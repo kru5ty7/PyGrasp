@@ -1,5 +1,14 @@
 import { PageLayout, SharedLayout } from "./quartz/cfg"
 import * as Component from "./quartz/components"
+import { FileTrieNode } from "./quartz/util/fileTrie"
+
+// Sort folders before files, then sort both groups by slugSegment so
+// our NN- numeric filename prefixes drive the sidebar order instead of page titles.
+const explorerSort = (a: FileTrieNode, b: FileTrieNode): number => {
+  if (a.isFolder && !b.isFolder) return -1
+  if (!a.isFolder && b.isFolder) return 1
+  return a.slugSegment.localeCompare(b.slugSegment, undefined, { numeric: true, sensitivity: "base" })
+}
 
 // components shared across all pages
 export const sharedPageComponents: SharedLayout = {
