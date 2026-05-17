@@ -1,6 +1,6 @@
----
+﻿---
 title: Relative Imports
-description: Relative imports use leading dots to reference modules relative to the current package — `.utils` means "utils in the same package," `..models` means "models in the parent package"; they only work inside packages and prevent naming conflicts with absolute imports.
+description: "Relative imports use leading dots to reference modules relative to the current package — `.utils` means \"utils in the same package,\" `..models` means \"models in the parent package\"; they only work inside packages and prevent naming conflicts with absolute imports."
 tags: [relative-imports, absolute-imports, packages, import, dotted-names, layer-1, core]
 status: draft
 difficulty: beginner

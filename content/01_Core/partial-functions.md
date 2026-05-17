@@ -1,6 +1,6 @@
----
+﻿---
 title: Partial Functions
-description: `functools.partial` creates a new callable by pre-filling some arguments of a function — the resulting partial object can be called with the remaining arguments later, enabling specialization and argument adaptation without writing a new function.
+description: "`functools.partial` creates a new callable by pre-filling some arguments of a function — the resulting partial object can be called with the remaining arguments later, enabling specialization and argument adaptation without writing a new function."
 tags: [partial, functools, partial-application, currying, callable, layer-1, core]
 status: draft
 difficulty: beginner

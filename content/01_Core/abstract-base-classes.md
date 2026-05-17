@@ -1,6 +1,6 @@
----
+﻿---
 title: Abstract Base Classes
-description: Abstract base classes (ABCs) define interfaces that concrete subclasses must implement — using `abc.ABCMeta` and `@abstractmethod`, Python enforces that subclasses provide required methods before instances can be created.
+description: "Abstract base classes (ABCs) define interfaces that concrete subclasses must implement — using `abc.ABCMeta` and `@abstractmethod`, Python enforces that subclasses provide required methods before instances can be created."
 tags: [abc, abstract-base-classes, abstractmethod, interface, protocol, layer-1, core]
 status: draft
 difficulty: intermediate

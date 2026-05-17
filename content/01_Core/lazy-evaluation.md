@@ -1,6 +1,6 @@
----
+﻿---
 title: Lazy Evaluation
-description: Lazy evaluation defers computation until the result is actually needed — Python's generators, generator expressions, and `itertools` produce values on demand rather than upfront, enabling processing of infinite sequences and large datasets with constant memory.
+description: "Lazy evaluation defers computation until the result is actually needed — Python's generators, generator expressions, and `itertools` produce values on demand rather than upfront, enabling processing of infinite sequences and large datasets with constant memory."
 tags: [lazy-evaluation, generators, itertools, on-demand, infinite-sequences, memory-efficiency, layer-1, core]
 status: draft
 difficulty: intermediate

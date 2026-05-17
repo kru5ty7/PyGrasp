@@ -1,6 +1,6 @@
----
+﻿---
 title: The multiprocessing Module
-description: Python's `multiprocessing` module provides Process, Pool, Queue, and Pipe primitives for creating and coordinating OS processes — each process runs a separate Python interpreter with its own GIL, enabling true CPU parallelism; objects are communicated via pickling.
+description: "Python's `multiprocessing` module provides Process, Pool, Queue, and Pipe primitives for creating and coordinating OS processes — each process runs a separate Python interpreter with its own GIL, enabling true CPU parallelism; objects are communicated via pickling."
 tags: [multiprocessing, Process, Pool, Queue, Pipe, pickling, layer-2, concurrency]
 status: draft
 difficulty: intermediate

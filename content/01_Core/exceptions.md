@@ -1,6 +1,6 @@
----
+﻿---
 title: Exceptions
-description: Python uses exceptions for error signaling — `raise` throws an exception object, `try/except` catches it, `else` runs if no exception occurred, `finally` always runs for cleanup; exceptions propagate up the call stack until caught or they crash the program with a traceback.
+description: "Python uses exceptions for error signaling — `raise` throws an exception object, `try/except` catches it, `else` runs if no exception occurred, `finally` always runs for cleanup; exceptions propagate up the call stack until caught or they crash the program with a traceback."
 tags: [exceptions, try-except, raise, finally, exception-handling, traceback, layer-1, core]
 status: draft
 difficulty: beginner

@@ -1,6 +1,6 @@
----
+﻿---
 title: Higher-Order Functions
-description: A higher-order function is one that takes a function as an argument or returns a function as its result — `map`, `filter`, `sorted`, and `functools.reduce` are built-in examples; decorators and closure factories are the most common patterns you write yourself.
+description: "A higher-order function is one that takes a function as an argument or returns a function as its result — `map`, `filter`, `sorted`, and `functools.reduce` are built-in examples; decorators and closure factories are the most common patterns you write yourself."
 tags: [higher-order-functions, map, filter, reduce, functional-programming, first-class-functions, layer-1, core]
 status: draft
 difficulty: beginner

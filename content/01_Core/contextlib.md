@@ -1,6 +1,6 @@
----
+﻿---
 title: contextlib
-description: The `contextlib` module provides utilities for creating context managers — `@contextmanager` converts a generator function into a context manager, `suppress` silences specific exceptions, `ExitStack` dynamically composes multiple context managers, and `nullcontext` is a no-op context manager.
+description: "The `contextlib` module provides utilities for creating context managers — `@contextmanager` converts a generator function into a context manager, `suppress` silences specific exceptions, `ExitStack` dynamically composes multiple context managers, and `nullcontext` is a no-op context manager."
 tags: [contextlib, contextmanager, suppress, ExitStack, nullcontext, context-managers, layer-1, core]
 status: draft
 difficulty: intermediate

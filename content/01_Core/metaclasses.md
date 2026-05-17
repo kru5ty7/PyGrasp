@@ -1,6 +1,6 @@
----
+﻿---
 title: Metaclasses
-description: A metaclass is the class of a class — it controls how a class is created, what attributes it has, and what happens when instances are created from it; `type` is the default metaclass, and custom metaclasses subclass `type` to customize class-level behavior.
+description: "A metaclass is the class of a class — it controls how a class is created, what attributes it has, and what happens when instances are created from it; `type` is the default metaclass, and custom metaclasses subclass `type` to customize class-level behavior."
 tags: [metaclasses, type, class-creation, python-data-model, advanced, layer-1, core]
 status: draft
 difficulty: advanced

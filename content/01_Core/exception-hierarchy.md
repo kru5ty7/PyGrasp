@@ -1,6 +1,6 @@
----
+﻿---
 title: Exception Hierarchy
-description: Python's exception classes form a tree rooted at `BaseException` — `Exception` is the base for all regular errors; `SystemExit`, `KeyboardInterrupt`, and `GeneratorExit` sit directly under `BaseException` and should not be caught routinely; knowing the hierarchy determines which `except` clause catches which errors.
+description: "Python's exception classes form a tree rooted at `BaseException` — `Exception` is the base for all regular errors; `SystemExit`, `KeyboardInterrupt`, and `GeneratorExit` sit directly under `BaseException` and should not be caught routinely; knowing the hierarchy determines which `except` clause catches which errors."
 tags: [exception-hierarchy, BaseException, Exception, built-in-exceptions, OSError, ValueError, layer-1, core]
 status: draft
 difficulty: beginner

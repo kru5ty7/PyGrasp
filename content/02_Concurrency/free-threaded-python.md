@@ -1,6 +1,6 @@
----
+﻿---
 title: Free-Threaded Python (3.13+)
-description: Python 3.13 introduced an experimental "free-threaded" build (`python3.13t`) that disables the GIL — threads can now execute Python bytecode in parallel on multiple cores; the tradeoff is per-object locking overhead, memory ordering constraints, and an immature extension ecosystem.
+description: "Python 3.13 introduced an experimental \"free-threaded\" build (`python3.13t`) that disables the GIL — threads can now execute Python bytecode in parallel on multiple cores; the tradeoff is per-object locking overhead, memory ordering constraints, and an immature extension ecosystem."
 tags: [free-threaded, nogil, python-3.13, per-object-locking, thread-safety, PEP-703, layer-2, concurrency]
 status: draft
 difficulty: advanced

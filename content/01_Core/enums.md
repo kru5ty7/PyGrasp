@@ -1,6 +1,6 @@
----
+﻿---
 title: Enums
-description: Python's `enum.Enum` creates named constants that are instances of the enum class — they have identity, comparison semantics, and iteration, preventing the "magic string/integer" anti-pattern while providing type-checker-visible named values.
+description: "Python's `enum.Enum` creates named constants that are instances of the enum class — they have identity, comparison semantics, and iteration, preventing the \"magic string/integer\" anti-pattern while providing type-checker-visible named values."
 tags: [enum, Enum, IntEnum, Flag, named-constants, layer-1, core]
 status: draft
 difficulty: beginner

@@ -1,6 +1,6 @@
----
+﻿---
 title: Generator Expressions
-description: A generator expression is a lazy list comprehension that produces values one at a time on demand instead of building a list upfront — it uses `()` instead of `[]` and returns a generator object, making it memory-efficient for large or infinite sequences.
+description: "A generator expression is a lazy list comprehension that produces values one at a time on demand instead of building a list upfront — it uses `()` instead of `[]` and returns a generator object, making it memory-efficient for large or infinite sequences."
 tags: [generator-expressions, generators, lazy-evaluation, comprehension, memory-efficiency, layer-1, core]
 status: draft
 difficulty: beginner

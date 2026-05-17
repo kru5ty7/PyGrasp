@@ -1,6 +1,6 @@
----
+﻿---
 title: Async Iterators
-description: Async iterators implement `__aiter__()` and `__anext__()` — `__anext__` is a coroutine that returns the next value or raises `StopAsyncIteration`; consumed via `async for`; async generators are the common way to create async iterators without writing a full class.
+description: "Async iterators implement `__aiter__()` and `__anext__()` — `__anext__` is a coroutine that returns the next value or raises `StopAsyncIteration`; consumed via `async for`; async generators are the common way to create async iterators without writing a full class."
 tags: [async-iterators, __aiter__, __anext__, StopAsyncIteration, async-for, layer-2, concurrency]
 status: draft
 difficulty: intermediate

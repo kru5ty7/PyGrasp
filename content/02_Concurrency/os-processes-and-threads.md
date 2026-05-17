@@ -1,6 +1,6 @@
----
+﻿---
 title: OS Processes and Threads
-description: An OS process is an isolated program instance with its own memory space; a thread is a unit of execution within a process sharing its memory — Python's `threading` maps to OS threads, `multiprocessing` creates OS processes; understanding the OS-level distinction explains Python's GIL, IPC requirements, and memory model for concurrent code.
+description: "An OS process is an isolated program instance with its own memory space; a thread is a unit of execution within a process sharing its memory — Python's `threading` maps to OS threads, `multiprocessing` creates OS processes; understanding the OS-level distinction explains Python's GIL, IPC requirements, and memory model for concurrent code."
 tags: [processes, threads, OS, memory-space, IPC, context-switching, layer-2, concurrency]
 status: draft
 difficulty: intermediate

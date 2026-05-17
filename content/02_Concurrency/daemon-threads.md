@@ -1,6 +1,6 @@
----
+﻿---
 title: Daemon Threads
-description: A daemon thread is a background thread that is automatically killed when all non-daemon threads have exited — marked with `t.daemon = True` before `t.start()`; use for background tasks (heartbeats, log flushing, monitors) that should not prevent program exit.
+description: "A daemon thread is a background thread that is automatically killed when all non-daemon threads have exited — marked with `t.daemon = True` before `t.start()`; use for background tasks (heartbeats, log flushing, monitors) that should not prevent program exit."
 tags: [daemon-threads, threading, background-threads, thread-lifecycle, layer-2, concurrency]
 status: draft
 difficulty: beginner

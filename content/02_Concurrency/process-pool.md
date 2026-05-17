@@ -1,6 +1,6 @@
----
+﻿---
 title: Process Pool
-description: A process pool is a pre-created set of worker processes that accept tasks from a queue — `multiprocessing.Pool` provides `map`, `apply_async`, and `starmap` to distribute work; worker startup cost is paid once, making pools efficient for many short tasks compared to creating a new process per task.
+description: "A process pool is a pre-created set of worker processes that accept tasks from a queue — `multiprocessing.Pool` provides `map`, `apply_async`, and `starmap` to distribute work; worker startup cost is paid once, making pools efficient for many short tasks compared to creating a new process per task."
 tags: [process-pool, multiprocessing, Pool, map, apply_async, starmap, layer-2, concurrency]
 status: draft
 difficulty: intermediate

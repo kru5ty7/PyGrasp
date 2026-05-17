@@ -1,6 +1,6 @@
----
+﻿---
 title: Asyncio Tasks
-description: An asyncio `Task` is a coroutine scheduled to run concurrently on the event loop — `asyncio.create_task(coro)` wraps a coroutine and immediately schedules it; tasks run concurrently but cooperate via `await`; cancellation and result access use the `Task` object.
+description: "An asyncio `Task` is a coroutine scheduled to run concurrently on the event loop — `asyncio.create_task(coro)` wraps a coroutine and immediately schedules it; tasks run concurrently but cooperate via `await`; cancellation and result access use the `Task` object."
 tags: [asyncio, Task, create_task, gather, cancellation, TaskGroup, layer-2, concurrency]
 status: draft
 difficulty: intermediate

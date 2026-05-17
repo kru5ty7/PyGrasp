@@ -1,6 +1,6 @@
----
+﻿---
 title: Thread Lifecycle
-description: A Python thread transitions through states — created, started, running, blocked (waiting on I/O or a lock), and terminated — managed by the OS scheduler and Python's GIL; `Thread.join()` waits for termination, daemon threads die when the main thread exits.
+description: "A Python thread transitions through states — created, started, running, blocked (waiting on I/O or a lock), and terminated — managed by the OS scheduler and Python's GIL; `Thread.join()` waits for termination, daemon threads die when the main thread exits."
 tags: [thread-lifecycle, threading, Thread, join, daemon, thread-states, layer-2, concurrency]
 status: draft
 difficulty: beginner

@@ -1,6 +1,6 @@
----
+﻿---
 title: List Comprehensions
-description: List comprehensions are a concise syntax for building lists by mapping and/or filtering an iterable in a single expression — they compile to faster bytecode than equivalent `for` loops and signal intent clearly, but set/dict comprehensions and generator expressions follow the same syntax for different collection types.
+description: "List comprehensions are a concise syntax for building lists by mapping and/or filtering an iterable in a single expression — they compile to faster bytecode than equivalent `for` loops and signal intent clearly, but set/dict comprehensions and generator expressions follow the same syntax for different collection types."
 tags: [list-comprehensions, set-comprehension, dict-comprehension, generator-expression, comprehension-syntax, layer-1, core]
 status: draft
 difficulty: beginner

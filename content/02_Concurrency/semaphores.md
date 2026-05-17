@@ -1,6 +1,6 @@
----
+﻿---
 title: Semaphores
-description: A semaphore is a counter-based synchronization primitive — `Semaphore(n)` allows up to `n` threads in a section simultaneously, making it suitable for rate limiting, connection pool management, and bounded concurrency; `BoundedSemaphore` prevents the counter from exceeding its initial value.
+description: "A semaphore is a counter-based synchronization primitive — `Semaphore(n)` allows up to `n` threads in a section simultaneously, making it suitable for rate limiting, connection pool management, and bounded concurrency; `BoundedSemaphore` prevents the counter from exceeding its initial value."
 tags: [semaphores, threading, Semaphore, BoundedSemaphore, concurrency-control, rate-limiting, layer-2, concurrency]
 status: draft
 difficulty: intermediate

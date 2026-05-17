@@ -1,6 +1,6 @@
----
+﻿---
 title: Type Narrowing
-description: Type narrowing is how static type checkers refine the type of a variable within a conditional branch — `isinstance` checks, `None` checks, `assert`, and `TypeGuard` all signal to mypy/pyright that a broader type can be treated as a narrower, more specific type in that branch.
+description: "Type narrowing is how static type checkers refine the type of a variable within a conditional branch — `isinstance` checks, `None` checks, `assert`, and `TypeGuard` all signal to mypy/pyright that a broader type can be treated as a narrower, more specific type in that branch."
 tags: [type-narrowing, isinstance, TypeGuard, mypy, pyright, Union, type-guards, layer-1, core]
 status: draft
 difficulty: intermediate

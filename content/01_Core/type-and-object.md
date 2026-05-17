@@ -1,6 +1,6 @@
----
+﻿---
 title: type and object
-description: In Python's type system, `object` is the base class of every class and `type` is the metaclass of every class — they form a circular bootstrap relationship where each is an instance of the other, making them the two roots of Python's entire object hierarchy.
+description: "In Python's type system, `object` is the base class of every class and `type` is the metaclass of every class — they form a circular bootstrap relationship where each is an instance of the other, making them the two roots of Python's entire object hierarchy."
 tags: [type, object, metaclass, class-hierarchy, cpython, python-data-model, layer-1, core]
 status: draft
 difficulty: intermediate
