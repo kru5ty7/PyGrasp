@@ -1,6 +1,6 @@
-ï»¿---
-title: 12 - The Frame Object
-description: A frame object (PyFrameObject) is the runtime execution context for a single function call â€” it holds the local variables, the bytecode instruction pointer, the value stack, and a reference to the enclosing frame, forming the call stack.
+---
+title: 11 - The Frame Object
+description: A frame object (PyFrameObject) is the runtime execution context for a single function call — it holds the local variables, the bytecode instruction pointer, the value stack, and a reference to the enclosing frame, forming the call stack.
 tags: [frame-object, pyframeobject, call-stack, local-variables, execution-context, cpython, layer-0, core]
 status: draft
 difficulty: intermediate
@@ -11,7 +11,7 @@ created: 2026-05-17
 
 # The Frame Object
 
-> A frame object (PyFrameObject) is the runtime execution context for a single function call â€” it holds the local variables, the bytecode instruction pointer, the value stack, and a reference to the enclosing frame, forming the call stack.
+> A frame object (PyFrameObject) is the runtime execution context for a single function call — it holds the local variables, the bytecode instruction pointer, the value stack, and a reference to the enclosing frame, forming the call stack.
 
 ---
 
@@ -25,10 +25,10 @@ created: 2026-05-17
 - In CPython 3.11+, frames are allocated in a **frame stack** per thread rather than on the heap, significantly reducing function call overhead
 
 **Tricky points:**
-- The frame's **value stack** is the operand stack that bytecode instructions push to and pop from â€” it is distinct from the local variables array
-- `f_locals` on a live frame is **computed on demand** â€” it creates a dict from the fast locals array each time it is accessed; modifying the returned dict does not change the actual locals
-- Generators and coroutines **suspend** execution by preserving their frame â€” the frame is not destroyed when a generator yields; it is detached from the thread's frame stack and reattached on the next `next()` call
-- `traceback.tb_frame` gives access to the frames in a traceback â€” used by debuggers and exception formatters
+- The frame's **value stack** is the operand stack that bytecode instructions push to and pop from — it is distinct from the local variables array
+- `f_locals` on a live frame is **computed on demand** — it creates a dict from the fast locals array each time it is accessed; modifying the returned dict does not change the actual locals
+- Generators and coroutines **suspend** execution by preserving their frame — the frame is not destroyed when a generator yields; it is detached from the thread's frame stack and reattached on the next `next()` call
+- `traceback.tb_frame` gives access to the frames in a traceback — used by debuggers and exception formatters
 - CPython 3.11 replaced heap-allocated `PyFrameObject` with a lighter `_PyInterpreterFrame` struct; the Python-visible `frame` type is now a thin wrapper
 
 ---
@@ -37,7 +37,7 @@ created: 2026-05-17
 
 Think of a frame object as a workspace that a contractor sets up for a specific job. When hired to install kitchen cabinets, the contractor brings a specific toolkit (local variables), a job sheet listing the steps (bytecode), a notepad for scratch work (the value stack), and the address of their manager to report to when done (the pointer to the previous frame). When the cabinet installation job is finished, the workspace is packed up and the contractor reports back to the manager. If they need to install flooring during the cabinet job (a nested function call), they set up a new workspace for flooring, complete it, and return to the cabinet workspace exactly where they left off.
 
-A frame encapsulates everything that makes a function call independent from every other function call running at the same time (in recursive calls, threads, or nested function calls). Two recursive calls to the same function have different frame objects â€” each has its own locals array with its own values of `n`, `result`, `index`, or whatever the function uses â€” despite sharing the same code object. The code object describes what to do; the frame is the context in which it is being done at this moment.
+A frame encapsulates everything that makes a function call independent from every other function call running at the same time (in recursive calls, threads, or nested function calls). Two recursive calls to the same function have different frame objects — each has its own locals array with its own values of `n`, `result`, `index`, or whatever the function uses — despite sharing the same code object. The code object describes what to do; the frame is the context in which it is being done at this moment.
 
 The frame is where Python's execution model becomes concrete. The interpreter loop executes bytecode instructions against a frame: `LOAD_FAST 0` loads local variable 0 from the frame's fast locals array onto the frame's value stack. `BINARY_OP +` pops two items from the value stack, adds them, and pushes the result. `STORE_FAST 1` pops from the value stack and stores in local slot 1. Every bytecode instruction reads from or writes to the current frame's state.
 
@@ -45,9 +45,9 @@ The frame is where Python's execution model becomes concrete. The interpreter lo
 
 ## How It Actually Works
 
-In CPython, a frame's key fields are: `f_code` (the `PyCodeObject` containing the bytecode and constants), `f_lasti` (the index of the last bytecode instruction executed â€” the instruction pointer), `f_localsplus` (a C array holding fast locals, free variables, and the value stack contiguously), and `f_back` (pointer to the caller's frame, `NULL` for the top-level frame).
+In CPython, a frame's key fields are: `f_code` (the `PyCodeObject` containing the bytecode and constants), `f_lasti` (the index of the last bytecode instruction executed — the instruction pointer), `f_localsplus` (a C array holding fast locals, free variables, and the value stack contiguously), and `f_back` (pointer to the caller's frame, `NULL` for the top-level frame).
 
-The `f_localsplus` array is divided into three logical sections. The first `co_nlocals` slots are the fast locals â€” local variables and parameters. The next section holds free variables (variables from enclosing scopes, stored as cells). The remaining slots are the value stack. The interpreter pushes and pops from the value stack section using a stack pointer (`stackpointer`) that tracks the current top.
+The `f_localsplus` array is divided into three logical sections. The first `co_nlocals` slots are the fast locals — local variables and parameters. The next section holds free variables (variables from enclosing scopes, stored as cells). The remaining slots are the value stack. The interpreter pushes and pops from the value stack section using a stack pointer (`stackpointer`) that tracks the current top.
 
 When a function is called, CPython's `_PyEval_EvalFrameDefault()` creates a new frame, sets `f_back` to the current frame, sets the interpreter's "current frame" pointer to the new frame, and starts executing the new code object's bytecode. When the function returns (`RETURN_VALUE` instruction), the return value is passed to the caller, the frame is deallocated (or, for generators, suspended), and the interpreter's current frame pointer is reset to `f_back`.
 
@@ -74,7 +74,7 @@ Misconception 1: "Modifying `frame.f_locals` changes the function's actual local
 Reality: `frame.f_locals` is computed on demand by copying fast locals (from the C array) into a Python dict. Modifying the returned dict does not write back to the fast locals array. The actual locals live in `f_localsplus` and are only accessible through the bytecode instructions `LOAD_FAST` and `STORE_FAST`. This is why monkey-patching local variables via `sys._getframe()` does not work reliably in CPython.
 
 Misconception 2: "Every Python object creates a frame."
-Reality: Frames are created only for function calls and module-level execution. Attribute lookups, list comprehensions (they have their own frame in Python 3, but not in 2), lambda calls, and generator expressions all create frames, but simple expressions, assignments, and method calls on objects do not create frames unless they involve a Python function call. The C implementation of a built-in function like `len()` does not create a Python frame â€” it calls the C function directly, which is why built-in functions do not appear in Python tracebacks.
+Reality: Frames are created only for function calls and module-level execution. Attribute lookups, list comprehensions (they have their own frame in Python 3, but not in 2), lambda calls, and generator expressions all create frames, but simple expressions, assignments, and method calls on objects do not create frames unless they involve a Python function call. The C implementation of a built-in function like `len()` does not create a Python frame — it calls the C function directly, which is why built-in functions do not appear in Python tracebacks.
 
 ---
 
@@ -82,7 +82,7 @@ Reality: Frames are created only for function calls and module-level execution. 
 
 Debuggers, profilers, and tracing tools all operate on frames. `pdb` inspects `f_locals`, `f_globals`, and `f_code.co_filename` to show the current execution context. `cProfile` hooks into frame creation and destruction to measure per-function time. `sys.settrace()` and `sys.setprofile()` install callbacks that are called on frame events (call, return, exception). Understanding the frame object is understanding the hook points that all Python debugging and profiling infrastructure uses.
 
-The cost of function calls in CPython is primarily the cost of frame allocation. Every `def` call creates a frame; every return destroys it. In CPython 3.11+, this cost dropped significantly due to stack-allocated frames. For extremely performance-sensitive inner loops, minimizing function call overhead â€” inlining logic, using built-in functions (which don't create Python frames), or moving hot loops to C extensions â€” is the most effective optimization.
+The cost of function calls in CPython is primarily the cost of frame allocation. Every `def` call creates a frame; every return destroys it. In CPython 3.11+, this cost dropped significantly due to stack-allocated frames. For extremely performance-sensitive inner loops, minimizing function call overhead — inlining logic, using built-in functions (which don't create Python frames), or moving hot loops to C extensions — is the most effective optimization.
 
 ---
 
@@ -93,7 +93,7 @@ Common question forms:
 - "How does Python implement the call stack?"
 - "What happens to a generator's frame when it yields?"
 
-Answer frame: A frame object is the runtime context for a single function call â€” it holds the code object, local variable array, value stack, and a pointer to the caller's frame. The chain of `f_back` pointers forms the call stack. The interpreter loop reads bytecode from the frame's code object and operates on the frame's value stack and locals. Generator frames are suspended (detached from the thread stack) on yield and resumed on `next()`. CPython 3.11+ allocates frames on a C stack rather than the heap for speed.
+Answer frame: A frame object is the runtime context for a single function call — it holds the code object, local variable array, value stack, and a pointer to the caller's frame. The chain of `f_back` pointers forms the call stack. The interpreter loop reads bytecode from the frame's code object and operates on the frame's value stack and locals. Generator frames are suspended (detached from the thread stack) on yield and resumed on `next()`. CPython 3.11+ allocates frames on a C stack rather than the heap for speed.
 
 ---
 
