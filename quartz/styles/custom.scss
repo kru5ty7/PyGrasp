@@ -1,3 +1,123 @@
 @use "./base.scss";
+@use "./variables.scss" as *;
 
-// put your custom CSS here!
+// ── Mobile improvements ───────────────────────────────────────────────────────
+
+// 1. Sticky opaque top bar on mobile so content doesn't bleed through when
+//    scrolling behind the page title / search / explorer toggle row.
+@media all and ($mobile) {
+  .sidebar.left {
+    background-color: var(--light);
+    position: sticky !important;
+    top: 0;
+    z-index: 100;
+    padding: 0.6rem 1rem !important;
+    border-bottom: 1px solid var(--lightgray);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  }
+
+  // Keep page title from overflowing the narrow bar
+  .page-title {
+    font-size: 1rem !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 40vw;
+  }
+}
+
+// 2. Right sidebar — stack Backlinks vertically on mobile instead of the
+//    default side-by-side flex row (which is cramped on small screens).
+@media all and ($mobile) {
+  .sidebar.right {
+    flex-direction: column !important;
+    padding: 0 0 1rem 0 !important;
+
+    > * {
+      max-height: unset !important;
+      width: 100%;
+    }
+  }
+}
+
+// 3. Explorer drawer on mobile — card-style with max-height + scroll
+@media all and ($mobile) {
+  .explorer-content {
+    background: var(--light);
+    border: 1px solid var(--lightgray);
+    border-radius: 10px;
+    padding: 0.5rem 0.75rem;
+    margin-top: 0.4rem;
+    box-shadow: 0 6px 24px rgba(0, 0, 0, 0.12);
+    max-height: 65vh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+// 4. Article content — better reading experience on small screens
+@media all and ($mobile) {
+  article {
+    padding: 0 0.1rem;
+
+    // Slightly smaller H1 so long titles don't overflow
+    > h1 {
+      font-size: 1.45rem !important;
+      line-height: 1.3;
+    }
+  }
+
+  // Breadcrumbs — horizontal scroll instead of wrapping/truncating
+  .breadcrumb-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+    padding-bottom: 0.2rem;
+
+    // Hide scrollbar but keep scroll functionality
+    &::-webkit-scrollbar { display: none; }
+    scrollbar-width: none;
+  }
+
+  // Tags — wrap and add spacing
+  .tags {
+    flex-wrap: wrap;
+    gap: 0.35rem;
+  }
+
+  // Code blocks — smaller font, ensure horizontal scroll works
+  pre {
+    font-size: 0.78rem !important;
+  }
+
+  // Inline code — slightly smaller
+  code {
+    font-size: 0.82em !important;
+  }
+
+  // Tables — horizontal scroll container already exists, ensure width
+  .table-container {
+    width: 100%;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  // Content meta (date / reading time)
+  .content-meta {
+    font-size: 0.78rem;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+  }
+
+  // Backlinks — full width, remove any max-height cap
+  .backlinks {
+    width: 100%;
+    max-height: unset !important;
+  }
+
+  // Footer — smaller, centered
+  footer {
+    font-size: 0.8rem;
+    text-align: center;
+    padding: 1rem 0;
+  }
+}
