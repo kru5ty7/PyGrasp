@@ -1,0 +1,222 @@
+{
+  "main": {
+    "id": "bd06e6f140e2781c",
+    "type": "split",
+    "children": [
+      {
+        "id": "1a46c1e77bd99876",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "e0c88e07c8ddce68",
+            "type": "leaf",
+            "state": {
+              "type": "markdown",
+              "state": {
+                "file": "02_Concurrency/async-await.md",
+                "mode": "source",
+                "source": false
+              },
+              "icon": "lucide-file",
+              "title": "async-await"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "vertical"
+  },
+  "left": {
+    "id": "696afd2c1108b947",
+    "type": "split",
+    "children": [
+      {
+        "id": "c366bb8b7dee3bdb",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "af92c14f86d9dae7",
+            "type": "leaf",
+            "state": {
+              "type": "file-explorer",
+              "state": {
+                "sortOrder": "alphabetical",
+                "autoReveal": false
+              },
+              "icon": "lucide-folder-closed",
+              "title": "Files"
+            }
+          },
+          {
+            "id": "690694308f5d4558",
+            "type": "leaf",
+            "state": {
+              "type": "search",
+              "state": {
+                "query": "",
+                "matchingCase": false,
+                "explainSearch": false,
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical"
+              },
+              "icon": "lucide-search",
+              "title": "Search"
+            }
+          },
+          {
+            "id": "bd4ae6cf04ff8f15",
+            "type": "leaf",
+            "state": {
+              "type": "bookmarks",
+              "state": {},
+              "icon": "lucide-bookmark",
+              "title": "Bookmarks"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300
+  },
+  "right": {
+    "id": "47602a9d6df138d2",
+    "type": "split",
+    "children": [
+      {
+        "id": "f000bc23c1a91e0f",
+        "type": "tabs",
+        "children": [
+          {
+            "id": "5bf423442a07bdd7",
+            "type": "leaf",
+            "state": {
+              "type": "backlink",
+              "state": {
+                "file": "02_Concurrency/async-await.md",
+                "collapseAll": false,
+                "extraContext": false,
+                "sortOrder": "alphabetical",
+                "showSearch": false,
+                "searchQuery": "",
+                "backlinkCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-coming-in",
+              "title": "Backlinks for async-await"
+            }
+          },
+          {
+            "id": "c0cc2c3cd48f3876",
+            "type": "leaf",
+            "state": {
+              "type": "outgoing-link",
+              "state": {
+                "file": "02_Concurrency/async-await.md",
+                "linksCollapsed": false,
+                "unlinkedCollapsed": true
+              },
+              "icon": "links-going-out",
+              "title": "Outgoing links from async-await"
+            }
+          },
+          {
+            "id": "1a4d3006db6ad6f5",
+            "type": "leaf",
+            "state": {
+              "type": "tag",
+              "state": {
+                "sortOrder": "frequency",
+                "useHierarchy": true,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-tags",
+              "title": "Tags"
+            }
+          },
+          {
+            "id": "ca75d9b7c19e92ce",
+            "type": "leaf",
+            "state": {
+              "type": "all-properties",
+              "state": {
+                "sortOrder": "frequency",
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-archive",
+              "title": "All properties"
+            }
+          },
+          {
+            "id": "11dfea2f6b42a51a",
+            "type": "leaf",
+            "state": {
+              "type": "outline",
+              "state": {
+                "file": "02_Concurrency/async-await.md",
+                "followCursor": false,
+                "showSearch": false,
+                "searchQuery": ""
+              },
+              "icon": "lucide-list",
+              "title": "Outline of async-await"
+            }
+          }
+        ]
+      }
+    ],
+    "direction": "horizontal",
+    "width": 300,
+    "collapsed": true
+  },
+  "left-ribbon": {
+    "hiddenItems": {
+      "switcher:Open quick switcher": false,
+      "graph:Open graph view": false,
+      "canvas:Create new canvas": false,
+      "daily-notes:Open today's daily note": false,
+      "templates:Insert template": false,
+      "command-palette:Open command palette": false,
+      "bases:Create new base": false
+    }
+  },
+  "active": "e0c88e07c8ddce68",
+  "lastOpenFiles": [
+    "04_AI/agents.md",
+    "04_AI/tool-calling.md",
+    "04_AI/nodes-and-edges.md",
+    "04_AI/state-graph.md",
+    "04_AI/langgraph-core.md",
+    "04_AI/langchain-basics.md",
+    "04_AI/rag.md",
+    "04_AI/vector-search.md",
+    "04_AI/embeddings.md",
+    "04_AI/llm-basics.md",
+    "03_Web/http-request-lifecycle.md",
+    "03_Web/openapi.md",
+    "03_Web/fastapi.md",
+    "03_Web/starlette.md",
+    "03_Web/uvicorn.md",
+    "03_Web/asgi.md",
+    "03_Web/wsgi.md",
+    "03_Web/dependency-injection.md",
+    "03_Web/pydantic.md",
+    "03_Web/http-basics.md",
+    "Untitled.canvas",
+    "02_Concurrency/asyncio.md",
+    "02_Concurrency/thread-pool-executor.md",
+    "02_Concurrency/event-loop.md",
+    "02_Concurrency/thread-vs-process.md",
+    "02_Concurrency/async-await.md",
+    "02_Concurrency/processes.md",
+    "99_Sandbox",
+    "04_AI",
+    "03_Web",
+    "02_Concurrency",
+    "01_Core",
+    "00_MOC"
+  ]
+}
