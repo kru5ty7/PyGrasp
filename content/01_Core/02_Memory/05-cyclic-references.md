@@ -1,5 +1,5 @@
----
-title: Cyclic References
+﻿---
+title: 05 - Cyclic References
 description: A cyclic reference occurs when two or more objects reference each other, forming a loop that prevents their reference counts from reaching zero — this is the class of memory leak that CPython's cyclic garbage collector exists to detect and break.
 tags: [cyclic-references, reference-counting, garbage-collection, memory-leak, cpython, layer-0, core]
 status: draft

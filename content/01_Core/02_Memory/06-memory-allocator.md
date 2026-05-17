@@ -1,5 +1,5 @@
----
-title: Python's Memory Allocator
+﻿---
+title: "06 - Python's Memory Allocator"
 description: CPython uses a three-tier memory allocation system — the system allocator, the pymalloc arena allocator, and the object-specific allocators — designed to reduce the overhead of allocating and freeing the millions of small short-lived objects typical Python programs create.
 tags: [memory-allocator, pymalloc, arenas, pools, blocks, cpython, memory, layer-0, core]
 status: draft

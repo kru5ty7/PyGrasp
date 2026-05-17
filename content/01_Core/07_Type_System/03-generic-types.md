@@ -1,5 +1,5 @@
 ﻿---
-title: Generic Types
+title: 03 - Generic Types
 description: "Generic types parameterize a class or function by one or more type variables, allowing a single implementation to work correctly with multiple concrete types while preserving type information — `list[int]`, `dict[str, int]`, and user-defined `class Stack(Generic[T])` are all generic types."
 tags: [generics, TypeVar, Generic, type-parameters, parametric-polymorphism, python-3.12, layer-1, core]
 status: draft

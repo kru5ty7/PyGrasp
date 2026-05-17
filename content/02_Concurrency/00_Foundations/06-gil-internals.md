@@ -1,5 +1,5 @@
----
-title: GIL Internals
+﻿---
+title: 06 - GIL Internals
 description: The GIL is implemented as a mutex with a condition variable — Python 3.2 replaced the "check every N bytecodes" mechanism with a 5ms forced release interval using a timed wait; understanding the switching mechanism, "GIL battle" problem, and new-GIL fixes explains thread performance characteristics.
 tags: [GIL, gil-internals, mutex, condition-variable, sys.getswitchinterval, ceval, layer-2, concurrency]
 status: draft

@@ -1,5 +1,5 @@
 ﻿---
-title: Custom Exceptions
+title: 03 - Custom Exceptions
 description: "Custom exceptions are user-defined exception classes that inherit from `Exception` or a more specific built-in — they allow callers to catch library-specific errors precisely, carry structured error data as attributes, and form their own hierarchy for graduated exception handling."
 tags: [custom-exceptions, exception-hierarchy, Exception, error-handling, layer-1, core]
 status: draft

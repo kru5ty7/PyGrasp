@@ -1,5 +1,5 @@
 ﻿---
-title: pip and Packaging
+title: 07 - pip and Packaging
 description: "pip is Python's package installer — `pip install`, `pip freeze`, and `pip show` manage packages from PyPI; `pyproject.toml` is the modern standard for project metadata and build configuration; understanding the packaging ecosystem is needed to distribute and consume Python libraries."
 tags: [pip, packaging, pyproject-toml, PyPI, setuptools, wheel, layer-1, core]
 status: draft

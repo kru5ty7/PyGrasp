@@ -1,5 +1,5 @@
 ﻿---
-title: Lambda Functions
+title: 08 - Lambda Functions
 description: "A `lambda` expression creates an anonymous single-expression function object — it is syntactic shorthand for a `def` with no name and a single `return` expression, typically used inline where a full `def` would be verbose."
 tags: [lambda, anonymous-functions, first-class-functions, higher-order, layer-1, core]
 status: draft

@@ -1,5 +1,5 @@
 ﻿---
-title: functools
+title: 11 - functools
 description: "The `functools` module provides higher-order function utilities — `lru_cache` for memoization, `wraps` for decorator metadata preservation, `partial` for partial application, `reduce` for fold operations, `total_ordering` for comparison method generation, and `cache`/`cached_property` for lazy computation."
 tags: [functools, lru_cache, wraps, partial, reduce, total_ordering, cached_property, memoization, layer-1, core]
 status: draft

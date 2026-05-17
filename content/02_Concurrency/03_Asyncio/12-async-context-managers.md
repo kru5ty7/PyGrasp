@@ -1,5 +1,5 @@
 ﻿---
-title: Async Context Managers
+title: 12 - Async Context Managers
 description: "Async context managers implement `__aenter__` and `__aexit__` coroutine methods — used with `async with`; they allow awaiting during setup and teardown (database connections, locks, HTTP sessions); `@asynccontextmanager` from `contextlib` converts an async generator to a context manager."
 tags: [async-context-managers, __aenter__, __aexit__, async-with, asynccontextmanager, layer-2, concurrency]
 status: draft

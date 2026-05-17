@@ -1,5 +1,5 @@
----
-title: Asyncio Queues
+﻿---
+title: 08 - Asyncio Queues
 description: "`asyncio.Queue` is a coroutine-friendly FIFO data structure — `await queue.put(item)` and `await queue.get()` yield to the event loop instead of blocking OS threads; used for producer-consumer patterns within asyncio programs; `LifoQueue` and `PriorityQueue` are available as well."
 tags: [asyncio, Queue, LifoQueue, PriorityQueue, producer-consumer, async-queue, layer-2, concurrency]
 status: draft

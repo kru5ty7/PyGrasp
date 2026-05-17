@@ -1,5 +1,5 @@
----
-title: Object Interning
+﻿---
+title: 11 - Object Interning
 description: Interning is CPython's optimization of reusing a single object for multiple references to equal values — rather than creating a new object for every identical string or integer, CPython maintains a pool of canonical objects that all references point to.
 tags: [interning, string-interning, identity, is-operator, cpython, optimization, layer-0, core]
 status: draft

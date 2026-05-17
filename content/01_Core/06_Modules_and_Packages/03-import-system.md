@@ -1,5 +1,5 @@
 ﻿---
-title: The Import System
+title: 03 - The Import System
 description: "Python's import system uses a chain of finders and loaders on `sys.meta_path` to locate and execute modules — `sys.path` is searched for file-based modules; `importlib` provides programmatic access; understanding the pipeline explains how to customize imports and debug `ModuleNotFoundError`."
 tags: [import-system, sys.meta_path, finders, loaders, importlib, sys.modules, layer-1, core]
 status: draft

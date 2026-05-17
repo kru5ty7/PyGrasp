@@ -1,5 +1,5 @@
----
-title: Dunder Methods
+﻿---
+title: 04 - Dunder Methods
 description: Dunder methods are the specific Python methods whose names start and end with double underscores — they are the hooks the Python data model provides for your classes to participate in language syntax, built-in functions, and operator behavior.
 tags: [dunder, magic-methods, data-model, protocols, cpython, layer-1, core]
 status: draft

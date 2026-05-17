@@ -1,5 +1,5 @@
----
-title: Asyncio
+﻿---
+title: 05 - Asyncio
 description: "`asyncio` is Python's standard library for async I/O — it provides the event loop implementation, task scheduling, async synchronization primitives, and network I/O utilities that make concurrent async programs work in practice."
 tags: [asyncio, event-loop, tasks, gather, async, standard-library, layer-2, concurrency]
 status: draft

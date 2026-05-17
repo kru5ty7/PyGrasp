@@ -1,5 +1,5 @@
----
-title: concurrent.futures
+﻿---
+title: 01 - concurrent.futures
 description: "`concurrent.futures` provides `ThreadPoolExecutor` and `ProcessPoolExecutor` — a unified high-level interface for running callables in thread or process pools; futures represent pending results; `as_completed()` and `wait()` allow flexible result collection."
 tags: [concurrent-futures, ThreadPoolExecutor, ProcessPoolExecutor, Future, as_completed, wait, layer-2, concurrency]
 status: draft

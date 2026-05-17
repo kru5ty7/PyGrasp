@@ -1,5 +1,5 @@
----
-title: Concurrency vs Parallelism
+﻿---
+title: 02 - Concurrency vs Parallelism
 description: Concurrency is about dealing with multiple tasks at once by interleaving progress; parallelism is about doing multiple tasks simultaneously on multiple cores — Python achieves concurrency with threads and asyncio (GIL-limited), and true parallelism with multiprocessing.
 tags: [concurrency, parallelism, threads, multiprocessing, asyncio, GIL, layer-2, concurrency]
 status: draft

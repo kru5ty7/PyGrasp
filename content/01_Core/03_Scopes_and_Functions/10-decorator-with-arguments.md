@@ -1,5 +1,5 @@
----
-title: Decorators with Arguments
+﻿---
+title: 10 - Decorators with Arguments
 description: A decorator with arguments is a callable that accepts configuration parameters and returns a decorator — it adds an extra function layer so the outer function receives arguments, the middle function receives the function to decorate, and the inner function is the actual wrapper.
 tags: [decorators, decorator-arguments, decorator-factory, functools-wraps, parametrized-decorators, layer-1, core]
 status: draft

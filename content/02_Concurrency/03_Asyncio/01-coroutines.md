@@ -1,5 +1,5 @@
----
-title: Coroutines
+﻿---
+title: 01 - Coroutines
 description: "A coroutine is a function that can suspend its execution at an `await` expression and resume later — built on the same frame-suspension mechanism as generators, and the foundation on which Python's entire async/await system is constructed."
 tags: [coroutines, async, await, generators, event-loop, layer-2, concurrency]
 status: draft

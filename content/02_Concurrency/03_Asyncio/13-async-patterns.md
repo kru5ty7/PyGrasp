@@ -1,5 +1,5 @@
----
-title: Async Patterns
+﻿---
+title: 13 - Async Patterns
 description: "Common async programming patterns: fan-out/fan-in with `gather`, producer-consumer with `asyncio.Queue`, circuit breaker with `asyncio.Semaphore`, retry with exponential backoff, and timeout composition with `asyncio.wait_for` — these patterns compose to handle real-world async workloads."
 tags: [async-patterns, fan-out, producer-consumer, circuit-breaker, retry, timeout, layer-2, concurrency]
 status: draft

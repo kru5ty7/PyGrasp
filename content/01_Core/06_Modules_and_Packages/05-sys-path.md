@@ -1,5 +1,5 @@
----
-title: sys.path
+﻿---
+title: 05 - sys.path
 description: "`sys.path` is a list of directories (and zip files) that Python searches for modules and packages — it is initialized from `PYTHONPATH`, the current directory, and the standard library paths; understanding it is essential for fixing `ModuleNotFoundError` and managing multi-environment setups."
 tags: [sys-path, PYTHONPATH, import, module-search, virtual-environments, layer-1, core]
 status: draft

@@ -1,5 +1,5 @@
----
-title: Context Switching
+﻿---
+title: 04 - Context Switching
 description: Context switching is the OS mechanism of saving a thread's CPU state (registers, stack pointer, program counter) and restoring another's — it is how a single CPU appears to run multiple threads; in Python, the GIL adds an extra layer of switching on top of OS context switching.
 tags: [context-switching, threads, GIL, OS-scheduler, sys.getswitchinterval, layer-2, concurrency]
 status: draft

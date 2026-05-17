@@ -1,5 +1,5 @@
----
-title: Bytecode
+﻿---
+title: 08 - Bytecode
 description: Bytecode is the intermediate language CPython compiles your source code into before running it — closer to machine instructions than Python, but still requiring CPython to execute.
 tags: [bytecode, cpython, compilation, dis, PyCodeObject, core]
 status: draft

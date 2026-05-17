@@ -1,5 +1,5 @@
----
-title: The LEGB Rule
+﻿---
+title: 02 - The LEGB Rule
 description: "LEGB is the order Python searches for a name: Local → Enclosing → Global → Built-in — it is not a suggestion but a strict compile-time and runtime contract that determines which object every name in your code refers to."
 tags: [LEGB, scopes, namespaces, global, nonlocal, closures, layer-1, core]
 status: draft

@@ -1,5 +1,5 @@
----
-title: Threads in Python
+﻿---
+title: 01 - Threads in Python
 description: "Python threads are real OS threads managed by the `threading` module — they run concurrently but not in parallel for CPU-bound work because of the GIL, making them the right tool for I/O-bound concurrency but the wrong tool for CPU-intensive parallelism."
 tags: [threads, threading, GIL, concurrency, OS-threads, layer-2, concurrency]
 status: draft

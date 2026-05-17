@@ -1,5 +1,5 @@
 ﻿---
-title: Properties
+title: 06 - Properties
 description: "The `property` built-in is a descriptor that wraps getter, setter, and deleter functions behind a clean attribute interface — it enables computed and validated attributes without changing the calling syntax from simple attribute access."
 tags: [property, getter, setter, descriptor, attribute-access, layer-1, core]
 status: draft

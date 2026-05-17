@@ -1,5 +1,5 @@
----
-title: Async and Await
+﻿---
+title: 02 - Async and Await
 description: "`async` and `await` are the two keywords that define Python's native coroutine syntax — `async def` creates a coroutine function, `await` suspends it until an awaitable finishes, and together they enable concurrent I/O-bound programs on a single thread without callbacks or locks."
 tags: [async, await, coroutines, asyncio, concurrency, layer-2, concurrency]
 status: draft

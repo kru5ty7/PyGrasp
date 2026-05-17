@@ -1,5 +1,5 @@
----
-title: The GIL
+﻿---
+title: 05 - The GIL
 description: The Global Interpreter Lock is a mutex inside CPython that ensures only one thread executes Python bytecode at a time — it exists to protect reference counting from race conditions, and it is the reason Python threads cannot achieve CPU parallelism.
 tags: [GIL, concurrency, threads, reference-counting, cpython, layer-2, concurrency]
 status: draft

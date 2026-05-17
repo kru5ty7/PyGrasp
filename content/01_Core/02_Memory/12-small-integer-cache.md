@@ -1,5 +1,5 @@
----
-title: Small Integer Cache
+﻿---
+title: 12 - Small Integer Cache
 description: CPython pre-allocates integer objects for values −5 through 256 at interpreter startup — these cached integers are reused for every occurrence of those values, so id(0) == id(0) is always True and assigning x = 1 never allocates new memory.
 tags: [small-integer-cache, integer-cache, interning, cpython, memory, optimization, layer-0, core]
 status: draft

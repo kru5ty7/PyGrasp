@@ -1,5 +1,5 @@
 ﻿---
-title: Inter-Process Communication
+title: 05 - Inter-Process Communication
 description: "Inter-process communication (IPC) is how separate processes exchange data — Python's `multiprocessing` provides Queues (FIFO, multi-producer/consumer), Pipes (bidirectional, two-endpoint), and Manager proxies (shared objects); all IPC serializes data with pickle since processes have isolated memory."
 tags: [IPC, multiprocessing, Queue, Pipe, Manager, pickle, inter-process, layer-2, concurrency]
 status: draft

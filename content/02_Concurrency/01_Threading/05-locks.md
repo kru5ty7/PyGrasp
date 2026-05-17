@@ -1,5 +1,5 @@
 ﻿---
-title: Locks
+title: 05 - Locks
 description: "A lock (mutex) ensures only one thread executes a critical section at a time — `threading.Lock` is the basic mutual exclusion primitive; `RLock` (reentrant lock) allows the same thread to acquire it multiple times; always use the `with` statement to guarantee release."
 tags: [locks, mutex, threading, Lock, RLock, critical-section, synchronization, layer-2, concurrency]
 status: draft

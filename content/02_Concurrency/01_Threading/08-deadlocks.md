@@ -1,5 +1,5 @@
----
-title: Deadlocks
+﻿---
+title: 08 - Deadlocks
 description: A deadlock occurs when two or more threads are each waiting for a lock held by the other, creating a circular dependency that no thread can break — the four necessary conditions (Coffman conditions) must all hold for a deadlock; prevention strategies include lock ordering, timeouts, and avoiding nested locks.
 tags: [deadlocks, threading, locks, circular-wait, Coffman-conditions, layer-2, concurrency]
 status: draft

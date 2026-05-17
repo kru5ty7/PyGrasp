@@ -1,5 +1,5 @@
----
-title: Stack vs Heap
+﻿---
+title: 07 - Stack vs Heap
 description: The stack holds function call frames and is managed automatically by the call order; the heap holds all Python objects and is managed by CPython's allocator and garbage collector — in Python, almost everything lives on the heap.
 tags: [stack, heap, memory, frame-object, pymalloc, cpython, layer-0, core]
 status: draft

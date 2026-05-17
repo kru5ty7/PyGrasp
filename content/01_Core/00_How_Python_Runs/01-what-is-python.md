@@ -1,5 +1,5 @@
 ---
-title: What is Python
+title: 01 - What is Python
 description: Python is both a language specification and a runtime — knowing the difference is what separates "I write Python" from "I understand Python."
 tags: [python, fundamentals, interpreter, cpython, language]
 status: draft

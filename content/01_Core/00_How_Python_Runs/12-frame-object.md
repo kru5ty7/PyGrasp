@@ -1,5 +1,5 @@
----
-title: The Frame Object
+﻿---
+title: 12 - The Frame Object
 description: A frame object (PyFrameObject) is the runtime execution context for a single function call — it holds the local variables, the bytecode instruction pointer, the value stack, and a reference to the enclosing frame, forming the call stack.
 tags: [frame-object, pyframeobject, call-stack, local-variables, execution-context, cpython, layer-0, core]
 status: draft

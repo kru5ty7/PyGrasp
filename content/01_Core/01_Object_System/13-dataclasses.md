@@ -1,5 +1,5 @@
 ﻿---
-title: Dataclasses
+title: 13 - Dataclasses
 description: "`@dataclass` auto-generates `__init__`, `__repr__`, and `__eq__` from class-level field annotations, reducing boilerplate for data-holding classes while supporting optional features like ordering, immutability, and `__slots__`."
 tags: [dataclasses, __init__, __repr__, field, frozen, slots, python-3.7, layer-1, core]
 status: draft

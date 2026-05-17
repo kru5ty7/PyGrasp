@@ -1,5 +1,5 @@
----
-title: Closures
+﻿---
+title: 04 - Closures
 description: A closure is a function that captures variables from its enclosing scope and carries them along — the captured variables live in cell objects that outlast the enclosing function's call frame and are shared between the inner and outer function.
 tags: [closures, cells, free-variables, LEGB, decorators, layer-1, core]
 status: draft

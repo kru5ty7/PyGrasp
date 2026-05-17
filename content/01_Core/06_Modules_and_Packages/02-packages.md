@@ -1,5 +1,5 @@
 ﻿---
-title: Packages
+title: 02 - Packages
 description: "A Python package is a directory containing an `__init__.py` file — importing the package executes `__init__.py`; sub-packages and modules inside can be accessed with dotted names; namespace packages (PEP 420) allow packages without `__init__.py` spread across multiple directories."
 tags: [packages, __init__.py, subpackages, namespace-packages, import, dotted-names, layer-1, core]
 status: draft

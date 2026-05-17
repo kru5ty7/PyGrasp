@@ -1,5 +1,5 @@
----
-title: I/O Bound vs CPU Bound
+﻿---
+title: 03 - I/O Bound vs CPU Bound
 description: I/O-bound tasks spend most of their time waiting for external operations; CPU-bound tasks spend most of their time computing — this distinction determines which Python concurrency tool will actually help and which will do nothing.
 tags: [io-bound, cpu-bound, concurrency, performance, GIL, layer-2, concurrency]
 status: draft

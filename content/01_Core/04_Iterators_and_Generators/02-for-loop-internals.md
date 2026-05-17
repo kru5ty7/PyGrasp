@@ -1,5 +1,5 @@
 ﻿---
-title: For Loop Internals
+title: 02 - For Loop Internals
 description: "Python's `for` loop calls `iter()` on the target to get an iterator, then repeatedly calls `next()` until `StopIteration` is raised — understanding this desugaring explains how `for` works with any custom object and how `break`/`else` fit in."
 tags: [for-loop, iter, next, StopIteration, iterator-protocol, layer-1, core]
 status: draft

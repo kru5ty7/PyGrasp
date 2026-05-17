@@ -1,5 +1,5 @@
----
-title: aiohttp
+﻿---
+title: 15 - aiohttp
 description: "`aiohttp` is an async HTTP client/server library — `aiohttp.ClientSession` manages connection pooling and must be used as an async context manager; individual requests are also async context managers; the server side uses `aiohttp.web.Application` and request handlers are coroutines."
 tags: [aiohttp, ClientSession, async-http, connection-pooling, web-application, layer-2, concurrency]
 status: draft

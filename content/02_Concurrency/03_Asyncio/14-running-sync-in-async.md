@@ -1,5 +1,5 @@
----
-title: Running Sync Code in Async
+﻿---
+title: 14 - Running Sync Code in Async
 description: "`asyncio.run_in_executor()` offloads blocking synchronous calls to a thread pool (or process pool) so they don't block the event loop; `loop.run_in_executor(None, func, *args)` uses the default `ThreadPoolExecutor`; blocking the event loop freezes all coroutines."
 tags: [run-in-executor, ThreadPoolExecutor, blocking, asyncio, sync-in-async, layer-2, concurrency]
 status: draft

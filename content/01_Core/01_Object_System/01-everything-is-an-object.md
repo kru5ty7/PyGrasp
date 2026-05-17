@@ -1,5 +1,5 @@
----
-title: Everything is an Object
+﻿---
+title: 01 - Everything is an Object
 description: In Python, every value — integers, strings, functions, classes, even None — is an object in memory with a type, an identity, and a reference count. This is not a metaphor; it is a structural fact about how CPython allocates and tracks every value your program touches.
 tags: [objects, CPython, memory, PyObject, type-system, core]
 status: draft

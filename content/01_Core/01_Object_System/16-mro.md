@@ -1,5 +1,5 @@
 ﻿---
-title: Method Resolution Order (MRO)
+title: 16 - Method Resolution Order (MRO)
 description: "The MRO is the ordered list of classes Python searches when looking up an attribute — it is computed by the C3 linearization algorithm, accessible via `__mro__`, and determines which class's method wins in multiple inheritance hierarchies."
 tags: [mro, method-resolution-order, c3-linearization, multiple-inheritance, cpython, layer-1, core]
 status: draft

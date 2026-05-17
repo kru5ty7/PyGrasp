@@ -1,5 +1,5 @@
----
-title: .pyc Files and __pycache__
+﻿---
+title: 09 - .pyc Files and __pycache__
 description: .pyc files are CPython's cached bytecode — when Python imports a module, it compiles the source to bytecode and stores it in __pycache__ so subsequent imports skip the compilation step, validated against the source file's modification time.
 tags: [pyc-files, pycache, bytecode-cache, compilation, import, cpython, layer-0, core]
 status: draft

@@ -1,5 +1,5 @@
----
-title: The Python Data Model
+﻿---
+title: 02 - The Python Data Model
 description: "The Python data model is the system of protocols that defines how objects interact with Python's built-in syntax and functions — implement the right methods, and your object works with `+`, `len()`, `for`, `with`, and every other language construct as naturally as a built-in type."
 tags: [data-model, dunder, protocols, cpython, slots, layer-1, core]
 status: draft

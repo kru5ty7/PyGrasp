@@ -1,5 +1,5 @@
 ﻿---
-title: Async Generators
+title: 11 - Async Generators
 description: "An async generator is an `async def` function containing `yield` — it produces values asynchronously; consumed with `async for`; each `yield` suspends the generator and allows the event loop to run other coroutines; useful for async data streams, paginated API results, and database cursors."
 tags: [async-generators, async-for, yield, async-iteration, aiter, anext, layer-2, concurrency]
 status: draft

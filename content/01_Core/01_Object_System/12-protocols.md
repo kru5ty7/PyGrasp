@@ -1,5 +1,5 @@
----
-title: Protocols and Structural Subtyping
+﻿---
+title: 12 - Protocols and Structural Subtyping
 description: Protocols define interfaces through structure rather than inheritance — a class satisfies a Protocol if it has the required methods and attributes, without needing to explicitly inherit from or register with the Protocol; this is Python's form of duck typing made explicit for static type checkers.
 tags: [protocols, structural-subtyping, typing, duck-typing, mypy, python-3.8, layer-1, core]
 status: draft

@@ -1,5 +1,5 @@
----
-title: Tokenization
+﻿---
+title: 06 - Tokenization
 description: Tokenization is the first stage of Python's compilation pipeline — the lexer reads raw source characters and produces a stream of typed tokens (NAME, NUMBER, STRING, OP, NEWLINE, INDENT, DEDENT) that the parser can work with.
 tags: [tokenization, lexer, tokens, parser, compilation, cpython, layer-0, core]
 status: draft

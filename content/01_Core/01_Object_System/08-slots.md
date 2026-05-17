@@ -1,5 +1,5 @@
----
-title: __slots__
+﻿---
+title: 08 - __slots__
 description: __slots__ replaces the per-instance __dict__ with a fixed set of C-level member descriptors, reducing per-instance memory usage and slightly speeding up attribute access — the tradeoff is loss of dynamic attribute assignment and some flexibility.
 tags: [slots, memory-optimization, __dict__, descriptors, cpython, layer-1, core]
 status: draft

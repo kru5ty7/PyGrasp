@@ -1,5 +1,5 @@
----
-title: Parsing and the AST
+﻿---
+title: 07 - Parsing and the AST
 description: The parser takes Python's token stream and builds an Abstract Syntax Tree — a hierarchical data structure that represents the grammatical structure of the source code and serves as the input to the bytecode compiler.
 tags: [parser, ast, abstract-syntax-tree, compilation, cpython, grammar, layer-0, core]
 status: draft

@@ -1,5 +1,5 @@
 ﻿---
-title: How Classes Are Created
+title: 09 - How Classes Are Created
 description: "When Python processes a `class` statement, it follows a precise sequence — determine the metaclass, call __prepare__ for the namespace, execute the class body, then call the metaclass to build the class object — understanding this sequence demystifies decorators, metaclasses, and descriptors."
 tags: [class-creation, metaclass, class-statement, namespace, cpython, layer-1, core]
 status: draft

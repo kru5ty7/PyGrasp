@@ -1,5 +1,5 @@
----
-title: Generators
+﻿---
+title: 03 - Generators
 description: A generator is a function that can pause its execution mid-way, yield a value to its caller, and resume from exactly where it left off — implemented in CPython by suspending and restoring the function's entire frame, making lazy sequences and cooperative concurrency possible with ordinary Python syntax.
 tags: [generators, yield, frame, coroutines, iterators, lazy, layer-1, core]
 status: draft

@@ -1,5 +1,5 @@
----
-title: id() and Memory Addresses
+﻿---
+title: 10 - id() and Memory Addresses
 description: In CPython, id(obj) returns the memory address of the object — the integer value of the PyObject* pointer — making it a reliable proxy for object identity and the basis of the is operator's implementation.
 tags: [id, memory-address, identity, is-operator, cpython, pyobject, layer-0, core]
 status: draft

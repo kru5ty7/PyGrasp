@@ -1,5 +1,5 @@
----
-title: Namespaces and Scopes
+﻿---
+title: 01 - Namespaces and Scopes
 description: A namespace is a mapping from names to objects; a scope is the region of code where a namespace is directly accessible — together they define how every name in your program is resolved to a value.
 tags: [namespaces, scopes, LEGB, cpython, bytecode, layer-1, core]
 status: draft

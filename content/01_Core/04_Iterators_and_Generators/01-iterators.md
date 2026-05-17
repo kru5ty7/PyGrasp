@@ -1,5 +1,5 @@
----
-title: Iterators and Iterables
+﻿---
+title: 01 - Iterators and Iterables
 description: "An iterable is any object that can produce an iterator; an iterator is an object that produces values one at a time — together they define the protocol that powers every `for` loop, comprehension, and unpacking operation in Python."
 tags: [iterators, iterables, protocol, dunder, generators, layer-1, core]
 status: draft

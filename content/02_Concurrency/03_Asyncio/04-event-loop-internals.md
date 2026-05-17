@@ -1,5 +1,5 @@
----
-title: Event Loop Internals
+﻿---
+title: 04 - Event Loop Internals
 description: The asyncio event loop is a selector-based scheduler — it maintains a ready queue of callbacks and a selector that monitors file descriptors for I/O readiness; when I/O completes, the associated coroutine is scheduled to resume; understanding this explains why blocking calls freeze the loop.
 tags: [event-loop, asyncio, selector, callbacks, I/O-multiplexing, epoll, kqueue, layer-2, concurrency]
 status: draft

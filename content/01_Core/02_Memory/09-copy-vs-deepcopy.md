@@ -1,5 +1,5 @@
----
-title: Shallow Copy vs Deep Copy
+﻿---
+title: 09 - Shallow Copy vs Deep Copy
 description: A shallow copy creates a new container object but populates it with references to the same inner objects; a deep copy recursively creates new copies of all nested objects — understanding the difference is essential when sharing mutable nested data structures.
 tags: [shallow-copy, deep-copy, copy, mutability, references, layer-0, core]
 status: draft

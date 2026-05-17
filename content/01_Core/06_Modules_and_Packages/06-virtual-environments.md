@@ -1,5 +1,5 @@
 ﻿---
-title: Virtual Environments
+title: 06 - Virtual Environments
 description: "A virtual environment is an isolated Python installation with its own `site-packages` directory — `python -m venv .venv` creates one; activating it redirects `python` and `pip` to the isolated environment, preventing package version conflicts between projects."
 tags: [virtual-environments, venv, pip, site-packages, isolation, python-environment, layer-1, core]
 status: draft

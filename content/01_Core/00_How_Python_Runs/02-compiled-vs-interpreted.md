@@ -1,5 +1,5 @@
----
-title: Compiled vs Interpreted Languages
+﻿---
+title: 02 - Compiled vs Interpreted Languages
 description: Compiled languages translate source code to machine code before execution; interpreted languages translate and execute source code at runtime — Python sits between both models, compiling to bytecode which is then interpreted by the CPython virtual machine.
 tags: [compiled, interpreted, bytecode, cpython, execution, layer-0, core]
 status: draft

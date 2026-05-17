@@ -1,5 +1,5 @@
----
-title: Type Hints
+﻿---
+title: 01 - Type Hints
 description: Type hints are annotations that describe what types a variable, parameter, or return value is expected to hold — they are read by static analysis tools but ignored by CPython at runtime, making them documentation with machine-readable syntax.
 tags: [type-hints, annotations, mypy, pyright, static-analysis, layer-1, core]
 status: draft

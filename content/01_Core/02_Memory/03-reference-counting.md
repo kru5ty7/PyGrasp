@@ -1,5 +1,5 @@
----
-title: Reference Counting
+﻿---
+title: 03 - Reference Counting
 description: Reference counting is how CPython tracks whether an object is still in use — every object carries a count of how many references point to it, and when that count hits zero, the object is freed immediately.
 tags: [reference-counting, memory, cpython, gc, GIL, ob_refcnt, core]
 status: draft

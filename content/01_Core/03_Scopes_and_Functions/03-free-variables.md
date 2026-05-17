@@ -1,5 +1,5 @@
----
-title: Free Variables
+﻿---
+title: 03 - Free Variables
 description: A free variable is a name used in a function but not defined in that function's local scope — it is resolved by looking outward through enclosing scopes; when a function captures a free variable from an enclosing function's scope, it becomes a closure cell.
 tags: [free-variables, closures, LEGB, __closure__, cell-objects, nonlocal, layer-1, core]
 status: draft

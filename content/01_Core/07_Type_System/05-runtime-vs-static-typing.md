@@ -1,5 +1,5 @@
 ﻿---
-title: Runtime vs Static Typing
+title: 05 - Runtime vs Static Typing
 description: "Python's type annotations are ignored at runtime by default — static type checkers (mypy, pyright) analyze them without executing code; runtime type enforcement requires explicit validation via `isinstance`, Pydantic, or similar libraries; understanding this distinction prevents the common mistake of assuming annotations validate data."
 tags: [runtime-typing, static-typing, annotations, mypy, pydantic, gradual-typing, layer-1, core]
 status: draft

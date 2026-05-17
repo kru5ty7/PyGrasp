@@ -1,5 +1,5 @@
----
-title: Context Managers
+﻿---
+title: 04 - Context Managers
 description: "A context manager is any object that implements `__enter__` and `__exit__` — the `with` statement calls them to set up and tear down a context reliably, even if an exception occurs, making resource management in Python predictable and safe."
 tags: [context-managers, with-statement, dunder, contextlib, generators, layer-1, core]
 status: draft

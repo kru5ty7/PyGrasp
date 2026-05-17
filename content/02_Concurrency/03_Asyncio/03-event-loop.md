@@ -1,5 +1,5 @@
----
-title: The Event Loop
+﻿---
+title: 03 - The Event Loop
 description: The event loop is the scheduler at the heart of async Python — a single-threaded loop that monitors I/O readiness, resumes suspended coroutines, and runs callbacks, turning a single OS thread into a coordinator for thousands of concurrent I/O operations.
 tags: [event-loop, asyncio, coroutines, I/O, epoll, layer-2, concurrency]
 status: draft

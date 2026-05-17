@@ -1,5 +1,5 @@
----
-title: Threads vs Processes
+﻿---
+title: 04 - Threads vs Processes
 description: Threads and processes are Python's two OS-level concurrency models — threads share memory and are limited by the GIL; processes are isolated and bypass the GIL — the choice between them comes down to whether your bottleneck is I/O or CPU, and whether you need shared state.
 tags: [threads, processes, concurrency, GIL, parallelism, IPC, layer-2, concurrency]
 status: draft

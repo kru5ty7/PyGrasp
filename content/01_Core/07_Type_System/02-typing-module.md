@@ -1,5 +1,5 @@
 ﻿---
-title: The typing Module
+title: 02 - The typing Module
 description: "The `typing` module provides the type annotation building blocks — `Optional`, `Union`, `List`, `Dict`, `Tuple`, `Callable`, `TypeVar`, `Generic`, `Protocol`, and newer forms like `Literal`, `TypedDict`, and `ParamSpec` — used to express complex type relationships that plain built-ins cannot capture."
 tags: [typing, Optional, Union, TypeVar, Generic, TypedDict, Literal, ParamSpec, python-typing, layer-1, core]
 status: draft

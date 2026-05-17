@@ -1,5 +1,5 @@
----
-title: Python's Memory Model
+﻿---
+title: "01 - Python's Memory Model"
 description: Python's memory model describes how CPython allocates, organizes, and reclaims the memory used by every object your program creates — a layered system designed around the reality that Python programs create enormous numbers of small, short-lived objects.
 tags: [memory, cpython, allocator, heap, pymalloc, gc, core]
 status: draft

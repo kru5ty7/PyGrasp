@@ -1,5 +1,5 @@
----
-title: yield from
+﻿---
+title: 05 - yield from
 description: "`yield from iterable` delegates iteration to a sub-iterator — it transparently forwards `next()`, `send()`, and `throw()` calls to the sub-generator, enables composing generators, and is the foundation for coroutine chaining in `asyncio` (before `async/await`)."
 tags: [yield-from, generators, delegation, subgenerators, coroutines, layer-1, core]
 status: draft

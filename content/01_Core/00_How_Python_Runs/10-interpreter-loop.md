@@ -1,5 +1,5 @@
----
-title: The Interpreter Loop
+﻿---
+title: 10 - The Interpreter Loop
 description: The interpreter loop is the C function at the center of CPython that fetches bytecode instructions one at a time and executes them — it is the engine that runs for the entire lifetime of your Python program.
 tags: [interpreter-loop, ceval, cpython, bytecode, execution, GIL, core]
 status: draft

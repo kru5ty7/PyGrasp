@@ -1,5 +1,5 @@
 ﻿---
-title: Modules
+title: 01 - Modules
 description: "A Python module is any `.py` file — `import` executes the file and caches the resulting module object in `sys.modules`; subsequent imports return the cached object; modules have their own namespace (`__dict__`), `__name__`, `__file__`, and `__spec__` attributes."
 tags: [modules, import, sys.modules, namespace, __name__, module-attributes, layer-1, core]
 status: draft

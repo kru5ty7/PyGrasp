@@ -1,5 +1,5 @@
----
-title: Race Conditions
+﻿---
+title: 07 - Race Conditions
 description: A race condition occurs when the outcome of concurrent code depends on the interleaving order of thread operations on shared state — the result is non-deterministic and often incorrect; even simple-looking Python operations are not atomic at the bytecode level, making explicit synchronization necessary.
 tags: [race-conditions, threading, atomicity, synchronization, shared-state, non-determinism, layer-2, concurrency]
 status: draft

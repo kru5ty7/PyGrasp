@@ -1,5 +1,5 @@
----
-title: asyncio.gather and asyncio.wait
+﻿---
+title: 07 - asyncio.gather and asyncio.wait
 description: "`asyncio.gather()` runs awaitables concurrently and returns results in input order; `asyncio.wait()` returns sets of done/pending futures without ordering; together they cover the main patterns for coordinating multiple concurrent tasks."
 tags: [asyncio, gather, wait, concurrent-tasks, return_exceptions, FIRST_COMPLETED, layer-2, concurrency]
 status: draft

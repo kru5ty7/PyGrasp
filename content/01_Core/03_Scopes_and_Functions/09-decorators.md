@@ -1,5 +1,5 @@
----
-title: Decorators
+﻿---
+title: 09 - Decorators
 description: "A decorator is a callable that takes a function (or class) as input and returns a replacement — `@decorator` above a function definition is syntactic sugar for immediately passing the function to the decorator and rebinding the name to the result."
 tags: [decorators, closures, functools, wraps, layer-1, core]
 status: draft

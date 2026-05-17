@@ -1,5 +1,5 @@
----
-title: classmethod vs staticmethod
+﻿---
+title: 07 - classmethod vs staticmethod
 description: "`@classmethod` makes a method receive the class as its first argument instead of an instance, enabling alternative constructors and class-level operations; `@staticmethod` makes a method receive no implicit first argument, making it a namespace-scoped plain function."
 tags: [classmethod, staticmethod, method-types, descriptors, factory-methods, layer-1, core]
 status: draft

@@ -1,5 +1,5 @@
----
-title: First-Class Functions
+﻿---
+title: 05 - First-Class Functions
 description: In Python, functions are objects — they can be assigned to variables, passed as arguments, returned from other functions, and stored in data structures; this is what "first-class" means and it is the foundation for decorators, callbacks, and higher-order functions.
 tags: [first-class-functions, functions-as-objects, callable, higher-order, layer-1, core]
 status: draft

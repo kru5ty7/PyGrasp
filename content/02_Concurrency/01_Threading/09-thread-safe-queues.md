@@ -1,5 +1,5 @@
 ﻿---
-title: Thread-Safe Queues
+title: 09 - Thread-Safe Queues
 description: "Python's `queue.Queue` is a thread-safe FIFO data structure — its `put()` and `get()` operations use internal locks and condition variables to safely coordinate producer and consumer threads; `task_done()` and `join()` enable completion signaling for pipeline patterns."
 tags: [queue, thread-safe, producer-consumer, Queue, LifoQueue, PriorityQueue, layer-2, concurrency]
 status: draft

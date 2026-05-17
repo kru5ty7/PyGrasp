@@ -1,5 +1,5 @@
 ﻿---
-title: Multiple Inheritance
+title: 15 - Multiple Inheritance
 description: "Multiple inheritance allows a class to inherit from more than one parent class — Python resolves attribute lookup order using the MRO (C3 linearization), and cooperative multiple inheritance with `super()` is the correct pattern for combining behaviors."
 tags: [multiple-inheritance, mixin, super, mro, cooperative-inheritance, layer-1, core]
 status: draft

@@ -1,5 +1,5 @@
----
-title: CPython
+﻿---
+title: 03 - CPython
 description: CPython is the reference implementation of Python — the program that actually reads your code, compiles it to bytecode, and runs it. Understanding CPython means understanding what Python actually does at runtime.
 tags: [cpython, interpreter, implementation, runtime, core]
 status: draft

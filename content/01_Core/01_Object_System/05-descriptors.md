@@ -1,5 +1,5 @@
 ﻿---
-title: Descriptors
+title: 05 - Descriptors
 description: "A descriptor is any object that defines `__get__`, `__set__`, or `__delete__` — these methods intercept attribute access on a class, enabling properties, classmethods, staticmethods, and ORMs to implement controlled attribute access without modifying user code."
 tags: [descriptors, __get__, __set__, __delete__, property, attribute-access, layer-1, core]
 status: draft

@@ -1,5 +1,5 @@
----
-title: ThreadPoolExecutor
+﻿---
+title: 10 - ThreadPoolExecutor
 description: "ThreadPoolExecutor is a managed pool of threads from `concurrent.futures` that abstracts away manual thread creation — it is also the bridge that lets async code safely run blocking functions without freezing the event loop."
 tags: [ThreadPoolExecutor, concurrent.futures, threads, asyncio, run_in_executor, layer-2, concurrency]
 status: draft

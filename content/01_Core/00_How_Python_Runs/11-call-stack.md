@@ -1,5 +1,5 @@
----
-title: The Call Stack
+﻿---
+title: 11 - The Call Stack
 description: The call stack is the chain of active frame objects in a Python thread — each function call pushes a new frame, each return pops it, and the stack's depth limit (default 1000) is what causes RecursionError in infinite recursion.
 tags: [call-stack, frame-object, recursion, traceback, cpython, execution, layer-0, core]
 status: draft

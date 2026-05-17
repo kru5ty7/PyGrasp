@@ -1,5 +1,5 @@
----
-title: Python Object Header
+﻿---
+title: 02 - Python Object Header
 description: Every Python object in CPython begins with a fixed C struct header containing a reference count and a type pointer — this two-field header is the structural foundation of Python's entire object model and enables the reference counting GC and dynamic dispatch.
 tags: [object-header, pyobject, refcount, type-pointer, cpython, memory, layer-0, core]
 status: draft

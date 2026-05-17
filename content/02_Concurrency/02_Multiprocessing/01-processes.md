@@ -1,5 +1,5 @@
----
-title: Processes in Python
+﻿---
+title: 01 - Processes in Python
 description: Python processes are separate OS processes with fully isolated memory spaces and their own Python interpreter — they bypass the GIL entirely, enabling true CPU parallelism at the cost of higher creation overhead and explicit inter-process communication.
 tags: [processes, multiprocessing, GIL, parallelism, IPC, pickling, layer-2, concurrency]
 status: draft

@@ -1,5 +1,5 @@
----
-title: How Python Runs Your Code
+﻿---
+title: 05 - How Python Runs Your Code
 description: "From the moment you type `python script.py` to the moment the first instruction executes, your code passes through five distinct stages — each one transforming it into something CPython can work with more directly."
 tags: [cpython, execution, pipeline, bytecode, AST, compilation, core]
 status: draft

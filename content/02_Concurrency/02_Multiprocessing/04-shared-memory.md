@@ -1,5 +1,5 @@
 ﻿---
-title: Shared Memory
+title: 04 - Shared Memory
 description: "Python's `multiprocessing.shared_memory` (3.8+) allows multiple processes to access the same memory block without pickling — a `SharedMemory` object wraps a named OS shared memory segment that any process can attach to; used with NumPy arrays for zero-copy data sharing between worker processes."
 tags: [shared-memory, multiprocessing, SharedMemory, numpy, zero-copy, layer-2, concurrency]
 status: draft

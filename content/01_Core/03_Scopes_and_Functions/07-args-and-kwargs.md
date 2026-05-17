@@ -1,5 +1,5 @@
----
-title: "*args and **kwargs"
+﻿---
+title: 07 - *args and **kwargs
 description: "`*args` collects extra positional arguments into a tuple and `**kwargs` collects extra keyword arguments into a dict — together they make functions that accept variable numbers of arguments; the `*` and `**` unpacking operators are the complement, spreading iterables and mappings into function calls."
 tags: [args, kwargs, variadic-functions, unpacking, positional-only, keyword-only, layer-1, core]
 status: draft

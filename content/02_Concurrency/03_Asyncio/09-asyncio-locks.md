@@ -1,5 +1,5 @@
----
-title: Asyncio Locks
+﻿---
+title: 09 - Asyncio Locks
 description: "`asyncio.Lock` and `asyncio.Semaphore` are coroutine-safe synchronization primitives — `async with lock:` yields to the event loop when blocked instead of blocking an OS thread; they are NOT thread-safe and must be used only within the same event loop."
 tags: [asyncio, Lock, Semaphore, Event, Condition, async-with, synchronization, layer-2, concurrency]
 status: draft

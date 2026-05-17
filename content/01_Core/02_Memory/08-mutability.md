@@ -1,5 +1,5 @@
----
-title: Mutability vs Immutability
+﻿---
+title: 08 - Mutability vs Immutability
 description: Mutability describes whether an object's value can be changed after it is created — a distinction that is not enforced by Python's type system but is built into the internal C structure of each object type, with real consequences for correctness, performance, and safety.
 tags: [mutability, immutability, objects, memory, cpython, core]
 status: draft

@@ -1,5 +1,5 @@
----
-title: Garbage Collection
+﻿---
+title: 04 - Garbage Collection
 description: CPython's garbage collector is a supplementary memory management system that finds and frees objects kept alive only by reference cycles — the one case reference counting alone cannot handle.
 tags: [garbage-collection, gc, reference-cycles, memory, cpython, core]
 status: draft

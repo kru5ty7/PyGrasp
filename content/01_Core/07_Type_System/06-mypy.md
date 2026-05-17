@@ -1,5 +1,5 @@
 ﻿---
-title: mypy
+title: 06 - mypy
 description: "mypy is Python's de-facto static type checker — it analyzes type annotations without running code, catches type mismatches, verifies `Optional` are handled, and can be configured from permissive to strict; understanding its common errors and configuration options is essential for typed Python codebases."
 tags: [mypy, static-type-checker, type-checking, pyright, strict-mode, type-errors, layer-1, core]
 status: draft
