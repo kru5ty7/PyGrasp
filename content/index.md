@@ -1,10 +1,10 @@
----
+﻿---
 title: Home
 ---
 
 # PyGrasp
 
-A structured Python knowledge vault — 429 notes across 9 layers, from CPython internals to production AI systems.
+A structured Python knowledge vault  -  429 notes across 9 layers, from CPython internals to production AI systems.
 
 ---
 
@@ -28,15 +28,15 @@ Start here. Each path follows dependency order so every concept builds on what c
 
 ## Recommended Starting Points
 
-**New to Python internals** → Start with [[lp-core|Core Python]], beginning at [[what-is-python|What is Python]].
+**New to Python internals** -> Start with [[lp-core|Core Python]], beginning at [[what-is-python|What is Python]].
 
-**Building web APIs** → [[lp-web|Web Frameworks]], starting at [[http-basics|HTTP Basics]], then jump straight to [[fastapi|FastAPI]].
+**Building web APIs** -> [[lp-web|Web Frameworks]], starting at [[http-basics|HTTP Basics]], then jump straight to [[fastapi|FastAPI]].
 
-**Working with AI / LLMs** → [[lp-ai-engineering|AI Engineering]], starting at [[llm-basics|How LLMs Work]].
+**Working with AI / LLMs** -> [[lp-ai-engineering|AI Engineering]], starting at [[llm-basics|How LLMs Work]].
 
-**Preparing for system design interviews** → [[lp-system-design|System Design]], starting at [[scalability-basics|Scalability Basics]].
+**Preparing for system design interviews** -> [[lp-system-design|System Design]], starting at [[scalability-basics|Scalability Basics]].
 
-**Deploying Python services** → [[lp-tooling|Tooling and DevOps]], starting at [[docker-basics|Docker Basics]].
+**Deploying Python services** -> [[lp-tooling|Tooling and DevOps]], starting at [[docker-basics|Docker Basics]].
 
 ---
 
@@ -44,18 +44,18 @@ Start here. Each path follows dependency order so every concept builds on what c
 
 ```
 Layer 0-1  Core Python
-    ↓
+    v
 Layer 2    Concurrency
-    ↓
+    v
 Layer 3    Web Frameworks
-    ↓
+    v
 Layer 4    Web Ecosystem
-    ↓
+    v
 Layer 5    Data Engineering    Layer 7  System Design
-    ↓                              ↑
+    v                              ^
 Layer 6    AI Engineering      Layer 8  Security
-                                   ↑
+                                   ^
                                Layer 9  Tooling and DevOps
 ```
 
-Layers 7, 8, and 9 can be read in parallel with Layers 4–6 — they depend on Layer 3 but not on each other.
+Layers 7, 8, and 9 can be read in parallel with Layers 4 - 6  -  they depend on Layer 3 but not on each other.

@@ -1,16 +1,16 @@
----
-title: Learning Path — System Design
+﻿---
+title: Learning Path  -  System Design
 description: Scalability, caching, databases at scale, messaging, API design, microservices, and system design case studies.
 tags: [moc, learning-path, system-design, layer-7]
 ---
 
-# Learning Path — System Design
+# Learning Path  -  System Design
 
-> Designing systems that scale. Mostly independent of earlier layers — can be read after Layer 3.
+> Designing systems that scale. Mostly independent of earlier layers  -  can be read after Layer 3.
 
 ---
 
-## Layer 7a — Fundamentals
+## Layer 7a  -  Fundamentals
 
 1. [[scalability-basics|Scalability Basics]]
 2. [[horizontal-vs-vertical-scaling|Horizontal vs Vertical Scaling]]
@@ -22,7 +22,7 @@ tags: [moc, learning-path, system-design, layer-7]
 
 ---
 
-## Layer 7b — Networking and Load Balancing
+## Layer 7b  -  Networking and Load Balancing
 
 1. [[dns|DNS]]
 2. [[load-balancing|Load Balancing]]
@@ -34,7 +34,7 @@ tags: [moc, learning-path, system-design, layer-7]
 
 ---
 
-## Layer 7c — Caching
+## Layer 7c  -  Caching
 
 1. [[caching-basics|Caching Basics]]
 2. [[caching-strategies|Caching Strategies]]
@@ -47,7 +47,7 @@ tags: [moc, learning-path, system-design, layer-7]
 
 ---
 
-## Layer 7d — Databases at Scale
+## Layer 7d  -  Databases at Scale
 
 1. [[database-replication|Database Replication]]
 2. [[database-sharding|Database Sharding]]
@@ -59,7 +59,7 @@ tags: [moc, learning-path, system-design, layer-7]
 
 ---
 
-## Layer 7e — Messaging and Queues
+## Layer 7e  -  Messaging and Queues
 
 1. [[message-queues|Message Queues]]
 2. [[pub-sub-pattern|Pub/Sub Pattern]]
@@ -70,7 +70,7 @@ tags: [moc, learning-path, system-design, layer-7]
 
 ---
 
-## Layer 7f — API Design
+## Layer 7f  -  API Design
 
 1. [[api-design-principles|API Design Principles]]
 2. [[api-versioning|API Versioning]]
@@ -82,7 +82,7 @@ tags: [moc, learning-path, system-design, layer-7]
 
 ---
 
-## Layer 7g — Microservices and Patterns
+## Layer 7g  -  Microservices and Patterns
 
 1. [[microservices-basics|Microservices Basics]]
 2. [[service-discovery|Service Discovery]]
@@ -94,7 +94,7 @@ tags: [moc, learning-path, system-design, layer-7]
 
 ---
 
-## Layer 7h — Case Studies
+## Layer 7h  -  Case Studies
 
 1. [[design-url-shortener|Design a URL Shortener]]
 2. [[design-rate-limiter|Design a Rate Limiter]]

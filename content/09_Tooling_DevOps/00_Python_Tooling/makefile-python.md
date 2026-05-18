@@ -1,4 +1,4 @@
----
+﻿---
 title: 07 - Makefiles for Python Projects
 description: "A Makefile in a Python project defines named targets like `test`, `lint`, and `format` that sequence tool invocations, giving every contributor a single consistent interface to project operations without memorizing the full command for each tool."
 tags: [makefile, make, automation, developer-workflow, tooling, layer-9]
@@ -11,26 +11,26 @@ created: 2026-05-18
 
 # Makefiles for Python Projects
 
-> A Makefile is a recipe file that defines named targets — `make test`, `make lint`, `make format` — which sequence the exact commands needed for each project task, providing a self-documenting, consistent interface that works the same for every developer and every CI system.
+> A Makefile is a recipe file that defines named targets  -  `make test`, `make lint`, `make format`  -  which sequence the exact commands needed for each project task, providing a self-documenting, consistent interface that works the same for every developer and every CI system.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- `make test` — runs the test suite with the correct flags (defined in `Makefile`)
-- `make lint` — runs all linters in sequence
-- `make format` — applies formatters in place
-- `make clean` — removes build artifacts, `__pycache__`, `.pyc` files
-- `.PHONY: test lint format clean` — declares targets that are not actual filenames
+- `make test`  -  runs the test suite with the correct flags (defined in `Makefile`)
+- `make lint`  -  runs all linters in sequence
+- `make format`  -  applies formatters in place
+- `make clean`  -  removes build artifacts, `__pycache__`, `.pyc` files
+- `.PHONY: test lint format clean`  -  declares targets that are not actual filenames
 - Targets can depend on other targets: `make ci: lint test` runs lint then test
 
 **Tricky points:**
-- Makefile recipes must be indented with a **tab**, not spaces — this is the most common beginner error and produces an obscure error: `Makefile:N: *** missing separator. Stop.`
-- `.PHONY` is required for targets that do not produce output files — without it, `make test` might skip running if a file named `test` happens to exist in the directory
-- Each line in a Makefile recipe runs in its own subshell — `cd subdir && command` is necessary to change directory within a recipe
-- Variables in Makefiles use `$(VAR)` syntax — `$VAR` expands only the first character, a common mistake from shell scripting
-- `make` uses the first target in the file as the default when called with no arguments — conventionally `help` or `all`
+- Makefile recipes must be indented with a **tab**, not spaces  -  this is the most common beginner error and produces an obscure error: `Makefile:N: *** missing separator. Stop.`
+- `.PHONY` is required for targets that do not produce output files  -  without it, `make test` might skip running if a file named `test` happens to exist in the directory
+- Each line in a Makefile recipe runs in its own subshell  -  `cd subdir && command` is necessary to change directory within a recipe
+- Variables in Makefiles use `$(VAR)` syntax  -  `$VAR` expands only the first character, a common mistake from shell scripting
+- `make` uses the first target in the file as the default when called with no arguments  -  conventionally `help` or `all`
 
 ---
 
@@ -38,9 +38,9 @@ created: 2026-05-18
 
 A Makefile is a build automation file originally designed for C compilation workflows, where `make` would determine which source files had changed and recompile only what was necessary. Python projects do not need incremental compilation, but they inherit the Makefile pattern for a different reason: it gives every contributor a single, consistent interface to all project operations.
 
-Without a Makefile, a new contributor must read documentation (if it exists) or ask colleagues: "How do I run the tests? Do I need to activate the virtual environment first? Which pytest flags do you use? How do I run the linter?" With a Makefile, the answer to all of these questions is: look at the Makefile and run the target. The Makefile serves as executable documentation — it shows not just what commands to run, but their exact flags and the correct order.
+Without a Makefile, a new contributor must read documentation (if it exists) or ask colleagues: "How do I run the tests? Do I need to activate the virtual environment first? Which pytest flags do you use? How do I run the linter?" With a Makefile, the answer to all of these questions is: look at the Makefile and run the target. The Makefile serves as executable documentation  -  it shows not just what commands to run, but their exact flags and the correct order.
 
-The appeal for Python projects is not Make's dependency tracking (which Python projects rarely need), but Make's interface: a short, memorable name for a potentially complex sequence of commands. `make lint` might internally run `ruff check .`, then `mypy src/`, then `ruff format --check .` — three separate commands with different flags. With a Makefile target, a developer types two words and gets all three checks, in the right order, with the right configuration.
+The appeal for Python projects is not Make's dependency tracking (which Python projects rarely need), but Make's interface: a short, memorable name for a potentially complex sequence of commands. `make lint` might internally run `ruff check .`, then `mypy src/`, then `ruff format --check .`  -  three separate commands with different flags. With a Makefile target, a developer types two words and gets all three checks, in the right order, with the right configuration.
 
 ---
 
@@ -84,7 +84,7 @@ help:
 	  awk 'BEGIN {FS = ":.*?## "}; {printf "  %-15s %s\n", $$1, $$2}'
 ```
 
-The `.PHONY` declaration tells Make that these target names do not correspond to files. Without `.PHONY`, if a file named `test` existed in the project root, `make test` would see the file as up-to-date and do nothing — a silent failure. Declaring targets as phony ensures the recipe always runs.
+The `.PHONY` declaration tells Make that these target names do not correspond to files. Without `.PHONY`, if a file named `test` existed in the project root, `make test` would see the file as up-to-date and do nothing  -  a silent failure. Declaring targets as phony ensures the recipe always runs.
 
 The `@` prefix before a command suppresses printing the command itself before executing it. Without `@`, `make help` would print `grep -E '^...` before showing the help output. The `@` keeps the output clean.
 
@@ -105,15 +105,15 @@ The tab indentation requirement is a notorious gotcha. Make was designed in 1976
 
 ## How It Connects
 
-The commands in a Makefile's `lint` target typically invoke Ruff — the Makefile orchestrates the tools without replacing them.
+The commands in a Makefile's `lint` target typically invoke Ruff  -  the Makefile orchestrates the tools without replacing them.
 
 [[ruff|Ruff]]
 
-CI pipelines frequently call Makefile targets rather than duplicating command sequences in the YAML workflow file — `make ci` in GitHub Actions runs the same checks as `make ci` locally.
+CI pipelines frequently call Makefile targets rather than duplicating command sequences in the YAML workflow file  -  `make ci` in GitHub Actions runs the same checks as `make ci` locally.
 
 [[ci-testing-pipeline|CI Testing Pipeline]]
 
-The `install` target typically calls uv or Poetry commands — the Makefile is the interface, the package manager is the implementation.
+The `install` target typically calls uv or Poetry commands  -  the Makefile is the interface, the package manager is the implementation.
 
 [[uv|uv]]
 
@@ -134,9 +134,9 @@ Reality: Each line in a recipe runs in a new subshell. `export VAR=value` on one
 
 ## Why It Matters in Practice
 
-Onboarding time for a new developer on a project with a well-written Makefile is dramatically shorter. The `make help` target (if implemented) displays all available targets with descriptions. A new team member can run `make install` to set up dependencies, `make test` to run tests, `make lint` to check code quality — without reading documentation for each individual tool.
+Onboarding time for a new developer on a project with a well-written Makefile is dramatically shorter. The `make help` target (if implemented) displays all available targets with descriptions. A new team member can run `make install` to set up dependencies, `make test` to run tests, `make lint` to check code quality  -  without reading documentation for each individual tool.
 
-In CI, calling `make ci` or `make lint && make test` in the workflow YAML means the CI definition is short and readable, and local developer commands mirror CI commands exactly. There is no drift between "what CI runs" and "what I run locally" — they call the same Makefile target.
+In CI, calling `make ci` or `make lint && make test` in the workflow YAML means the CI definition is short and readable, and local developer commands mirror CI commands exactly. There is no drift between "what CI runs" and "what I run locally"  -  they call the same Makefile target.
 
 ---
 

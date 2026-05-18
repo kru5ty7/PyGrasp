@@ -1,16 +1,16 @@
----
-title: Learning Path — Tooling and DevOps
-description: Python tooling, Docker, Kubernetes, GitHub Actions, and observability — the operational layer around Python applications.
+﻿---
+title: Learning Path  -  Tooling and DevOps
+description: Python tooling, Docker, Kubernetes, GitHub Actions, and observability  -  the operational layer around Python applications.
 tags: [moc, learning-path, tooling, devops, layer-9]
 ---
 
-# Learning Path — Tooling and DevOps
+# Learning Path  -  Tooling and DevOps
 
-> The operational layer — packaging, containers, CI/CD, and observability. Mostly independent, can be read any time after Layer 1.
+> The operational layer  -  packaging, containers, CI/CD, and observability. Mostly independent, can be read any time after Layer 1.
 
 ---
 
-## Layer 9a — Python Tooling
+## Layer 9a  -  Python Tooling
 
 1. [[poetry|Poetry]]
 2. [[uv|uv]]
@@ -24,7 +24,7 @@ tags: [moc, learning-path, tooling, devops, layer-9]
 
 ---
 
-## Layer 9b — Containers
+## Layer 9b  -  Containers
 
 1. [[docker-basics|Docker Basics]]
 2. [[dockerfile-python|Writing a Dockerfile for Python]]
@@ -38,7 +38,7 @@ tags: [moc, learning-path, tooling, devops, layer-9]
 
 ---
 
-## Layer 9c — CI/CD
+## Layer 9c  -  CI/CD
 
 1. [[github-actions-basics|GitHub Actions Basics]]
 2. [[github-actions-python|GitHub Actions for Python]]
@@ -48,7 +48,7 @@ tags: [moc, learning-path, tooling, devops, layer-9]
 
 ---
 
-## Layer 9d — Observability
+## Layer 9d  -  Observability
 
 1. [[logging-production|Production Logging]]
 2. [[structured-logging|Structured Logging]]

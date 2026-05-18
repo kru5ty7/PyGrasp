@@ -1,6 +1,6 @@
----
+﻿---
 title: 01 - Testing Basics
-description: "Software testing verifies that code behaves correctly — unit tests test individual functions in isolation, integration tests test components together, end-to-end tests test the whole system; the test pyramid suggests many unit tests, fewer integration tests, and even fewer E2E tests."
+description: "Software testing verifies that code behaves correctly  -  unit tests test individual functions in isolation, integration tests test components together, end-to-end tests test the whole system; the test pyramid suggests many unit tests, fewer integration tests, and even fewer E2E tests."
 tags: [testing, unit-tests, integration-tests, test-pyramid, assertions, layer-3, web]
 status: draft
 difficulty: beginner
@@ -11,7 +11,7 @@ created: 2026-05-17
 
 # Testing Basics
 
-> Software testing verifies that code behaves correctly — unit tests test individual functions in isolation, integration tests test components together, end-to-end tests test the whole system; the test pyramid suggests many unit tests, fewer integration tests, and even fewer E2E tests.
+> Software testing verifies that code behaves correctly  -  unit tests test individual functions in isolation, integration tests test components together, end-to-end tests test the whole system; the test pyramid suggests many unit tests, fewer integration tests, and even fewer E2E tests.
 
 ---
 
@@ -21,15 +21,15 @@ created: 2026-05-17
 - **Unit test**: tests a single function/class in isolation; fast; no external dependencies (DB, network mocked)
 - **Integration test**: tests multiple components together (e.g., FastAPI handler + real database); slower
 - **End-to-end (E2E)**: tests the full system as a user would; slowest; most brittle
-- **Test pyramid**: many unit tests (cheap) → fewer integration tests → very few E2E tests
-- Arrange-Act-Assert (AAA) pattern: setup → call the thing → verify the result
+- **Test pyramid**: many unit tests (cheap) -> fewer integration tests -> very few E2E tests
+- Arrange-Act-Assert (AAA) pattern: setup -> call the thing -> verify the result
 
 **Tricky points:**
-- Unit tests should be fast (<10ms each) — testing is run frequently; slow tests discourage running them
-- Isolation via mocking: `unittest.mock.patch` or `pytest-mock` replace real dependencies with controllable fakes — but mock what you own, not third-party libraries directly
+- Unit tests should be fast (<10ms each)  -  testing is run frequently; slow tests discourage running them
+- Isolation via mocking: `unittest.mock.patch` or `pytest-mock` replace real dependencies with controllable fakes  -  but mock what you own, not third-party libraries directly
 - **False confidence from mocks**: mocking too aggressively means your tests pass but the real system fails; integration tests catch what unit tests miss
-- Tests should be deterministic — a test that sometimes passes and sometimes fails (flaky test) is worse than no test
-- Test naming: `test_create_user_returns_201_on_valid_input` is better than `test_create_user` — describes the expected behavior
+- Tests should be deterministic  -  a test that sometimes passes and sometimes fails (flaky test) is worse than no test
+- Test naming: `test_create_user_returns_201_on_valid_input` is better than `test_create_user`  -  describes the expected behavior
 
 ---
 
@@ -92,10 +92,10 @@ What to test:
 
 ## How It Connects
 
-Pytest is the standard test runner for Python — understanding testing basics is the prerequisite for using pytest's fixtures and parametrize.
+Pytest is the standard test runner for Python  -  understanding testing basics is the prerequisite for using pytest's fixtures and parametrize.
 [[pytest|Pytest]]
 
-FastAPI apps are tested with `TestClient` or `AsyncClient` — integration tests that exercise the full request-response cycle.
+FastAPI apps are tested with `TestClient` or `AsyncClient`  -  integration tests that exercise the full request-response cycle.
 [[testing-fastapi|Testing FastAPI]]
 
 ---
@@ -124,7 +124,7 @@ Integration tests (medium):
   - Database queries with real data
   
 E2E tests (slow):
-  - Full user flows (register → login → create resource → delete)
+  - Full user flows (register -> login -> create resource -> delete)
   - Browser-based tests (Playwright, Selenium)
 ```
 
@@ -138,7 +138,7 @@ Common question forms:
 - "What is the test pyramid?"
 - "What is the difference between unit and integration tests?"
 
-Answer frame: **Unit tests** test one function in isolation with dependencies mocked — fast, many. **Integration tests** test components together with real infrastructure — slower, fewer. **E2E tests** test the full system — slowest, fewest. Test pyramid: many unit, fewer integration, very few E2E. AAA pattern: Arrange, Act, Assert. Tests catch regressions — invest in them early to save time later.
+Answer frame: **Unit tests** test one function in isolation with dependencies mocked  -  fast, many. **Integration tests** test components together with real infrastructure  -  slower, fewer. **E2E tests** test the full system  -  slowest, fewest. Test pyramid: many unit, fewer integration, very few E2E. AAA pattern: Arrange, Act, Assert. Tests catch regressions  -  invest in them early to save time later.
 
 ---
 

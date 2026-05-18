@@ -1,6 +1,6 @@
----
+﻿---
 title: 02 - RAG Pipeline
-description: "A RAG pipeline has two phases: indexing (chunk → embed → store) and retrieval (embed query → search → retrieve → augment prompt → generate); the indexing phase runs once (or on document updates); the retrieval phase runs on every user query."
+description: "A RAG pipeline has two phases: indexing (chunk -> embed -> store) and retrieval (embed query -> search -> retrieve -> augment prompt -> generate); the indexing phase runs once (or on document updates); the retrieval phase runs on every user query."
 tags: [rag, rag-pipeline, indexing, retrieval, augmentation, generation, layer-4, ai]
 status: draft
 difficulty: intermediate
@@ -11,25 +11,25 @@ created: 2026-05-17
 
 # RAG Pipeline
 
-> A RAG pipeline has two phases: indexing (chunk → embed → store) and retrieval (embed query → search → retrieve → augment prompt → generate); the indexing phase runs once (or on document updates); the retrieval phase runs on every user query.
+> A RAG pipeline has two phases: indexing (chunk -> embed -> store) and retrieval (embed query -> search -> retrieve -> augment prompt -> generate); the indexing phase runs once (or on document updates); the retrieval phase runs on every user query.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- **Indexing phase**: load document → chunk → embed chunks → store in vector DB (offline, run once)
-- **Retrieval phase**: embed user query → search vector DB → retrieve top-k chunks → build prompt → call LLM
+- **Indexing phase**: load document -> chunk -> embed chunks -> store in vector DB (offline, run once)
+- **Retrieval phase**: embed user query -> search vector DB -> retrieve top-k chunks -> build prompt -> call LLM
 - **Augmentation**: inject retrieved chunks into the prompt context between system instructions and user query
 - **Evaluation metrics**: answer correctness, faithfulness (grounded in retrieved docs), context relevance (retrieved docs are relevant)
-- `top_k` — number of chunks to retrieve; typical: 3-10; more chunks = more context for the LLM but also more noise
+- `top_k`  -  number of chunks to retrieve; typical: 3-10; more chunks = more context for the LLM but also more noise
 
 **Tricky points:**
-- Retrieval quality is the bottleneck — a perfect LLM with bad retrieval produces bad answers; optimize retrieval first
-- Empty retrieval should be handled explicitly — if no chunks score above the threshold, tell the LLM "no relevant information found" rather than passing an empty context
-- Chunk-level vs. document-level attribution — track which chunk each retrieved piece came from for citation
-- Stale index: documents added after the last indexing run are not retrieved — implement incremental indexing for live systems
-- Query-document mismatch: user queries are short and colloquial; documents are longer and formal — this semantic gap reduces retrieval quality; HyDE or query expansion can help
+- Retrieval quality is the bottleneck  -  a perfect LLM with bad retrieval produces bad answers; optimize retrieval first
+- Empty retrieval should be handled explicitly  -  if no chunks score above the threshold, tell the LLM "no relevant information found" rather than passing an empty context
+- Chunk-level vs. document-level attribution  -  track which chunk each retrieved piece came from for citation
+- Stale index: documents added after the last indexing run are not retrieved  -  implement incremental indexing for live systems
+- Query-document mismatch: user queries are short and colloquial; documents are longer and formal  -  this semantic gap reduces retrieval quality; HyDE or query expansion can help
 
 ---
 
@@ -37,7 +37,7 @@ created: 2026-05-17
 
 A RAG pipeline operationalizes the idea of giving an LLM access to a knowledge base. The two-phase design is deliberate: indexing is expensive (embed every chunk) and done upfront; retrieval is fast (one embedding + ANN search) and done per query.
 
-The pipeline is a chain of transformations: raw text → retrievable embeddings (offline), and question → relevant context → grounded answer (online). Each step in the chain has its own quality parameters and failure modes.
+The pipeline is a chain of transformations: raw text -> retrievable embeddings (offline), and question -> relevant context -> grounded answer (online). Each step in the chain has its own quality parameters and failure modes.
 
 ---
 
@@ -118,7 +118,7 @@ def rag_query(question: str) -> str:
 
 ## How It Connects
 
-The RAG pipeline's retrieval step is the practical application of vector search — the query embedding finds similar document embeddings.
+The RAG pipeline's retrieval step is the practical application of vector search  -  the query embedding finds similar document embeddings.
 [[rag|RAG]]
 
 Retrieval strategies beyond basic vector search (re-ranking, hybrid search) improve the quality of what gets passed to the LLM.
@@ -132,7 +132,7 @@ Misconception 1: "RAG eliminates hallucination."
 Reality: RAG reduces hallucination by grounding the LLM in retrieved facts. But the LLM can still hallucinate if: the retrieved chunks don't contain the answer, the LLM ignores the context, or the LLM confabulates beyond the retrieved information. Always evaluate answer faithfulness.
 
 Misconception 2: "More chunks = better answers."
-Reality: Retrieving 20 chunks fills the context window with noise — irrelevant chunks confuse the model. 3-5 high-quality relevant chunks typically outperform 20 mixed-quality chunks. Use re-ranking to select the best chunks from a larger candidate set.
+Reality: Retrieving 20 chunks fills the context window with noise  -  irrelevant chunks confuse the model. 3-5 high-quality relevant chunks typically outperform 20 mixed-quality chunks. Use re-ranking to select the best chunks from a larger candidate set.
 
 ---
 
@@ -140,9 +140,9 @@ Reality: Retrieving 20 chunks fills the context window with noise — irrelevant
 
 RAG pipeline evaluation:
 ```
-Metric 1 — Retrieval precision: % of retrieved chunks that are actually relevant
-Metric 2 — Answer faithfulness: is the answer grounded in the retrieved context?
-Metric 3 — Answer correctness: is the answer factually right?
+Metric 1  -  Retrieval precision: % of retrieved chunks that are actually relevant
+Metric 2  -  Answer faithfulness: is the answer grounded in the retrieved context?
+Metric 3  -  Answer correctness: is the answer factually right?
 
 Diagnose failures:
 - Wrong answer + relevant chunks: LLM problem (prompt, model)
@@ -158,7 +158,7 @@ Common question forms:
 - "How does a RAG pipeline work?"
 - "What are the two phases of RAG?"
 
-Answer frame: Two phases — **indexing** (offline: chunk → embed → store in vector DB) and **retrieval** (online per query: embed query → ANN search → retrieve top-k chunks → inject into prompt → LLM generates answer). Bottleneck is retrieval quality. Failure modes: bad chunking, embedding model mismatch, stale index, too many/few chunks. Evaluate separately: is retrieval relevant? Is the answer faithful to retrieved context?
+Answer frame: Two phases  -  **indexing** (offline: chunk -> embed -> store in vector DB) and **retrieval** (online per query: embed query -> ANN search -> retrieve top-k chunks -> inject into prompt -> LLM generates answer). Bottleneck is retrieval quality. Failure modes: bad chunking, embedding model mismatch, stale index, too many/few chunks. Evaluate separately: is retrieval relevant? Is the answer faithful to retrieved context?
 
 ---
 

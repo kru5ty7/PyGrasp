@@ -1,4 +1,4 @@
----
+﻿---
 title: 09 - Hypothesis (Property-Based Testing)
 description: "Hypothesis is a property-based testing library that automatically generates hundreds of diverse inputs to find edge cases, then shrinks failing examples to the minimal case that reproduces the bug."
 tags: [hypothesis, property-based-testing, testing, fuzzing, layer-4, web-ecosystem]
@@ -11,35 +11,35 @@ created: 2026-05-18
 
 # Hypothesis (Property-Based Testing)
 
-> Hypothesis generates test inputs you would never think to write by hand — it explores the space of possible values systematically, finds the case that breaks your function, and then shrinks it to the simplest possible failing example.
+> Hypothesis generates test inputs you would never think to write by hand  -  it explores the space of possible values systematically, finds the case that breaks your function, and then shrinks it to the simplest possible failing example.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- `@given(st.integers(), st.text())` — strategies generate test inputs; Hypothesis chooses values and shrinks on failure
+- `@given(st.integers(), st.text())`  -  strategies generate test inputs; Hypothesis chooses values and shrinks on failure
 - Strategies: `st.integers()`, `st.text()`, `st.lists(st.integers())`, `st.dictionaries()`, `st.builds(MyClass, ...)`
-- Test what properties should hold: encode→decode = original, sort output is always sorted, result is always in valid range
-- `@settings(max_examples=500)` — more examples for thoroughness; `deadline=None` for slow tests
+- Test what properties should hold: encode->decode = original, sort output is always sorted, result is always in valid range
+- `@settings(max_examples=500)`  -  more examples for thoroughness; `deadline=None` for slow tests
 - Failing inputs are saved to a `.hypothesis/` database and replayed on every subsequent run until fixed
 
 **Tricky points:**
-- Hypothesis does not replace example-based tests — it finds different kinds of bugs; use both
+- Hypothesis does not replace example-based tests  -  it finds different kinds of bugs; use both
 - Strategies are composable: `st.lists(st.integers(min_value=0, max_value=100), min_size=1)` produces non-empty lists of small non-negative integers
-- `assume(condition)` filters out inputs that do not meet a precondition — use sparingly; over-filtering makes Hypothesis generate too many rejected examples
-- `@given` tests do not accept function arguments that are not strategy-bound — they must be parameterized entirely by strategies
+- `assume(condition)` filters out inputs that do not meet a precondition  -  use sparingly; over-filtering makes Hypothesis generate too many rejected examples
+- `@given` tests do not accept function arguments that are not strategy-bound  -  they must be parameterized entirely by strategies
 - The `@example` decorator pins a specific known-bad case to always be tested, in addition to generated cases
 
 ---
 
 ## What It Is
 
-Example-based testing is the default mental model: for this input, the output should be this value. It tests the cases you remember to write. The problem is that bugs live in the cases you do not remember — the empty string, the negative number, the list with duplicate elements, the maximum integer value, the Unicode string with combining characters. A developer writing tests for a `sum_list()` function will write `[1, 2, 3] → 6` and `[] → 0` but may not write `[sys.maxsize, sys.maxsize] → overflow`, or `[0.1, 0.1, 0.1] → not exactly 0.3` (floating point).
+Example-based testing is the default mental model: for this input, the output should be this value. It tests the cases you remember to write. The problem is that bugs live in the cases you do not remember  -  the empty string, the negative number, the list with duplicate elements, the maximum integer value, the Unicode string with combining characters. A developer writing tests for a `sum_list()` function will write `[1, 2, 3] -> 6` and `[] -> 0` but may not write `[sys.maxsize, sys.maxsize] -> overflow`, or `[0.1, 0.1, 0.1] -> not exactly 0.3` (floating point).
 
-Property-based testing takes a different approach. Instead of specifying inputs and expected outputs, it specifies a property — a statement about what should always be true. For a sorting function: "the output should always be the same length as the input," "every element of the output should appear in the input," and "no element should be greater than its successor." These properties hold for all valid inputs, not just the ones you enumerate. Hypothesis generates inputs that satisfy the type constraints of your strategies and checks that the property holds for all of them.
+Property-based testing takes a different approach. Instead of specifying inputs and expected outputs, it specifies a property  -  a statement about what should always be true. For a sorting function: "the output should always be the same length as the input," "every element of the output should appear in the input," and "no element should be greater than its successor." These properties hold for all valid inputs, not just the ones you enumerate. Hypothesis generates inputs that satisfy the type constraints of your strategies and checks that the property holds for all of them.
 
-When Hypothesis finds a failing input, it does not stop there. It shrinks the input by trying progressively simpler variations — smaller numbers, shorter strings, shorter lists — until it finds the minimal input that still causes the failure. This shrinking is one of Hypothesis's most valuable features. Instead of reporting "the test failed on this 5000-character string," it reports "the test failed on 'x'." The minimal failure is dramatically easier to reason about and fix.
+When Hypothesis finds a failing input, it does not stop there. It shrinks the input by trying progressively simpler variations  -  smaller numbers, shorter strings, shorter lists  -  until it finds the minimal input that still causes the failure. This shrinking is one of Hypothesis's most valuable features. Instead of reporting "the test failed on this 5000-character string," it reports "the test failed on 'x'." The minimal failure is dramatically easier to reason about and fix.
 
 ---
 
@@ -111,17 +111,17 @@ def test_slug_generation(text):
     assert " " not in slug
 ```
 
-Hypothesis stores failing examples in `.hypothesis/examples/` — this directory should be committed to version control so that known-bad cases are always retested.
+Hypothesis stores failing examples in `.hypothesis/examples/`  -  this directory should be committed to version control so that known-bad cases are always retested.
 
 ---
 
 ## How It Connects
 
-Hypothesis works alongside parametrize — `@given` handles the case space you cannot enumerate; `@parametrize` handles the specific known edge cases.
+Hypothesis works alongside parametrize  -  `@given` handles the case space you cannot enumerate; `@parametrize` handles the specific known edge cases.
 
 [[parametrize|Parametrize]]
 
-Hypothesis can generate instances of models using `st.builds()` — factory_boy and Hypothesis serve different roles in test data generation.
+Hypothesis can generate instances of models using `st.builds()`  -  factory_boy and Hypothesis serve different roles in test data generation.
 
 [[factory-boy|factory_boy]]
 
@@ -130,16 +130,16 @@ Hypothesis can generate instances of models using `st.builds()` — factory_boy 
 ## Common Misconceptions
 
 Misconception 1: "Property-based testing replaces example-based tests."
-Reality: They test different things. Example-based tests verify specific behavior: "for this input, expect this output." Property-based tests verify invariants: "for all inputs of this type, this property holds." A sorting function test should have both: a property test (output is sorted, same length) and example tests (empty list → empty list, already sorted list → unchanged).
+Reality: They test different things. Example-based tests verify specific behavior: "for this input, expect this output." Property-based tests verify invariants: "for all inputs of this type, this property holds." A sorting function test should have both: a property test (output is sorted, same length) and example tests (empty list -> empty list, already sorted list -> unchanged).
 
-Misconception 2: "Hypothesis testing is slow — 100 examples per test is too many for a CI pipeline."
-Reality: Hypothesis runs fast for simple strategies. The default 100 examples run in milliseconds for pure Python functions. The `deadline` setting (200ms by default) caps slow tests. For complex or inherently slow operations, `@settings(max_examples=50, deadline=None)` balances coverage and speed. The time investment is worthwhile — Hypothesis finds bugs that hours of manual testing would miss.
+Misconception 2: "Hypothesis testing is slow  -  100 examples per test is too many for a CI pipeline."
+Reality: Hypothesis runs fast for simple strategies. The default 100 examples run in milliseconds for pure Python functions. The `deadline` setting (200ms by default) caps slow tests. For complex or inherently slow operations, `@settings(max_examples=50, deadline=None)` balances coverage and speed. The time investment is worthwhile  -  Hypothesis finds bugs that hours of manual testing would miss.
 
 ---
 
 ## Why It Matters in Practice
 
-Hypothesis has found bugs in widely-used libraries and standard library equivalents — not because the authors were careless, but because the edge cases are genuinely non-obvious. Encoding functions, parser code, mathematical utilities, and data transformation pipelines are all candidates for property-based testing. Adding Hypothesis to a test suite for these categories of functions catches a class of correctness bugs that example-based tests systematically miss.
+Hypothesis has found bugs in widely-used libraries and standard library equivalents  -  not because the authors were careless, but because the edge cases are genuinely non-obvious. Encoding functions, parser code, mathematical utilities, and data transformation pipelines are all candidates for property-based testing. Adding Hypothesis to a test suite for these categories of functions catches a class of correctness bugs that example-based tests systematically miss.
 
 ---
 
@@ -150,7 +150,7 @@ Common question forms:
 - "What is Hypothesis and what kind of bugs does it find?"
 
 Answer frame:
-Property-based testing asserts invariants that must hold for all valid inputs rather than specific outputs for specific inputs. Hypothesis generates inputs automatically and shrinks failures to the minimal case. It finds edge cases developers don't think to write — empty strings, integer overflow, Unicode edge cases. Example-based tests verify specific behavior; Hypothesis verifies correctness properties across the entire input space. Both are needed.
+Property-based testing asserts invariants that must hold for all valid inputs rather than specific outputs for specific inputs. Hypothesis generates inputs automatically and shrinks failures to the minimal case. It finds edge cases developers don't think to write  -  empty strings, integer overflow, Unicode edge cases. Example-based tests verify specific behavior; Hypothesis verifies correctness properties across the entire input space. Both are needed.
 
 ---
 

@@ -1,4 +1,4 @@
----
+﻿---
 title: 01 - dbt Basics
 description: "dbt (data build tool) is a SQL-first transformation framework that turns SELECT statements into versioned, tested, documented data models deployed to a data warehouse."
 tags: [dbt, transformation, sql, data-warehouse, data-modeling, layer-5, data-engineering]
@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # dbt Basics
 
-> dbt applies software engineering practices — version control, testing, documentation, modular composition — to SQL-based data transformation, turning ad-hoc warehouse scripts into a maintainable, observable data platform.
+> dbt applies software engineering practices  -  version control, testing, documentation, modular composition  -  to SQL-based data transformation, turning ad-hoc warehouse scripts into a maintainable, observable data platform.
 
 ---
 
@@ -23,24 +23,24 @@ created: 2026-05-18
 - Model references: `{{ ref('model_name') }}` resolves to the fully qualified table name and establishes a dependency edge in the DAG
 - Materialization types: `view` (default), `table`, `incremental`, `ephemeral` (CTE, never persisted)
 - Sources: `{{ source('raw_data', 'orders') }}` references raw warehouse tables with freshness checks
-- Profiles: `profiles.yml` (outside the project) stores warehouse credentials — never commit it
+- Profiles: `profiles.yml` (outside the project) stores warehouse credentials  -  never commit it
 
 **Tricky points:**
-- `{{ ref() }}` is not just string interpolation — it registers a DAG dependency that dbt uses for run ordering and lineage
-- `incremental` materialization requires an `is_incremental()` macro to write the correct WHERE clause — forgetting this causes a full re-scan on every run
-- The `dbt` command-line tool runs SQL on the warehouse — it does not process data in Python; all computation happens in the warehouse
-- `dbt test` runs SQL assertions — failing tests do not stop a `dbt run` by default; use `--select` and severity levels for blocking tests
+- `{{ ref() }}` is not just string interpolation  -  it registers a DAG dependency that dbt uses for run ordering and lineage
+- `incremental` materialization requires an `is_incremental()` macro to write the correct WHERE clause  -  forgetting this causes a full re-scan on every run
+- The `dbt` command-line tool runs SQL on the warehouse  -  it does not process data in Python; all computation happens in the warehouse
+- `dbt test` runs SQL assertions  -  failing tests do not stop a `dbt run` by default; use `--select` and severity levels for blocking tests
 - Schema changes (column additions) in incremental models require `--full-refresh` to rebuild the table
 
 ---
 
 ## What It Is
 
-Imagine a large kitchen with dozens of cooks, all working from the same cookbook. The cookbook contains recipes: each recipe takes specific ingredients (inputs) and produces a dish (output). A complex dinner requires multiple recipes, each using the outputs of earlier recipes. If you update a recipe, you want to know which other recipes depend on it. You want a checklist to verify every dish meets quality standards. And you want the cookbook to be the single source of truth — not scattered handwritten notes on sticky pads around the kitchen. dbt is that cookbook for data transformations in a warehouse.
+Imagine a large kitchen with dozens of cooks, all working from the same cookbook. The cookbook contains recipes: each recipe takes specific ingredients (inputs) and produces a dish (output). A complex dinner requires multiple recipes, each using the outputs of earlier recipes. If you update a recipe, you want to know which other recipes depend on it. You want a checklist to verify every dish meets quality standards. And you want the cookbook to be the single source of truth  -  not scattered handwritten notes on sticky pads around the kitchen. dbt is that cookbook for data transformations in a warehouse.
 
-dbt centers on "models" — SQL SELECT statements that define how data should be structured. Each model is a `.sql` file that ends with a SELECT. dbt wraps that SELECT in a CREATE TABLE or CREATE VIEW statement and executes it in the target warehouse (Snowflake, BigQuery, Redshift, Databricks, PostgreSQL, and others). The model's filename becomes the table name. When model B needs data from model A, model B's SQL contains `{{ ref('model_a') }}`, which dbt resolves to the actual schema-qualified table name. This `ref()` function is what builds dbt's DAG — dbt knows model B depends on model A and must run A before B.
+dbt centers on "models"  -  SQL SELECT statements that define how data should be structured. Each model is a `.sql` file that ends with a SELECT. dbt wraps that SELECT in a CREATE TABLE or CREATE VIEW statement and executes it in the target warehouse (Snowflake, BigQuery, Redshift, Databricks, PostgreSQL, and others). The model's filename becomes the table name. When model B needs data from model A, model B's SQL contains `{{ ref('model_a') }}`, which dbt resolves to the actual schema-qualified table name. This `ref()` function is what builds dbt's DAG  -  dbt knows model B depends on model A and must run A before B.
 
-Before dbt, a common data engineering workflow was: write SQL scripts, schedule them with cron, store them in git (maybe), run tests occasionally (usually not), and maintain documentation manually (almost never). dbt makes all of these practices structural and enforced. Running `dbt run` compiles the DAG, executes models in dependency order, and produces a structured log. Running `dbt test` executes a suite of SQL assertions. Running `dbt docs generate` produces an interactive HTML documentation site from the model SQL and YAML descriptions. These are not optional add-ons — they are the standard workflow, which is why dbt spread rapidly once data teams tried it.
+Before dbt, a common data engineering workflow was: write SQL scripts, schedule them with cron, store them in git (maybe), run tests occasionally (usually not), and maintain documentation manually (almost never). dbt makes all of these practices structural and enforced. Running `dbt run` compiles the DAG, executes models in dependency order, and produces a structured log. Running `dbt test` executes a suite of SQL assertions. Running `dbt docs generate` produces an interactive HTML documentation site from the model SQL and YAML descriptions. These are not optional add-ons  -  they are the standard workflow, which is why dbt spread rapidly once data teams tried it.
 
 ---
 
@@ -98,7 +98,7 @@ SELECT * FROM final
 ```
 
 ```yaml
-# models/marts/schema.yml — documentation and tests
+# models/marts/schema.yml  -  documentation and tests
 version: 2
 
 models:
@@ -135,13 +135,13 @@ FROM {{ source('raw', 'events') }}
 {% endif %}
 ```
 
-`{{ this }}` refers to the current model's table, allowing the incremental filter to check the latest timestamp already loaded. Without `is_incremental()`, the model would scan the full source table on every run — expensive for billion-row event tables.
+`{{ this }}` refers to the current model's table, allowing the incremental filter to check the latest timestamp already loaded. Without `is_incremental()`, the model would scan the full source table on every run  -  expensive for billion-row event tables.
 
 ---
 
 ## How It Connects
 
-dbt produces tables and views in a data warehouse, but it does not move data into the warehouse — that is the "Extract and Load" (E+L) phase done by tools like Fivetran, Airbyte, or custom Python pipelines. Understanding ETL patterns provides the design context for where dbt fits.
+dbt produces tables and views in a data warehouse, but it does not move data into the warehouse  -  that is the "Extract and Load" (E+L) phase done by tools like Fivetran, Airbyte, or custom Python pipelines. Understanding ETL patterns provides the design context for where dbt fits.
 
 [[etl-patterns|ETL Patterns]]
 
@@ -149,7 +149,7 @@ Airflow and Dagster both have first-class dbt integrations: dbt models appear as
 
 [[airflow-basics|Apache Airflow Basics]]
 
-Snowflake is one of the most common dbt targets — understanding Snowflake's virtual warehouse architecture, billing model, and query execution helps you write dbt models that are both correct and cost-efficient.
+Snowflake is one of the most common dbt targets  -  understanding Snowflake's virtual warehouse architecture, billing model, and query execution helps you write dbt models that are both correct and cost-efficient.
 
 [[snowflake-python|Snowflake with Python]]
 
@@ -157,11 +157,11 @@ Snowflake is one of the most common dbt targets — understanding Snowflake's vi
 
 ## Common Misconceptions
 
-Misconception 1: "dbt processes data with Python — I can run Python transformations inside dbt models."
-Reality: dbt executes SQL against a warehouse — it is a compilation and orchestration tool for SQL. All data processing happens in the warehouse's compute engine (Snowflake, BigQuery, etc.). dbt does not run Python code for transformations by default. (dbt Labs has experimental support for Python models in some adapters, but SQL is the primary model type.)
+Misconception 1: "dbt processes data with Python  -  I can run Python transformations inside dbt models."
+Reality: dbt executes SQL against a warehouse  -  it is a compilation and orchestration tool for SQL. All data processing happens in the warehouse's compute engine (Snowflake, BigQuery, etc.). dbt does not run Python code for transformations by default. (dbt Labs has experimental support for Python models in some adapters, but SQL is the primary model type.)
 
 Misconception 2: "Setting a model to `incremental` materialization automatically makes it efficient on every run."
-Reality: Incremental materialization is only efficient if the model correctly implements the `is_incremental()` filter to select only new/changed rows. An incremental model without this filter scans the full source on every run — identical cost to a `table` materialization, but with the additional overhead of a MERGE or INSERT.
+Reality: Incremental materialization is only efficient if the model correctly implements the `is_incremental()` filter to select only new/changed rows. An incremental model without this filter scans the full source on every run  -  identical cost to a `table` materialization, but with the additional overhead of a MERGE or INSERT.
 
 Misconception 3: "`dbt test` failing means my `dbt run` stopped and nothing was loaded."
 Reality: By default, `dbt test` is a separate command from `dbt run`. Running `dbt run` executes models; `dbt test` validates them. Tests do not block runs unless you configure `dbt build` (which runs models and tests together) and set test severity levels. Failed tests produce exit code 1 in `dbt test` but models already ran.
@@ -170,9 +170,9 @@ Reality: By default, `dbt test` is a separate command from `dbt run`. Running `d
 
 ## Why It Matters in Practice
 
-dbt has become the standard SQL transformation tool in the modern data stack because it solves the "analytics engineering" problem systematically. Before dbt, SQL transformations in data warehouses were poorly tracked, rarely tested, and undocumented — making data quality uncertain and onboarding new team members difficult. dbt brings the same practices that make software teams productive (version control, CI/CD, testing, documentation) to the data warehouse.
+dbt has become the standard SQL transformation tool in the modern data stack because it solves the "analytics engineering" problem systematically. Before dbt, SQL transformations in data warehouses were poorly tracked, rarely tested, and undocumented  -  making data quality uncertain and onboarding new team members difficult. dbt brings the same practices that make software teams productive (version control, CI/CD, testing, documentation) to the data warehouse.
 
-The `ref()` function deserves special attention as a force multiplier. Because every model dependency is declared with `ref()`, dbt always knows the full data lineage — which models depend on which raw tables, which business metrics depend on which intermediate models. This lineage is rendered in the docs UI and enables `dbt run --select +fct_orders+` to run just `fct_orders` and all its upstream and downstream models, rather than all models in the project.
+The `ref()` function deserves special attention as a force multiplier. Because every model dependency is declared with `ref()`, dbt always knows the full data lineage  -  which models depend on which raw tables, which business metrics depend on which intermediate models. This lineage is rendered in the docs UI and enables `dbt run --select +fct_orders+` to run just `fct_orders` and all its upstream and downstream models, rather than all models in the project.
 
 ---
 
@@ -184,7 +184,7 @@ Common question forms:
 - "How does dbt manage model dependencies?"
 
 Answer frame:
-dbt is a SQL transformation framework that compiles `.sql` model files into warehouse statements, manages execution order via a DAG, and provides testing and documentation tooling. Problem it solves: ad-hoc warehouse SQL scripts with no tests, no lineage tracking, and no documentation. Materializations: `view` (SQL re-executed each query, no storage cost), `table` (materialized to disk on each run), `incremental` (append/merge new rows only — requires `is_incremental()` filter), `ephemeral` (CTE inlined into referencing models, never a real table). Dependencies: `{{ ref('model_name') }}` compiles to the table name AND registers a DAG edge — dbt topologically sorts and runs models in dependency order.
+dbt is a SQL transformation framework that compiles `.sql` model files into warehouse statements, manages execution order via a DAG, and provides testing and documentation tooling. Problem it solves: ad-hoc warehouse SQL scripts with no tests, no lineage tracking, and no documentation. Materializations: `view` (SQL re-executed each query, no storage cost), `table` (materialized to disk on each run), `incremental` (append/merge new rows only  -  requires `is_incremental()` filter), `ephemeral` (CTE inlined into referencing models, never a real table). Dependencies: `{{ ref('model_name') }}` compiles to the table name AND registers a DAG edge  -  dbt topologically sorts and runs models in dependency order.
 
 ---
 

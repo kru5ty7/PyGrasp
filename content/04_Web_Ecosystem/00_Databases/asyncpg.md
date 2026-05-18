@@ -1,6 +1,6 @@
----
+﻿---
 title: 08 - asyncpg
-description: "asyncpg is a pure-async PostgreSQL driver written in Python and Cython — it is the fastest Python-to-PostgreSQL driver and is used as the backend for SQLAlchemy's async engine."
+description: "asyncpg is a pure-async PostgreSQL driver written in Python and Cython  -  it is the fastest Python-to-PostgreSQL driver and is used as the backend for SQLAlchemy's async engine."
 tags: [asyncpg, postgresql, async, driver, layer-4, web-ecosystem]
 status: draft
 difficulty: intermediate
@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # asyncpg
 
-> asyncpg is Python's fastest PostgreSQL driver — it speaks the PostgreSQL wire protocol directly using asyncio, bypassing the DBAPI-2 interface entirely, and gives you binary-encoded results with no string parsing overhead.
+> asyncpg is Python's fastest PostgreSQL driver  -  it speaks the PostgreSQL wire protocol directly using asyncio, bypassing the DBAPI-2 interface entirely, and gives you binary-encoded results with no string parsing overhead.
 
 ---
 
@@ -22,24 +22,24 @@ created: 2026-05-18
 - `conn.fetch()` returns a list of `Record` objects; `conn.fetchrow()` returns one; `conn.fetchval()` returns a scalar
 - `conn.execute()` runs a statement returning only a status string (INSERT, UPDATE, DELETE)
 - Prepared statements are compiled and cached automatically per connection on first use
-- Types are encoded and decoded in binary by asyncpg — no string parsing means better performance and accurate Python type mapping
+- Types are encoded and decoded in binary by asyncpg  -  no string parsing means better performance and accurate Python type mapping
 
 **Tricky points:**
-- asyncpg is not DBAPI-2 compliant — it does not use `.cursor()`, `.fetchmany()`, or `connection.commit()` in the traditional sense; transactions are explicit context managers
+- asyncpg is not DBAPI-2 compliant  -  it does not use `.cursor()`, `.fetchmany()`, or `connection.commit()` in the traditional sense; transactions are explicit context managers
 - `$1`, `$2` positional parameters replace the `%s` or `?` placeholders used in psycopg2 / SQLite
-- `asyncpg.Record` behaves like a read-only dict-and-tuple hybrid — `row['column']` and `row[0]` both work
-- Transactions require explicit management: `async with conn.transaction():` — there is no autocommit exception to be aware of from psycopg2
-- Cannot be used directly in sync code — it requires a running asyncio event loop; use `psycopg2` for synchronous applications
+- `asyncpg.Record` behaves like a read-only dict-and-tuple hybrid  -  `row['column']` and `row[0]` both work
+- Transactions require explicit management: `async with conn.transaction():`  -  there is no autocommit exception to be aware of from psycopg2
+- Cannot be used directly in sync code  -  it requires a running asyncio event loop; use `psycopg2` for synchronous applications
 
 ---
 
 ## What It Is
 
-Most Python database drivers are built on top of the DBAPI-2 specification (PEP 249), a standard interface that defines `.connect()`, `.cursor()`, `.execute()`, and `.fetchall()`. DBAPI-2 was designed in an era of synchronous code — every call blocks the thread until the database responds. psycopg2, the long-standing standard PostgreSQL driver, follows this model and cannot participate in an asyncio event loop without being wrapped in a thread pool executor.
+Most Python database drivers are built on top of the DBAPI-2 specification (PEP 249), a standard interface that defines `.connect()`, `.cursor()`, `.execute()`, and `.fetchall()`. DBAPI-2 was designed in an era of synchronous code  -  every call blocks the thread until the database responds. psycopg2, the long-standing standard PostgreSQL driver, follows this model and cannot participate in an asyncio event loop without being wrapped in a thread pool executor.
 
-asyncpg takes a different approach. It implements the PostgreSQL frontend/backend wire protocol directly in asyncio, with performance-critical parts written in Cython. There is no DBAPI-2 layer, no cursor object, and no string-encoded SQL values. Queries are sent as binary messages; results come back as binary-encoded data that asyncpg decodes directly into Python types — integers become Python `int`, timestamps become `datetime`, JSON columns become Python dicts. This binary encoding eliminates an entire parsing step that DBAPI-2 drivers pay on every row.
+asyncpg takes a different approach. It implements the PostgreSQL frontend/backend wire protocol directly in asyncio, with performance-critical parts written in Cython. There is no DBAPI-2 layer, no cursor object, and no string-encoded SQL values. Queries are sent as binary messages; results come back as binary-encoded data that asyncpg decodes directly into Python types  -  integers become Python `int`, timestamps become `datetime`, JSON columns become Python dicts. This binary encoding eliminates an entire parsing step that DBAPI-2 drivers pay on every row.
 
-The driver was created by the EdgeDB team and was first released in 2016. It remains the reference implementation for how to write a high-performance async database driver in Python. Benchmarks consistently show asyncpg running 3–5 times faster than psycopg2 on equivalent query workloads, with the gap widening as result set sizes increase.
+The driver was created by the EdgeDB team and was first released in 2016. It remains the reference implementation for how to write a high-performance async database driver in Python. Benchmarks consistently show asyncpg running 3 - 5 times faster than psycopg2 on equivalent query workloads, with the gap widening as result set sizes increase.
 
 ---
 
@@ -77,7 +77,7 @@ async with conn.transaction():
     await conn.execute("UPDATE accounts SET balance = balance - $1 WHERE id = $2", 100, 1)
 ```
 
-When asyncpg is used as the driver behind SQLAlchemy's async engine, the connection URL scheme changes and the ORM handles all direct asyncpg calls internally — the application code sees only `AsyncSession`.
+When asyncpg is used as the driver behind SQLAlchemy's async engine, the connection URL scheme changes and the ORM handles all direct asyncpg calls internally  -  the application code sees only `AsyncSession`.
 
 ```python
 from sqlalchemy.ext.asyncio import create_async_engine
@@ -95,7 +95,7 @@ SQLAlchemy's async engine delegates all actual database communication to asyncpg
 
 [[sqlalchemy-async|SQLAlchemy Async]]
 
-Connection pooling concepts — `min_size`, `max_size`, pool health checks — apply to asyncpg's `create_pool()` as well as SQLAlchemy's pool configuration.
+Connection pooling concepts  -  `min_size`, `max_size`, pool health checks  -  apply to asyncpg's `create_pool()` as well as SQLAlchemy's pool configuration.
 
 [[connection-pooling|Database Connection Pooling]]
 
@@ -113,7 +113,7 @@ Reality: SQLAlchemy's async dialect abstracts over the driver interface. The `po
 
 ## Why It Matters in Practice
 
-In async Python web applications backed by PostgreSQL, asyncpg is the standard driver choice — either used directly for maximum control or through SQLAlchemy's async engine. Understanding its connection and pool semantics, transaction management, and the `$1` positional parameter syntax prevents confusion when reading stack traces, debugging connection errors, or tuning pool parameters for high-throughput services.
+In async Python web applications backed by PostgreSQL, asyncpg is the standard driver choice  -  either used directly for maximum control or through SQLAlchemy's async engine. Understanding its connection and pool semantics, transaction management, and the `$1` positional parameter syntax prevents confusion when reading stack traces, debugging connection errors, or tuning pool parameters for high-throughput services.
 
 ---
 
@@ -124,7 +124,7 @@ Common question forms:
 - "What driver does SQLAlchemy use for async PostgreSQL connections?"
 
 Answer frame:
-psycopg2 is synchronous and blocking — each call occupies the thread until the database responds, stalling the entire asyncio event loop. asyncpg implements the PostgreSQL wire protocol natively in asyncio with binary encoding, making it both async-safe and significantly faster. SQLAlchemy's async engine uses asyncpg via the `postgresql+asyncpg://` connection URL, so the ORM stays async-safe throughout.
+psycopg2 is synchronous and blocking  -  each call occupies the thread until the database responds, stalling the entire asyncio event loop. asyncpg implements the PostgreSQL wire protocol natively in asyncio with binary encoding, making it both async-safe and significantly faster. SQLAlchemy's async engine uses asyncpg via the `postgresql+asyncpg://` connection URL, so the ORM stays async-safe throughout.
 
 ---
 

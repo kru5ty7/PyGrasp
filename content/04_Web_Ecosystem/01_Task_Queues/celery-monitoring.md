@@ -1,4 +1,4 @@
----
+﻿---
 title: 05 - Monitoring Celery with Flower
 description: "Flower is a real-time web-based monitoring tool for Celery that shows worker status, task history, queue depths, and allows task revocation from a browser interface."
 tags: [celery, flower, monitoring, observability, layer-4, web-ecosystem]
@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Monitoring Celery with Flower
 
-> Flower is Celery's built-in web dashboard — it gives operators a live view of worker health, task throughput, and failure rates without writing any monitoring code.
+> Flower is Celery's built-in web dashboard  -  it gives operators a live view of worker health, task throughput, and failure rates without writing any monitoring code.
 
 ---
 
@@ -22,24 +22,24 @@ created: 2026-05-18
 - Dashboard shows: worker online/offline status, tasks per worker, active/queued/completed/failed counts
 - Task history: drill into individual task details, arguments, result, exception traceback, execution time
 - Task revocation: cancel a queued or running task from the UI with optional `terminate=True`
-- Flower connects to the broker and listens to Celery's real-time event stream — no polling the database
+- Flower connects to the broker and listens to Celery's real-time event stream  -  no polling the database
 
 **Tricky points:**
-- Flower requires `task_send_sent_event=True` and `worker_send_task_events=True` in Celery config to show full task history — without these, it only sees events from workers that are currently online
-- Flower state is in-memory by default — restarting Flower loses all history; use `--persistent=True` with a database for persistence
+- Flower requires `task_send_sent_event=True` and `worker_send_task_events=True` in Celery config to show full task history  -  without these, it only sees events from workers that are currently online
+- Flower state is in-memory by default  -  restarting Flower loses all history; use `--persistent=True` with a database for persistence
 - Authentication: `--basic_auth=user:password` for simple protection; expose Flower only inside a private network or behind a VPN in production
-- `--max_tasks=10000` limits how many tasks Flower keeps in memory — prevent unbounded memory growth in high-throughput systems
-- Flower API: all UI actions are also available via REST endpoints at `/api/*` — useful for programmatic monitoring or alerting
+- `--max_tasks=10000` limits how many tasks Flower keeps in memory  -  prevent unbounded memory growth in high-throughput systems
+- Flower API: all UI actions are also available via REST endpoints at `/api/*`  -  useful for programmatic monitoring or alerting
 
 ---
 
 ## What It Is
 
-Celery workers are silent by nature — they pull tasks from a queue and execute them without producing any visible output unless you look at logs. In a production system with dozens of workers processing thousands of tasks per hour, understanding the system state requires more than reading log files. How many tasks are queued? Are workers healthy? Which tasks are failing and at what rate? How long is the average task taking? Flower answers all of these questions through a web interface that updates in real time.
+Celery workers are silent by nature  -  they pull tasks from a queue and execute them without producing any visible output unless you look at logs. In a production system with dozens of workers processing thousands of tasks per hour, understanding the system state requires more than reading log files. How many tasks are queued? Are workers healthy? Which tasks are failing and at what rate? How long is the average task taking? Flower answers all of these questions through a web interface that updates in real time.
 
-Flower connects to the Celery broker and subscribes to Celery's internal event stream. When a task is published, received, started, succeeded, or failed, Celery emits an event. Flower consumes these events and maintains an aggregated view of the system state. This event-driven architecture means Flower reflects the true live state of the system — there is no polling delay, no separate metrics database to maintain, and no instrumentation code to add to tasks.
+Flower connects to the Celery broker and subscribes to Celery's internal event stream. When a task is published, received, started, succeeded, or failed, Celery emits an event. Flower consumes these events and maintains an aggregated view of the system state. This event-driven architecture means Flower reflects the true live state of the system  -  there is no polling delay, no separate metrics database to maintain, and no instrumentation code to add to tasks.
 
-The tool was created as part of the Celery ecosystem and ships as a separate Python package (`flower`). It runs as a standalone web application, typically on port 5555, and can be deployed alongside workers in the same container or as a separate service. Because it only reads events from the broker, it has no write access to tasks or workers — except for the revocation feature, which sends a control message through the broker's control channel.
+The tool was created as part of the Celery ecosystem and ships as a separate Python package (`flower`). It runs as a standalone web application, typically on port 5555, and can be deployed alongside workers in the same container or as a separate service. Because it only reads events from the broker, it has no write access to tasks or workers  -  except for the revocation feature, which sends a control message through the broker's control channel.
 
 ---
 
@@ -109,11 +109,11 @@ httpx.post(f"http://localhost:5555/api/task/revoke/{task_id}", json={"terminate"
 
 ## How It Connects
 
-Flower monitors the workers defined in the workers note — understanding worker configuration helps interpret what Flower reports.
+Flower monitors the workers defined in the workers note  -  understanding worker configuration helps interpret what Flower reports.
 
 [[celery-workers|Celery Workers and Concurrency]]
 
-The task state machine described in the Celery tasks note is what Flower visualizes — PENDING, STARTED, SUCCESS, FAILURE, RETRY states appear in the Flower task list.
+The task state machine described in the Celery tasks note is what Flower visualizes  -  PENDING, STARTED, SUCCESS, FAILURE, RETRY states appear in the Flower task list.
 
 [[celery-tasks|Celery Tasks]]
 
@@ -142,7 +142,7 @@ Common question forms:
 - "What does Flower show you and how does it get that information?"
 
 Answer frame:
-Flower subscribes to Celery's internal event stream from the broker — it sees every task state transition in real time. It shows worker health, queue depths, task history with arguments and results, and error rates. Configuration requires `worker_send_task_events=True` in the Celery app. For production: protect with `--basic_auth`, use `--persistent=True` to survive restarts, restrict network access. Programmatic alternatives: `celery inspect ping` and `celery inspect stats` for health checks in alerting pipelines.
+Flower subscribes to Celery's internal event stream from the broker  -  it sees every task state transition in real time. It shows worker health, queue depths, task history with arguments and results, and error rates. Configuration requires `worker_send_task_events=True` in the Celery app. For production: protect with `--basic_auth`, use `--persistent=True` to survive restarts, restrict network access. Programmatic alternatives: `celery inspect ping` and `celery inspect stats` for health checks in alerting pipelines.
 
 ---
 

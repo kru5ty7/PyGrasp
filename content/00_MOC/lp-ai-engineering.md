@@ -1,16 +1,16 @@
----
-title: Learning Path — AI and ML Engineering
-description: LLMs, embeddings, RAG, LangChain, LangGraph, agents, and MLOps — building production AI systems with Python.
+﻿---
+title: Learning Path  -  AI and ML Engineering
+description: LLMs, embeddings, RAG, LangChain, LangGraph, agents, and MLOps  -  building production AI systems with Python.
 tags: [moc, learning-path, ai, layer-6]
 ---
 
-# Learning Path — AI and ML Engineering
+# Learning Path  -  AI and ML Engineering
 
 > From LLM fundamentals to production agent systems. Assumes Layer 2 (async/await) and Layer 3 (FastAPI).
 
 ---
 
-## Layer 6a — LLM Foundations
+## Layer 6a  -  LLM Foundations
 
 1. [[llm-basics|How LLMs Work]]
 2. [[tokenization-llm|Tokenization in LLMs]]
@@ -23,7 +23,7 @@ tags: [moc, learning-path, ai, layer-6]
 
 ---
 
-## Layer 6b — Embeddings and Search
+## Layer 6b  -  Embeddings and Search
 
 1. [[embeddings|Embeddings]]
 2. [[vector-search|Vector Search]]
@@ -35,7 +35,7 @@ tags: [moc, learning-path, ai, layer-6]
 
 ---
 
-## Layer 6c — RAG
+## Layer 6c  -  RAG
 
 1. [[rag|RAG]]
 2. [[rag-pipeline|RAG Pipeline]]
@@ -45,7 +45,7 @@ tags: [moc, learning-path, ai, layer-6]
 
 ---
 
-## Layer 6d — LangChain
+## Layer 6d  -  LangChain
 
 1. [[langchain-basics|LangChain Basics]]
 2. [[chains|Chains]]
@@ -56,7 +56,7 @@ tags: [moc, learning-path, ai, layer-6]
 
 ---
 
-## Layer 6e — LangGraph
+## Layer 6e  -  LangGraph
 
 1. [[graph-theory-basics|Graph Theory Basics]]
 2. [[langgraph-core|LangGraph Core]]
@@ -71,7 +71,7 @@ tags: [moc, learning-path, ai, layer-6]
 
 ---
 
-## Layer 6f — Agents
+## Layer 6f  -  Agents
 
 1. [[agents|Agents]]
 2. [[tool-calling|Tool Calling]]
@@ -82,7 +82,7 @@ tags: [moc, learning-path, ai, layer-6]
 
 ---
 
-## Layer 6g — ML Operations
+## Layer 6g  -  ML Operations
 
 1. [[model-serving|Model Serving]]
 2. [[model-deployment-patterns|Model Deployment Patterns]]

@@ -1,16 +1,16 @@
----
-title: Learning Path — Concurrency
-description: How Python handles threads, processes, and async — including the GIL, the event loop, and when to use each model.
+﻿---
+title: Learning Path  -  Concurrency
+description: How Python handles threads, processes, and async  -  including the GIL, the event loop, and when to use each model.
 tags: [moc, learning-path, concurrency, layer-2]
 ---
 
-# Learning Path — Concurrency
+# Learning Path  -  Concurrency
 
-> The GIL, threads, processes, and async/await — why they exist, how they differ, and when to reach for each. Assumes Layer 0 (CPython internals).
+> The GIL, threads, processes, and async/await  -  why they exist, how they differ, and when to reach for each. Assumes Layer 0 (CPython internals).
 
 ---
 
-## Layer 2a — Foundations
+## Layer 2a  -  Foundations
 
 1. [[io-bound-vs-cpu-bound|I/O Bound vs CPU Bound]]
 2. [[concurrency-vs-parallelism|Concurrency vs Parallelism]]
@@ -22,7 +22,7 @@ tags: [moc, learning-path, concurrency, layer-2]
 
 ---
 
-## Layer 2b — Threads
+## Layer 2b  -  Threads
 
 1. [[threads|Threads in Python]]
 2. [[thread-lifecycle|Thread Lifecycle]]
@@ -37,7 +37,7 @@ tags: [moc, learning-path, concurrency, layer-2]
 
 ---
 
-## Layer 2c — Processes
+## Layer 2c  -  Processes
 
 1. [[processes|Processes in Python]]
 2. [[multiprocessing-module|The multiprocessing Module]]
@@ -49,7 +49,7 @@ tags: [moc, learning-path, concurrency, layer-2]
 
 ---
 
-## Layer 2d — Async
+## Layer 2d  -  Async
 
 1. [[coroutines|Coroutines]]
 2. [[async-await|Async and Await]]

@@ -1,6 +1,6 @@
----
+﻿---
 title: 01 - ORM Basics
-description: "An ORM (Object-Relational Mapper) maps Python classes to database tables and instances to rows — SQL queries are expressed as Python method calls; reduces SQL boilerplate but adds abstraction overhead; SQLAlchemy is Python's dominant ORM."
+description: "An ORM (Object-Relational Mapper) maps Python classes to database tables and instances to rows  -  SQL queries are expressed as Python method calls; reduces SQL boilerplate but adds abstraction overhead; SQLAlchemy is Python's dominant ORM."
 tags: [orm, object-relational-mapper, sqlalchemy, models, tables, layer-3, web]
 status: draft
 difficulty: beginner
@@ -11,25 +11,25 @@ created: 2026-05-17
 
 # ORM Basics
 
-> An ORM (Object-Relational Mapper) maps Python classes to database tables and instances to rows — SQL queries are expressed as Python method calls; reduces SQL boilerplate but adds abstraction overhead; SQLAlchemy is Python's dominant ORM.
+> An ORM (Object-Relational Mapper) maps Python classes to database tables and instances to rows  -  SQL queries are expressed as Python method calls; reduces SQL boilerplate but adds abstraction overhead; SQLAlchemy is Python's dominant ORM.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- **Model class** → database table; **model instance** → database row; **class attribute** → column
-- ORM translates Python expressions to SQL: `db.query(User).filter(User.age > 18)` → `SELECT * FROM users WHERE age > 18`
+- **Model class** -> database table; **model instance** -> database row; **class attribute** -> column
+- ORM translates Python expressions to SQL: `db.query(User).filter(User.age > 18)` -> `SELECT * FROM users WHERE age > 18`
 - **Unit of Work**: accumulate changes in memory (add, update, delete), then flush to DB in a single transaction with `session.commit()`
 - **Identity Map**: within a session, loading the same row twice returns the same Python object
-- SQLAlchemy is the standard Python ORM — two APIs: Core (SQL expression layer) and ORM (declarative models)
+- SQLAlchemy is the standard Python ORM  -  two APIs: Core (SQL expression layer) and ORM (declarative models)
 
 **Tricky points:**
-- `session.query()` (legacy) vs `select()` (modern SQLAlchemy 2.0 style) — both work; prefer the 2.0 style for new code
-- Lazy loading: accessing a relationship (`user.posts`) issues a new SQL query — this causes N+1 queries if done in a loop; use `joinedload` or `selectinload` to eager-load
-- `session.flush()` sends SQL to the DB but doesn't commit the transaction — rows are visible within the same session but not to other sessions
-- `session.expire_on_commit=True` (default) — after commit, all attributes become expired and are re-fetched on next access; fine for web apps (new request = new session)
-- ORM models are not Pydantic models — you need to convert: `UserResponse.model_validate(db_user)` or `UserResponse.from_orm(db_user)`
+- `session.query()` (legacy) vs `select()` (modern SQLAlchemy 2.0 style)  -  both work; prefer the 2.0 style for new code
+- Lazy loading: accessing a relationship (`user.posts`) issues a new SQL query  -  this causes N+1 queries if done in a loop; use `joinedload` or `selectinload` to eager-load
+- `session.flush()` sends SQL to the DB but doesn't commit the transaction  -  rows are visible within the same session but not to other sessions
+- `session.expire_on_commit=True` (default)  -  after commit, all attributes become expired and are re-fetched on next access; fine for web apps (new request = new session)
+- ORM models are not Pydantic models  -  you need to convert: `UserResponse.model_validate(db_user)` or `UserResponse.from_orm(db_user)`
 
 ---
 
@@ -111,7 +111,7 @@ for user in users:
 
 ## How It Connects
 
-SQLAlchemy Core and ORM are the two layers of Python's most complete database toolkit — ORM builds on Core.
+SQLAlchemy Core and ORM are the two layers of Python's most complete database toolkit  -  ORM builds on Core.
 [[sqlalchemy-core|SQLAlchemy Core]]
 
 In FastAPI, the ORM session is a per-request resource managed by a `yield` dependency.
@@ -122,10 +122,10 @@ In FastAPI, the ORM session is a per-request resource managed by a `yield` depen
 ## Common Misconceptions
 
 Misconception 1: "ORM queries are always slower than raw SQL."
-Reality: For simple queries, ORM overhead is negligible. For complex queries, poorly written ORM code (N+1, unnecessary joins) can be slower than hand-written SQL. Well-written ORM code is comparable — and the ORM's automatic parameterization prevents SQL injection.
+Reality: For simple queries, ORM overhead is negligible. For complex queries, poorly written ORM code (N+1, unnecessary joins) can be slower than hand-written SQL. Well-written ORM code is comparable  -  and the ORM's automatic parameterization prevents SQL injection.
 
 Misconception 2: "An ORM model and a Pydantic model are the same."
-Reality: SQLAlchemy ORM models are Python classes that map to database tables — they use SQLAlchemy's descriptor system for attribute access and lazy loading. Pydantic models are pure data validation/serialization containers. They have different bases, different behaviors, and must be explicitly converted between them.
+Reality: SQLAlchemy ORM models are Python classes that map to database tables  -  they use SQLAlchemy's descriptor system for attribute access and lazy loading. Pydantic models are pure data validation/serialization containers. They have different bases, different behaviors, and must be explicitly converted between them.
 
 ---
 
@@ -145,7 +145,7 @@ Common question forms:
 - "What is an ORM?"
 - "What is the N+1 query problem?"
 
-Answer frame: ORM maps Python classes to DB tables — model instance = row, query methods = SQL. **N+1 problem**: loading a list of users then accessing `.posts` on each runs 1+N queries; fix with `selectinload`/`joinedload` (eager loading). Trade-off: ORMs simplify simple queries and prevent SQL injection; complex queries sometimes need raw SQL. SQLAlchemy = dominant Python ORM; 2.0 style uses `Mapped[]` type annotations.
+Answer frame: ORM maps Python classes to DB tables  -  model instance = row, query methods = SQL. **N+1 problem**: loading a list of users then accessing `.posts` on each runs 1+N queries; fix with `selectinload`/`joinedload` (eager loading). Trade-off: ORMs simplify simple queries and prevent SQL injection; complex queries sometimes need raw SQL. SQLAlchemy = dominant Python ORM; 2.0 style uses `Mapped[]` type annotations.
 
 ---
 

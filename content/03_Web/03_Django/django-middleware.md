@@ -1,4 +1,4 @@
----
+﻿---
 title: 10 - Django Middleware
 description: "Django middleware is an ordered stack of processing layers that every request passes through on the way in and every response passes through in reverse on the way out."
 tags: [django, layer-3, web]
@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Django Middleware
 
-> Django middleware is a pipeline where every request and response must pass through a sequence of processing layers in a fixed order — understanding this pipeline is the key to understanding where authentication, CSRF protection, session management, and security headers actually come from.
+> Django middleware is a pipeline where every request and response must pass through a sequence of processing layers in a fixed order  -  understanding this pipeline is the key to understanding where authentication, CSRF protection, session management, and security headers actually come from.
 
 ---
 
@@ -21,24 +21,24 @@ created: 2026-05-18
 - `settings.MIDDLEWARE` is an ordered list of dotted class paths applied top-to-bottom for requests, bottom-to-top for responses
 - Modern middleware interface: `__init__(get_response)` stores the callable; `__call__(request)` processes the request and delegates to `get_response`
 - Built-in: `SecurityMiddleware`, `SessionMiddleware`, `CommonMiddleware`, `CsrfViewMiddleware`, `AuthenticationMiddleware`, `MessageMiddleware`, `XFrameOptionsMiddleware`
-- `SessionMiddleware` must precede `AuthenticationMiddleware` — auth reads the session to identify the user
+- `SessionMiddleware` must precede `AuthenticationMiddleware`  -  auth reads the session to identify the user
 - Writing custom middleware: any callable that takes `get_response` and returns a callable that takes `request`
 
 **Tricky points:**
-- Middleware order is not optional for built-ins — swapping `SessionMiddleware` and `AuthenticationMiddleware` causes `AttributeError: 'str' object has no attribute 'pk'` on every request
-- A middleware can short-circuit the entire chain by returning a response without calling `get_response` — this is how CSRF and basic auth middleware work
+- Middleware order is not optional for built-ins  -  swapping `SessionMiddleware` and `AuthenticationMiddleware` causes `AttributeError: 'str' object has no attribute 'pk'` on every request
+- A middleware can short-circuit the entire chain by returning a response without calling `get_response`  -  this is how CSRF and basic auth middleware work
 - Process-level exceptions raised in views can be caught in `process_exception()` on old-style middleware or in a `try/except` around `get_response()` in new-style
-- Each middleware class is instantiated once per server process, not once per request — state on `self` persists across requests and causes bugs
+- Each middleware class is instantiated once per server process, not once per request  -  state on `self` persists across requests and causes bugs
 
 ---
 
 ## What It Is
 
-Middleware in Django works like a series of checkpoints at an international border crossing. A request entering the country must pass through customs (security headers check), then immigration (session lookup), then identity verification (user authentication), then a document check (CSRF validation), before finally reaching its destination (the view). On the way out, the response passes back through each checkpoint in reverse — immigration stamps the passport (updates the session), customs seals the package (adds security headers). Every traveler — every request — goes through every checkpoint in the same order, regardless of destination.
+Middleware in Django works like a series of checkpoints at an international border crossing. A request entering the country must pass through customs (security headers check), then immigration (session lookup), then identity verification (user authentication), then a document check (CSRF validation), before finally reaching its destination (the view). On the way out, the response passes back through each checkpoint in reverse  -  immigration stamps the passport (updates the session), customs seals the package (adds security headers). Every traveler  -  every request  -  goes through every checkpoint in the same order, regardless of destination.
 
-This pipeline architecture is what makes cross-cutting concerns so clean in Django. CSRF protection does not need to be added to each individual view; it lives in `CsrfViewMiddleware` and automatically applies to every state-changing request. Security headers like `X-Content-Type-Options`, `Strict-Transport-Security`, and `Referrer-Policy` do not need to be set in every view; `SecurityMiddleware` adds them to every response. The cost of this approach is that the middleware stack is always traversed even for requests that do not need all of its processing, but the benefit — guaranteed cross-request consistency — overwhelmingly outweighs the overhead for virtually all applications.
+This pipeline architecture is what makes cross-cutting concerns so clean in Django. CSRF protection does not need to be added to each individual view; it lives in `CsrfViewMiddleware` and automatically applies to every state-changing request. Security headers like `X-Content-Type-Options`, `Strict-Transport-Security`, and `Referrer-Policy` do not need to be set in every view; `SecurityMiddleware` adds them to every response. The cost of this approach is that the middleware stack is always traversed even for requests that do not need all of its processing, but the benefit  -  guaranteed cross-request consistency  -  overwhelmingly outweighs the overhead for virtually all applications.
 
-The modern middleware interface is a composable function pattern. A middleware class's `__init__` receives `get_response`, a callable that represents the rest of the pipeline (everything beneath it in the stack, plus the view). Its `__call__` method receives a `request`, may inspect or modify it, then calls `get_response(request)` to pass the request down the chain and receive a response, which it may then inspect or modify before returning. This is precisely the decorator pattern applied to request/response cycles — each middleware wraps the next like nested functions, and the view is at the center.
+The modern middleware interface is a composable function pattern. A middleware class's `__init__` receives `get_response`, a callable that represents the rest of the pipeline (everything beneath it in the stack, plus the view). Its `__call__` method receives a `request`, may inspect or modify it, then calls `get_response(request)` to pass the request down the chain and receive a response, which it may then inspect or modify before returning. This is precisely the decorator pattern applied to request/response cycles  -  each middleware wraps the next like nested functions, and the view is at the center.
 
 ---
 
@@ -78,12 +78,12 @@ MIDDLEWARE = [
 
 ## How It Connects
 
-The middleware stack is the first place requests land after entering through the WSGI or ASGI interface — understanding where middleware sits in the overall request lifecycle gives context for why its ordering has hard constraints.
+The middleware stack is the first place requests land after entering through the WSGI or ASGI interface  -  understanding where middleware sits in the overall request lifecycle gives context for why its ordering has hard constraints.
 
 [[django-overview|Django Overview and MVT Pattern]]
 [[wsgi|WSGI]]
 
-Authentication middleware populates `request.user` by reading the session, which is why session middleware must come first — the auth system and its relationship to middleware is detailed in the auth note.
+Authentication middleware populates `request.user` by reading the session, which is why session middleware must come first  -  the auth system and its relationship to middleware is detailed in the auth note.
 
 [[django-auth|Django Authentication]]
 
@@ -108,7 +108,7 @@ Reality: The new-style middleware is simpler. Any class or function that takes `
 
 ## Why It Matters in Practice
 
-The middleware stack is where Django's security guarantees live. CSRF protection, clickjacking protection, HTTPS enforcement, content-type sniffing protection, and Strict-Transport-Security are all middleware. Removing or reordering middleware incorrectly removes these protections silently — the application continues to function, but security properties are lost. This is why `manage.py check --deploy` specifically validates the middleware configuration against Django's recommended security settings.
+The middleware stack is where Django's security guarantees live. CSRF protection, clickjacking protection, HTTPS enforcement, content-type sniffing protection, and Strict-Transport-Security are all middleware. Removing or reordering middleware incorrectly removes these protections silently  -  the application continues to function, but security properties are lost. This is why `manage.py check --deploy` specifically validates the middleware configuration against Django's recommended security settings.
 
 Custom middleware is also the right tool for cross-cutting operational concerns: request timing, request ID injection for distributed tracing, rate limiting, A/B test flag injection, and tenant identification in multi-tenant SaaS applications. Any behavior that must apply to every request (or a well-defined subset of requests) and that does not belong in business logic belongs in middleware.
 

@@ -1,6 +1,6 @@
----
+﻿---
 title: 03 - Load Balancing Algorithms
-description: "The algorithms a load balancer uses to select the next server — round robin, least connections, IP hash, and weighted variants — and when each is the right choice."
+description: "The algorithms a load balancer uses to select the next server  -  round robin, least connections, IP hash, and weighted variants  -  and when each is the right choice."
 tags: [load-balancing, algorithms, networking, layer-7, system-design]
 status: draft
 difficulty: intermediate
@@ -22,24 +22,24 @@ created: 2026-05-18
 - Weighted round robin: same cycle but servers get requests proportional to their weight
 - Least connections: send to the server with the fewest active connections right now
 - IP hash: hash the client IP to always send a client to the same server
-- Random: pick a server at random — surprisingly effective for large, homogeneous pools
+- Random: pick a server at random  -  surprisingly effective for large, homogeneous pools
 
 **Tricky points:**
-- Round robin is only fair when all requests have the same cost — they rarely do
-- Least connections requires the LB to track state across all connections — adds overhead
+- Round robin is only fair when all requests have the same cost  -  they rarely do
+- Least connections requires the LB to track state across all connections  -  adds overhead
 - IP hash for sticky routing breaks if the server pool size changes (all hash assignments shift)
 - Consistent hashing solves the IP hash problem by minimizing reshuffling when nodes join or leave
-- Weighted algorithms require knowing server capacity in advance — hard to keep accurate
+- Weighted algorithms require knowing server capacity in advance  -  hard to keep accurate
 
 ---
 
 ## What It Is
 
-Imagine you manage a call center with ten agents. Some agents are fast, some slow. Some callers have simple questions, some need 30 minutes. How do you route incoming calls so no agent is overwhelmed and no agent sits idle? If you assign calls in strict rotation (round robin), fast agents finish quickly and wait while slow agents are still on long calls. If you assign calls to whoever just finished (least connections / "idle first"), the fastest agents do the most work, which is fair in terms of throughput but may not match caller needs. If you remember which agent helped a caller before and always route them back to the same person, that is IP hash or sticky sessions — consistent, but not load-balanced.
+Imagine you manage a call center with ten agents. Some agents are fast, some slow. Some callers have simple questions, some need 30 minutes. How do you route incoming calls so no agent is overwhelmed and no agent sits idle? If you assign calls in strict rotation (round robin), fast agents finish quickly and wait while slow agents are still on long calls. If you assign calls to whoever just finished (least connections / "idle first"), the fastest agents do the most work, which is fair in terms of throughput but may not match caller needs. If you remember which agent helped a caller before and always route them back to the same person, that is IP hash or sticky sessions  -  consistent, but not load-balanced.
 
 Load balancing algorithms are the decision functions that answer "which server should handle this request?" The choice depends on the nature of your workload. Are requests homogeneous (similar cost)? Are servers homogeneous (similar capacity)? Does it matter if a client always reaches the same server? Does the LB have visibility into current server load? These questions determine which algorithm is optimal.
 
-Round robin is the simplest: requests are distributed to servers in sequence. Request 1 goes to Server A, Request 2 to Server B, Request 3 to Server C, Request 4 back to Server A. This is perfectly fair if every request takes the same time and every server has the same capacity. In practice, requests vary enormously — a database query might take 1ms and a file upload might take 5 seconds. Round robin does not account for this. A server that happens to receive several expensive requests in a row becomes overloaded while other servers sit underutilized.
+Round robin is the simplest: requests are distributed to servers in sequence. Request 1 goes to Server A, Request 2 to Server B, Request 3 to Server C, Request 4 back to Server A. This is perfectly fair if every request takes the same time and every server has the same capacity. In practice, requests vary enormously  -  a database query might take 1ms and a file upload might take 5 seconds. Round robin does not account for this. A server that happens to receive several expensive requests in a row becomes overloaded while other servers sit underutilized.
 
 Weighted round robin extends round robin by assigning each server a weight. A server with weight 3 receives three requests for every one request that goes to a weight-1 server. This is appropriate when servers have different capacities: a newer, larger instance can be given more weight. But weights are configured manually, which means you need to know the relative capacity of each server in advance and update weights when server configurations change.
 
@@ -51,7 +51,7 @@ IP hash (or IP-based sticky sessions) computes a hash of the client's IP address
 
 ## How It Actually Works
 
-Round robin is stateless from the load balancer's perspective — it maintains only a counter that cycles. This makes it trivially scalable and adds essentially no latency. In Nginx, `upstream { server ...; server ...; }` with no additional directives defaults to round robin.
+Round robin is stateless from the load balancer's perspective  -  it maintains only a counter that cycles. This makes it trivially scalable and adds essentially no latency. In Nginx, `upstream { server ...; server ...; }` with no additional directives defaults to round robin.
 
 Least connections requires the LB to atomically increment and decrement a connection counter for each server. In a multi-threaded LB, this requires a lock or atomic operations. At very high connection rates, this contention can add measurable latency. A practical optimization is "power of two choices": the LB randomly selects two servers and picks the one with fewer connections. This approximates least connections with O(1) work and no global state lock, and has been shown empirically to be nearly as effective as perfect least-connections scheduling.
 
@@ -92,7 +92,7 @@ class ConsistentHashRing:
         return int(hashlib.md5(key.encode()).hexdigest(), 16)
 ```
 
-Random selection — picking a server completely at random on each request — is underrated. For large, homogeneous pools with short-lived requests, random performs nearly as well as least-connections without any state tracking overhead. Netflix's Eureka service discovery originally used random selection for client-side load balancing.
+Random selection  -  picking a server completely at random on each request  -  is underrated. For large, homogeneous pools with short-lived requests, random performs nearly as well as least-connections without any state tracking overhead. Netflix's Eureka service discovery originally used random selection for client-side load balancing.
 
 ---
 
@@ -118,7 +118,7 @@ Misconception 1: "Round robin is good enough for most applications."
 Reality: Round robin is fine when requests are homogeneous and servers are identical. In practice, most applications have a mix of cheap reads and expensive writes. Under round robin, a server that receives a batch of expensive requests becomes significantly more loaded than others, causing inconsistent P99 latency. Least connections or a power-of-two-choices approach handles this better.
 
 Misconception 2: "IP hash provides real session persistence."
-Reality: IP hash provides weak persistence. If the user is behind a NAT or a proxy (which is extremely common — cellular networks, corporate networks, cloud egress), many users share the same source IP. This concentrates load on a single server rather than distributing it. IP hash is almost never the right choice for session affinity; use a cookie-based sticky session instead, or better yet, make the application stateless.
+Reality: IP hash provides weak persistence. If the user is behind a NAT or a proxy (which is extremely common  -  cellular networks, corporate networks, cloud egress), many users share the same source IP. This concentrates load on a single server rather than distributing it. IP hash is almost never the right choice for session affinity; use a cookie-based sticky session instead, or better yet, make the application stateless.
 
 Misconception 3: "Adding a server to a round-robin pool immediately spreads load."
 Reality: Round robin distributes new requests evenly, but existing long-running connections are not redistributed. If your application uses persistent HTTP connections (keep-alive), many existing connections may remain on old servers for a long time after a new server is added. This effect is less pronounced with shorter-lived requests.
@@ -127,7 +127,7 @@ Reality: Round robin distributes new requests evenly, but existing long-running 
 
 ## Why It Matters in Practice
 
-The wrong algorithm causes hot spots — individual servers that receive far more load than others — which leads to uneven latency, premature autoscaling triggers, and single-server failures that should not occur. A well-chosen algorithm, combined with proper health checks, makes the fleet behave as a uniform resource pool.
+The wrong algorithm causes hot spots  -  individual servers that receive far more load than others  -  which leads to uneven latency, premature autoscaling triggers, and single-server failures that should not occur. A well-chosen algorithm, combined with proper health checks, makes the fleet behave as a uniform resource pool.
 
 For Python applications using async servers (Uvicorn/FastAPI), the request cost varies significantly depending on what the request does. A simple health check completes in under a millisecond. A request that calls three external services and queries the database takes hundreds of milliseconds. Least connections is more appropriate than round robin in this context, because it naturally routes new connections to the servers that finished their previous requests fastest.
 

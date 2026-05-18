@@ -1,6 +1,6 @@
----
+ï»¿---
 title: 08 - Abstract Base Classes
-description: "Abstract base classes (ABCs) define interfaces that concrete subclasses must implement — using `abc.ABCMeta` and `@abstractmethod`, Python enforces that subclasses provide required methods before instances can be created."
+description: "Abstract base classes (ABCs) define interfaces that concrete subclasses must implement  -  using `abc.ABCMeta` and `@abstractmethod`, Python enforces that subclasses provide required methods before instances can be created."
 tags: [abc, abstract-base-classes, abstractmethod, interface, protocol, layer-1, core]
 status: draft
 difficulty: intermediate
@@ -11,33 +11,33 @@ created: 2026-05-17
 
 # Abstract Base Classes
 
-> Abstract base classes (ABCs) define interfaces that concrete subclasses must implement — using `abc.ABCMeta` and `@abstractmethod`, Python enforces that subclasses provide required methods before instances can be created.
+> Abstract base classes (ABCs) define interfaces that concrete subclasses must implement  -  using `abc.ABCMeta` and `@abstractmethod`, Python enforces that subclasses provide required methods before instances can be created.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- An **abstract base class** defines methods with `@abstractmethod` that subclasses **must** override — instantiating a subclass that has not implemented all abstract methods raises `TypeError`
+- An **abstract base class** defines methods with `@abstractmethod` that subclasses **must** override  -  instantiating a subclass that has not implemented all abstract methods raises `TypeError`
 - Use `class MyABC(ABC):` (from `abc` module) or `class MyABC(metaclass=ABCMeta):` to create an ABC
 - `@abstractmethod` marks a method as requiring concrete implementation; `@abstractproperty`, `@abstractclassmethod`, and `@abstractstaticmethod` do the same for properties/classmethods/staticmethods
-- `abc.ABC` is a convenience class that uses `ABCMeta` as its metaclass — inherit from it instead of specifying `metaclass=ABCMeta` directly
+- `abc.ABC` is a convenience class that uses `ABCMeta` as its metaclass  -  inherit from it instead of specifying `metaclass=ABCMeta` directly
 - ABCs in `collections.abc` define standard container interfaces (`Iterable`, `Sequence`, `Mapping`, `MutableSet`) with concrete mixin methods for classes that implement the abstract ones
 
 **Tricky points:**
-- Abstract method enforcement happens at **instantiation time**, not at class definition time — defining a subclass that does not implement abstract methods does not immediately raise an error
-- A class is concrete (can be instantiated) if it has **zero** `__abstractmethods__` — the `__abstractmethods__` frozenset can be inspected on any class
-- **Virtual subclasses** via `abc.register(cls)` tell an ABC that `cls` is a subclass even if it does not inherit from the ABC — `isinstance(cls_instance, MyABC)` returns `True` without inheritance
-- Overriding an abstract method with another `@abstractmethod` keeps the method abstract — the subclass can still not be instantiated
-- `collections.abc.Sequence` provides `__contains__`, `__iter__`, `__reversed__`, `index`, and `count` as mixin implementations based on `__getitem__` and `__len__` — implement only the required methods and get the rest for free
+- Abstract method enforcement happens at **instantiation time**, not at class definition time  -  defining a subclass that does not implement abstract methods does not immediately raise an error
+- A class is concrete (can be instantiated) if it has **zero** `__abstractmethods__`  -  the `__abstractmethods__` frozenset can be inspected on any class
+- **Virtual subclasses** via `abc.register(cls)` tell an ABC that `cls` is a subclass even if it does not inherit from the ABC  -  `isinstance(cls_instance, MyABC)` returns `True` without inheritance
+- Overriding an abstract method with another `@abstractmethod` keeps the method abstract  -  the subclass can still not be instantiated
+- `collections.abc.Sequence` provides `__contains__`, `__iter__`, `__reversed__`, `index`, and `count` as mixin implementations based on `__getitem__` and `__len__`  -  implement only the required methods and get the rest for free
 
 ---
 
 ## What It Is
 
-Think of an employment contract template. The template specifies required duties that any employee filling this role must perform — without completing those duties, the employment contract cannot be finalized. An abstract base class is that template: it declares the required "duties" (methods) that any concrete implementation must provide. If a class claims to fill the role (inherits from the ABC) but has not fulfilled all required duties (implemented all abstract methods), Python refuses to create instances of it — the equivalent of refusing to finalize the contract.
+Think of an employment contract template. The template specifies required duties that any employee filling this role must perform  -  without completing those duties, the employment contract cannot be finalized. An abstract base class is that template: it declares the required "duties" (methods) that any concrete implementation must provide. If a class claims to fill the role (inherits from the ABC) but has not fulfilled all required duties (implemented all abstract methods), Python refuses to create instances of it  -  the equivalent of refusing to finalize the contract.
 
-ABCs solve the problem of accidental interface violations. Without ABCs, a class that is supposed to behave like a `Sequence` (supporting `__getitem__`, `__len__`, `__contains__`, `__iter__`, etc.) could forget to implement some of those methods, and the omission would only be discovered at runtime when the missing method is called. ABCs make the interface explicit and enforce completeness at instantiation time — you discover the missing method when you try to create an instance, not when some caller uses the missing functionality.
+ABCs solve the problem of accidental interface violations. Without ABCs, a class that is supposed to behave like a `Sequence` (supporting `__getitem__`, `__len__`, `__contains__`, `__iter__`, etc.) could forget to implement some of those methods, and the omission would only be discovered at runtime when the missing method is called. ABCs make the interface explicit and enforce completeness at instantiation time  -  you discover the missing method when you try to create an instance, not when some caller uses the missing functionality.
 
 Python's `collections.abc` module defines ABCs for the standard container protocols: `Container`, `Iterable`, `Iterator`, `Sequence`, `MutableSequence`, `Mapping`, `MutableMapping`, `Set`, `MutableSet`. These ABCs come with abstract methods (that you must implement) and concrete mixin methods (that you get for free once you implement the required ones). Implementing `__getitem__` and `__len__` on a class that inherits from `Sequence` automatically provides working `__contains__`, `__iter__`, `__reversed__`, `index`, and `count` methods.
 
@@ -51,7 +51,7 @@ When an instance is created (`cls()`), `type.__call__` checks `cls.__abstractmet
 
 `@abstractmethod` is a decorator that sets `func.__isabstractmethod__ = True`. `ABCMeta.__new__` collects all names in the namespace with `__isabstractmethod__ = True`. A subclass that provides a concrete implementation of `method` (without `@abstractmethod`) causes the name to be removed from the subclass's `__abstractmethods__`.
 
-`abc.register()` implements the virtual subclass mechanism. `MyABC.register(SomeExistingClass)` adds `SomeExistingClass` to a list that `__instancecheck__` and `__subclasscheck__` consult. `isinstance(some_existing_instance, MyABC)` returns `True` without `SomeExistingClass` inheriting from `MyABC`. This enables "duck typing with explicit registration" — you can declare that an existing class satisfies an ABC's interface without modifying that class.
+`abc.register()` implements the virtual subclass mechanism. `MyABC.register(SomeExistingClass)` adds `SomeExistingClass` to a list that `__instancecheck__` and `__subclasscheck__` consult. `isinstance(some_existing_instance, MyABC)` returns `True` without `SomeExistingClass` inheriting from `MyABC`. This enables "duck typing with explicit registration"  -  you can declare that an existing class satisfies an ABC's interface without modifying that class.
 
 ---
 
@@ -71,7 +71,7 @@ Misconception 1: "You cannot instantiate an abstract class at all."
 Reality: You cannot instantiate a class that has abstract methods (non-empty `__abstractmethods__`). An abstract base class that defines no abstract methods (used purely as a shared base for registration or mixin behavior) can be instantiated. `ABC` itself can be instantiated: `abc.ABC()` works. The restriction is specifically on classes with unimplemented abstract methods.
 
 Misconception 2: "ABCs and Protocols serve the same purpose."
-Reality: ABCs and Protocols both define interfaces, but via different subtyping models. ABCs require explicit registration or inheritance — a class must inherit from `Iterable` or register with it to be considered `Iterable`. Protocols are structural — any class with an `__iter__` method is `Iterable[T]` from mypy's perspective without any declaration. ABCs are checked at runtime (`isinstance`); Protocols are primarily a static type checking tool. They are complementary, not alternatives.
+Reality: ABCs and Protocols both define interfaces, but via different subtyping models. ABCs require explicit registration or inheritance  -  a class must inherit from `Iterable` or register with it to be considered `Iterable`. Protocols are structural  -  any class with an `__iter__` method is `Iterable[T]` from mypy's perspective without any declaration. ABCs are checked at runtime (`isinstance`); Protocols are primarily a static type checking tool. They are complementary, not alternatives.
 
 ---
 

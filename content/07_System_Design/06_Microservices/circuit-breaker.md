@@ -1,6 +1,6 @@
----
+﻿---
 title: 03 - Circuit Breaker
-description: "The three states of a circuit breaker — closed, open, half-open — how they prevent cascading failures, and what this means for resilience in distributed systems."
+description: "The three states of a circuit breaker  -  closed, open, half-open  -  how they prevent cascading failures, and what this means for resilience in distributed systems."
 tags: [circuit-breaker, resilience, microservices, layer-7, system-design]
 status: draft
 difficulty: intermediate
@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Circuit Breaker
 
-> A circuit breaker prevents a slow or failing downstream service from taking down your service too — it is the component that turns distributed failure from an avalanche into a controlled degradation.
+> A circuit breaker prevents a slow or failing downstream service from taking down your service too  -  it is the component that turns distributed failure from an avalanche into a controlled degradation.
 
 ---
 
@@ -25,21 +25,21 @@ created: 2026-05-18
 - Recovery timeout: how long to wait before moving from open to half-open
 
 **Tricky points:**
-- A circuit breaker is at the caller side, not the callee — each service has breakers for its downstream dependencies
-- "Fail fast" in open state is intentional — better to immediately return an error than wait for a timeout
+- A circuit breaker is at the caller side, not the callee  -  each service has breakers for its downstream dependencies
+- "Fail fast" in open state is intentional  -  better to immediately return an error than wait for a timeout
 - Half-open allows partial recovery testing without immediately routing all traffic to a recovering service
-- Circuit breakers do not prevent failures — they prevent cascading failures by containing the blast radius
-- The breaker state is per-dependency per-service instance — two instances of Service A have independent breakers for Service B
+- Circuit breakers do not prevent failures  -  they prevent cascading failures by containing the blast radius
+- The breaker state is per-dependency per-service instance  -  two instances of Service A have independent breakers for Service B
 
 ---
 
 ## What It Is
 
-Think about the circuit breakers in your home. The electrical panel has one breaker per circuit. When an appliance draws too much current (a sign of a fault), the breaker trips — it opens the circuit and stops current from flowing. This prevents the fault from damaging other appliances on the circuit or starting a fire. Once the problem is fixed, you reset the breaker and current flows again.
+Think about the circuit breakers in your home. The electrical panel has one breaker per circuit. When an appliance draws too much current (a sign of a fault), the breaker trips  -  it opens the circuit and stops current from flowing. This prevents the fault from damaging other appliances on the circuit or starting a fire. Once the problem is fixed, you reset the breaker and current flows again.
 
-Michael Nygard described the circuit breaker pattern in "Release It!" as applying the same principle to software. When a downstream service is failing — returning errors, timing out, or being completely unreachable — calls to it should stop immediately rather than piling up. Without a circuit breaker, each call to the failing service times out after several seconds, consuming a thread or an async slot. As calls pile up waiting for timeouts, the caller's own resources are exhausted and it fails too. The failure cascades upstream.
+Michael Nygard described the circuit breaker pattern in "Release It!" as applying the same principle to software. When a downstream service is failing  -  returning errors, timing out, or being completely unreachable  -  calls to it should stop immediately rather than piling up. Without a circuit breaker, each call to the failing service times out after several seconds, consuming a thread or an async slot. As calls pile up waiting for timeouts, the caller's own resources are exhausted and it fails too. The failure cascades upstream.
 
-The circuit breaker sits between the caller and the downstream service. It monitors calls to that service. In the closed state (normal operation), all calls pass through and the breaker counts failures. When failures exceed a threshold — a certain number of consecutive failures, or a certain percentage of failures within a time window — the breaker trips to the open state. In the open state, calls to the downstream service fail immediately without actually attempting the call. The breaker returns an error or a fallback value instantly. The downstream service gets no requests, allowing it to recover.
+The circuit breaker sits between the caller and the downstream service. It monitors calls to that service. In the closed state (normal operation), all calls pass through and the breaker counts failures. When failures exceed a threshold  -  a certain number of consecutive failures, or a certain percentage of failures within a time window  -  the breaker trips to the open state. In the open state, calls to the downstream service fail immediately without actually attempting the call. The breaker returns an error or a fallback value instantly. The downstream service gets no requests, allowing it to recover.
 
 After a configured timeout (the recovery period), the breaker moves to the half-open state. It allows a small number of test requests through. If those requests succeed, the breaker closes and normal operation resumes. If they fail, the breaker opens again and the recovery timer restarts. The half-open state prevents a service that just came back up from being immediately overwhelmed with the backed-up traffic.
 
@@ -47,7 +47,7 @@ After a configured timeout (the recovery period), the breaker moves to the half-
 
 ## How It Actually Works
 
-The failure threshold has two common implementations. Count-based: after N consecutive failures, the breaker opens. This is simple but does not handle intermittent failures well — a 10% failure rate might never trigger a count-based breaker if failures alternate with successes. Rate-based: if the failure rate within a rolling time window exceeds a threshold (e.g., 50% of requests in the last 10 seconds fail), the breaker opens. Rate-based is more representative of actual service health.
+The failure threshold has two common implementations. Count-based: after N consecutive failures, the breaker opens. This is simple but does not handle intermittent failures well  -  a 10% failure rate might never trigger a count-based breaker if failures alternate with successes. Rate-based: if the failure rate within a rolling time window exceeds a threshold (e.g., 50% of requests in the last 10 seconds fail), the breaker opens. Rate-based is more representative of actual service health.
 
 The fallback is what the circuit breaker returns when in the open state (or when the downstream call fails). Fallback options: return a cached value (show yesterday's product recommendations), return a default value ("temporarily unavailable"), return an error to the caller, or propagate a partial response. The choice depends on the importance of the data and the user experience. For user-facing features, a degraded experience (showing cached or default data) is better than an error page.
 
@@ -100,7 +100,7 @@ class CircuitBreaker:
             result = func(*args, **kwargs)
             with self._lock:
                 if self.state == CircuitState.HALF_OPEN:
-                    # Success in half-open — close the circuit
+                    # Success in half-open  -  close the circuit
                     self.state = CircuitState.CLOSED
                     self.failure_count = 0
                     logging.info("Circuit CLOSED: recovery confirmed")
@@ -141,7 +141,7 @@ def check_inventory(product_id: str) -> dict:
 
 Production circuit breaker libraries provide more sophisticated implementations. Netflix's Hystrix (now in maintenance mode) and its successor Resilience4J (Java) provided thread isolation, timeout handling, and metrics integration. Python libraries include `pybreaker` and `circuitbreaker`. Service meshes like Istio and Linkerd implement circuit breaking at the network level (in the sidecar proxy), making it transparent to application code and consistently applied across all services.
 
-Circuit breaker metrics — the number of calls in each state, current failure rate, circuit state transitions — must be monitored. An open circuit in production is an actionable alert: something downstream is failing. Circuit breaker metrics also reveal hidden dependencies: a breaker that trips frequently between 2–4 PM suggests a downstream service that degrades under afternoon load.
+Circuit breaker metrics  -  the number of calls in each state, current failure rate, circuit state transitions  -  must be monitored. An open circuit in production is an actionable alert: something downstream is failing. Circuit breaker metrics also reveal hidden dependencies: a breaker that trips frequently between 2 - 4 PM suggests a downstream service that degrades under afternoon load.
 
 ---
 
@@ -151,7 +151,7 @@ Circuit breakers are one component of the broader resilience pattern. Service di
 
 [[service-discovery|Service Discovery]]
 
-The Saga pattern for distributed transactions also needs circuit breakers for the compensating transaction steps — if a step that reverses a prior action fails, the system must have a circuit breaker to prevent it from retrying indefinitely.
+The Saga pattern for distributed transactions also needs circuit breakers for the compensating transaction steps  -  if a step that reverses a prior action fails, the system must have a circuit breaker to prevent it from retrying indefinitely.
 
 [[saga-pattern|Saga Pattern]]
 
@@ -167,10 +167,10 @@ Misconception 1: "A circuit breaker retries the failed request automatically."
 Reality: A circuit breaker does not retry. Retrying is a separate concern. In the open state, the circuit breaker fails the call immediately. Retries happen when the caller receives that failure and decides to retry. The circuit breaker says "don't bother, it won't work right now." Retries say "try again after a delay." These are separate, composable behaviors.
 
 Misconception 2: "A circuit breaker prevents the downstream service from failing."
-Reality: A circuit breaker prevents the downstream service's failure from propagating to the caller. The downstream service is still failing — the circuit breaker just stops sending it traffic. This gives the downstream service breathing room to recover and prevents the caller from exhausting its own resources waiting for timeouts.
+Reality: A circuit breaker prevents the downstream service's failure from propagating to the caller. The downstream service is still failing  -  the circuit breaker just stops sending it traffic. This gives the downstream service breathing room to recover and prevents the caller from exhausting its own resources waiting for timeouts.
 
 Misconception 3: "One circuit breaker per service is enough."
-Reality: Each caller should have a separate circuit breaker instance per downstream dependency. Service A calling Service B and Service C should have two independent circuit breakers — one for B, one for C. If B is failing, only the B circuit breaker opens; calls to C are unaffected. A single combined circuit breaker would open for C failures caused by B problems, which is incorrect.
+Reality: Each caller should have a separate circuit breaker instance per downstream dependency. Service A calling Service B and Service C should have two independent circuit breakers  -  one for B, one for C. If B is failing, only the B circuit breaker opens; calls to C are unaffected. A single combined circuit breaker would open for C failures caused by B problems, which is incorrect.
 
 ---
 
@@ -190,7 +190,7 @@ Common question forms:
 - "How do circuit breakers prevent cascading failures?"
 
 Answer frame:
-Describe the cascading failure problem: slow downstream → caller threads blocked → caller runs out of capacity → caller fails → upstream fails. Describe the circuit breaker as the solution: fail fast instead of blocking. Walk through three states: closed (normal), open (fail fast + recovery timer), half-open (test requests). Explain the threshold and recovery timeout configuration. Discuss fallback strategies: cached data, defaults, explicit error. Close with the importance of metrics: circuit breaker state transitions are production alerts.
+Describe the cascading failure problem: slow downstream -> caller threads blocked -> caller runs out of capacity -> caller fails -> upstream fails. Describe the circuit breaker as the solution: fail fast instead of blocking. Walk through three states: closed (normal), open (fail fast + recovery timer), half-open (test requests). Explain the threshold and recovery timeout configuration. Discuss fallback strategies: cached data, defaults, explicit error. Close with the importance of metrics: circuit breaker state transitions are production alerts.
 
 ---
 

@@ -1,6 +1,6 @@
----
+ï»¿---
 title: 12 - Asyncio Locks
-description: "`asyncio.Lock` and `asyncio.Semaphore` are coroutine-safe synchronization primitives — `async with lock:` yields to the event loop when blocked instead of blocking an OS thread; they are NOT thread-safe and must be used only within the same event loop."
+description: "`asyncio.Lock` and `asyncio.Semaphore` are coroutine-safe synchronization primitives  -  `async with lock:` yields to the event loop when blocked instead of blocking an OS thread; they are NOT thread-safe and must be used only within the same event loop."
 tags: [asyncio, Lock, Semaphore, Event, Condition, async-with, synchronization, layer-2, concurrency]
 status: draft
 difficulty: intermediate
@@ -11,33 +11,33 @@ created: 2026-05-17
 
 # Asyncio Locks
 
-> `asyncio.Lock` and `asyncio.Semaphore` are coroutine-safe synchronization primitives — `async with lock:` yields to the event loop when blocked instead of blocking an OS thread; they are NOT thread-safe and must be used only within the same event loop.
+> `asyncio.Lock` and `asyncio.Semaphore` are coroutine-safe synchronization primitives  -  `async with lock:` yields to the event loop when blocked instead of blocking an OS thread; they are NOT thread-safe and must be used only within the same event loop.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- `lock = asyncio.Lock()` — mutual exclusion; `async with lock:` acquires on entry, releases on exit
-- `await lock.acquire()` / `lock.release()` — manual acquire/release; prefer `async with`
-- `asyncio.Semaphore(n)` — limits concurrency to `n` coroutines; `async with sem:`
-- `asyncio.Event` — one-time signal; `await event.wait()` blocks until `event.set()` is called
-- `asyncio.Condition` — like `threading.Condition`; `async with cond:` then `await cond.wait()` / `cond.notify()`
+- `lock = asyncio.Lock()`  -  mutual exclusion; `async with lock:` acquires on entry, releases on exit
+- `await lock.acquire()` / `lock.release()`  -  manual acquire/release; prefer `async with`
+- `asyncio.Semaphore(n)`  -  limits concurrency to `n` coroutines; `async with sem:`
+- `asyncio.Event`  -  one-time signal; `await event.wait()` blocks until `event.set()` is called
+- `asyncio.Condition`  -  like `threading.Condition`; `async with cond:` then `await cond.wait()` / `cond.notify()`
 
 **Tricky points:**
-- `asyncio.Lock` is NOT thread-safe — it uses futures internally; do not acquire/release from different OS threads; for cross-thread signaling use `loop.call_soon_threadsafe()`
-- `asyncio.Lock` is NOT reentrant — a coroutine that tries to `acquire()` a lock it already holds will deadlock (there is no async RLock in the standard library)
-- `lock.locked()` is a snapshot — another coroutine may acquire the lock between the check and your next `await`
+- `asyncio.Lock` is NOT thread-safe  -  it uses futures internally; do not acquire/release from different OS threads; for cross-thread signaling use `loop.call_soon_threadsafe()`
+- `asyncio.Lock` is NOT reentrant  -  a coroutine that tries to `acquire()` a lock it already holds will deadlock (there is no async RLock in the standard library)
+- `lock.locked()` is a snapshot  -  another coroutine may acquire the lock between the check and your next `await`
 - `asyncio.BoundedSemaphore` raises `ValueError` if released more times than acquired; prefer it over `Semaphore` to catch bugs
-- Unlike `threading.Lock`, asyncio primitives do not have a `timeout` parameter on `acquire()` — wrap with `asyncio.wait_for()` for timeouts
+- Unlike `threading.Lock`, asyncio primitives do not have a `timeout` parameter on `acquire()`  -  wrap with `asyncio.wait_for()` for timeouts
 
 ---
 
 ## What It Is
 
-Think of `asyncio.Lock` as a one-person bathroom at a restaurant. When the coroutine holding the lock is inside (working), all other coroutines that try to enter (`await lock.acquire()`) yield to the event loop — they wait in line without blocking any threads. When the coroutine exits (`lock.release()`), the next waiter is woken up.
+Think of `asyncio.Lock` as a one-person bathroom at a restaurant. When the coroutine holding the lock is inside (working), all other coroutines that try to enter (`await lock.acquire()`) yield to the event loop  -  they wait in line without blocking any threads. When the coroutine exits (`lock.release()`), the next waiter is woken up.
 
-The key difference from `threading.Lock`: a `threading.Lock.acquire()` that is blocked parks the OS thread — no other work can happen on that thread. `asyncio.Lock.acquire()` that is blocked creates a future and yields — the event loop continues running other coroutines. This is the distinction between parallelism (threads) and cooperative multitasking (asyncio).
+The key difference from `threading.Lock`: a `threading.Lock.acquire()` that is blocked parks the OS thread  -  no other work can happen on that thread. `asyncio.Lock.acquire()` that is blocked creates a future and yields  -  the event loop continues running other coroutines. This is the distinction between parallelism (threads) and cooperative multitasking (asyncio).
 
 ---
 
@@ -101,10 +101,10 @@ async def consumer():
 
 ## How It Connects
 
-`asyncio.Lock` is the async counterpart to `threading.Lock` — same mutual exclusion semantics, but yields to the event loop instead of blocking a thread.
+`asyncio.Lock` is the async counterpart to `threading.Lock`  -  same mutual exclusion semantics, but yields to the event loop instead of blocking a thread.
 [[locks|Locks and RLock]]
 
-Async context managers (`async with`) are how asyncio primitives are consumed — `Lock`, `Semaphore`, and `Condition` all implement `__aenter__`/`__aexit__`.
+Async context managers (`async with`) are how asyncio primitives are consumed  -  `Lock`, `Semaphore`, and `Condition` all implement `__aenter__`/`__aexit__`.
 [[async-context-managers|Async Context Managers]]
 
 ---
@@ -112,7 +112,7 @@ Async context managers (`async with`) are how asyncio primitives are consumed — 
 ## Common Misconceptions
 
 Misconception 1: "`asyncio.Lock` prevents data corruption like `threading.Lock`."
-Reality: `asyncio.Lock` prevents re-entry between `await` points — a coroutine holding the lock will not be interrupted mid-execution (asyncio is cooperative, not preemptive). Data corruption in async code happens when a coroutine yields (via `await`) in the middle of a multi-step operation and another coroutine modifies shared state. The lock prevents this correctly. But unlike threading, non-awaiting code within a coroutine is never preempted, so short atomic operations don't need a lock.
+Reality: `asyncio.Lock` prevents re-entry between `await` points  -  a coroutine holding the lock will not be interrupted mid-execution (asyncio is cooperative, not preemptive). Data corruption in async code happens when a coroutine yields (via `await`) in the middle of a multi-step operation and another coroutine modifies shared state. The lock prevents this correctly. But unlike threading, non-awaiting code within a coroutine is never preempted, so short atomic operations don't need a lock.
 
 Misconception 2: "`asyncio.Lock` can be used from multiple threads."
 Reality: `asyncio.Lock` stores futures tied to a specific event loop. Calling `await lock.acquire()` from a thread that is not running that event loop will fail or corrupt the lock's state. For cross-thread synchronization, use `threading.Lock` or communicate via `loop.call_soon_threadsafe()`.
@@ -161,7 +161,7 @@ Common question forms:
 - "How do you prevent race conditions in asyncio?"
 - "What is `asyncio.Semaphore` used for?"
 
-Answer frame: `asyncio.Lock` provides mutual exclusion — `async with lock:` ensures only one coroutine at a time runs the protected block. Race conditions in asyncio occur at `await` points; the lock prevents re-entry. `asyncio.Semaphore(n)` limits concurrency to `n` — used for rate-limiting. These primitives are NOT thread-safe (event-loop only). For timeouts, wrap `await lock.acquire()` in `asyncio.wait_for()`.
+Answer frame: `asyncio.Lock` provides mutual exclusion  -  `async with lock:` ensures only one coroutine at a time runs the protected block. Race conditions in asyncio occur at `await` points; the lock prevents re-entry. `asyncio.Semaphore(n)` limits concurrency to `n`  -  used for rate-limiting. These primitives are NOT thread-safe (event-loop only). For timeouts, wrap `await lock.acquire()` in `asyncio.wait_for()`.
 
 ---
 

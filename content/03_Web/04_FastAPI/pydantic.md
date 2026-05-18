@@ -1,6 +1,6 @@
----
+﻿---
 title: 01 - Pydantic
-description: Pydantic is a data validation library that uses Python type hints to define data schemas — it validates, coerces, and serializes data at runtime, and it is the validation engine underneath FastAPI's request and response handling.
+description: Pydantic is a data validation library that uses Python type hints to define data schemas  -  it validates, coerces, and serializes data at runtime, and it is the validation engine underneath FastAPI's request and response handling.
 tags: [pydantic, validation, type-hints, serialization, FastAPI, layer-3, web]
 status: draft
 difficulty: intermediate
@@ -11,35 +11,35 @@ created: 2026-05-17
 
 # Pydantic
 
-> Pydantic is a data validation library that uses Python type hints to define data schemas — it validates, coerces, and serializes data at runtime, and it is the validation engine underneath FastAPI's request and response handling.
+> Pydantic is a data validation library that uses Python type hints to define data schemas  -  it validates, coerces, and serializes data at runtime, and it is the validation engine underneath FastAPI's request and response handling.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- Define a `BaseModel` subclass with annotated fields — Pydantic validates and coerces data on instantiation
-- Validation happens at **runtime** (unlike mypy/pyright which are static) — invalid data raises `ValidationError`
-- Pydantic **coerces** by default: `"42"` → `int` field becomes `42`; use `model_config = ConfigDict(strict=True)` to disable
-- `model.model_dump()` → dict; `model.model_dump_json()` → JSON string; `Model.model_validate(dict)` → model instance
+- Define a `BaseModel` subclass with annotated fields  -  Pydantic validates and coerces data on instantiation
+- Validation happens at **runtime** (unlike mypy/pyright which are static)  -  invalid data raises `ValidationError`
+- Pydantic **coerces** by default: `"42"` -> `int` field becomes `42`; use `model_config = ConfigDict(strict=True)` to disable
+- `model.model_dump()` -> dict; `model.model_dump_json()` -> JSON string; `Model.model_validate(dict)` -> model instance
 - Field customization: `Field(default=..., alias=..., gt=0, max_length=100, description=...)`
 
 **Tricky points:**
-- Pydantic v2 (current) is a near-complete rewrite from v1 — method names changed: `dict()` → `model_dump()`, `parse_obj()` → `model_validate()`, `schema()` → `model_json_schema()`
-- **Validators run on assignment** by default in v2 — mutating a field after creation still triggers validation if `model_config = ConfigDict(validate_assignment=True)` is set
-- `Optional[str]` in a Pydantic model means the field accepts `None` — it does **not** mean the field has a default; you still must pass it or set `default=None`
-- Nested models are validated recursively — a dict passed for a nested model field is automatically coerced into the nested model type
-- `model_dump(exclude_unset=True)` returns only fields that were explicitly set — critical for PATCH endpoints that should not overwrite unset fields
+- Pydantic v2 (current) is a near-complete rewrite from v1  -  method names changed: `dict()` -> `model_dump()`, `parse_obj()` -> `model_validate()`, `schema()` -> `model_json_schema()`
+- **Validators run on assignment** by default in v2  -  mutating a field after creation still triggers validation if `model_config = ConfigDict(validate_assignment=True)` is set
+- `Optional[str]` in a Pydantic model means the field accepts `None`  -  it does **not** mean the field has a default; you still must pass it or set `default=None`
+- Nested models are validated recursively  -  a dict passed for a nested model field is automatically coerced into the nested model type
+- `model_dump(exclude_unset=True)` returns only fields that were explicitly set  -  critical for PATCH endpoints that should not overwrite unset fields
 
 ---
 
 ## What It Is
 
-Think of a customs officer at an airport. Every traveller (piece of data) must pass through customs. The officer checks that the passport (the required fields) is present, that the declared items (the field values) match what is allowed, and that everything is in the right format. If something is wrong, the traveller is turned away with a clear explanation of what failed. If something is close but needs a minor conversion — a weight declared in pounds that needs to be in kilograms — the officer handles that too. Pydantic is that customs officer for your Python data.
+Think of a customs officer at an airport. Every traveller (piece of data) must pass through customs. The officer checks that the passport (the required fields) is present, that the declared items (the field values) match what is allowed, and that everything is in the right format. If something is wrong, the traveller is turned away with a clear explanation of what failed. If something is close but needs a minor conversion  -  a weight declared in pounds that needs to be in kilograms  -  the officer handles that too. Pydantic is that customs officer for your Python data.
 
 Pydantic lets you define data schemas as Python classes. You subclass `BaseModel` and add class attributes with type annotations. When you instantiate the model with data, Pydantic validates every field: it checks that required fields are present, that each value is the right type (or can be coerced to it), and that any constraints (minimum value, maximum length, regex pattern) are satisfied. If anything is wrong, it raises a `ValidationError` with a precise description of every field that failed and why.
 
-The key design choice that makes Pydantic powerful is that it uses Python type hints as the schema definition. You write `name: str`, `age: int`, `email: EmailStr`, `tags: list[str]` — the same syntax you would use for type checking — and Pydantic turns those annotations into a runtime validation system. This means your schema and your type annotations are the same thing. There is no separate schema file, no XML, no JSON schema to maintain alongside your code. The class definition is both documentation and enforcement.
+The key design choice that makes Pydantic powerful is that it uses Python type hints as the schema definition. You write `name: str`, `age: int`, `email: EmailStr`, `tags: list[str]`  -  the same syntax you would use for type checking  -  and Pydantic turns those annotations into a runtime validation system. This means your schema and your type annotations are the same thing. There is no separate schema file, no XML, no JSON schema to maintain alongside your code. The class definition is both documentation and enforcement.
 
 ---
 
@@ -71,9 +71,9 @@ FastAPI uses Pydantic as its validation engine. Every request body type, every r
 ## Common Misconceptions
 
 Misconception 1: "Pydantic validates types the same way mypy does."
-Reality: Pydantic validates at runtime when data is instantiated. Mypy validates statically before the program runs. They are complementary, not duplicates. Mypy catches type errors in your code — where you use the model. Pydantic catches data errors at the boundary — when untrusted external data (user input, API responses, database rows) enters your system. You need both.
+Reality: Pydantic validates at runtime when data is instantiated. Mypy validates statically before the program runs. They are complementary, not duplicates. Mypy catches type errors in your code  -  where you use the model. Pydantic catches data errors at the boundary  -  when untrusted external data (user input, API responses, database rows) enters your system. You need both.
 
-Misconception 2: "Pydantic v2 and v1 are compatible — I can upgrade without changes."
+Misconception 2: "Pydantic v2 and v1 are compatible  -  I can upgrade without changes."
 Reality: Pydantic v2 was a near-complete rewrite. Method names changed significantly: `dict()` is now `model_dump()`, `parse_obj()` is now `model_validate()`, `schema()` is now `model_json_schema()`. Configuration moved from a nested `Config` class to `model_config = ConfigDict(...)`. Validators use `@field_validator` instead of `@validator`. Pydantic v2 provides a compatibility layer (`from pydantic.v1 import BaseModel`) but relying on it is a migration step, not a final state. New projects should use v2 APIs from the start.
 
 ---
@@ -82,7 +82,7 @@ Reality: Pydantic v2 was a near-complete rewrite. Method names changed significa
 
 Pydantic is the boundary guard between the untrustworthy outside world and your application's internal logic. HTTP requests arrive as raw bytes; JSON is parsed into Python dicts with unvalidated values. Without Pydantic, every route handler must manually validate inputs, check for missing keys, coerce types, and return appropriate errors. With Pydantic, this entire layer is declarative: define a model, annotate the handler, and all validation is handled automatically. Invalid data never reaches your business logic.
 
-The `model_dump(exclude_unset=True)` pattern is particularly important for REST API design. In a PATCH endpoint, you only want to update the fields the client explicitly sent — not overwrite all fields with defaults for the ones they did not send. `exclude_unset=True` returns only the fields that were present in the incoming data, regardless of whether those fields have defaults. This makes building partial-update endpoints clean and correct without custom parsing logic.
+The `model_dump(exclude_unset=True)` pattern is particularly important for REST API design. In a PATCH endpoint, you only want to update the fields the client explicitly sent  -  not overwrite all fields with defaults for the ones they did not send. `exclude_unset=True` returns only the fields that were present in the incoming data, regardless of whether those fields have defaults. This makes building partial-update endpoints clean and correct without custom parsing logic.
 
 ---
 

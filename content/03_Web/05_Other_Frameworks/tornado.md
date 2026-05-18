@@ -1,4 +1,4 @@
----
+﻿---
 title: 03 - Tornado
 description: "Tornado is a pre-asyncio async web framework that popularized non-blocking Python web development and still sees use in legacy codebases and WebSocket-heavy services."
 tags: [tornado, async, web-framework, websockets, ioloop, layer-3, web]
@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Tornado
 
-> Tornado is the Python web framework that proved non-blocking I/O was possible in Python before asyncio existed — now integrated with asyncio, it remains relevant in legacy systems and for its native WebSocket support.
+> Tornado is the Python web framework that proved non-blocking I/O was possible in Python before asyncio existed  -  now integrated with asyncio, it remains relevant in legacy systems and for its native WebSocket support.
 
 ---
 
@@ -20,25 +20,25 @@ created: 2026-05-18
 **Core idea:**
 - Non-blocking async web framework and networking library, originally built by FriendFeed (acquired by Facebook in 2009)
 - Uses `tornado.ioloop.IOLoop` which integrates with Python's `asyncio` event loop since Tornado 5+
-- Route handlers subclass `tornado.web.RequestHandler` — `get()`, `post()` are methods, not decorated functions
+- Route handlers subclass `tornado.web.RequestHandler`  -  `get()`, `post()` are methods, not decorated functions
 - Native WebSocket support via `tornado.websocket.WebSocketHandler` with `on_message`, `open`, and `on_close` callbacks
 - `tornado.httpclient.AsyncHTTPClient` provides a built-in async HTTP client
 - WSGI-based apps can be run inside Tornado via `tornado.wsgi.WSGIContainer`
 
 **Tricky points:**
-- Tornado's handler class model is fundamentally different from FastAPI/Flask decorator-based routing — porting code between frameworks requires restructuring, not just syntax changes
+- Tornado's handler class model is fundamentally different from FastAPI/Flask decorator-based routing  -  porting code between frameworks requires restructuring, not just syntax changes
 - Pre-Tornado-5 code using `@tornado.gen.coroutine` and `yield` is still common in legacy codebases; these are compatible with asyncio but look different from `async/await`
-- `self.write()` buffers output; `self.finish()` flushes it and ends the response — forgetting `finish()` in some code paths causes hanging requests
-- Tornado's `IOLoop.current()` and asyncio's event loop are the same object since Tornado 5 — mixing them is safe but can confuse debugging
+- `self.write()` buffers output; `self.finish()` flushes it and ends the response  -  forgetting `finish()` in some code paths causes hanging requests
+- Tornado's `IOLoop.current()` and asyncio's event loop are the same object since Tornado 5  -  mixing them is safe but can confuse debugging
 - Running Tornado with multiple processes uses its own `tornado.process.fork_processes()`, not Gunicorn workers
 
 ---
 
 ## What It Is
 
-Consider the historical moment: in 2009, Python web development meant Apache + mod_wsgi + Django or Flask. Every request tied up an OS thread or process for its entire duration, and handling ten thousand simultaneous long-lived connections — the "C10K problem" — was computationally expensive or impractical. Node.js was emerging as evidence that a single-threaded, event-driven model could handle enormous concurrency. FriendFeed, a social aggregation startup, faced exactly this problem: their product aggregated real-time feeds from dozens of sources per user, requiring many simultaneous long-lived connections per request. They built Tornado as their solution in Python, open-sourced it when Facebook acquired them, and demonstrated that Python could do non-blocking I/O effectively.
+Consider the historical moment: in 2009, Python web development meant Apache + mod_wsgi + Django or Flask. Every request tied up an OS thread or process for its entire duration, and handling ten thousand simultaneous long-lived connections  -  the "C10K problem"  -  was computationally expensive or impractical. Node.js was emerging as evidence that a single-threaded, event-driven model could handle enormous concurrency. FriendFeed, a social aggregation startup, faced exactly this problem: their product aggregated real-time feeds from dozens of sources per user, requiring many simultaneous long-lived connections per request. They built Tornado as their solution in Python, open-sourced it when Facebook acquired them, and demonstrated that Python could do non-blocking I/O effectively.
 
-Tornado's architecture centres on an event loop — the `IOLoop` — that manages a pool of non-blocking sockets and dispatches callbacks when I/O is ready. This is the same conceptual model that Node.js uses and that Python's asyncio later standardized. Before asyncio existed (Python 3.4, 2014), Tornado's IOLoop was the primary way to write high-concurrency Python code. Tornado introduced its own coroutine system using generator-based coroutines (`@gen.coroutine` / `yield`), which predated Python's native `async/await` syntax but worked on the same principle of suspending execution while waiting for I/O.
+Tornado's architecture centres on an event loop  -  the `IOLoop`  -  that manages a pool of non-blocking sockets and dispatches callbacks when I/O is ready. This is the same conceptual model that Node.js uses and that Python's asyncio later standardized. Before asyncio existed (Python 3.4, 2014), Tornado's IOLoop was the primary way to write high-concurrency Python code. Tornado introduced its own coroutine system using generator-based coroutines (`@gen.coroutine` / `yield`), which predated Python's native `async/await` syntax but worked on the same principle of suspending execution while waiting for I/O.
 
 Since Tornado 5 (2018), `tornado.ioloop.IOLoop` wraps Python's standard `asyncio` event loop. Tornado coroutines and asyncio coroutines are now interoperable, and `async def` / `await` is the preferred syntax for new Tornado code. This convergence means Tornado applications can use asyncio libraries directly, and asyncio applications can use Tornado's higher-level networking utilities. The framework did not become obsolete by asyncio's arrival; instead, it became part of the broader asyncio ecosystem while retaining its unique features, particularly the mature WebSocket implementation and the WSGI container bridge.
 
@@ -98,7 +98,7 @@ This is simpler and more battle-tested than many WebSocket abstractions built on
 
 ## How It Connects
 
-Tornado's WebSocket handler model is a practical alternative to FastAPI's WebSocket support and to the standalone `websockets` library — all three solve the same problem with different API styles.
+Tornado's WebSocket handler model is a practical alternative to FastAPI's WebSocket support and to the standalone `websockets` library  -  all three solve the same problem with different API styles.
 
 [[websockets|WebSockets]]
 
@@ -121,7 +121,7 @@ Misconception 2: "Tornado cannot use modern asyncio libraries."
 Reality: Since Tornado 5, `asyncio.coroutine` and `tornado.gen.coroutine` are interoperable. Tornado handlers can `await` asyncio-based libraries (aiohttp, asyncpg, etc.) directly. The IOLoop and asyncio event loop are the same object.
 
 Misconception 3: "I should rewrite legacy Tornado code to FastAPI immediately."
-Reality: A working Tornado service that handles its load reliably does not need to be rewritten. Rewrites introduce risk. The correct trigger for migration is when Tornado's limitations (smaller ecosystem, class-based routing complexity) create actual friction — not simply because a newer framework exists.
+Reality: A working Tornado service that handles its load reliably does not need to be rewritten. Rewrites introduce risk. The correct trigger for migration is when Tornado's limitations (smaller ecosystem, class-based routing complexity) create actual friction  -  not simply because a newer framework exists.
 
 ---
 
@@ -141,7 +141,7 @@ Common question forms:
 - "Can Tornado and asyncio code be mixed?"
 
 Answer frame:
-A strong answer to the first question describes the C10K context — handling many simultaneous long-lived connections — and explains Tornado's event loop model as the solution, noting that this was pre-asyncio. For routing differences, the class-based `RequestHandler` model with URL regex mapping contrasts with Flask/FastAPI's decorator-on-function approach. For the asyncio compatibility question, the correct answer is yes, completely, since Tornado 5 — and a strong answer explains that `IOLoop.current()` and `asyncio.get_event_loop()` return the same object.
+A strong answer to the first question describes the C10K context  -  handling many simultaneous long-lived connections  -  and explains Tornado's event loop model as the solution, noting that this was pre-asyncio. For routing differences, the class-based `RequestHandler` model with URL regex mapping contrasts with Flask/FastAPI's decorator-on-function approach. For the asyncio compatibility question, the correct answer is yes, completely, since Tornado 5  -  and a strong answer explains that `IOLoop.current()` and `asyncio.get_event_loop()` return the same object.
 
 ---
 

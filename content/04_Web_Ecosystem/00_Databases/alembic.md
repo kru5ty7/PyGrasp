@@ -1,6 +1,6 @@
----
+﻿---
 title: 04 - Alembic Migrations
-description: "Alembic is a database migration tool for SQLAlchemy — it generates versioned migration scripts (`upgrade`/`downgrade`) from model changes; `alembic revision --autogenerate` diffs your models against the current schema; migrations track the schema evolution over time."
+description: "Alembic is a database migration tool for SQLAlchemy  -  it generates versioned migration scripts (`upgrade`/`downgrade`) from model changes; `alembic revision --autogenerate` diffs your models against the current schema; migrations track the schema evolution over time."
 tags: [alembic, migrations, schema, upgrade, downgrade, autogenerate, layer-3, web]
 status: draft
 difficulty: intermediate
@@ -11,25 +11,25 @@ created: 2026-05-17
 
 # Alembic Migrations
 
-> Alembic is a database migration tool for SQLAlchemy — it generates versioned migration scripts (`upgrade`/`downgrade`) from model changes; `alembic revision --autogenerate` diffs your models against the current schema; migrations track the schema evolution over time.
+> Alembic is a database migration tool for SQLAlchemy  -  it generates versioned migration scripts (`upgrade`/`downgrade`) from model changes; `alembic revision --autogenerate` diffs your models against the current schema; migrations track the schema evolution over time.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- `alembic init alembic` — initialize; creates `alembic/` directory + `alembic.ini`
-- `alembic revision --autogenerate -m "add users table"` — generate migration from model diff
-- `alembic upgrade head` — apply all pending migrations
-- `alembic downgrade -1` — roll back the last migration
-- `alembic current` — show current applied revision; `alembic history` — list all revisions
+- `alembic init alembic`  -  initialize; creates `alembic/` directory + `alembic.ini`
+- `alembic revision --autogenerate -m "add users table"`  -  generate migration from model diff
+- `alembic upgrade head`  -  apply all pending migrations
+- `alembic downgrade -1`  -  roll back the last migration
+- `alembic current`  -  show current applied revision; `alembic history`  -  list all revisions
 
 **Tricky points:**
-- `--autogenerate` compares SQLAlchemy metadata (your models) against the live DB — it requires a live DB connection; run against a dev DB, not production directly
-- Autogenerate does NOT detect: renamed tables/columns (it sees drop+create), check constraints (on some DBs), stored procedures, or custom types — review every generated migration before applying
-- `alembic_version` table in the DB tracks the current revision — never manually edit this table
-- Migration scripts are Python files — you can add data migrations (INSERT, UPDATE) inside `upgrade()` alongside schema changes
-- Order of operations: add NOT NULL columns with defaults first, then apply `NOT NULL` constraint in a separate step — otherwise existing rows violate the constraint
+- `--autogenerate` compares SQLAlchemy metadata (your models) against the live DB  -  it requires a live DB connection; run against a dev DB, not production directly
+- Autogenerate does NOT detect: renamed tables/columns (it sees drop+create), check constraints (on some DBs), stored procedures, or custom types  -  review every generated migration before applying
+- `alembic_version` table in the DB tracks the current revision  -  never manually edit this table
+- Migration scripts are Python files  -  you can add data migrations (INSERT, UPDATE) inside `upgrade()` alongside schema changes
+- Order of operations: add NOT NULL columns with defaults first, then apply `NOT NULL` constraint in a separate step  -  otherwise existing rows violate the constraint
 
 ---
 
@@ -37,7 +37,7 @@ created: 2026-05-17
 
 When you change a SQLAlchemy model (add a column, rename a table), the Python object changes but the database schema doesn't. Alembic bridges this: it compares your models to the current database schema, generates a migration script with the necessary `ALTER TABLE` / `CREATE TABLE` statements, and applies them.
 
-Each migration has a revision ID and references its predecessor — they form a linear chain. This ensures migrations are applied in the correct order across environments (dev, staging, prod).
+Each migration has a revision ID and references its predecessor  -  they form a linear chain. This ensures migrations are applied in the correct order across environments (dev, staging, prod).
 
 ---
 
@@ -100,7 +100,7 @@ def upgrade() -> None:
 
 ## How It Connects
 
-Alembic works with SQLAlchemy models — it reads `Base.metadata` to understand the target schema.
+Alembic works with SQLAlchemy models  -  it reads `Base.metadata` to understand the target schema.
 [[sqlalchemy-core|SQLAlchemy Core]]
 
 In CI/CD pipelines, `alembic upgrade head` is run as part of deployment to apply pending migrations before the new app version starts.
@@ -121,10 +121,10 @@ Reality: Always test migrations on a staging environment first. Add a NOT NULL c
 ## Why It Matters in Practice
 
 Migration discipline:
-- Every model change = a new migration — never modify the database schema manually
+- Every model change = a new migration  -  never modify the database schema manually
 - Migrations committed to version control alongside the code change
-- `alembic upgrade head` in deployment scripts — automated, repeatable schema application
-- `downgrade()` in every migration — ability to roll back if a deployment fails
+- `alembic upgrade head` in deployment scripts  -  automated, repeatable schema application
+- `downgrade()` in every migration  -  ability to roll back if a deployment fails
 
 Zero-downtime migration pattern for large tables:
 ```
@@ -141,7 +141,7 @@ Common question forms:
 - "How do you handle database schema changes in Python?"
 - "What is a migration?"
 
-Answer frame: Alembic tracks schema evolution as versioned scripts. `alembic revision --autogenerate` diffs models vs DB → generates upgrade/downgrade script. `alembic upgrade head` applies all pending migrations. Each migration has a revision ID forming a chain. Always review autogenerated scripts — they miss renames and custom constraints. For large tables, add nullable columns first, backfill, then add NOT NULL constraint.
+Answer frame: Alembic tracks schema evolution as versioned scripts. `alembic revision --autogenerate` diffs models vs DB -> generates upgrade/downgrade script. `alembic upgrade head` applies all pending migrations. Each migration has a revision ID forming a chain. Always review autogenerated scripts  -  they miss renames and custom constraints. For large tables, add nullable columns first, backfill, then add NOT NULL constraint.
 
 ---
 

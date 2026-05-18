@@ -1,6 +1,6 @@
----
+﻿---
 title: 04 - Redis Architecture
-description: "How Redis achieves its speed through a single-threaded event loop and I/O multiplexing — and what that architecture means for how you use it."
+description: "How Redis achieves its speed through a single-threaded event loop and I/O multiplexing  -  and what that architecture means for how you use it."
 tags: [redis, architecture, caching, layer-7, system-design]
 status: draft
 difficulty: intermediate
@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Redis Architecture
 
-> Redis is fast not because it is magic, but because of a specific set of architectural decisions — understanding them explains both its performance and its limitations.
+> Redis is fast not because it is magic, but because of a specific set of architectural decisions  -  understanding them explains both its performance and its limitations.
 
 ---
 
@@ -19,29 +19,29 @@ created: 2026-05-18
 
 **Core idea:**
 - Redis runs a single-threaded event loop that handles all client commands sequentially
-- Operations are atomic by design — the single thread means no concurrent modification
+- Operations are atomic by design  -  the single thread means no concurrent modification
 - All data lives in memory; persistence is optional and asynchronous by default
 - I/O multiplexing (epoll/kqueue) allows one thread to handle thousands of concurrent connections
 - Redis 6.0+ uses I/O threads for network reads/writes but keeps command execution single-threaded
 
 **Tricky points:**
-- "Single-threaded" means command execution is serial — a slow command (O(n) KEYS scan) blocks all others
-- Redis is not limited by CPU for most workloads — it is limited by network bandwidth and memory
+- "Single-threaded" means command execution is serial  -  a slow command (O(n) KEYS scan) blocks all others
+- Redis is not limited by CPU for most workloads  -  it is limited by network bandwidth and memory
 - The event loop does not parallelize: two simultaneous writes are serialized, not interleaved
 - MULTI/EXEC transactions are atomic at the command level but do not support rollback
-- Redis is not a durable store by default — if the server crashes without persistence, all data is lost
+- Redis is not a durable store by default  -  if the server crashes without persistence, all data is lost
 
 ---
 
 ## What It Is
 
-Imagine a very fast, very organized cashier at a grocery store. There is only one cashier — but this cashier moves so quickly that the line moves faster than a multi-cashier system with coordination overhead. Each customer presents their groceries, the cashier processes them instantly, and the next customer steps up. Because only one customer is served at a time, there is never a dispute about who owns a particular item or whose total is being rung up. The speed comes from the simplicity of having exactly one actor doing the work.
+Imagine a very fast, very organized cashier at a grocery store. There is only one cashier  -  but this cashier moves so quickly that the line moves faster than a multi-cashier system with coordination overhead. Each customer presents their groceries, the cashier processes them instantly, and the next customer steps up. Because only one customer is served at a time, there is never a dispute about who owns a particular item or whose total is being rung up. The speed comes from the simplicity of having exactly one actor doing the work.
 
-Redis (Remote Dictionary Server) is an in-memory data store built on this philosophy. It runs a single event loop in a single thread. Every client command — a GET, a SET, an LPUSH, a ZADD — executes sequentially in this loop. No command is executed concurrently with another. This sounds like a limitation, but it is the source of Redis's most important property: every operation is atomic. There are no races, no locks, no transactions needed for most operations. "Increment this counter" is atomic. "Add this element to a set" is atomic. "Get and set this key" can be made atomic with Lua scripts.
+Redis (Remote Dictionary Server) is an in-memory data store built on this philosophy. It runs a single event loop in a single thread. Every client command  -  a GET, a SET, an LPUSH, a ZADD  -  executes sequentially in this loop. No command is executed concurrently with another. This sounds like a limitation, but it is the source of Redis's most important property: every operation is atomic. There are no races, no locks, no transactions needed for most operations. "Increment this counter" is atomic. "Add this element to a set" is atomic. "Get and set this key" can be made atomic with Lua scripts.
 
 The speed comes from several factors. First, all data is in RAM. A memory access takes roughly 100 nanoseconds; a disk access takes roughly 100 microseconds to 10 milliseconds depending on the storage type. Serving data from memory is orders of magnitude faster than from disk. Second, the data structures Redis implements (hash tables, skip lists, ziplist-compressed structures for small collections) are highly optimized for in-memory operation. Third, the event loop eliminates context-switching overhead: there are no thread context switches, no lock acquisitions, no scheduler interventions during command processing.
 
-I/O multiplexing via epoll (Linux), kqueue (macOS), or IOCP (Windows) allows Redis's single thread to manage thousands of client connections simultaneously without blocking. When a client sends a command, the kernel notifies Redis via the multiplexer that data is available to read. Redis reads the command, executes it, writes the response, and moves to the next ready client. Clients waiting for I/O do not consume CPU — they exist only as file descriptors in the kernel's event queue. This is the same architecture as Nginx and Node.js.
+I/O multiplexing via epoll (Linux), kqueue (macOS), or IOCP (Windows) allows Redis's single thread to manage thousands of client connections simultaneously without blocking. When a client sends a command, the kernel notifies Redis via the multiplexer that data is available to read. Redis reads the command, executes it, writes the response, and moves to the next ready client. Clients waiting for I/O do not consume CPU  -  they exist only as file descriptors in the kernel's event queue. This is the same architecture as Nginx and Node.js.
 
 ---
 
@@ -88,9 +88,9 @@ result = deduct_balance(keys=['user:balance:42'], args=[10])
 print(f"Deduction {'succeeded' if result else 'failed (insufficient balance)'}")
 ```
 
-The single-threaded execution model has a direct implication for Lua scripts: a Lua script executed in Redis runs to completion atomically, with no other commands executing concurrently. This makes Lua scripts the mechanism for implementing custom atomic operations that require more than one Redis command — such as "check a condition and, if true, perform an action." This is far more efficient than optimistic locking in the client.
+The single-threaded execution model has a direct implication for Lua scripts: a Lua script executed in Redis runs to completion atomically, with no other commands executing concurrently. This makes Lua scripts the mechanism for implementing custom atomic operations that require more than one Redis command  -  such as "check a condition and, if true, perform an action." This is far more efficient than optimistic locking in the client.
 
-Pipeline pipelining sends multiple commands to Redis without waiting for each response, then collects all responses at the end. This reduces round-trip overhead from N round-trips to 1. Pipelining does not guarantee atomicity — other clients can interleave commands between the pipelined commands. For atomic multi-command operations, use MULTI/EXEC or a Lua script.
+Pipeline pipelining sends multiple commands to Redis without waiting for each response, then collects all responses at the end. This reduces round-trip overhead from N round-trips to 1. Pipelining does not guarantee atomicity  -  other clients can interleave commands between the pipelined commands. For atomic multi-command operations, use MULTI/EXEC or a Lua script.
 
 ---
 
@@ -100,7 +100,7 @@ Redis's single-threaded architecture makes it an ideal distributed lock and coun
 
 [[redis-data-structures|Redis Data Structures]]
 
-The default Redis configuration stores nothing to disk — if the server restarts, all data is lost. Persistence modes (RDB and AOF) change this behavior with different tradeoffs.
+The default Redis configuration stores nothing to disk  -  if the server restarts, all data is lost. Persistence modes (RDB and AOF) change this behavior with different tradeoffs.
 
 [[redis-persistence|Redis Persistence]]
 
@@ -119,7 +119,7 @@ Misconception 2: "Redis MULTI/EXEC transactions support rollback."
 Reality: Redis MULTI/EXEC transactions execute all queued commands atomically (no interleaving from other clients), but they do not support rollback. If one command in the EXEC block fails (e.g., calling INCR on a string value), Redis continues executing the remaining commands. There is no way to roll back commands that already succeeded within the block. For true transactional semantics, use Lua scripts.
 
 Misconception 3: "Redis is a database and can replace my relational database."
-Reality: Redis is an in-memory data store, not a general-purpose database. It lacks SQL query capabilities, foreign key constraints, complex joins, and the durability guarantees of a relational database (by default). It is the right tool for caching, session storage, rate limiting, leaderboards, and real-time pub/sub — not for relational data with complex query patterns.
+Reality: Redis is an in-memory data store, not a general-purpose database. It lacks SQL query capabilities, foreign key constraints, complex joins, and the durability guarantees of a relational database (by default). It is the right tool for caching, session storage, rate limiting, leaderboards, and real-time pub/sub  -  not for relational data with complex query patterns.
 
 ---
 
@@ -127,7 +127,7 @@ Reality: Redis is an in-memory data store, not a general-purpose database. It la
 
 Understanding Redis's architecture prevents entire classes of bugs. The single-threaded model means that a single slow command (KEYS *, SMEMBERS on a huge set, SORT on a large list) blocks every other client for the duration. In production, this causes latency spikes that appear unrelated to the slow command because all clients experience them. Knowing this, you use SCAN instead of KEYS, cap collection sizes, and avoid O(N) operations on large collections.
 
-The in-memory-first model means Redis is not safe as the only store for critical data unless persistence is configured correctly. Many engineers assume Redis persists data durably. The default configuration does not. Designing a system that relies on Redis for non-reproducible state — order IDs, payment records — without understanding persistence modes is a reliability risk.
+The in-memory-first model means Redis is not safe as the only store for critical data unless persistence is configured correctly. Many engineers assume Redis persists data durably. The default configuration does not. Designing a system that relies on Redis for non-reproducible state  -  order IDs, payment records  -  without understanding persistence modes is a reliability risk.
 
 ---
 

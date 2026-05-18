@@ -1,6 +1,6 @@
 ﻿---
 title: 05 - How Python Runs Your Code
-description: "From the moment you type `python script.py` to the moment the first instruction executes, your code passes through five distinct stages — each one transforming it into something CPython can work with more directly."
+description: "From the moment you type `python script.py` to the moment the first instruction executes, your code passes through five distinct stages  -  each one transforming it into something CPython can work with more directly."
 tags: [cpython, execution, pipeline, bytecode, AST, compilation, core]
 status: draft
 difficulty: intermediate
@@ -11,57 +11,57 @@ created: 2026-05-17
 
 # How Python Runs Your Code
 
-> From the moment you type `python script.py` to the moment the first instruction executes, your code passes through five distinct stages — each one transforming it into something CPython can work with more directly.
+> From the moment you type `python script.py` to the moment the first instruction executes, your code passes through five distinct stages  -  each one transforming it into something CPython can work with more directly.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- Five stages: **read → lex (tokens) → parse (AST) → compile (bytecode) → evaluate (ceval loop)**
-- Lexer: `Parser/tokenize.c` — breaks source into typed tokens
-- Parser: `Parser/parser.c` — builds an Abstract Syntax Tree; inspect with `import ast; ast.dump(ast.parse(...))`
-- Compiler: `Python/compile.c` — walks AST, emits a `PyCodeObject` per function/module
-- Evaluator: `_PyEval_EvalFrameDefault` — processes bytecode instructions one at a time
+- Five stages: **read -> lex (tokens) -> parse (AST) -> compile (bytecode) -> evaluate (ceval loop)**
+- Lexer: `Parser/tokenize.c`  -  breaks source into typed tokens
+- Parser: `Parser/parser.c`  -  builds an Abstract Syntax Tree; inspect with `import ast; ast.dump(ast.parse(...))`
+- Compiler: `Python/compile.c`  -  walks AST, emits a `PyCodeObject` per function/module
+- Evaluator: `_PyEval_EvalFrameDefault`  -  processes bytecode instructions one at a time
 - Module-level code runs **at import time**, not at call time
 
 **Tricky points:**
-- `SyntaxError` and `IndentationError` fire during the **parse stage** — before any execution; `try/except` cannot catch them
-- "Python executes line by line" — wrong; the **entire file** is lexed, parsed, and compiled before any line runs
-- `.pyc` in `__pycache__` is a **compile cache** — skips stages 1–4; still not OS-executable
-- Top-level side effects in a module (DB connections, file reads) run **on first import** — every time the module is first loaded
+- `SyntaxError` and `IndentationError` fire during the **parse stage**  -  before any execution; `try/except` cannot catch them
+- "Python executes line by line"  -  wrong; the **entire file** is lexed, parsed, and compiled before any line runs
+- `.pyc` in `__pycache__` is a **compile cache**  -  skips stages 1 - 4; still not OS-executable
+- Top-level side effects in a module (DB connections, file reads) run **on first import**  -  every time the module is first loaded
 
 ---
 
 ## What It Is
 
-Think of what happens when a chef receives a handwritten recipe. Before cooking a single thing, they read the whole recipe to check it makes sense, mentally break it into steps, and then follow those steps in order. If the recipe says "add the butter," the chef does not think about what butter is — they just get the butter and add it. Python works in a similar way. Your source code is the handwritten recipe. CPython reads it, checks it, breaks it into steps, and then follows those steps. The transformation from your text to executed instructions is not one leap — it is a sequence of deliberate stages.
+Think of what happens when a chef receives a handwritten recipe. Before cooking a single thing, they read the whole recipe to check it makes sense, mentally break it into steps, and then follow those steps in order. If the recipe says "add the butter," the chef does not think about what butter is  -  they just get the butter and add it. Python works in a similar way. Your source code is the handwritten recipe. CPython reads it, checks it, breaks it into steps, and then follows those steps. The transformation from your text to executed instructions is not one leap  -  it is a sequence of deliberate stages.
 
-The first stage is reading. CPython opens your `.py` file and reads the raw text. Nothing happens to that text yet. The second stage is lexing: CPython breaks the text into tokens — the smallest meaningful units of Python code. The word `if` is a token. The number `42` is a token. The operator `+` is a token. Whitespace mostly disappears at this stage, but indentation is tracked because Python uses it to define code structure.
+The first stage is reading. CPython opens your `.py` file and reads the raw text. Nothing happens to that text yet. The second stage is lexing: CPython breaks the text into tokens  -  the smallest meaningful units of Python code. The word `if` is a token. The number `42` is a token. The operator `+` is a token. Whitespace mostly disappears at this stage, but indentation is tracked because Python uses it to define code structure.
 
-The third stage is parsing: CPython assembles those tokens into a tree called the Abstract Syntax Tree, or AST. The AST represents the grammatical structure of your program as a tree of nodes. An `if` statement becomes a node with a condition, a body, and an optional else. A function call becomes a node with a name and a list of argument nodes. The tree captures the meaning of your code without caring about the exact characters you typed. The fourth stage is compilation: CPython walks the AST and emits bytecode — a compact sequence of low-level instructions. The fifth and final stage is evaluation: CPython's interpreter loop reads those bytecode instructions one at a time and executes them. This is where your program actually runs.
+The third stage is parsing: CPython assembles those tokens into a tree called the Abstract Syntax Tree, or AST. The AST represents the grammatical structure of your program as a tree of nodes. An `if` statement becomes a node with a condition, a body, and an optional else. A function call becomes a node with a name and a list of argument nodes. The tree captures the meaning of your code without caring about the exact characters you typed. The fourth stage is compilation: CPython walks the AST and emits bytecode  -  a compact sequence of low-level instructions. The fifth and final stage is evaluation: CPython's interpreter loop reads those bytecode instructions one at a time and executes them. This is where your program actually runs.
 
 ---
 
 ## How It Actually Works
 
-Each stage is handled by a distinct subsystem inside CPython. The lexer lives in `Parser/tokenize.c` and `Parser/lexer/`. It produces a stream of token objects, each tagged with a type (keyword, name, operator, literal) and a position in the source file. The parser lives in `Parser/parser.c` (in modern CPython, a PEG parser generated by `Tools/peg_generator/`). It consumes the token stream and builds the AST. The AST is defined in `Parser/Python.asdl` — a schema file that specifies every node type the tree can contain. You can inspect the AST yourself in Python using the `ast` module: `import ast; print(ast.dump(ast.parse("x = 1 + 2")))`.
+Each stage is handled by a distinct subsystem inside CPython. The lexer lives in `Parser/tokenize.c` and `Parser/lexer/`. It produces a stream of token objects, each tagged with a type (keyword, name, operator, literal) and a position in the source file. The parser lives in `Parser/parser.c` (in modern CPython, a PEG parser generated by `Tools/peg_generator/`). It consumes the token stream and builds the AST. The AST is defined in `Parser/Python.asdl`  -  a schema file that specifies every node type the tree can contain. You can inspect the AST yourself in Python using the `ast` module: `import ast; print(ast.dump(ast.parse("x = 1 + 2")))`.
 
-The compiler lives in `Python/compile.c`. It walks the AST using a visitor pattern and emits bytecode instructions into a `PyCodeObject` — a Python object that holds the bytecode for a single function or module, plus all the constants, variable names, and other metadata needed to run it. One `PyCodeObject` is created per function definition and per module. Nested functions each get their own object.
+The compiler lives in `Python/compile.c`. It walks the AST using a visitor pattern and emits bytecode instructions into a `PyCodeObject`  -  a Python object that holds the bytecode for a single function or module, plus all the constants, variable names, and other metadata needed to run it. One `PyCodeObject` is created per function definition and per module. Nested functions each get their own object.
 
-The evaluator is the function `_PyEval_EvalFrameDefault` in `Python/ceval.c`. It receives a frame object — a runtime structure that holds the current `PyCodeObject`, a pointer to the current instruction, and the evaluation stack where operands and results are pushed and popped. The evaluator runs a loop: fetch the next opcode, dispatch to the matching case in a switch statement, execute it, advance the instruction pointer, repeat. This loop runs until the function returns, an exception is raised, or the program exits. Every Python instruction you write — every assignment, every comparison, every function call — eventually becomes one or more iterations of this loop.
+The evaluator is the function `_PyEval_EvalFrameDefault` in `Python/ceval.c`. It receives a frame object  -  a runtime structure that holds the current `PyCodeObject`, a pointer to the current instruction, and the evaluation stack where operands and results are pushed and popped. The evaluator runs a loop: fetch the next opcode, dispatch to the matching case in a switch statement, execute it, advance the instruction pointer, repeat. This loop runs until the function returns, an exception is raised, or the program exits. Every Python instruction you write  -  every assignment, every comparison, every function call  -  eventually becomes one or more iterations of this loop.
 
 ---
 
 ## How It Connects
 
-The transformation pipeline ends when the evaluator begins working on bytecode. Understanding what bytecode actually looks like — what the instructions are, how they're structured, what `PyCodeObject` contains — is the next step after understanding how it gets produced.
+The transformation pipeline ends when the evaluator begins working on bytecode. Understanding what bytecode actually looks like  -  what the instructions are, how they're structured, what `PyCodeObject` contains  -  is the next step after understanding how it gets produced.
 [[bytecode|Bytecode]]
 
-The evaluator loop is the piece of CPython that does the actual execution. It is more than just a loop — it manages the call stack, handles exceptions, and interacts with the GIL. Understanding the loop's structure explains many of Python's performance and concurrency behaviors.
+The evaluator loop is the piece of CPython that does the actual execution. It is more than just a loop  -  it manages the call stack, handles exceptions, and interacts with the GIL. Understanding the loop's structure explains many of Python's performance and concurrency behaviors.
 [[interpreter-loop|The Interpreter Loop]]
 
-The pipeline produces and manipulates Python objects at every stage. Constants, variable names, and intermediate values are all Python objects. The fact that everything in the Python runtime is an object is not just philosophical — it shapes how the compiler represents values and how the evaluator passes them between instructions.
+The pipeline produces and manipulates Python objects at every stage. Constants, variable names, and intermediate values are all Python objects. The fact that everything in the Python runtime is an object is not just philosophical  -  it shapes how the compiler represents values and how the evaluator passes them between instructions.
 [[everything-is-an-object|Everything is an Object]]
 
 ---
@@ -69,16 +69,16 @@ The pipeline produces and manipulates Python objects at every stage. Constants, 
 ## Common Misconceptions
 
 Misconception 1: "Python reads and executes code line by line."
-Reality: CPython does not execute source lines one at a time. It first processes the entire module through lexing, parsing, and compilation into bytecode. Execution only starts after the full bytecode for the module has been produced. This is why a syntax error anywhere in a file prevents any of the file from running — the error is caught at compile time, before execution begins.
+Reality: CPython does not execute source lines one at a time. It first processes the entire module through lexing, parsing, and compilation into bytecode. Execution only starts after the full bytecode for the module has been produced. This is why a syntax error anywhere in a file prevents any of the file from running  -  the error is caught at compile time, before execution begins.
 
 Misconception 2: "The `.pyc` file in `__pycache__` is a compiled binary like a `.exe`."
-Reality: `.pyc` files contain Python bytecode, not native machine code. They are not executable by the OS directly. They still require CPython to run — the cache just means CPython can skip the lexing, parsing, and compilation stages on the next run and jump straight to evaluation. They are a compile cache, not a compiled program.
+Reality: `.pyc` files contain Python bytecode, not native machine code. They are not executable by the OS directly. They still require CPython to run  -  the cache just means CPython can skip the lexing, parsing, and compilation stages on the next run and jump straight to evaluation. They are a compile cache, not a compiled program.
 
 ---
 
 ## Why It Matters in Practice
 
-Knowing the pipeline makes error messages make sense. A `SyntaxError` fires during the parse stage — before a single line of your code has run, which is why you cannot catch it with a `try/except`. An `IndentationError` is also a parse-stage error. A `NameError` or `TypeError`, by contrast, fires during evaluation — the interpreter loop is already running and hits something it cannot handle. The stage at which an error occurs tells you what category of problem you are dealing with.
+Knowing the pipeline makes error messages make sense. A `SyntaxError` fires during the parse stage  -  before a single line of your code has run, which is why you cannot catch it with a `try/except`. An `IndentationError` is also a parse-stage error. A `NameError` or `TypeError`, by contrast, fires during evaluation  -  the interpreter loop is already running and hits something it cannot handle. The stage at which an error occurs tells you what category of problem you are dealing with.
 
 The pipeline also explains import behavior. When Python imports a module, it runs the entire module-level code through the pipeline. Side effects in a module's top-level code happen at import time, not at call time. If your module does expensive work at the top level, that cost is paid every time the module is first imported. Understanding the pipeline turns "why does this happen on import?" from a mystery into an obvious consequence.
 
@@ -91,7 +91,7 @@ Common question forms:
 - "What is the difference between a syntax error and a runtime error in Python?"
 - "Why can't you catch a SyntaxError with try/except?"
 
-Answer frame: Describe the five stages in order: read, lex, parse, compile, evaluate. Anchor the syntax error question in the pipeline — SyntaxError fires during parse, before evaluation starts, which is why try/except cannot catch it. Show that you know the AST and `PyCodeObject` exist as concrete intermediate structures, not just abstract concepts. Mention `__pycache__` as the compile cache.
+Answer frame: Describe the five stages in order: read, lex, parse, compile, evaluate. Anchor the syntax error question in the pipeline  -  SyntaxError fires during parse, before evaluation starts, which is why try/except cannot catch it. Show that you know the AST and `PyCodeObject` exist as concrete intermediate structures, not just abstract concepts. Mention `__pycache__` as the compile cache.
 
 ---
 

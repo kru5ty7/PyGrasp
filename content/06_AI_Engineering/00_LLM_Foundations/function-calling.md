@@ -1,6 +1,6 @@
----
+﻿---
 title: 06 - Function Calling
-description: "Function calling (tool use) lets an LLM request execution of a function — the model outputs a structured tool call with arguments; your code executes the function and returns the result; the model uses the result to generate the final response; enables LLMs to access external data and perform actions."
+description: "Function calling (tool use) lets an LLM request execution of a function  -  the model outputs a structured tool call with arguments; your code executes the function and returns the result; the model uses the result to generate the final response; enables LLMs to access external data and perform actions."
 tags: [function-calling, tool-use, tools, anthropic-api, structured-output, layer-4, ai]
 status: draft
 difficulty: intermediate
@@ -11,7 +11,7 @@ created: 2026-05-17
 
 # Function Calling
 
-> Function calling (tool use) lets an LLM request execution of a function — the model outputs a structured tool call with arguments; your code executes the function and returns the result; the model uses the result to generate the final response; enables LLMs to access external data and perform actions.
+> Function calling (tool use) lets an LLM request execution of a function  -  the model outputs a structured tool call with arguments; your code executes the function and returns the result; the model uses the result to generate the final response; enables LLMs to access external data and perform actions.
 
 ---
 
@@ -22,14 +22,14 @@ created: 2026-05-17
 - Model decides when to call a tool and with what arguments
 - You execute the function and return the result to the model in the next message
 - Model uses the result in its final response
-- `tool_choice` — force the model to use a specific tool or let it decide
+- `tool_choice`  -  force the model to use a specific tool or let it decide
 
 **Tricky points:**
-- The model does NOT call the function — it generates a structured request; your code calls the actual function
+- The model does NOT call the function  -  it generates a structured request; your code calls the actual function
 - Multiple tool calls in one response: the model can request several tool calls at once; you must execute all of them and return all results before the model continues
-- Tool descriptions drive quality: a poorly written description → wrong tool called at wrong time; treat descriptions like docstrings
-- `tool_choice={"type": "tool", "name": "specific_tool"}` — forces the model to always call a specific tool; use for extraction tasks
-- Error handling: if a tool fails, return the error message as the tool result — the model can handle it gracefully in its response
+- Tool descriptions drive quality: a poorly written description -> wrong tool called at wrong time; treat descriptions like docstrings
+- `tool_choice={"type": "tool", "name": "specific_tool"}`  -  forces the model to always call a specific tool; use for extraction tasks
+- Error handling: if a tool fails, return the error message as the tool result  -  the model can handle it gracefully in its response
 
 ---
 
@@ -37,7 +37,7 @@ created: 2026-05-17
 
 Function calling bridges the gap between LLM reasoning and real-world data and actions. The model knows how to reason but doesn't have access to current stock prices, your database, or the ability to send an email. With tools, the model can request those operations and incorporate the results into its response.
 
-The paradigm shift: instead of a single API call that returns a response, function calling involves a multi-turn conversation: user → model (tool call request) → your code executes → model (final response using result).
+The paradigm shift: instead of a single API call that returns a response, function calling involves a multi-turn conversation: user -> model (tool call request) -> your code executes -> model (final response using result).
 
 ---
 
@@ -88,7 +88,7 @@ def run_with_tools(user_message: str) -> str:
         )
         
         if response.stop_reason == "end_turn":
-            # Model is done — extract text response
+            # Model is done  -  extract text response
             return response.content[0].text
         
         if response.stop_reason == "tool_use":
@@ -136,7 +136,7 @@ response = client.messages.create(
     messages=[{"role": "user", "content": invoice_text}]
 )
 
-# Model always calls extract_invoice → get the structured data:
+# Model always calls extract_invoice -> get the structured data:
 tool_call = response.content[0]
 extracted = tool_call.input  # dict with invoice_number, date, etc.
 ```
@@ -145,7 +145,7 @@ extracted = tool_call.input  # dict with invoice_number, date, etc.
 
 ## How It Connects
 
-Function calling is the mechanism behind LangChain tools and LangGraph agents — agents decide which tools to call based on the task.
+Function calling is the mechanism behind LangChain tools and LangGraph agents  -  agents decide which tools to call based on the task.
 [[tool-calling|Tool Calling]]
 
 Structured output via forced tool use is more reliable than asking the model to format JSON in its text response.
@@ -156,22 +156,22 @@ Structured output via forced tool use is more reliable than asking the model to 
 ## Common Misconceptions
 
 Misconception 1: "The model executes the function."
-Reality: The model outputs a structured request with the function name and arguments. Your code executes the function. The model never has direct access to your system — it only sees what you pass back as a tool result.
+Reality: The model outputs a structured request with the function name and arguments. Your code executes the function. The model never has direct access to your system  -  it only sees what you pass back as a tool result.
 
 Misconception 2: "Tool calling requires multiple API calls."
-Reality: A response with `stop_reason = "end_turn"` means no tools were called — one API call is sufficient. Tool calling adds round trips only when the model decides to use a tool (which depends on the prompt and available tools).
+Reality: A response with `stop_reason = "end_turn"` means no tools were called  -  one API call is sufficient. Tool calling adds round trips only when the model decides to use a tool (which depends on the prompt and available tools).
 
 ---
 
 ## Why It Matters in Practice
 
 Tools turn LLMs from text transformers into action-taking agents:
-- Database queries: tool `search_products(query, filters)` → model gets real data
-- Calculations: tool `calculate(expression)` → exact math without hallucination
-- External APIs: tool `send_email(to, subject, body)` → model triggers real actions
+- Database queries: tool `search_products(query, filters)` -> model gets real data
+- Calculations: tool `calculate(expression)` -> exact math without hallucination
+- External APIs: tool `send_email(to, subject, body)` -> model triggers real actions
 - Multi-step workflows: model decides which tools to call in what order
 
-The key design principle: tools should be atomic and well-described — each tool does one thing, the description explains when to use it, and the schema is precise.
+The key design principle: tools should be atomic and well-described  -  each tool does one thing, the description explains when to use it, and the schema is precise.
 
 ---
 
@@ -181,7 +181,7 @@ Common question forms:
 - "How does function calling work with LLMs?"
 - "How do you get structured output from Claude?"
 
-Answer frame: Define tools as JSON schemas. Model returns `stop_reason="tool_use"` with tool name + arguments. Your code executes the function and returns the result. Model uses result in final response. Forced tool use (`tool_choice={"type":"tool","name":...}`) guarantees structured output — more reliable than JSON in text. Multiple tool calls can be requested in one response.
+Answer frame: Define tools as JSON schemas. Model returns `stop_reason="tool_use"` with tool name + arguments. Your code executes the function and returns the result. Model uses result in final response. Forced tool use (`tool_choice={"type":"tool","name":...}`) guarantees structured output  -  more reliable than JSON in text. Multiple tool calls can be requested in one response.
 
 ---
 

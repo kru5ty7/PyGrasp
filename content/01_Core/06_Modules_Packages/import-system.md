@@ -1,6 +1,6 @@
 ﻿---
 title: 03 - The Import System
-description: "Python's import system uses a chain of finders and loaders on `sys.meta_path` to locate and execute modules — `sys.path` is searched for file-based modules; `importlib` provides programmatic access; understanding the pipeline explains how to customize imports and debug `ModuleNotFoundError`."
+description: "Python's import system uses a chain of finders and loaders on `sys.meta_path` to locate and execute modules  -  `sys.path` is searched for file-based modules; `importlib` provides programmatic access; understanding the pipeline explains how to customize imports and debug `ModuleNotFoundError`."
 tags: [import-system, sys.meta_path, finders, loaders, importlib, sys.modules, layer-1, core]
 status: draft
 difficulty: advanced
@@ -11,33 +11,33 @@ created: 2026-05-17
 
 # The Import System
 
-> Python's import system uses a chain of finders and loaders on `sys.meta_path` to locate and execute modules — `sys.path` is searched for file-based modules; `importlib` provides programmatic access; understanding the pipeline explains how to customize imports and debug `ModuleNotFoundError`.
+> Python's import system uses a chain of finders and loaders on `sys.meta_path` to locate and execute modules  -  `sys.path` is searched for file-based modules; `importlib` provides programmatic access; understanding the pipeline explains how to customize imports and debug `ModuleNotFoundError`.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- `import x` triggers: check `sys.modules` → iterate `sys.meta_path` finders → create module object → execute code → cache in `sys.modules`
-- `sys.meta_path` — list of meta path finders; each implements `find_spec(fullname, path, target)`; checked in order
-- `sys.path_hooks` — factories for path-based finders; called when a path entry is first used
-- `sys.path` — list of directories (and zip files) to search for modules; used by `PathFinder`
-- `importlib.import_module("module.name")` — programmatic equivalent of `import`; works with dynamic names
+- `import x` triggers: check `sys.modules` -> iterate `sys.meta_path` finders -> create module object -> execute code -> cache in `sys.modules`
+- `sys.meta_path`  -  list of meta path finders; each implements `find_spec(fullname, path, target)`; checked in order
+- `sys.path_hooks`  -  factories for path-based finders; called when a path entry is first used
+- `sys.path`  -  list of directories (and zip files) to search for modules; used by `PathFinder`
+- `importlib.import_module("module.name")`  -  programmatic equivalent of `import`; works with dynamic names
 
 **Tricky points:**
-- Adding to `sys.path` at runtime affects all subsequent imports — changes persist for the process lifetime
-- `sys.meta_path` finders are consulted **before** `sys.path` — custom finders on `meta_path` can intercept any import
+- Adding to `sys.path` at runtime affects all subsequent imports  -  changes persist for the process lifetime
+- `sys.meta_path` finders are consulted **before** `sys.path`  -  custom finders on `meta_path` can intercept any import
 - `importlib.reload(module)` re-executes the module but does NOT update existing references to objects defined in the old module
-- `__import__("module")` is the low-level built-in — `import x` compiles to a `IMPORT_NAME` bytecode that calls `__import__`; use `importlib.import_module` for programmatic imports instead
-- The module spec (`importlib.machinery.ModuleSpec`) carries the module's fully qualified name, origin (file path), and loader — it is the result of `find_spec` and is used to create and load the module
+- `__import__("module")` is the low-level built-in  -  `import x` compiles to a `IMPORT_NAME` bytecode that calls `__import__`; use `importlib.import_module` for programmatic imports instead
+- The module spec (`importlib.machinery.ModuleSpec`) carries the module's fully qualified name, origin (file path), and loader  -  it is the result of `find_spec` and is used to create and load the module
 
 ---
 
 ## What It Is
 
-Think of the import system as a hierarchical filing system with a lookup pipeline. When you request a file, a series of clerks (finders) are consulted in order. Each clerk checks their domain — one knows about the standard library, one knows about installed packages, one knows about the file system. The first clerk who can find the file returns a description of where it is and how to open it (the module spec). A loader then opens and reads the file (executes the module code). The result is filed in a registry (sys.modules) so future lookups are instant.
+Think of the import system as a hierarchical filing system with a lookup pipeline. When you request a file, a series of clerks (finders) are consulted in order. Each clerk checks their domain  -  one knows about the standard library, one knows about installed packages, one knows about the file system. The first clerk who can find the file returns a description of where it is and how to open it (the module spec). A loader then opens and reads the file (executes the module code). The result is filed in a registry (sys.modules) so future lookups are instant.
 
-Most Python developers only interact with the end result — `import x` works or raises `ModuleNotFoundError`. Understanding the pipeline becomes necessary when: debugging import failures, building custom importers (import from a database, a URL, or a zip file), implementing import hooks, or understanding why `sys.path` changes affect imports.
+Most Python developers only interact with the end result  -  `import x` works or raises `ModuleNotFoundError`. Understanding the pipeline becomes necessary when: debugging import failures, building custom importers (import from a database, a URL, or a zip file), implementing import hooks, or understanding why `sys.path` changes affect imports.
 
 ---
 
@@ -47,15 +47,15 @@ The full `import x` sequence:
 
 1. **`sys.modules` cache**: `if "x" in sys.modules: return sys.modules["x"]`
 2. **`sys.meta_path` finders**: iterate `sys.meta_path`, call `finder.find_spec("x", None, None)`; first non-None `spec` wins
-3. **Module creation**: `module = importlib.util.module_from_spec(spec)` — creates empty module object
-4. **Cache early**: `sys.modules["x"] = module` — cached before execution to handle circular imports
-5. **Loading**: `spec.loader.exec_module(module)` — executes the module's code in `module.__dict__`
+3. **Module creation**: `module = importlib.util.module_from_spec(spec)`  -  creates empty module object
+4. **Cache early**: `sys.modules["x"] = module`  -  cached before execution to handle circular imports
+5. **Loading**: `spec.loader.exec_module(module)`  -  executes the module's code in `module.__dict__`
 6. Return `module`
 
 Default `sys.meta_path` contains three finders:
-- `BuiltinImporter` — handles C built-in modules (`sys`, `builtins`, etc.)
-- `FrozenImporter` — handles frozen modules (modules compiled into the Python interpreter)
-- `PathFinder` — handles file-based modules by searching `sys.path`
+- `BuiltinImporter`  -  handles C built-in modules (`sys`, `builtins`, etc.)
+- `FrozenImporter`  -  handles frozen modules (modules compiled into the Python interpreter)
+- `PathFinder`  -  handles file-based modules by searching `sys.path`
 
 `PathFinder` uses `sys.path_hooks` to create path entry finders for each directory/zip in `sys.path`. Each path entry finder implements `find_spec` for that directory.
 
@@ -85,10 +85,10 @@ print(virtual_module.answer)  # 42
 
 ## How It Connects
 
-`sys.path` is the list of directories that `PathFinder` searches — it is the most commonly adjusted part of the import system.
+`sys.path` is the list of directories that `PathFinder` searches  -  it is the most commonly adjusted part of the import system.
 [[sys-path|sys.path]]
 
-Packages extend modules with a directory structure — the import system handles package `__init__.py` execution and submodule discovery.
+Packages extend modules with a directory structure  -  the import system handles package `__init__.py` execution and submodule discovery.
 [[packages|Packages]]
 
 ---

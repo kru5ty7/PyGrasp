@@ -1,4 +1,4 @@
----
+﻿---
 title: 03 - Django URL Routing
 description: "Django's URL routing system maps URL patterns to view callables using a declarative list that supports path converters, app namespaces, and reverse resolution."
 tags: [django, layer-3, web]
@@ -27,7 +27,7 @@ created: 2026-05-18
 
 **Tricky points:**
 - `path()` converters capture and coerce the segment; the view receives a typed Python value, not a string
-- `re_path()` always captures strings, regardless of the pattern — type conversion is the view's responsibility
+- `re_path()` always captures strings, regardless of the pattern  -  type conversion is the view's responsibility
 - A trailing slash in `path('articles/', ...)` requires the request URL to include it; `APPEND_SLASH = True` redirects slash-less requests by default
 - Namespace collisions are silent: if two apps use the same `app_name`, the second registration wins
 
@@ -35,11 +35,11 @@ created: 2026-05-18
 
 ## What It Is
 
-URL routing in Django works like a postal sorting office. Every incoming request carries an address — the URL path. The sorting office (Django's URL resolver) reads the address against a sorted stack of labelled bins (`urlpatterns`). The moment a bin's label matches the address, the letter is delivered to the handler assigned to that bin (the view). If no bin matches, the sorting office returns a 404. The sorting office does not guess; it reads the list in order and stops at the first match.
+URL routing in Django works like a postal sorting office. Every incoming request carries an address  -  the URL path. The sorting office (Django's URL resolver) reads the address against a sorted stack of labelled bins (`urlpatterns`). The moment a bin's label matches the address, the letter is delivered to the handler assigned to that bin (the view). If no bin matches, the sorting office returns a 404. The sorting office does not guess; it reads the list in order and stops at the first match.
 
-The `path()` function creates a route with a human-readable pattern and optional typed captures. The pattern `'articles/<int:year>/<slug:title>/'` tells Django: match any URL that starts with `articles/`, is followed by digits (captured and converted to an integer named `year`), then a slash, then a slug string (captured as `title`), then a trailing slash. The view receives `request, year, title` — already typed correctly — without writing any parsing code. The `re_path()` alternative accepts a full regular expression, which is necessary for patterns that path converters cannot express but comes at the cost of readability and type safety.
+The `path()` function creates a route with a human-readable pattern and optional typed captures. The pattern `'articles/<int:year>/<slug:title>/'` tells Django: match any URL that starts with `articles/`, is followed by digits (captured and converted to an integer named `year`), then a slash, then a slug string (captured as `title`), then a trailing slash. The view receives `request, year, title`  -  already typed correctly  -  without writing any parsing code. The `re_path()` alternative accepts a full regular expression, which is necessary for patterns that path converters cannot express but comes at the cost of readability and type safety.
 
-Namespacing is the part of Django's URL system that unlocks serious scalability. Without namespaces, every named URL across every installed app must be globally unique, which is impossible to guarantee when combining third-party apps. The `app_name = 'blog'` declaration in `blog/urls.py` prefixes all URL names in that file with `blog:`, so `{% url 'blog:detail' pk=article.pk %}` is unambiguous regardless of how many other apps also have a URL named `detail`. This indirection also means renaming a URL in `urls.py` only requires updating the `name=` parameter — every template and `reverse()` call using the namespace resolves correctly without changes.
+Namespacing is the part of Django's URL system that unlocks serious scalability. Without namespaces, every named URL across every installed app must be globally unique, which is impossible to guarantee when combining third-party apps. The `app_name = 'blog'` declaration in `blog/urls.py` prefixes all URL names in that file with `blog:`, so `{% url 'blog:detail' pk=article.pk %}` is unambiguous regardless of how many other apps also have a URL named `detail`. This indirection also means renaming a URL in `urls.py` only requires updating the `name=` parameter  -  every template and `reverse()` call using the namespace resolves correctly without changes.
 
 ---
 
@@ -70,7 +70,7 @@ urlpatterns = [
 
 # Reverse resolution
 from django.urls import reverse
-url = reverse('blog:detail', kwargs={'pk': 42})  # → '/blog/42/'
+url = reverse('blog:detail', kwargs={'pk': 42})  # -> '/blog/42/'
 
 # In templates
 # {% url 'blog:detail' pk=article.pk %}
@@ -80,7 +80,7 @@ url = reverse('blog:detail', kwargs={'pk': 42})  # → '/blog/42/'
 
 ## How It Connects
 
-The URL configuration is the bridge between an incoming HTTP request and a view callable — understanding the HTTP request side explains why path and query parameters are separated.
+The URL configuration is the bridge between an incoming HTTP request and a view callable  -  understanding the HTTP request side explains why path and query parameters are separated.
 
 [[http-basics|HTTP Basics]]
 [[request-response-cycle|Request-Response Cycle]]
@@ -98,7 +98,7 @@ Namespaced URL reverse resolution is particularly important in templates, where 
 ## Common Misconceptions
 
 Misconception 1: "re_path() is the older, deprecated way to define URLs."
-Reality: `re_path()` is still fully supported and is the correct choice when a URL pattern requires regex features that path converters cannot express — for example, optional trailing segments or complex character class restrictions. `path()` is preferred for common cases because of its readability, but both are current API.
+Reality: `re_path()` is still fully supported and is the correct choice when a URL pattern requires regex features that path converters cannot express  -  for example, optional trailing segments or complex character class restrictions. `path()` is preferred for common cases because of its readability, but both are current API.
 
 Misconception 2: "include() just concatenates URL patterns from two files."
 Reality: `include()` causes the URL resolver to strip the matched prefix before recursing. If the root URL is `path('blog/', include('blog.urls'))` and `blog/urls.py` has `path('<int:pk>/', ...)`, the view for a request to `/blog/42/` receives `pk=42`, not `blog/42/`. The prefix is consumed at each level of `include()`.
@@ -110,7 +110,7 @@ Reality: Django uses `app_name` as the key in its namespace registry. The second
 
 ## Why It Matters in Practice
 
-The URL configuration is the public contract of a Django application. It defines what paths exist, what parameters they accept, and which view handles each one. Keeping URL definitions clean — using `include()` to delegate to app-level files, using `name=` on every route, and using namespaces consistently — pays dividends when URLs need to change. A URL that has a name can be renamed without touching templates or view code. A URL without a name forces a global search-and-replace through every template and Python file that hard-codes the path string.
+The URL configuration is the public contract of a Django application. It defines what paths exist, what parameters they accept, and which view handles each one. Keeping URL definitions clean  -  using `include()` to delegate to app-level files, using `name=` on every route, and using namespaces consistently  -  pays dividends when URLs need to change. A URL that has a name can be renamed without touching templates or view code. A URL without a name forces a global search-and-replace through every template and Python file that hard-codes the path string.
 
 The `reverse()` function also matters for programmatic redirect generation, email link construction, and API hypermedia. Any code that constructs a URL from a hard-coded string is a maintenance liability; `reverse()` with a namespace and name is the correct abstraction.
 

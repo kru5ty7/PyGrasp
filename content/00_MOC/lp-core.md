@@ -1,16 +1,16 @@
----
-title: Learning Path — Core Python
+﻿---
+title: Learning Path  -  Core Python
 description: Ground-up reading path through how CPython runs Python code and the language features built on top of that runtime.
 tags: [moc, learning-path, core, layer-0, layer-1]
 ---
 
-# Learning Path — Core Python
+# Learning Path  -  Core Python
 
-> How Python actually runs, from source file to executed bytecode, and the language features that make Python Python. Read in order — each note assumes the ones before it.
+> How Python actually runs, from source file to executed bytecode, and the language features that make Python Python. Read in order  -  each note assumes the ones before it.
 
 ---
 
-## Layer 0 — How Python Runs
+## Layer 0  -  How Python Runs
 
 1. [[what-is-python|What is Python]]
 2. [[compiled-vs-interpreted|Compiled vs Interpreted Languages]]
@@ -40,7 +40,7 @@ tags: [moc, learning-path, core, layer-0, layer-1]
 
 ---
 
-## Layer 1a — The Object System
+## Layer 1a  -  The Object System
 
 1. [[python-data-model|The Python Data Model]]
 2. [[dunder-methods|Dunder Methods]]
@@ -61,7 +61,7 @@ tags: [moc, learning-path, core, layer-0, layer-1]
 
 ---
 
-## Layer 1b — Scopes and Functions
+## Layer 1b  -  Scopes and Functions
 
 1. [[namespaces-and-scopes|Namespaces and Scopes]]
 2. [[legb-rule|The LEGB Rule]]
@@ -78,7 +78,7 @@ tags: [moc, learning-path, core, layer-0, layer-1]
 
 ---
 
-## Layer 1c — Iterators and Generators
+## Layer 1c  -  Iterators and Generators
 
 1. [[iterators|Iterators and Iterables]]
 2. [[for-loop-internals|How For Loops Work Internally]]
@@ -91,7 +91,7 @@ tags: [moc, learning-path, core, layer-0, layer-1]
 
 ---
 
-## Layer 1d — Types and Typing
+## Layer 1d  -  Types and Typing
 
 1. [[type-hints|Type Hints]]
 2. [[typing-module|The typing Module]]
@@ -104,7 +104,7 @@ tags: [moc, learning-path, core, layer-0, layer-1]
 
 ---
 
-## Layer 1e — Error Handling and Context
+## Layer 1e  -  Error Handling and Context
 
 1. [[exceptions|Exceptions]]
 2. [[exception-hierarchy|Exception Hierarchy]]
@@ -116,7 +116,7 @@ tags: [moc, learning-path, core, layer-0, layer-1]
 
 ---
 
-## Layer 1f — Modules and Packages
+## Layer 1f  -  Modules and Packages
 
 1. [[modules|Modules]]
 2. [[packages|Packages]]
@@ -129,7 +129,7 @@ tags: [moc, learning-path, core, layer-0, layer-1]
 
 ---
 
-## Layer 1g — Built-in Data Structures
+## Layer 1g  -  Built-in Data Structures
 
 1. [[lists|Lists]]
 2. [[tuples|Tuples]]

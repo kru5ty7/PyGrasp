@@ -1,6 +1,6 @@
----
+﻿---
 title: 10 - Supervisor Pattern
-description: "The supervisor pattern in LangGraph uses an LLM as an orchestrator — the supervisor receives the task and conversation history, decides which worker agent to call next, and aggregates results until the task is complete; workers focus on execution, supervisor focuses on routing."
+description: "The supervisor pattern in LangGraph uses an LLM as an orchestrator  -  the supervisor receives the task and conversation history, decides which worker agent to call next, and aggregates results until the task is complete; workers focus on execution, supervisor focuses on routing."
 tags: [langgraph, supervisor, orchestrator, multi-agent, routing, worker-agents, layer-4, ai]
 status: draft
 difficulty: advanced
@@ -11,7 +11,7 @@ created: 2026-05-17
 
 # Supervisor Pattern
 
-> The supervisor pattern in LangGraph uses an LLM as an orchestrator — the supervisor receives the task and conversation history, decides which worker agent to call next, and aggregates results until the task is complete; workers focus on execution, supervisor focuses on routing.
+> The supervisor pattern in LangGraph uses an LLM as an orchestrator  -  the supervisor receives the task and conversation history, decides which worker agent to call next, and aggregates results until the task is complete; workers focus on execution, supervisor focuses on routing.
 
 ---
 
@@ -20,22 +20,22 @@ created: 2026-05-17
 **Core idea:**
 - **Supervisor node**: an LLM that decides which worker to call next (or to finish)
 - **Worker nodes**: specialized agents or tools that execute tasks; they don't decide what to do next
-- Supervisor is called after every worker completes — it sees the accumulated results and decides the next step
-- `FINISH` is the supervisor's signal to terminate — it routes to `END` when the task is done
+- Supervisor is called after every worker completes  -  it sees the accumulated results and decides the next step
+- `FINISH` is the supervisor's signal to terminate  -  it routes to `END` when the task is done
 - `create_react_agent` from `langgraph.prebuilt` builds worker agents quickly
 
 **Tricky points:**
-- Supervisor uses an LLM call every step — each routing decision costs tokens and latency
-- Worker names in the supervisor's prompt must match actual node names — mismatches cause routing failures
-- The supervisor can call the same worker multiple times — this is intentional for iterative refinement
+- Supervisor uses an LLM call every step  -  each routing decision costs tokens and latency
+- Worker names in the supervisor's prompt must match actual node names  -  mismatches cause routing failures
+- The supervisor can call the same worker multiple times  -  this is intentional for iterative refinement
 - Without a clear task-complete criterion in the supervisor's prompt, it may loop indefinitely
-- Supervisor chain-of-thought is visible in `verbose=True` — useful for debugging routing decisions
+- Supervisor chain-of-thought is visible in `verbose=True`  -  useful for debugging routing decisions
 
 ---
 
 ## What It Is
 
-In the supervisor pattern, one LLM acts as a manager: given the task and what has been done so far, it decides which specialist to call next. The specialists are workers — they receive a specific subtask, execute it, and return results. The supervisor sees the results and decides the next step.
+In the supervisor pattern, one LLM acts as a manager: given the task and what has been done so far, it decides which specialist to call next. The specialists are workers  -  they receive a specific subtask, execute it, and return results. The supervisor sees the results and decides the next step.
 
 This mirrors how human teams work: a manager delegates to specialists, reviews their work, and decides what's needed next until the project is done.
 
@@ -144,10 +144,10 @@ The supervisor pattern is the primary architecture for multi-agent systems in La
 ## Common Misconceptions
 
 Misconception 1: "The supervisor must be a more capable model than the workers."
-Reality: Workers often need more reasoning capability than the supervisor — the supervisor makes routing decisions (simple classification), while workers execute complex tasks. You can use a cheaper model for the supervisor.
+Reality: Workers often need more reasoning capability than the supervisor  -  the supervisor makes routing decisions (simple classification), while workers execute complex tasks. You can use a cheaper model for the supervisor.
 
 Misconception 2: "The supervisor pattern requires many agents."
-Reality: A supervisor with two workers is still the supervisor pattern. The value is the separation between routing logic and execution logic — this applies even with just one worker.
+Reality: A supervisor with two workers is still the supervisor pattern. The value is the separation between routing logic and execution logic  -  this applies even with just one worker.
 
 ---
 
@@ -164,9 +164,9 @@ for event in app.stream({"messages": [...], "next": ""}):
 ```
 
 Common failure modes:
-- **Infinite loop**: supervisor never returns `FINISH` — fix the stopping condition in the system prompt
-- **Wrong worker selected**: worker names in prompt don't match node names — align them exactly
-- **Lost context**: workers don't have access to prior worker results — verify state merging is working
+- **Infinite loop**: supervisor never returns `FINISH`  -  fix the stopping condition in the system prompt
+- **Wrong worker selected**: worker names in prompt don't match node names  -  align them exactly
+- **Lost context**: workers don't have access to prior worker results  -  verify state merging is working
 
 ---
 
@@ -176,7 +176,7 @@ Common question forms:
 - "How would you design a multi-agent research and writing system?"
 - "What is the supervisor pattern?"
 
-Answer frame: Supervisor = LLM that decides which worker runs next. Workers execute; supervisor orchestrates. Pattern: START → supervisor → [worker] → supervisor (loop) → FINISH → END. Supervisor sees full message history, including worker results. Use structured output (`with_structured_output`) for reliable routing decisions. Workers return to supervisor after every execution.
+Answer frame: Supervisor = LLM that decides which worker runs next. Workers execute; supervisor orchestrates. Pattern: START -> supervisor -> [worker] -> supervisor (loop) -> FINISH -> END. Supervisor sees full message history, including worker results. Use structured output (`with_structured_output`) for reliable routing decisions. Workers return to supervisor after every execution.
 
 ---
 

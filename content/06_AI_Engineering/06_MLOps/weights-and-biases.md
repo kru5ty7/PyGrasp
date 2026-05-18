@@ -1,6 +1,6 @@
----
+﻿---
 title: 08 - Weights and Biases
-description: "experiment tracking, hyperparameter sweeps, artifact versioning, and model comparison using the Weights and Biases platform — covering runs, sweeps, and how it differs from MLflow"
+description: "experiment tracking, hyperparameter sweeps, artifact versioning, and model comparison using the Weights and Biases platform  -  covering runs, sweeps, and how it differs from MLflow"
 tags: [wandb, weights-and-biases, experiment-tracking, sweeps, hyperparameter-search, mlops, layer-6, ai]
 status: draft
 difficulty: intermediate
@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Weights and Biases
 
-> Weights and Biases is a cloud-native experiment tracking platform that adds hyperparameter sweep automation and richer visualization on top of the same run/metric/artifact pattern as MLflow — the key differentiator is the sweep system, which automates hyperparameter search across distributed training jobs.
+> Weights and Biases is a cloud-native experiment tracking platform that adds hyperparameter sweep automation and richer visualization on top of the same run/metric/artifact pattern as MLflow  -  the key differentiator is the sweep system, which automates hyperparameter search across distributed training jobs.
 
 ---
 
@@ -19,26 +19,26 @@ created: 2026-05-18
 
 **Core idea:**
 - `wandb.init(project="my-project", name="run-1", config={...})`: start a tracked run with configuration
-- `wandb.log({"train_loss": 0.45, "val_acc": 0.89})`: log metrics — called repeatedly; each call is a new step
+- `wandb.log({"train_loss": 0.45, "val_acc": 0.89})`: log metrics  -  called repeatedly; each call is a new step
 - `wandb.log({"train_loss": loss}, step=epoch)`: explicit step control
-- **Sweep**: a search over hyperparameter space — `wandb.sweep(sweep_config)` + `wandb.agent(sweep_id, function=train_fn, count=N)` — runs N training jobs with different hyperparameter combinations
-- **Artifacts**: versioned data/model blobs — `wandb.Artifact(name, type)` + `artifact.add_file(path)` + `run.log_artifact(artifact)` — with lineage tracking (which artifact produced which model)
+- **Sweep**: a search over hyperparameter space  -  `wandb.sweep(sweep_config)` + `wandb.agent(sweep_id, function=train_fn, count=N)`  -  runs N training jobs with different hyperparameter combinations
+- **Artifacts**: versioned data/model blobs  -  `wandb.Artifact(name, type)` + `artifact.add_file(path)` + `run.log_artifact(artifact)`  -  with lineage tracking (which artifact produced which model)
 - `wandb.watch(model, log="all", log_freq=100)`: attach a PyTorch model to a run for automatic gradient and weight histogram logging
 
 **Tricky points:**
-- `wandb.init()` requires a network connection to the W&B cloud by default — use `mode="offline"` for air-gapped environments, then `wandb sync` to upload when connected
-- Sweeps use Bayesian optimization, random search, or grid search — Bayesian optimization (`method: bayes`) is efficient for continuous hyperparameters but requires a defined `metric.goal` to optimize toward
-- `wandb.log()` without a `step` argument auto-increments an internal counter — mixing `wandb.log({"loss": loss})` and `wandb.log({"acc": acc}, step=epoch)` in the same run can produce misaligned metric timelines
-- W&B charges for storage of large artifacts and for seats on team plans — artifact versioning at scale (large model checkpoints logged every epoch) can accumulate significant storage costs
-- The `wandb.watch()` gradient logging can significantly slow training because it hooks into the backward pass — log at intervals (`log_freq=100`) rather than every step
+- `wandb.init()` requires a network connection to the W&B cloud by default  -  use `mode="offline"` for air-gapped environments, then `wandb sync` to upload when connected
+- Sweeps use Bayesian optimization, random search, or grid search  -  Bayesian optimization (`method: bayes`) is efficient for continuous hyperparameters but requires a defined `metric.goal` to optimize toward
+- `wandb.log()` without a `step` argument auto-increments an internal counter  -  mixing `wandb.log({"loss": loss})` and `wandb.log({"acc": acc}, step=epoch)` in the same run can produce misaligned metric timelines
+- W&B charges for storage of large artifacts and for seats on team plans  -  artifact versioning at scale (large model checkpoints logged every epoch) can accumulate significant storage costs
+- The `wandb.watch()` gradient logging can significantly slow training because it hooks into the backward pass  -  log at intervals (`log_freq=100`) rather than every step
 
 ---
 
 ## What It Is
 
-Managing ML experiments without tooling is like managing a series of cooking experiments by taste-testing results and trusting memory. You try a new recipe variation, note mentally that it seemed better, change two more things the next day, and after a week you can no longer explain what you ate on Tuesday that was particularly good or reproduce it reliably. Weights and Biases is the professional kitchen log — every ingredient, quantity, temperature, and timing recorded, with photographs of each dish, and a search interface that lets you find "the pasta dish with garlic and lemon that scored 9/10."
+Managing ML experiments without tooling is like managing a series of cooking experiments by taste-testing results and trusting memory. You try a new recipe variation, note mentally that it seemed better, change two more things the next day, and after a week you can no longer explain what you ate on Tuesday that was particularly good or reproduce it reliably. Weights and Biases is the professional kitchen log  -  every ingredient, quantity, temperature, and timing recorded, with photographs of each dish, and a search interface that lets you find "the pasta dish with garlic and lemon that scored 9/10."
 
-Weights and Biases (W&B) and MLflow solve the same core problem — experiment reproducibility and comparison — but with different architectural philosophies. MLflow is open-source and self-hosted: you run the tracking server on your own infrastructure. W&B is a cloud-hosted SaaS product: experiment data is sent to W&B's servers in real time, and the UI lives at `wandb.ai`. W&B's cloud-first design means the UI is richer and more polished than MLflow's out-of-the-box, team collaboration features work without infrastructure setup, and real-time monitoring of training runs (watching loss curves update live) works seamlessly. The tradeoff is that experiment data leaves your infrastructure by default, which is a compliance concern for some organizations.
+Weights and Biases (W&B) and MLflow solve the same core problem  -  experiment reproducibility and comparison  -  but with different architectural philosophies. MLflow is open-source and self-hosted: you run the tracking server on your own infrastructure. W&B is a cloud-hosted SaaS product: experiment data is sent to W&B's servers in real time, and the UI lives at `wandb.ai`. W&B's cloud-first design means the UI is richer and more polished than MLflow's out-of-the-box, team collaboration features work without infrastructure setup, and real-time monitoring of training runs (watching loss curves update live) works seamlessly. The tradeoff is that experiment data leaves your infrastructure by default, which is a compliance concern for some organizations.
 
 The feature that most differentiates W&B from MLflow is the Sweeps system. A sweep is an automated hyperparameter search experiment: you define the hyperparameter space (which parameters to vary, what ranges to explore, what search strategy to use), and W&B's sweep controller distributes training jobs across one or more machines, managing the search algorithmically. Bayesian optimization sweeps use the results of completed runs to predict which hyperparameter configuration is most likely to improve the target metric, focusing subsequent runs on promising regions of the space. Random search sweeps sample uniformly, which is better for large or discontinuous hyperparameter spaces. Grid search exhaustively evaluates all combinations, appropriate only for small discrete spaces.
 
@@ -122,7 +122,7 @@ artifact_dir = artifact.download()
 
 ## How It Connects
 
-MLflow is the primary alternative to W&B for experiment tracking. The choice between them is architectural: MLflow for self-hosted open-source, W&B for cloud-managed SaaS. Both integrate with the Hugging Face `Trainer` and both support a model registry — the concepts map directly, though the APIs differ.
+MLflow is the primary alternative to W&B for experiment tracking. The choice between them is architectural: MLflow for self-hosted open-source, W&B for cloud-managed SaaS. Both integrate with the Hugging Face `Trainer` and both support a model registry  -  the concepts map directly, though the APIs differ.
 
 [[mlflow|MLflow]]
 
@@ -130,7 +130,7 @@ W&B's sweep system is the practical tool for hyperparameter search during fine-t
 
 [[qlora|QLoRA Fine-Tuning]]
 
-AI observability in production extends W&B's development-time monitoring to deployed models — tracking prompt/response pairs, latency, and cost in production rather than training metrics.
+AI observability in production extends W&B's development-time monitoring to deployed models  -  tracking prompt/response pairs, latency, and cost in production rather than training metrics.
 
 [[ai-observability|AI Observability]]
 
@@ -138,19 +138,19 @@ AI observability in production extends W&B's development-time monitoring to depl
 
 ## Common Misconceptions
 
-Misconception 1: "W&B and MLflow do the same thing — pick either one."
-Reality: While both track experiments, W&B's sweep system is substantially more capable than MLflow's hyperparameter search — W&B supports Bayesian optimization, distributed multi-agent sweeps, and early stopping of unpromising runs natively. MLflow's hyperparameter search requires external tools (Optuna, Ray Tune) for similar capability. Conversely, MLflow's model registry, deployment integrations, and self-hosted nature are better fits for enterprise MLOps pipelines with compliance requirements. They are not interchangeable — the right choice depends on what part of the ML workflow is the bottleneck.
+Misconception 1: "W&B and MLflow do the same thing  -  pick either one."
+Reality: While both track experiments, W&B's sweep system is substantially more capable than MLflow's hyperparameter search  -  W&B supports Bayesian optimization, distributed multi-agent sweeps, and early stopping of unpromising runs natively. MLflow's hyperparameter search requires external tools (Optuna, Ray Tune) for similar capability. Conversely, MLflow's model registry, deployment integrations, and self-hosted nature are better fits for enterprise MLOps pipelines with compliance requirements. They are not interchangeable  -  the right choice depends on what part of the ML workflow is the bottleneck.
 
 Misconception 2: "I need to change my training code significantly to use W&B."
-Reality: The Hugging Face `Trainer` integrates with W&B automatically when `wandb` is installed and `WANDB_PROJECT` is set as an environment variable — zero code changes required for standard training metrics. For custom training loops, `wandb.init()` and `wandb.log()` can be added in under five lines. The barrier to entry is low; the decision to use W&B is primarily about which UI and feature set better fits the team's needs.
+Reality: The Hugging Face `Trainer` integrates with W&B automatically when `wandb` is installed and `WANDB_PROJECT` is set as an environment variable  -  zero code changes required for standard training metrics. For custom training loops, `wandb.init()` and `wandb.log()` can be added in under five lines. The barrier to entry is low; the decision to use W&B is primarily about which UI and feature set better fits the team's needs.
 
 ---
 
 ## Why It Matters in Practice
 
-Hyperparameter search without automation is a significant time sink in applied ML. Manually running dozens of training jobs with different configurations, checking results, forming intuitions, and adjusting the next run takes days of engineer time. W&B sweeps with Bayesian optimization explore the hyperparameter space intelligently, running the most informative trials first — a 30-trial Bayesian sweep often finds configurations as good as a 200-trial grid search for continuous hyperparameter spaces. This directly reduces the calendar time from "initial model" to "best achievable model" on a given dataset.
+Hyperparameter search without automation is a significant time sink in applied ML. Manually running dozens of training jobs with different configurations, checking results, forming intuitions, and adjusting the next run takes days of engineer time. W&B sweeps with Bayesian optimization explore the hyperparameter space intelligently, running the most informative trials first  -  a 30-trial Bayesian sweep often finds configurations as good as a 200-trial grid search for continuous hyperparameter spaces. This directly reduces the calendar time from "initial model" to "best achievable model" on a given dataset.
 
-Real-time monitoring of training runs is another practical benefit. A long fine-tuning run (6–12 hours on a single GPU) that silently diverges after 2 hours wastes 4–10 hours of compute time if not monitored. W&B's alert system sends notifications when metrics cross thresholds — a `val/loss` that stops decreasing or a gradient norm that explodes can trigger a notification before significant compute is wasted.
+Real-time monitoring of training runs is another practical benefit. A long fine-tuning run (6 - 12 hours on a single GPU) that silently diverges after 2 hours wastes 4 - 10 hours of compute time if not monitored. W&B's alert system sends notifications when metrics cross thresholds  -  a `val/loss` that stops decreasing or a gradient norm that explodes can trigger a notification before significant compute is wasted.
 
 ---
 

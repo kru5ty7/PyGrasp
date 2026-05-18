@@ -1,4 +1,4 @@
----
+﻿---
 title: 05 - Event-Driven Architecture
 description: "Events vs commands vs queries, how loose coupling through events enables independently deployable services, and the eventual consistency tradeoffs that come with it."
 tags: [event-driven, architecture, microservices, layer-7, system-design]
@@ -11,45 +11,45 @@ created: 2026-05-18
 
 # Event-Driven Architecture
 
-> Event-driven architecture is the most powerful form of decoupling available to system designers — and understanding the difference between an event, a command, and a query is what makes it work rather than creating distributed chaos.
+> Event-driven architecture is the most powerful form of decoupling available to system designers  -  and understanding the difference between an event, a command, and a query is what makes it work rather than creating distributed chaos.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- An event is a fact that something happened — immutable, past tense, no instruction to others
-- A command is an instruction for another service to do something — directed, imperative
+- An event is a fact that something happened  -  immutable, past tense, no instruction to others
+- A command is an instruction for another service to do something  -  directed, imperative
 - EDA communicates through events; services react to facts rather than receiving commands
 - Loose coupling: a producer does not know about consumers; new consumers can be added without changing the producer
 - Eventual consistency: because processing is asynchronous, different services will be in sync "eventually"
 
 **Tricky points:**
-- "Event" is often misused — a message that says "please send this email" is a command, not an event
-- Debugging EDA is harder than synchronous systems — distributed tracing and correlation IDs are essential
+- "Event" is often misused  -  a message that says "please send this email" is a command, not an event
+- Debugging EDA is harder than synchronous systems  -  distributed tracing and correlation IDs are essential
 - Event ordering is not guaranteed across topics without careful design
-- Exactly-once processing requires idempotent consumers or transactional consumers — at-least-once is the default
-- Event-driven does not mean "no synchronous calls" — events are appropriate for some things, not everything
+- Exactly-once processing requires idempotent consumers or transactional consumers  -  at-least-once is the default
+- Event-driven does not mean "no synchronous calls"  -  events are appropriate for some things, not everything
 
 ---
 
 ## What It Is
 
-Think about how newspapers work. When a city council votes to change the speed limit, the city does not call every individual organization to notify them. It holds the vote, publishes the meeting minutes (the event), and various organizations — insurance companies, road engineers, driving schools, GPS providers — all read the minutes and independently update their own systems. The city council does not know who reads the minutes or what they do with them. Organizations can start reading minutes at any time — new ones do not require a change to how the city holds votes.
+Think about how newspapers work. When a city council votes to change the speed limit, the city does not call every individual organization to notify them. It holds the vote, publishes the meeting minutes (the event), and various organizations  -  insurance companies, road engineers, driving schools, GPS providers  -  all read the minutes and independently update their own systems. The city council does not know who reads the minutes or what they do with them. Organizations can start reading minutes at any time  -  new ones do not require a change to how the city holds votes.
 
-This is event-driven architecture. Services emit events — announcements of facts — and other services subscribe to those events and react. The speed limit change is the event. The various organizations' updates are the reactions. The city council (producer) is completely decoupled from the updating organizations (consumers).
+This is event-driven architecture. Services emit events  -  announcements of facts  -  and other services subscribe to those events and react. The speed limit change is the event. The various organizations' updates are the reactions. The city council (producer) is completely decoupled from the updating organizations (consumers).
 
 EDA is defined by its communication model. In a synchronous, command-driven architecture, Service A calls Service B's API to instruct it to do something. Service A waits for B to complete. If B is slow, A is slow. If B is down, A fails. Service A must know about Service B. In EDA, Service A emits an event to an event bus. Services B, C, and D subscribe to that event and react independently. Service A does not wait, does not know about B, C, or D, and is not affected if any of them fail.
 
-The vocabulary distinction matters enormously. An event is a fact: "UserRegistered", "OrderPlaced", "PaymentProcessed". It is in the past tense. It carries information about what happened. It makes no instruction. A command is an instruction: "SendWelcomeEmail", "ReserveInventory", "ProcessPayment". Commands can fail. Events cannot — they simply record what happened. Designing EDA with proper events (not disguised commands) enables true decoupling. If the `UserRegistered` event is published and no service consumes it, nothing breaks — the registration still happened. If a `SendWelcomeEmail` command is published and the email service is down, the command must be retried or acknowledged as failed.
+The vocabulary distinction matters enormously. An event is a fact: "UserRegistered", "OrderPlaced", "PaymentProcessed". It is in the past tense. It carries information about what happened. It makes no instruction. A command is an instruction: "SendWelcomeEmail", "ReserveInventory", "ProcessPayment". Commands can fail. Events cannot  -  they simply record what happened. Designing EDA with proper events (not disguised commands) enables true decoupling. If the `UserRegistered` event is published and no service consumes it, nothing breaks  -  the registration still happened. If a `SendWelcomeEmail` command is published and the email service is down, the command must be retried or acknowledged as failed.
 
 ---
 
 ## How It Actually Works
 
-An event-driven system needs three components: an event source (the service that emits events), an event bus (the messaging infrastructure that routes events — Kafka, RabbitMQ, SNS), and event handlers (the services that subscribe and react). The event bus provides the temporal decoupling: producers and consumers do not need to be running simultaneously.
+An event-driven system needs three components: an event source (the service that emits events), an event bus (the messaging infrastructure that routes events  -  Kafka, RabbitMQ, SNS), and event handlers (the services that subscribe and react). The event bus provides the temporal decoupling: producers and consumers do not need to be running simultaneously.
 
-Events carry a standard envelope: an event ID (for idempotency), a timestamp (when it occurred), an event type, the aggregate ID (which entity it pertains to), and the event payload (the data describing what changed). A well-designed event is self-contained — the consumer does not need to make additional calls to understand it.
+Events carry a standard envelope: an event ID (for idempotency), a timestamp (when it occurred), an event type, the aggregate ID (which entity it pertains to), and the event payload (the data describing what changed). A well-designed event is self-contained  -  the consumer does not need to make additional calls to understand it.
 
 Choreography and orchestration are two approaches to implementing multi-step workflows in EDA. In choreography, each service reacts to events and emits its own events, and the workflow emerges from the chain of reactions. In orchestration, a central service (the orchestrator) issues commands to other services and tracks the workflow state. Choreography is more loosely coupled but harder to monitor. Orchestration is easier to reason about but introduces a central dependency. The Saga pattern uses both approaches for distributed transactions.
 
@@ -102,7 +102,7 @@ class OrderService:
 
 # Inventory service: reacts to OrderPlaced event
 def handle_order_placed(event: dict):
-    """Independent service — knows about the event schema, not OrderService."""
+    """Independent service  -  knows about the event schema, not OrderService."""
     order_id = event["aggregate_id"]
     items = event["payload"]["items"]
     for item in items:
@@ -115,7 +115,7 @@ def handle_order_placed(event: dict):
     )
     kafka.publish("inventory", key=order_id, value=event.to_json())
 
-# Email service: also reacts to OrderPlaced — independent of inventory
+# Email service: also reacts to OrderPlaced  -  independent of inventory
 def handle_order_placed_for_email(event: dict):
     user_id = event["payload"]["user_id"]
     send_order_confirmation_email(user_id, event["payload"])
@@ -131,7 +131,7 @@ Kafka is the most common event bus for high-throughput EDA. Understanding Kafka'
 
 [[kafka-system-design|Kafka in System Design]]
 
-The outbox pattern ensures that a service's database write and its event publication are atomic — preventing the dual-write problem that would cause events to be lost or published without the corresponding data being saved.
+The outbox pattern ensures that a service's database write and its event publication are atomic  -  preventing the dual-write problem that would cause events to be lost or published without the corresponding data being saved.
 
 [[outbox-pattern|Outbox Pattern]]
 
@@ -144,21 +144,21 @@ Event sourcing takes EDA to its logical conclusion: the event log is the source 
 ## Common Misconceptions
 
 Misconception 1: "Event-driven architecture is eventually consistent, so it is acceptable for financial transactions."
-Reality: EDA's eventual consistency means different services will see the same state "eventually." For financial transactions where funds must be reserved before confirmation is given, this is not acceptable without explicit consistency mechanisms. The Saga pattern handles distributed transactions in EDA by using compensating transactions — if a step fails, previous steps are reversed. This is complex and must be designed carefully.
+Reality: EDA's eventual consistency means different services will see the same state "eventually." For financial transactions where funds must be reserved before confirmation is given, this is not acceptable without explicit consistency mechanisms. The Saga pattern handles distributed transactions in EDA by using compensating transactions  -  if a step fails, previous steps are reversed. This is complex and must be designed carefully.
 
 Misconception 2: "EDA is always more scalable than synchronous architectures."
 Reality: EDA adds messaging infrastructure overhead (the broker), event serialization costs, and complex failure handling. For simple request-response interactions where both services are always available and latency matters, synchronous HTTP calls are simpler and often faster. EDA is better when decoupling, scalability, or resilience to downstream failures is more important than simplicity or latency.
 
 Misconception 3: "Once an event is published, I can change its schema freely."
-Reality: Event schemas are contracts. Consumers depend on the shape of events they subscribe to. Changing a field name, removing a field, or changing a field's type breaks consumers. Schema evolution requires backward-compatible changes (add optional fields, never remove required fields) or explicit versioning with a schema registry. This is the hidden coupling in EDA — services are decoupled at the code level but coupled at the schema level.
+Reality: Event schemas are contracts. Consumers depend on the shape of events they subscribe to. Changing a field name, removing a field, or changing a field's type breaks consumers. Schema evolution requires backward-compatible changes (add optional fields, never remove required fields) or explicit versioning with a schema registry. This is the hidden coupling in EDA  -  services are decoupled at the code level but coupled at the schema level.
 
 ---
 
 ## Why It Matters in Practice
 
-EDA enables independent deployment of services. If the email service is deployed with a bug and goes down, it does not prevent orders from being placed — the `OrderPlaced` events accumulate in the queue and the email service processes them when it comes back up. This "backpressure buffer" property is one of the most practical benefits of EDA in production.
+EDA enables independent deployment of services. If the email service is deployed with a bug and goes down, it does not prevent orders from being placed  -  the `OrderPlaced` events accumulate in the queue and the email service processes them when it comes back up. This "backpressure buffer" property is one of the most practical benefits of EDA in production.
 
-For Python developers, EDA means designing services to be event producers and consumers, not just HTTP servers. Every important domain action — user registration, order placement, payment completion — should emit an event. Event consumers implement specific business reactions. The coupling that accumulates in synchronous "call all the things" architectures never forms.
+For Python developers, EDA means designing services to be event producers and consumers, not just HTTP servers. Every important domain action  -  user registration, order placement, payment completion  -  should emit an event. Event consumers implement specific business reactions. The coupling that accumulates in synchronous "call all the things" architectures never forms.
 
 ---
 

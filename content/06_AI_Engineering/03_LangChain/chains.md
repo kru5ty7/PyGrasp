@@ -1,6 +1,6 @@
----
+﻿---
 title: 02 - Chains
-description: "In LangChain, a chain connects components sequentially — LCEL (LangChain Expression Language) uses `|` to pipe components; classic chains like `LLMChain`, `SequentialChain` are legacy; LCEL is the modern approach; a chain takes an input dict and returns an output dict."
+description: "In LangChain, a chain connects components sequentially  -  LCEL (LangChain Expression Language) uses `|` to pipe components; classic chains like `LLMChain`, `SequentialChain` are legacy; LCEL is the modern approach; a chain takes an input dict and returns an output dict."
 tags: [langchain, chains, LCEL, LLMChain, SequentialChain, pipeline, layer-4, ai]
 status: draft
 difficulty: intermediate
@@ -11,33 +11,33 @@ created: 2026-05-17
 
 # Chains
 
-> In LangChain, a chain connects components sequentially — LCEL (LangChain Expression Language) uses `|` to pipe components; classic chains like `LLMChain`, `SequentialChain` are legacy; LCEL is the modern approach; a chain takes an input dict and returns an output dict.
+> In LangChain, a chain connects components sequentially  -  LCEL (LangChain Expression Language) uses `|` to pipe components; classic chains like `LLMChain`, `SequentialChain` are legacy; LCEL is the modern approach; a chain takes an input dict and returns an output dict.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- **Chain**: a sequence of processing steps — prompt → LLM → output parser
-- **LCEL**: `chain = prompt | llm | parser` — pipe operator; components implement `Runnable` interface
-- `chain.invoke({"key": "value"})` — run chain synchronously
-- `await chain.ainvoke(...)` — async invocation
-- `chain.stream(...)` — streaming output; returns iterator of tokens
+- **Chain**: a sequence of processing steps  -  prompt -> LLM -> output parser
+- **LCEL**: `chain = prompt | llm | parser`  -  pipe operator; components implement `Runnable` interface
+- `chain.invoke({"key": "value"})`  -  run chain synchronously
+- `await chain.ainvoke(...)`  -  async invocation
+- `chain.stream(...)`  -  streaming output; returns iterator of tokens
 
 **Tricky points:**
-- LCEL is the modern API (LangChain 0.3+); `LLMChain`, `SequentialChain` are legacy but still work — prefer LCEL for new code
-- LCEL `|` operator requires both sides to implement `Runnable` — LangChain components (prompts, LLMs, parsers) all implement it; custom functions must be wrapped with `RunnableLambda`
-- Input/output types: LCEL chains pass the output of each step as input to the next; type compatibility is not checked at definition time — errors surface at runtime
-- `RunnablePassthrough()` passes input through unchanged — used to preserve earlier values in a chain
+- LCEL is the modern API (LangChain 0.3+); `LLMChain`, `SequentialChain` are legacy but still work  -  prefer LCEL for new code
+- LCEL `|` operator requires both sides to implement `Runnable`  -  LangChain components (prompts, LLMs, parsers) all implement it; custom functions must be wrapped with `RunnableLambda`
+- Input/output types: LCEL chains pass the output of each step as input to the next; type compatibility is not checked at definition time  -  errors surface at runtime
+- `RunnablePassthrough()` passes input through unchanged  -  used to preserve earlier values in a chain
 - Parallel execution with `RunnableParallel`: runs multiple branches simultaneously
 
 ---
 
 ## What It Is
 
-A chain is LangChain's abstraction for combining components into a pipeline. The classic use case: `PromptTemplate | ChatModel | StrOutputParser` — takes a user input, formats it into a prompt, passes to the LLM, and extracts the text response.
+A chain is LangChain's abstraction for combining components into a pipeline. The classic use case: `PromptTemplate | ChatModel | StrOutputParser`  -  takes a user input, formats it into a prompt, passes to the LLM, and extracts the text response.
 
-LCEL (LangChain Expression Language) is the declarative piping syntax that replaced the older class-based chains. It's cleaner, supports async/streaming natively, and is composable — chains can be nested as components in other chains.
+LCEL (LangChain Expression Language) is the declarative piping syntax that replaced the older class-based chains. It's cleaner, supports async/streaming natively, and is composable  -  chains can be nested as components in other chains.
 
 ---
 
@@ -114,7 +114,7 @@ full_chain = (
 
 ## How It Connects
 
-LCEL is the syntax for building chains — understanding the LCEL expression language gives the full power of composition.
+LCEL is the syntax for building chains  -  understanding the LCEL expression language gives the full power of composition.
 [[lcel|LangChain Expression Language]]
 
 Memory components are added to chains to provide conversation history.
@@ -125,7 +125,7 @@ Memory components are added to chains to provide conversation history.
 ## Common Misconceptions
 
 Misconception 1: "LCEL `|` is the same as Python's `|` bitwise OR."
-Reality: LangChain overloads `__or__` on `Runnable` objects to create a pipeline — it has nothing to do with bitwise OR. The result is a new `Runnable` that, when invoked, runs the components sequentially.
+Reality: LangChain overloads `__or__` on `Runnable` objects to create a pipeline  -  it has nothing to do with bitwise OR. The result is a new `Runnable` that, when invoked, runs the components sequentially.
 
 Misconception 2: "LangChain chains require the LangChain LLM wrappers."
 Reality: Any callable that takes the chain's output as input can be part of an LCEL chain via `RunnableLambda`. You can mix LangChain components with custom Python functions seamlessly.
@@ -153,7 +153,7 @@ rag_chain = (
 answer = rag_chain.invoke("What is FastAPI?")
 ```
 
-The `|` pipeline cleanly expresses: retrieve context + pass question → format prompt → call LLM → parse output.
+The `|` pipeline cleanly expresses: retrieve context + pass question -> format prompt -> call LLM -> parse output.
 
 ---
 

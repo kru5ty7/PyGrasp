@@ -1,6 +1,6 @@
----
+﻿---
 title: 03 - dbt Tests
-description: "dbt Tests are SQL assertions that validate data quality — built-in generic tests catch common issues automatically, while singular tests and custom generic tests handle bespoke business rules."
+description: "dbt Tests are SQL assertions that validate data quality  -  built-in generic tests catch common issues automatically, while singular tests and custom generic tests handle bespoke business rules."
 tags: [dbt, tests, data-quality, assertions, generic-tests, singular-tests, layer-5, data-engineering]
 status: draft
 difficulty: intermediate
@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # dbt Tests
 
-> dbt tests are the contract between your transformation code and its consumers — they fail loudly when data violates expectations instead of silently producing wrong dashboards.
+> dbt tests are the contract between your transformation code and its consumers  -  they fail loudly when data violates expectations instead of silently producing wrong dashboards.
 
 ---
 
@@ -20,25 +20,25 @@ created: 2026-05-18
 **Core idea:**
 - Two test types: **generic** (YAML-configured, parameterized, reusable) and **singular** (one-off `.sql` assertions)
 - Four built-in generic tests: `unique`, `not_null`, `accepted_values`, `relationships`
-- Tests compile to SQL queries that return rows — zero rows = test passes; any rows = test fails
+- Tests compile to SQL queries that return rows  -  zero rows = test passes; any rows = test fails
 - `dbt test --select model_name` runs tests for one model; `dbt build` runs models + tests in DAG order
 - Test severity: `warn` (non-blocking) vs `error` (blocking with exit code 1)
 - `dbt_utils` package adds many more generic tests: `equal_rowcount`, `expression_is_true`, `not_empty_string`, etc.
 
 **Tricky points:**
-- Tests run SQL against the warehouse — slow tests on large tables can be expensive; use `--limit` or `where` conditions for expensive tests
-- A `not_null` test on an incremental model only checks the latest batch of rows by default — add `where` to the test config to check historical data
-- `relationships` test checks FK referential integrity — it is a full table scan on both sides; expensive on large tables
-- Failing tests return exit code 1 from `dbt test` — use this in CI to gate deployments
-- dbt Cloud and dbt Core handle test execution differently — dbt Cloud can run tests in parallel; dbt Core runs sequentially by default
+- Tests run SQL against the warehouse  -  slow tests on large tables can be expensive; use `--limit` or `where` conditions for expensive tests
+- A `not_null` test on an incremental model only checks the latest batch of rows by default  -  add `where` to the test config to check historical data
+- `relationships` test checks FK referential integrity  -  it is a full table scan on both sides; expensive on large tables
+- Failing tests return exit code 1 from `dbt test`  -  use this in CI to gate deployments
+- dbt Cloud and dbt Core handle test execution differently  -  dbt Cloud can run tests in parallel; dbt Core runs sequentially by default
 
 ---
 
 ## What It Is
 
-Think of a food safety inspector at a restaurant. The kitchen produces dishes (data models), and the inspector has a checklist: Is every dish the correct temperature? Are allergenic ingredients labeled? Are portions within the legal weight range? The inspector does not care how the chef prepared the dish — only whether the result meets the defined standards. A dish that looks beautiful but has an internal temperature of 50°F fails the test, and the restaurant is alerted before serving it to customers. dbt tests are that food safety inspector for data: they check that the output of every model meets defined standards before that data flows downstream to dashboards, ML models, or business processes.
+Think of a food safety inspector at a restaurant. The kitchen produces dishes (data models), and the inspector has a checklist: Is every dish the correct temperature? Are allergenic ingredients labeled? Are portions within the legal weight range? The inspector does not care how the chef prepared the dish  -  only whether the result meets the defined standards. A dish that looks beautiful but has an internal temperature of 50°F fails the test, and the restaurant is alerted before serving it to customers. dbt tests are that food safety inspector for data: they check that the output of every model meets defined standards before that data flows downstream to dashboards, ML models, or business processes.
 
-Generic tests in dbt are parameterized SQL assertions configured in YAML files alongside model definitions. The four built-in tests cover the most fundamental data quality checks. `not_null` verifies that a column contains no NULL values — essential for primary keys and required foreign keys. `unique` verifies that every value in a column is distinct — critical for any column that will be used as a join key. `accepted_values` verifies that every value in a column is in a defined list — useful for status fields, category codes, and enumerated types. `relationships` verifies referential integrity — every value in a column exists in a specified column of another model.
+Generic tests in dbt are parameterized SQL assertions configured in YAML files alongside model definitions. The four built-in tests cover the most fundamental data quality checks. `not_null` verifies that a column contains no NULL values  -  essential for primary keys and required foreign keys. `unique` verifies that every value in a column is distinct  -  critical for any column that will be used as a join key. `accepted_values` verifies that every value in a column is in a defined list  -  useful for status fields, category codes, and enumerated types. `relationships` verifies referential integrity  -  every value in a column exists in a specified column of another model.
 
 Singular tests are for bespoke business rules that do not fit the generic pattern. A singular test is a `.sql` file in the `tests/` directory that returns the rows that violate the rule. For example: "all orders with status 'shipped' must have a non-null `shipped_at` date" or "revenue in the reporting table must equal revenue in the source table for any given date." These are SQL queries that should return zero rows when data is correct. The test passes when the query returns nothing; it fails when the query returns rows that represent violations.
 
@@ -89,7 +89,7 @@ models:
         tests:
           - accepted_values:
               values: ['pending', 'processing', 'shipped', 'delivered', 'returned']
-              severity: warn    # warn instead of fail — expected to have some unusual values
+              severity: warn    # warn instead of fail  -  expected to have some unusual values
       - name: amount_usd
         tests:
           - not_null
@@ -126,17 +126,17 @@ JOIN raw_revenue r USING (order_date)
 WHERE ABS(f.revenue - r.revenue) > 0.01
 ```
 
-The `dbt build` command runs models and tests together in DAG order: a model's tests run immediately after the model builds, before downstream models that depend on it are built. This prevents bad data from propagating downstream — if `stg_orders` fails its `not_null` test on `order_id`, `dbt build` stops building models that depend on `stg_orders`. This is strictly more powerful than running `dbt run` and `dbt test` separately, where all models build first and tests run after.
+The `dbt build` command runs models and tests together in DAG order: a model's tests run immediately after the model builds, before downstream models that depend on it are built. This prevents bad data from propagating downstream  -  if `stg_orders` fails its `not_null` test on `order_id`, `dbt build` stops building models that depend on `stg_orders`. This is strictly more powerful than running `dbt run` and `dbt test` separately, where all models build first and tests run after.
 
 ---
 
 ## How It Connects
 
-Tests validate the models produced by dbt's transformation pipeline — understanding the model types (views, tables, incrementals) helps you write appropriate tests for each.
+Tests validate the models produced by dbt's transformation pipeline  -  understanding the model types (views, tables, incrementals) helps you write appropriate tests for each.
 
 [[dbt-models|dbt Models]]
 
-dbt Basics explains what dbt does and why — tests are the quality enforcement layer on top of the transformation execution.
+dbt Basics explains what dbt does and why  -  tests are the quality enforcement layer on top of the transformation execution.
 
 [[dbt-basics|dbt Basics]]
 
@@ -145,7 +145,7 @@ dbt Basics explains what dbt does and why — tests are the quality enforcement 
 ## Common Misconceptions
 
 Misconception 1: "dbt tests run in Python and can validate complex business logic with Python code."
-Reality: dbt tests are SQL queries executed against the warehouse. They can be as complex as any SQL expression the warehouse supports — window functions, subqueries, CTEs — but they are SQL, not Python. For Python-based data quality, look at Great Expectations or Soda.
+Reality: dbt tests are SQL queries executed against the warehouse. They can be as complex as any SQL expression the warehouse supports  -  window functions, subqueries, CTEs  -  but they are SQL, not Python. For Python-based data quality, look at Great Expectations or Soda.
 
 Misconception 2: "`dbt test` failing means the underlying data is definitely wrong."
 Reality: A failing test means the data violates the assertion you wrote. If the assertion was wrong (e.g., `accepted_values` forgot a valid status), the test failure indicates a problem with the test, not the data. Always review the failing rows (use `store_failures: true` to materialize them) before assuming the data is at fault.
@@ -157,9 +157,9 @@ Reality: Tests run SQL against your warehouse and cost compute time and money. A
 
 ## Why It Matters in Practice
 
-Data quality failures caught at the warehouse level, before data reaches dashboards and downstream consumers, are cheap to fix. The same failures caught two weeks later — after an analyst has presented wrong revenue numbers in a board meeting — are expensive. dbt tests are the earliest possible catch point for a class of data quality problems (nulls, duplicates, referential integrity violations) that consistently cause downstream trust issues.
+Data quality failures caught at the warehouse level, before data reaches dashboards and downstream consumers, are cheap to fix. The same failures caught two weeks later  -  after an analyst has presented wrong revenue numbers in a board meeting  -  are expensive. dbt tests are the earliest possible catch point for a class of data quality problems (nulls, duplicates, referential integrity violations) that consistently cause downstream trust issues.
 
-The `store_failures: true` config option is particularly valuable in production: when tests fail, dbt materializes the failing rows as a table in the warehouse (typically in a `dbt_test__audit` schema). Instead of seeing "100 rows failed the `not_null` test on customer_id," you can query the failure table and see exactly which order IDs have null customer IDs — actionable diagnostic information.
+The `store_failures: true` config option is particularly valuable in production: when tests fail, dbt materializes the failing rows as a table in the warehouse (typically in a `dbt_test__audit` schema). Instead of seeing "100 rows failed the `not_null` test on customer_id," you can query the failure table and see exactly which order IDs have null customer IDs  -  actionable diagnostic information.
 
 ---
 
@@ -171,7 +171,7 @@ Common question forms:
 - "How would you use dbt tests in a CI/CD pipeline?"
 
 Answer frame:
-Two types: generic (YAML-configured, parameterized — `unique`, `not_null`, `accepted_values`, `relationships`) and singular (custom `.sql` files in `tests/` that return rows on violation). Singular test mechanics: SQL query returns rows = test fails; zero rows = test passes. CI/CD: run `dbt build` (or `dbt test`) in CI; non-zero exit code on test failure blocks the merge/deploy. Use severity levels to distinguish warnings (non-blocking) from errors (blocking). Use `store_failures: true` to materialize failing rows for diagnosis.
+Two types: generic (YAML-configured, parameterized  -  `unique`, `not_null`, `accepted_values`, `relationships`) and singular (custom `.sql` files in `tests/` that return rows on violation). Singular test mechanics: SQL query returns rows = test fails; zero rows = test passes. CI/CD: run `dbt build` (or `dbt test`) in CI; non-zero exit code on test failure blocks the merge/deploy. Use severity levels to distinguish warnings (non-blocking) from errors (blocking). Use `store_failures: true` to materialize failing rows for diagnosis.
 
 ---
 

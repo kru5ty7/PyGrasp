@@ -1,6 +1,6 @@
----
+﻿---
 title: 05 - Security in FastAPI
-description: "FastAPI provides security utilities for OAuth2, API key, and HTTP Basic authentication — `OAuth2PasswordBearer`, `APIKeyHeader`, `HTTPBasic` extract credentials from requests; used as `Depends()` parameters; `Security()` extends `Depends()` with OAuth2 scope support for Swagger UI."
+description: "FastAPI provides security utilities for OAuth2, API key, and HTTP Basic authentication  -  `OAuth2PasswordBearer`, `APIKeyHeader`, `HTTPBasic` extract credentials from requests; used as `Depends()` parameters; `Security()` extends `Depends()` with OAuth2 scope support for Swagger UI."
 tags: [fastapi, security, OAuth2PasswordBearer, APIKeyHeader, HTTPBasic, Security, layer-3, web]
 status: draft
 difficulty: intermediate
@@ -11,24 +11,24 @@ created: 2026-05-17
 
 # Security in FastAPI
 
-> FastAPI provides security utilities for OAuth2, API key, and HTTP Basic authentication — `OAuth2PasswordBearer`, `APIKeyHeader`, `HTTPBasic` extract credentials from requests; used as `Depends()` parameters; `Security()` extends `Depends()` with OAuth2 scope support for Swagger UI.
+> FastAPI provides security utilities for OAuth2, API key, and HTTP Basic authentication  -  `OAuth2PasswordBearer`, `APIKeyHeader`, `HTTPBasic` extract credentials from requests; used as `Depends()` parameters; `Security()` extends `Depends()` with OAuth2 scope support for Swagger UI.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- `OAuth2PasswordBearer(tokenUrl="/token")` — extracts `Authorization: Bearer <token>` from headers
-- `APIKeyHeader(name="X-API-Key")` — extracts a custom header value
-- `APIKeyQuery(name="api_key")` — extracts an API key from query params
-- `HTTPBasic()` — prompts browser for username/password (Base64 encoded in `Authorization` header)
-- `Security(get_current_user, scopes=["read"])` — like `Depends()` but adds OAuth2 scope metadata for Swagger UI
+- `OAuth2PasswordBearer(tokenUrl="/token")`  -  extracts `Authorization: Bearer <token>` from headers
+- `APIKeyHeader(name="X-API-Key")`  -  extracts a custom header value
+- `APIKeyQuery(name="api_key")`  -  extracts an API key from query params
+- `HTTPBasic()`  -  prompts browser for username/password (Base64 encoded in `Authorization` header)
+- `Security(get_current_user, scopes=["read"])`  -  like `Depends()` but adds OAuth2 scope metadata for Swagger UI
 
 **Tricky points:**
-- These utilities only extract credentials — they do NOT validate; validation is your `get_current_user` dependency's job
-- `OAuth2PasswordBearer(auto_error=False)` — returns `None` if no token is present instead of raising 401; use for optional auth
-- `APIKeyHeader(auto_error=False)` — same pattern for optional API key
-- `Security()` affects Swagger UI's "Authorize" dialog — declares the required scopes; runtime scope enforcement is still done manually in the dependency
+- These utilities only extract credentials  -  they do NOT validate; validation is your `get_current_user` dependency's job
+- `OAuth2PasswordBearer(auto_error=False)`  -  returns `None` if no token is present instead of raising 401; use for optional auth
+- `APIKeyHeader(auto_error=False)`  -  same pattern for optional API key
+- `Security()` affects Swagger UI's "Authorize" dialog  -  declares the required scopes; runtime scope enforcement is still done manually in the dependency
 - Combining auth methods (JWT + API key): use `Optional` deps with `auto_error=False` and check both in `get_current_user`
 
 ---
@@ -112,10 +112,10 @@ async def list_posts(current_user: User | None = Depends(get_current_user_option
 
 ## How It Connects
 
-FastAPI security builds on `Depends()` — the security utilities are specialized dependencies.
+FastAPI security builds on `Depends()`  -  the security utilities are specialized dependencies.
 [[fastapi-dependencies|FastAPI Dependencies]]
 
-OAuth2 and JWT are the protocols that back the authentication — security utilities in FastAPI implement their extraction layer.
+OAuth2 and JWT are the protocols that back the authentication  -  security utilities in FastAPI implement their extraction layer.
 [[oauth2|OAuth2]]
 [[jwt|JWT]]
 
@@ -127,7 +127,7 @@ Misconception 1: "`OAuth2PasswordBearer` validates the JWT."
 Reality: `OAuth2PasswordBearer` only extracts the bearer token from the `Authorization` header. It raises 401 if no token is present (and `auto_error=True`). The JWT signature verification and user lookup happen in your custom `get_current_user` dependency.
 
 Misconception 2: "`Security()` enforces scopes at runtime."
-Reality: `Security(get_current_user, scopes=["read"])` passes the requested scopes to the dependency function via `SecurityScopes`. The dependency must explicitly check `security_scopes.scopes` against the token's scopes — FastAPI does not automatically enforce them.
+Reality: `Security(get_current_user, scopes=["read"])` passes the requested scopes to the dependency function via `SecurityScopes`. The dependency must explicitly check `security_scopes.scopes` against the token's scopes  -  FastAPI does not automatically enforce them.
 
 ---
 
@@ -151,7 +151,7 @@ async def update_profile(
     ...
 ```
 
-Each layer has a single responsibility — makes each layer independently testable.
+Each layer has a single responsibility  -  makes each layer independently testable.
 
 ---
 
@@ -161,7 +161,7 @@ Common question forms:
 - "How do you add JWT authentication to a FastAPI app?"
 - "What is `OAuth2PasswordBearer`?"
 
-Answer frame: `OAuth2PasswordBearer(tokenUrl="/token")` extracts the bearer token from the `Authorization` header. Use it as `Depends(oauth2_scheme)` in `get_current_user` — which then decodes and validates the JWT. `APIKeyHeader` for API key extraction. `Security()` for scope-aware OAuth2 in Swagger. Separation: security utilities extract, custom dependencies validate.
+Answer frame: `OAuth2PasswordBearer(tokenUrl="/token")` extracts the bearer token from the `Authorization` header. Use it as `Depends(oauth2_scheme)` in `get_current_user`  -  which then decodes and validates the JWT. `APIKeyHeader` for API key extraction. `Security()` for scope-aware OAuth2 in Swagger. Separation: security utilities extract, custom dependencies validate.
 
 ---
 

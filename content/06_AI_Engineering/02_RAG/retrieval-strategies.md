@@ -1,6 +1,6 @@
----
+﻿---
 title: 03 - Retrieval Strategies
-description: "Retrieval strategies improve what gets passed to the LLM in RAG — basic vector search can be augmented with query expansion (generate multiple queries), HyDE (generate a hypothetical answer to embed), multi-query retrieval, and parent-document retrieval (embed small, return large)."
+description: "Retrieval strategies improve what gets passed to the LLM in RAG  -  basic vector search can be augmented with query expansion (generate multiple queries), HyDE (generate a hypothetical answer to embed), multi-query retrieval, and parent-document retrieval (embed small, return large)."
 tags: [retrieval-strategies, HyDE, query-expansion, multi-query, parent-document, RAG, layer-4, ai]
 status: draft
 difficulty: intermediate
@@ -11,25 +11,25 @@ created: 2026-05-17
 
 # Retrieval Strategies
 
-> Retrieval strategies improve what gets passed to the LLM in RAG — basic vector search can be augmented with query expansion (generate multiple queries), HyDE (generate a hypothetical answer to embed), multi-query retrieval, and parent-document retrieval (embed small, return large).
+> Retrieval strategies improve what gets passed to the LLM in RAG  -  basic vector search can be augmented with query expansion (generate multiple queries), HyDE (generate a hypothetical answer to embed), multi-query retrieval, and parent-document retrieval (embed small, return large).
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- **Basic retrieval**: embed query → find top-k nearest chunks (sufficient for many use cases)
-- **HyDE** (Hypothetical Document Embeddings): ask the LLM to generate a hypothetical answer → embed that → search; the hypothetical answer embeds closer to document space than a bare question
-- **Multi-query**: generate 3-5 reformulations of the query → retrieve for each → merge results; covers more of the semantic space
+- **Basic retrieval**: embed query -> find top-k nearest chunks (sufficient for many use cases)
+- **HyDE** (Hypothetical Document Embeddings): ask the LLM to generate a hypothetical answer -> embed that -> search; the hypothetical answer embeds closer to document space than a bare question
+- **Multi-query**: generate 3-5 reformulations of the query -> retrieve for each -> merge results; covers more of the semantic space
 - **Parent-document retrieval**: embed small chunks (precise matching) but return their parent (larger context)
-- **Step-back prompting**: ask the model to identify the abstract principle behind the question → search on the principle
+- **Step-back prompting**: ask the model to identify the abstract principle behind the question -> search on the principle
 
 **Tricky points:**
-- HyDE adds one LLM call before retrieval — adds latency and cost; worthwhile when queries are very different from document style
-- Multi-query deduplication: the same chunk may be retrieved by multiple query reformulations — deduplicate before passing to the LLM
-- Parent-document retrieval requires storing the parent-child relationship — extra complexity but often worth it for dense technical documents
-- Query expansion in BM25 (keyword search) is well-studied; for dense retrieval, the gains are more variable — test on your data
-- Long queries embed poorly in some models — truncate to the model's max input length before embedding
+- HyDE adds one LLM call before retrieval  -  adds latency and cost; worthwhile when queries are very different from document style
+- Multi-query deduplication: the same chunk may be retrieved by multiple query reformulations  -  deduplicate before passing to the LLM
+- Parent-document retrieval requires storing the parent-child relationship  -  extra complexity but often worth it for dense technical documents
+- Query expansion in BM25 (keyword search) is well-studied; for dense retrieval, the gains are more variable  -  test on your data
+- Long queries embed poorly in some models  -  truncate to the model's max input length before embedding
 
 ---
 
@@ -115,7 +115,7 @@ def parent_retrieve(query: str, top_k: int = 5) -> list[dict]:
 
 ## How It Connects
 
-Retrieval strategies build on basic RAG retrieval — they improve the quality of what gets passed to the LLM.
+Retrieval strategies build on basic RAG retrieval  -  they improve the quality of what gets passed to the LLM.
 [[rag-pipeline|RAG Pipeline]]
 
 Reranking is often applied after retrieval strategies to further sort the candidate chunks.
@@ -126,7 +126,7 @@ Reranking is often applied after retrieval strategies to further sort the candid
 ## Common Misconceptions
 
 Misconception 1: "Complex retrieval strategies always outperform basic vector search."
-Reality: On well-chunked documents with queries that match the document style, basic vector search is hard to beat. Complex strategies add latency and cost. Measure the improvement before committing to HyDE or multi-query — the gains are dataset-dependent.
+Reality: On well-chunked documents with queries that match the document style, basic vector search is hard to beat. Complex strategies add latency and cost. Measure the improvement before committing to HyDE or multi-query  -  the gains are dataset-dependent.
 
 Misconception 2: "More retrieved chunks compensate for poor retrieval quality."
 Reality: More chunks add noise. The LLM context window fills with irrelevant content, diluting the signal. Better retrieval of fewer, more relevant chunks outperforms noisy retrieval of many chunks.
@@ -144,7 +144,7 @@ Parent-document:         Documents with dense, specific content (code, legal, me
 Step-back prompting:     Questions requiring background knowledge or first principles
 ```
 
-Always evaluate on a held-out test set (20-50 representative queries with known correct answers) before and after adding retrieval strategies — confirm the improvement is real.
+Always evaluate on a held-out test set (20-50 representative queries with known correct answers) before and after adding retrieval strategies  -  confirm the improvement is real.
 
 ---
 
@@ -154,7 +154,7 @@ Common question forms:
 - "How do you improve RAG retrieval beyond basic vector search?"
 - "What is HyDE?"
 
-Answer frame: Basic vector search embeds the question and finds similar chunks. **HyDE**: generate a hypothetical answer → embed that (closer to document space). **Multi-query**: 3-5 query reformulations → merge results (covers more semantic angles). **Parent-document**: match small chunks, return larger parent for context. All add latency/cost — measure improvement before deploying. Reranking is often applied after retrieval to further filter.
+Answer frame: Basic vector search embeds the question and finds similar chunks. **HyDE**: generate a hypothetical answer -> embed that (closer to document space). **Multi-query**: 3-5 query reformulations -> merge results (covers more semantic angles). **Parent-document**: match small chunks, return larger parent for context. All add latency/cost  -  measure improvement before deploying. Reranking is often applied after retrieval to further filter.
 
 ---
 

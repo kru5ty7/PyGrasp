@@ -1,6 +1,6 @@
----
+﻿---
 title: 06 - Retrievers
-description: "LangChain retrievers are components that return documents given a query — they implement a standard interface (`get_relevant_documents(query)`) and are used in RAG chains; vector store retrievers, multi-query retrievers, and contextual compression retrievers are common; any retriever can slot into an LCEL chain."
+description: "LangChain retrievers are components that return documents given a query  -  they implement a standard interface (`get_relevant_documents(query)`) and are used in RAG chains; vector store retrievers, multi-query retrievers, and contextual compression retrievers are common; any retriever can slot into an LCEL chain."
 tags: [langchain, retrievers, vector-store-retriever, multi-query-retriever, RAG, layer-4, ai]
 status: draft
 difficulty: intermediate
@@ -11,33 +11,33 @@ created: 2026-05-17
 
 # Retrievers
 
-> LangChain retrievers are components that return documents given a query — they implement a standard interface (`get_relevant_documents(query)`) and are used in RAG chains; vector store retrievers, multi-query retrievers, and contextual compression retrievers are common; any retriever can slot into an LCEL chain.
+> LangChain retrievers are components that return documents given a query  -  they implement a standard interface (`get_relevant_documents(query)`) and are used in RAG chains; vector store retrievers, multi-query retrievers, and contextual compression retrievers are common; any retriever can slot into an LCEL chain.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- `vectorstore.as_retriever(search_kwargs={"k": 5})` — convert any LangChain vector store to a retriever
-- `retriever.invoke("query")` → `list[Document]` — documents have `.page_content` and `.metadata`
-- Retrievers are `Runnable` — they plug directly into LCEL chains with `|`
-- `MultiQueryRetriever` — generates query variations, merges results
-- `ContextualCompressionRetriever` — wraps another retriever and filters/compresses results
+- `vectorstore.as_retriever(search_kwargs={"k": 5})`  -  convert any LangChain vector store to a retriever
+- `retriever.invoke("query")` -> `list[Document]`  -  documents have `.page_content` and `.metadata`
+- Retrievers are `Runnable`  -  they plug directly into LCEL chains with `|`
+- `MultiQueryRetriever`  -  generates query variations, merges results
+- `ContextualCompressionRetriever`  -  wraps another retriever and filters/compresses results
 
 **Tricky points:**
-- `as_retriever()` returns all `k` results regardless of relevance — add a score threshold: `search_kwargs={"score_threshold": 0.7}` (only works with similarity score search)
-- `Document.metadata` is a dict — always include source/URL/title metadata during indexing; you'll need it for citation
-- Chroma's `as_retriever(search_type="mmr")` uses Maximum Marginal Relevance — reduces redundancy in retrieved docs; useful when top results are near-duplicate
-- Async retrieval: `await retriever.ainvoke("query")` — necessary for async FastAPI handlers
-- `EnsembleRetriever` combines multiple retrievers (e.g., BM25 + vector) — implements hybrid search without manual RRF
+- `as_retriever()` returns all `k` results regardless of relevance  -  add a score threshold: `search_kwargs={"score_threshold": 0.7}` (only works with similarity score search)
+- `Document.metadata` is a dict  -  always include source/URL/title metadata during indexing; you'll need it for citation
+- Chroma's `as_retriever(search_type="mmr")` uses Maximum Marginal Relevance  -  reduces redundancy in retrieved docs; useful when top results are near-duplicate
+- Async retrieval: `await retriever.ainvoke("query")`  -  necessary for async FastAPI handlers
+- `EnsembleRetriever` combines multiple retrievers (e.g., BM25 + vector)  -  implements hybrid search without manual RRF
 
 ---
 
 ## What It Is
 
-LangChain's retriever abstraction provides a common interface for all retrieval methods — vector search, keyword search, graph-based, or custom API-backed. Any retriever can be swapped into an LCEL chain without changing the surrounding code, enabling easy experimentation with different retrieval backends.
+LangChain's retriever abstraction provides a common interface for all retrieval methods  -  vector search, keyword search, graph-based, or custom API-backed. Any retriever can be swapped into an LCEL chain without changing the surrounding code, enabling easy experimentation with different retrieval backends.
 
-This is the plug-in point for the retrieval step in a RAG pipeline — the chain doesn't know or care whether the retriever uses pgvector, Chroma, or a custom search API.
+This is the plug-in point for the retrieval step in a RAG pipeline  -  the chain doesn't know or care whether the retriever uses pgvector, Chroma, or a custom search API.
 
 ---
 
@@ -122,7 +122,7 @@ docs = compression_retriever.invoke("asyncio tasks")
 
 ## How It Connects
 
-Retrievers are the retrieval layer in LangChain RAG pipelines — they plug into LCEL chains as the source of context.
+Retrievers are the retrieval layer in LangChain RAG pipelines  -  they plug into LCEL chains as the source of context.
 [[rag|RAG]]
 
 `EnsembleRetriever` implements hybrid search within LangChain's retriever abstraction.
@@ -136,7 +136,7 @@ Misconception 1: "All retrievers return the same quality of results."
 Reality: Retriever quality depends heavily on the underlying search method, the embedding model, and the indexing quality. `MultiQueryRetriever` and `ContextualCompressionRetriever` add significant latency for marginal improvement if the base retriever is already good. Profile first.
 
 Misconception 2: "`as_retriever()` requires configuring `search_type`."
-Reality: The default `search_type="similarity"` with `k=4` works well for most cases. Only change it when you have evidence that similarity search is failing — e.g., use `mmr` when retrieved documents are too similar to each other.
+Reality: The default `search_type="similarity"` with `k=4` works well for most cases. Only change it when you have evidence that similarity search is failing  -  e.g., use `mmr` when retrieved documents are too similar to each other.
 
 ---
 
@@ -155,7 +155,7 @@ multi_chain = {
     "question": RunnablePassthrough(),
 } | prompt | llm | StrOutputParser()
 
-# Same evaluation code works for both — retriever is the only difference
+# Same evaluation code works for both  -  retriever is the only difference
 ```
 
 ---
@@ -166,7 +166,7 @@ Common question forms:
 - "How do you build a RAG chain in LangChain?"
 - "What is a retriever in LangChain?"
 
-Answer frame: Retriever = component returning `list[Document]` given a query; implements `.invoke(query)`. `vectorstore.as_retriever()` converts any vector store. Plugs into LCEL chain with `|`. `MultiQueryRetriever`: generates query variations, merges. `EnsembleRetriever`: combines BM25 + vector (hybrid search). `ContextualCompressionRetriever`: filters retrieved chunks. All are interchangeable in the chain — swap retriever to change strategy.
+Answer frame: Retriever = component returning `list[Document]` given a query; implements `.invoke(query)`. `vectorstore.as_retriever()` converts any vector store. Plugs into LCEL chain with `|`. `MultiQueryRetriever`: generates query variations, merges. `EnsembleRetriever`: combines BM25 + vector (hybrid search). `ContextualCompressionRetriever`: filters retrieved chunks. All are interchangeable in the chain  -  swap retriever to change strategy.
 
 ---
 

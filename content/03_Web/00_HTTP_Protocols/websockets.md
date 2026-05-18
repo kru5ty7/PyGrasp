@@ -1,6 +1,6 @@
----
+﻿---
 title: 07 - WebSockets
-description: "WebSockets provide full-duplex, persistent connections over a single TCP connection — the client sends an HTTP upgrade request, the server responds with `101 Switching Protocols`, and both sides can send messages at any time; used for real-time features like chat, live updates, and notifications."
+description: "WebSockets provide full-duplex, persistent connections over a single TCP connection  -  the client sends an HTTP upgrade request, the server responds with `101 Switching Protocols`, and both sides can send messages at any time; used for real-time features like chat, live updates, and notifications."
 tags: [websockets, full-duplex, upgrade, ws, wss, real-time, layer-3, web]
 status: draft
 difficulty: intermediate
@@ -11,7 +11,7 @@ created: 2026-05-17
 
 # WebSockets
 
-> WebSockets provide full-duplex, persistent connections over a single TCP connection — the client sends an HTTP upgrade request, the server responds with `101 Switching Protocols`, and both sides can send messages at any time; used for real-time features like chat, live updates, and notifications.
+> WebSockets provide full-duplex, persistent connections over a single TCP connection  -  the client sends an HTTP upgrade request, the server responds with `101 Switching Protocols`, and both sides can send messages at any time; used for real-time features like chat, live updates, and notifications.
 
 ---
 
@@ -19,23 +19,23 @@ created: 2026-05-17
 
 **Core idea:**
 - WebSocket connection starts as an HTTP/1.1 `GET` with `Upgrade: websocket` header
-- Server responds with `101 Switching Protocols` — the TCP connection is now a WebSocket connection
+- Server responds with `101 Switching Protocols`  -  the TCP connection is now a WebSocket connection
 - Both client and server can send **frames** at any time (full-duplex, bidirectional)
-- `ws://` — plain WebSocket; `wss://` — WebSocket over TLS (use `wss://` always in production)
+- `ws://`  -  plain WebSocket; `wss://`  -  WebSocket over TLS (use `wss://` always in production)
 - Messages can be text (UTF-8) or binary (bytes); framing is handled by the protocol
 
 **Tricky points:**
-- WebSocket connections are stateful and long-lived — each connected client is a persistent coroutine in async servers; resource usage scales with connection count, not request rate
+- WebSocket connections are stateful and long-lived  -  each connected client is a persistent coroutine in async servers; resource usage scales with connection count, not request rate
 - Standard HTTP load balancers often don't support WebSockets without explicit configuration (sticky sessions or WebSocket-aware LB)
-- WebSockets bypass HTTP's request-response semantics — no built-in authentication per-message; authenticate on connect (validate token in the upgrade request), then trust the connection
+- WebSockets bypass HTTP's request-response semantics  -  no built-in authentication per-message; authenticate on connect (validate token in the upgrade request), then trust the connection
 - `ping`/`pong` frames keep connections alive through proxies/firewalls that close idle TCP connections
-- Reconnection is the client's responsibility — the server cannot initiate reconnect after a disconnect
+- Reconnection is the client's responsibility  -  the server cannot initiate reconnect after a disconnect
 
 ---
 
 ## What It Is
 
-HTTP is a request-response protocol: client asks, server answers, connection closes (or waits for next request). WebSockets flip this — after the upgrade, either side can send a message at any time without waiting for a request. This is necessary for real-time applications: a chat server needs to push new messages to all connected clients immediately, not wait for each client to poll.
+HTTP is a request-response protocol: client asks, server answers, connection closes (or waits for next request). WebSockets flip this  -  after the upgrade, either side can send a message at any time without waiting for a request. This is necessary for real-time applications: a chat server needs to push new messages to all connected clients immediately, not wait for each client to poll.
 
 The upgrade handshake reuses the existing HTTP infrastructure (ports 80/443, TLS) but then hands the connection to the WebSocket protocol. The result is a bidirectional message channel with minimal framing overhead compared to HTTP polling.
 
@@ -45,20 +45,20 @@ The upgrade handshake reuses the existing HTTP infrastructure (ports 80/443, TLS
 
 WebSocket upgrade handshake:
 ```http
-→ GET /ws HTTP/1.1
+-> GET /ws HTTP/1.1
    Host: example.com
    Upgrade: websocket
    Connection: Upgrade
    Sec-WebSocket-Key: dGhlIHNhbXBsZSBub25jZQ==
    Sec-WebSocket-Version: 13
 
-← HTTP/1.1 101 Switching Protocols
+<- HTTP/1.1 101 Switching Protocols
    Upgrade: websocket
    Connection: Upgrade
    Sec-WebSocket-Accept: s3pPLMBiTxaQ9kYGzzhZRbK+xOo=
 ```
 
-After this, the connection is no longer HTTP — messages are sent as WebSocket frames.
+After this, the connection is no longer HTTP  -  messages are sent as WebSocket frames.
 
 FastAPI WebSocket endpoint:
 ```python
@@ -93,10 +93,10 @@ ws.send("hello");
 
 ## How It Connects
 
-WebSockets start as an HTTP upgrade — understanding HTTP request flow explains the handshake.
+WebSockets start as an HTTP upgrade  -  understanding HTTP request flow explains the handshake.
 [[http-basics|HTTP Basics]]
 
-Async servers (FastAPI + Uvicorn) handle WebSockets as long-lived coroutines — each connected client runs `await websocket.receive_text()` which yields to the event loop.
+Async servers (FastAPI + Uvicorn) handle WebSockets as long-lived coroutines  -  each connected client runs `await websocket.receive_text()` which yields to the event loop.
 [[async-await|Async and Await]]
 
 ---
@@ -129,7 +129,7 @@ Common question forms:
 - "How does a WebSocket connection start?"
 - "When would you use WebSockets vs HTTP polling?"
 
-Answer frame: WebSocket starts with HTTP GET + `Upgrade: websocket` header → server responds `101 Switching Protocols` → TCP connection becomes a WebSocket channel. Full-duplex: both sides send at any time. Use WebSockets for high-frequency bidirectional updates (chat, live collab). Use SSE for server-to-client only streams. Use HTTP polling for low-frequency status checks. Scaling challenge: persistent connections need a pub/sub broker for multi-instance deployments.
+Answer frame: WebSocket starts with HTTP GET + `Upgrade: websocket` header -> server responds `101 Switching Protocols` -> TCP connection becomes a WebSocket channel. Full-duplex: both sides send at any time. Use WebSockets for high-frequency bidirectional updates (chat, live collab). Use SSE for server-to-client only streams. Use HTTP polling for low-frequency status checks. Scaling challenge: persistent connections need a pub/sub broker for multi-instance deployments.
 
 ---
 

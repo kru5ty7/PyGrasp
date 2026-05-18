@@ -1,6 +1,6 @@
----
+﻿---
 title: 06 - REST
-description: "REST (Representational State Transfer) is an architectural style for distributed systems — its constraints include statelessness, uniform interface (HTTP methods + resource URLs), client-server separation, and optional caching; a RESTful API maps CRUD operations to HTTP methods on resource-oriented URLs."
+description: "REST (Representational State Transfer) is an architectural style for distributed systems  -  its constraints include statelessness, uniform interface (HTTP methods + resource URLs), client-server separation, and optional caching; a RESTful API maps CRUD operations to HTTP methods on resource-oriented URLs."
 tags: [rest, restful, stateless, resource, CRUD, HTTP-methods, layer-3, web]
 status: draft
 difficulty: beginner
@@ -11,7 +11,7 @@ created: 2026-05-17
 
 # REST
 
-> REST (Representational State Transfer) is an architectural style for distributed systems — its constraints include statelessness, uniform interface (HTTP methods + resource URLs), client-server separation, and optional caching; a RESTful API maps CRUD operations to HTTP methods on resource-oriented URLs.
+> REST (Representational State Transfer) is an architectural style for distributed systems  -  its constraints include statelessness, uniform interface (HTTP methods + resource URLs), client-server separation, and optional caching; a RESTful API maps CRUD operations to HTTP methods on resource-oriented URLs.
 
 ---
 
@@ -19,15 +19,15 @@ created: 2026-05-17
 
 **Core idea:**
 - **Resource-oriented**: every entity is a resource with a URL (`/users/42`, `/orders/99/items`)
-- **HTTP methods map to CRUD**: GET → read, POST → create, PUT/PATCH → update, DELETE → delete
+- **HTTP methods map to CRUD**: GET -> read, POST -> create, PUT/PATCH -> update, DELETE -> delete
 - **Stateless**: each request contains all context needed; server stores no session state between requests
 - **Representations**: resources can be represented in different formats (JSON, XML) via `Content-Type`/`Accept` negotiation
 - **Uniform interface**: consistent URL patterns and method semantics across the API
 
 **Tricky points:**
-- REST is an architectural style (6 constraints), not a protocol or standard — "RESTful" is informal; nothing enforces compliance
-- Stateless does NOT mean the server has no state — it means no client session state is stored server-side; the database is server state, not session state
-- "HATEOAS" (Hypermedia As The Engine Of Application State) is the most neglected REST constraint — responses include links to related actions; almost no real-world APIs implement it fully
+- REST is an architectural style (6 constraints), not a protocol or standard  -  "RESTful" is informal; nothing enforces compliance
+- Stateless does NOT mean the server has no state  -  it means no client session state is stored server-side; the database is server state, not session state
+- "HATEOAS" (Hypermedia As The Engine Of Application State) is the most neglected REST constraint  -  responses include links to related actions; almost no real-world APIs implement it fully
 - Nested resources (e.g., `/users/42/posts`) are acceptable for strong containment; avoid going deeper than 2 levels
 - Actions that don't map cleanly to CRUD (e.g., "send email", "process payment") are often shoehorned as POST on a sub-resource: `POST /invoices/99/send`
 
@@ -35,7 +35,7 @@ created: 2026-05-17
 
 ## What It Is
 
-REST is a set of constraints for designing distributed hypermedia systems, described by Roy Fielding in his 2000 dissertation. It emerged as a formalization of what made the web scale — stateless connections, cacheable responses, a uniform interface. Applied to web APIs, it means designing around resources (nouns, not verbs) with a consistent URL structure and using HTTP methods to express the operation.
+REST is a set of constraints for designing distributed hypermedia systems, described by Roy Fielding in his 2000 dissertation. It emerged as a formalization of what made the web scale  -  stateless connections, cacheable responses, a uniform interface. Applied to web APIs, it means designing around resources (nouns, not verbs) with a consistent URL structure and using HTTP methods to express the operation.
 
 The practical benefit: predictability. A developer looking at a REST API can infer `/users/42` means "user with ID 42" and `DELETE /users/42` means "delete that user" without reading documentation. This convention reduces cognitive load and enables tooling (like Swagger/OpenAPI) to describe APIs generically.
 
@@ -54,20 +54,20 @@ Sub-item:       /users/42/posts/7    (specific post)
 
 Full CRUD mapping:
 ```
-GET    /users          → 200 [users list]
-POST   /users          → 201 {new user}, Location: /users/43
-GET    /users/42       → 200 {user}
-PUT    /users/42       → 200 {updated user}
-PATCH  /users/42       → 200 {updated user}
-DELETE /users/42       → 204 (no content)
-GET    /users/999      → 404 Not Found
+GET    /users          -> 200 [users list]
+POST   /users          -> 201 {new user}, Location: /users/43
+GET    /users/42       -> 200 {user}
+PUT    /users/42       -> 200 {updated user}
+PATCH  /users/42       -> 200 {updated user}
+DELETE /users/42       -> 204 (no content)
+GET    /users/999      -> 404 Not Found
 ```
 
-What NOT to do (verb in URL — not RESTful):
+What NOT to do (verb in URL  -  not RESTful):
 ```
-POST /createUser        ← wrong; use POST /users
-GET  /getUserById?id=42 ← wrong; use GET /users/42
-POST /deleteUser/42     ← wrong; use DELETE /users/42
+POST /createUser        <- wrong; use POST /users
+GET  /getUserById?id=42 <- wrong; use GET /users/42
+POST /deleteUser/42     <- wrong; use DELETE /users/42
 ```
 
 FastAPI REST structure:
@@ -96,10 +96,10 @@ async def delete_user(user_id: int): ...
 
 ## How It Connects
 
-REST uses HTTP methods to express operations — understanding what each method means (safety, idempotency) is prerequisite.
+REST uses HTTP methods to express operations  -  understanding what each method means (safety, idempotency) is prerequisite.
 [[http-methods|HTTP Methods]]
 
-FastAPI is built for building RESTful APIs — its route decorators directly implement REST conventions.
+FastAPI is built for building RESTful APIs  -  its route decorators directly implement REST conventions.
 [[fastapi|FastAPI]]
 
 ---
@@ -122,7 +122,7 @@ REST conventions make APIs predictable and enable tooling:
 - CDNs cache GET responses on resource URLs automatically
 - Rate limiting can be applied per resource (`/users/*` throttled separately from `/orders/*`)
 
-Non-REST patterns to know: **RPC-style** (gRPC, tRPC) sends commands (`getUser`, `createOrder`) — better for internal microservices. **GraphQL** sends queries — better for complex data graphs with many client variations.
+Non-REST patterns to know: **RPC-style** (gRPC, tRPC) sends commands (`getUser`, `createOrder`)  -  better for internal microservices. **GraphQL** sends queries  -  better for complex data graphs with many client variations.
 
 ---
 

@@ -1,6 +1,6 @@
----
+﻿---
 title: 05 - Chunking Strategies
-description: "Chunking splits documents into smaller pieces before embedding — the chunk size, overlap, and splitting method affect retrieval quality; fixed-size character splits are simplest; sentence/paragraph splitting preserves context; recursive splitting tries larger units first; chunk overlap prevents losing context at boundaries."
+description: "Chunking splits documents into smaller pieces before embedding  -  the chunk size, overlap, and splitting method affect retrieval quality; fixed-size character splits are simplest; sentence/paragraph splitting preserves context; recursive splitting tries larger units first; chunk overlap prevents losing context at boundaries."
 tags: [chunking, chunk-size, overlap, text-splitter, recursive-splitting, RAG, layer-4, ai]
 status: draft
 difficulty: intermediate
@@ -11,7 +11,7 @@ created: 2026-05-17
 
 # Chunking Strategies
 
-> Chunking splits documents into smaller pieces before embedding — the chunk size, overlap, and splitting method affect retrieval quality; fixed-size character splits are simplest; sentence/paragraph splitting preserves context; recursive splitting tries larger units first; chunk overlap prevents losing context at boundaries.
+> Chunking splits documents into smaller pieces before embedding  -  the chunk size, overlap, and splitting method affect retrieval quality; fixed-size character splits are simplest; sentence/paragraph splitting preserves context; recursive splitting tries larger units first; chunk overlap prevents losing context at boundaries.
 
 ---
 
@@ -19,23 +19,23 @@ created: 2026-05-17
 
 **Core idea:**
 - **Chunk size**: smaller chunks = more precise retrieval; larger chunks = more context per match; typical range: 256-1024 tokens
-- **Overlap**: duplicate content at chunk boundaries (e.g., 50-100 tokens) — prevents losing information when a fact spans a boundary
-- **Fixed-size splitting**: split every N characters/tokens — simple but may split mid-sentence
-- **Sentence/paragraph splitting**: split at natural boundaries — better context but variable size
-- **Recursive splitting**: try paragraph → sentence → word splits in order; ensures no chunk exceeds max size
+- **Overlap**: duplicate content at chunk boundaries (e.g., 50-100 tokens)  -  prevents losing information when a fact spans a boundary
+- **Fixed-size splitting**: split every N characters/tokens  -  simple but may split mid-sentence
+- **Sentence/paragraph splitting**: split at natural boundaries  -  better context but variable size
+- **Recursive splitting**: try paragraph -> sentence -> word splits in order; ensures no chunk exceeds max size
 
 **Tricky points:**
-- The optimal chunk size depends on your content and query type — short factual queries match small chunks better; reasoning tasks benefit from larger chunks
-- Metadata matters as much as content — include document title, URL, section heading in chunk metadata for citation
-- Small chunks embedded independently lose context — "it" or "they" in a chunk without context embeds poorly
-- Embedding dimension ≠ context window — embedding models have their own input limits (usually 512-8192 tokens); chunks should fit the embedding model's limit, not just the LLM's context window
-- Parent-child chunking: embed small chunks for precision, retrieve parent (larger) chunk for context — best of both worlds
+- The optimal chunk size depends on your content and query type  -  short factual queries match small chunks better; reasoning tasks benefit from larger chunks
+- Metadata matters as much as content  -  include document title, URL, section heading in chunk metadata for citation
+- Small chunks embedded independently lose context  -  "it" or "they" in a chunk without context embeds poorly
+- Embedding dimension ≠ context window  -  embedding models have their own input limits (usually 512-8192 tokens); chunks should fit the embedding model's limit, not just the LLM's context window
+- Parent-child chunking: embed small chunks for precision, retrieve parent (larger) chunk for context  -  best of both worlds
 
 ---
 
 ## What It Is
 
-Embedding an entire 100-page document as one vector loses all granularity — a query about Chapter 3 would match on the whole document. Chunking creates multiple embeddings per document, each representing a section, paragraph, or window of text. The retrieval step then finds the specific chunk most relevant to the query.
+Embedding an entire 100-page document as one vector loses all granularity  -  a query about Chapter 3 would match on the whole document. Chunking creates multiple embeddings per document, each representing a section, paragraph, or window of text. The retrieval step then finds the specific chunk most relevant to the query.
 
 The chunking strategy is one of the highest-impact parameters in a RAG pipeline. Bad chunking (chunks that cut mid-sentence, too small to contain useful context, or too large to be specific) directly degrades retrieval quality.
 
@@ -108,10 +108,10 @@ def chunk_with_context(document: str, small_size=256, large_size=1024, overlap=5
 
 ## How It Connects
 
-Chunked text is embedded before storing in a vector database — chunk quality directly affects embedding quality and retrieval precision.
+Chunked text is embedded before storing in a vector database  -  chunk quality directly affects embedding quality and retrieval precision.
 [[embeddings|Embeddings]]
 
-Chunking strategy determines what ends up in the LLM's context window during RAG — good chunking = relevant, self-contained passages.
+Chunking strategy determines what ends up in the LLM's context window during RAG  -  good chunking = relevant, self-contained passages.
 [[rag|RAG]]
 
 ---
@@ -151,7 +151,7 @@ Common question forms:
 - "How do you split documents for RAG?"
 - "What is chunk overlap and why does it matter?"
 
-Answer frame: Chunking splits documents into pieces that can be independently embedded and retrieved. Fixed-size: simplest; may cut mid-sentence. Recursive: tries paragraph → sentence splits first; more natural boundaries. Overlap (10-15%): duplicates content at chunk boundaries to prevent losing facts that span the split point. Chunk size trade-off: small = precise but lacks context; large = more context but less specific matches. Parent-child: embed small, retrieve large.
+Answer frame: Chunking splits documents into pieces that can be independently embedded and retrieved. Fixed-size: simplest; may cut mid-sentence. Recursive: tries paragraph -> sentence splits first; more natural boundaries. Overlap (10-15%): duplicates content at chunk boundaries to prevent losing facts that span the split point. Chunk size trade-off: small = precise but lacks context; large = more context but less specific matches. Parent-child: embed small, retrieve large.
 
 ---
 

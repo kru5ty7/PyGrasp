@@ -1,4 +1,4 @@
----
+﻿---
 title: 08 - Profiling Python Code
 description: "Profiling is the measurement of where a Python program spends its time and memory, using tools like cProfile for deterministic call-count profiling, line_profiler for line-level timing, and py-spy for low-overhead sampling on running processes."
 tags: [profiling, cprofile, performance, optimization, line-profiler, py-spy, tooling, layer-9]
@@ -11,36 +11,36 @@ created: 2026-05-18
 
 # Profiling Python Code
 
-> Profiling is measuring where your program's time and memory actually go — because developer intuition about performance bottlenecks is reliably wrong, and optimizing without measurement is the definition of premature optimization.
+> Profiling is measuring where your program's time and memory actually go  -  because developer intuition about performance bottlenecks is reliably wrong, and optimizing without measurement is the definition of premature optimization.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- `python -m cProfile -o output.prof script.py` — runs the deterministic profiler, saves results
-- `python -m pstats output.prof` — interactive stats viewer for cProfile output
-- `@profile` decorator from `line_profiler` — profiles a specific function line by line
-- `py-spy top --pid PID` — attaches to a running Python process, sampling profiler, no code changes
-- `memory_profiler` `@profile` decorator — measures per-line memory usage
-- **Profile before optimizing** — guess wrong 90% of the time; measure to know where to spend effort
+- `python -m cProfile -o output.prof script.py`  -  runs the deterministic profiler, saves results
+- `python -m pstats output.prof`  -  interactive stats viewer for cProfile output
+- `@profile` decorator from `line_profiler`  -  profiles a specific function line by line
+- `py-spy top --pid PID`  -  attaches to a running Python process, sampling profiler, no code changes
+- `memory_profiler` `@profile` decorator  -  measures per-line memory usage
+- **Profile before optimizing**  -  guess wrong 90% of the time; measure to know where to spend effort
 
 **Tricky points:**
-- cProfile uses deterministic profiling — it intercepts every function call, which adds overhead and can change timing ratios
+- cProfile uses deterministic profiling  -  it intercepts every function call, which adds overhead and can change timing ratios
 - `pstats` sort options: `cumulative` (total time including callees, identifies entry points), `tottime` (time in function only, identifies hot functions)
-- py-spy is a sampling profiler — it samples the call stack at intervals without modifying the Python process; minimal overhead, safe for production
-- Amdahl's Law: if a function takes 10% of total runtime, optimizing it to zero saves at most 10% — profile to find functions that dominate total time
+- py-spy is a sampling profiler  -  it samples the call stack at intervals without modifying the Python process; minimal overhead, safe for production
+- Amdahl's Law: if a function takes 10% of total runtime, optimizing it to zero saves at most 10%  -  profile to find functions that dominate total time
 - CPython's GIL means profiling multithreaded Python shows only one thread's perspective in most profilers; py-spy handles this better
 
 ---
 
 ## What It Is
 
-Optimization without profiling is guessing. Human intuition about where programs spend their time is systematically wrong — we suspect the complex algorithm, but the hot path is almost always something simpler: a database query called in a loop, a string serialization happening on every request, a library function with unexpected overhead. Profiling is the discipline of measuring before acting, replacing speculation with data.
+Optimization without profiling is guessing. Human intuition about where programs spend their time is systematically wrong  -  we suspect the complex algorithm, but the hot path is almost always something simpler: a database query called in a loop, a string serialization happening on every request, a library function with unexpected overhead. Profiling is the discipline of measuring before acting, replacing speculation with data.
 
-There are two categories of Python profilers: deterministic profilers and sampling profilers. A deterministic profiler, like cProfile, instruments the program by intercepting every function call and return using Python's tracing API (`sys.settrace`). It records exact call counts and precise time measurements for every function. The cost is overhead — the measurement itself slows the program down, sometimes significantly, because the tracing hook is called on every function call. Deterministic profiling is best used in development, not production.
+There are two categories of Python profilers: deterministic profilers and sampling profilers. A deterministic profiler, like cProfile, instruments the program by intercepting every function call and return using Python's tracing API (`sys.settrace`). It records exact call counts and precise time measurements for every function. The cost is overhead  -  the measurement itself slows the program down, sometimes significantly, because the tracing hook is called on every function call. Deterministic profiling is best used in development, not production.
 
-A sampling profiler, like py-spy, works differently. It runs as an external process and periodically reads the call stack of the target Python process from outside — by inspecting the process's memory directly. It does not modify the Python program, inject any instrumentation, or use `sys.settrace`. The overhead is essentially zero, and it can be attached to a running production process without restarting it. The trade-off is resolution — sampling only approximates where time is spent; very short functions that run infrequently may not appear in the profile. For identifying the dominant bottlenecks in real production traffic, sampling profilers are the right tool.
+A sampling profiler, like py-spy, works differently. It runs as an external process and periodically reads the call stack of the target Python process from outside  -  by inspecting the process's memory directly. It does not modify the Python program, inject any instrumentation, or use `sys.settrace`. The overhead is essentially zero, and it can be attached to a running production process without restarting it. The trade-off is resolution  -  sampling only approximates where time is spent; very short functions that run infrequently may not appear in the profile. For identifying the dominant bottlenecks in real production traffic, sampling profilers are the right tool.
 
 ---
 
@@ -95,7 +95,7 @@ def process_records(records):
 # Run with: kernprof -l -v script.py
 ```
 
-The output shows each line's hit count, total time, and percentage of the function's time — making it immediately clear which line is the bottleneck.
+The output shows each line's hit count, total time, and percentage of the function's time  -  making it immediately clear which line is the bottleneck.
 
 **py-spy** requires no code changes and attaches to any running Python process:
 
@@ -129,11 +129,11 @@ def load_data(path):
 
 ## How It Connects
 
-Understanding the interpreter loop clarifies why Python profiling shows what it does — function calls are expensive in CPython because they create frame objects, which is why cProfile's call-count data is meaningful.
+Understanding the interpreter loop clarifies why Python profiling shows what it does  -  function calls are expensive in CPython because they create frame objects, which is why cProfile's call-count data is meaningful.
 
 [[interpreter-loop|The Interpreter Loop]]
 
-Profiling async code requires async-aware profilers — standard cProfile misses time spent in the event loop, making it look like async functions are fast when they are actually waiting.
+Profiling async code requires async-aware profilers  -  standard cProfile misses time spent in the event loop, making it look like async functions are fast when they are actually waiting.
 
 [[asyncio|Asyncio]]
 
@@ -149,10 +149,10 @@ Misconception 1: "I can guess where the bottleneck is by reading the code."
 Reality: Experienced developers consistently misjudge where programs spend their time. The bottleneck is usually in a different function than expected, or in a library call that appears trivial. Profile first, then optimize the function that cProfile or py-spy identifies as the dominant contributor to runtime.
 
 Misconception 2: "cProfile overhead is negligible and safe for production."
-Reality: cProfile uses Python's `sys.settrace` hook, which is called on every function call and return. For a program with many function calls, this overhead can slow execution by 10–100x. It is a development tool, not a production tool. For production profiling, use py-spy (sampling, zero-instrumentation) or a purpose-built APM tool.
+Reality: cProfile uses Python's `sys.settrace` hook, which is called on every function call and return. For a program with many function calls, this overhead can slow execution by 10 - 100x. It is a development tool, not a production tool. For production profiling, use py-spy (sampling, zero-instrumentation) or a purpose-built APM tool.
 
 Misconception 3: "Optimizing the slowest function always makes the program significantly faster."
-Reality: Amdahl's Law governs this. If function X takes 5% of total runtime, optimizing it to run 10x faster saves only 4.5% of total runtime. The largest gains come from optimizing functions that dominate total runtime — typically 60–90% of time in 1–3 functions. Sorting cProfile output by `cumulative` time reveals these dominators.
+Reality: Amdahl's Law governs this. If function X takes 5% of total runtime, optimizing it to run 10x faster saves only 4.5% of total runtime. The largest gains come from optimizing functions that dominate total runtime  -  typically 60 - 90% of time in 1 - 3 functions. Sorting cProfile output by `cumulative` time reveals these dominators.
 
 ---
 
@@ -171,7 +171,7 @@ Common question forms:
 - "What profiling tools do you use and when?"
 
 Answer frame:
-A strong answer distinguishes deterministic (cProfile, line_profiler) from sampling profilers (py-spy), explains when to use each (development vs production), and mentions Amdahl's Law as the framework for deciding what to optimize. Describing a real workflow — profile, find dominant function, optimize, re-profile — demonstrates practical experience.
+A strong answer distinguishes deterministic (cProfile, line_profiler) from sampling profilers (py-spy), explains when to use each (development vs production), and mentions Amdahl's Law as the framework for deciding what to optimize. Describing a real workflow  -  profile, find dominant function, optimize, re-profile  -  demonstrates practical experience.
 
 ---
 

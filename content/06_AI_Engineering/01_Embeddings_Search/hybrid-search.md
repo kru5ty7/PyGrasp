@@ -1,6 +1,6 @@
----
+﻿---
 title: 07 - Hybrid Search
-description: "Hybrid search combines dense vector search (semantic similarity) with sparse keyword search (BM25/TF-IDF) — vector search finds semantically related content; keyword search finds exact term matches; combining both with RRF (Reciprocal Rank Fusion) improves retrieval over either alone."
+description: "Hybrid search combines dense vector search (semantic similarity) with sparse keyword search (BM25/TF-IDF)  -  vector search finds semantically related content; keyword search finds exact term matches; combining both with RRF (Reciprocal Rank Fusion) improves retrieval over either alone."
 tags: [hybrid-search, BM25, dense-retrieval, sparse-retrieval, RRF, reciprocal-rank-fusion, layer-4, ai]
 status: draft
 difficulty: intermediate
@@ -11,7 +11,7 @@ created: 2026-05-17
 
 # Hybrid Search
 
-> Hybrid search combines dense vector search (semantic similarity) with sparse keyword search (BM25/TF-IDF) — vector search finds semantically related content; keyword search finds exact term matches; combining both with RRF (Reciprocal Rank Fusion) improves retrieval over either alone.
+> Hybrid search combines dense vector search (semantic similarity) with sparse keyword search (BM25/TF-IDF)  -  vector search finds semantically related content; keyword search finds exact term matches; combining both with RRF (Reciprocal Rank Fusion) improves retrieval over either alone.
 
 ---
 
@@ -25,19 +25,19 @@ created: 2026-05-17
 - Many vector databases support hybrid search natively (pgvector with `tsvector`, Qdrant, Elasticsearch)
 
 **Tricky points:**
-- BM25 is sensitive to exact keyword matches — good for product names, error codes, technical terms; poor for paraphrases or synonyms
-- Vector search handles paraphrases well but can miss exact matches — "ERROR_CODE_404" and "404 error" are semantically similar but the embedding may prioritize general meaning over exact code
-- RRF parameter `k=60` is the standard default — the `+60` in the denominator prevents documents ranked 1st from dominating excessively; rarely needs tuning
-- Hybrid search requires running two retrieval systems — higher latency and complexity than single-modality
+- BM25 is sensitive to exact keyword matches  -  good for product names, error codes, technical terms; poor for paraphrases or synonyms
+- Vector search handles paraphrases well but can miss exact matches  -  "ERROR_CODE_404" and "404 error" are semantically similar but the embedding may prioritize general meaning over exact code
+- RRF parameter `k=60` is the standard default  -  the `+60` in the denominator prevents documents ranked 1st from dominating excessively; rarely needs tuning
+- Hybrid search requires running two retrieval systems  -  higher latency and complexity than single-modality
 - `alpha` parameter (if using weighted combination instead of RRF): 0.0 = pure BM25, 1.0 = pure vector; typical starting point: 0.5
 
 ---
 
 ## What It Is
 
-Neither vector search nor keyword search is universally better — they complement each other. A query like "how to configure TLS in nginx" benefits from both: vector search finds semantically related documentation, keyword search ensures documents containing "TLS" and "nginx" are included even if they use slightly different phrasing.
+Neither vector search nor keyword search is universally better  -  they complement each other. A query like "how to configure TLS in nginx" benefits from both: vector search finds semantically related documentation, keyword search ensures documents containing "TLS" and "nginx" are included even if they use slightly different phrasing.
 
-Hybrid search exploits the complementarity: retrieve the top-N from each method independently, then merge the ranked lists. The merged list leverages both signals — semantically related content and exact keyword matches both surface.
+Hybrid search exploits the complementarity: retrieve the top-N from each method independently, then merge the ranked lists. The merged list leverages both signals  -  semantically related content and exact keyword matches both surface.
 
 ---
 
@@ -116,7 +116,7 @@ results = client.query_points(
 
 ## How It Connects
 
-Hybrid search combines the outputs of vector search and BM25 retrieval — understanding both is prerequisite.
+Hybrid search combines the outputs of vector search and BM25 retrieval  -  understanding both is prerequisite.
 [[vector-search|Vector Search]]
 
 Reranking is often applied after hybrid search to further refine the merged results.
@@ -142,7 +142,7 @@ Use cases where hybrid search provides the most benefit:
 - Legal/medical (technical terms + explanatory content)
 - Customer support (product codes + natural language descriptions)
 
-Evaluation: measure NDCG@5 on a test set with annotated relevant documents — compare vector-only, BM25-only, and hybrid to determine if hybrid is worth the added complexity for your use case.
+Evaluation: measure NDCG@5 on a test set with annotated relevant documents  -  compare vector-only, BM25-only, and hybrid to determine if hybrid is worth the added complexity for your use case.
 
 ---
 

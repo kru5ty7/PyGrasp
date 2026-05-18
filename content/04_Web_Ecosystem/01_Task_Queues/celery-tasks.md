@@ -1,4 +1,4 @@
----
+﻿---
 title: 02 - Celery Tasks
 description: "Celery tasks are Python functions decorated to run asynchronously in worker processes, with built-in support for retries, state tracking, and idempotent execution patterns."
 tags: [celery, tasks, retry, idempotency, layer-4, web-ecosystem]
@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Celery Tasks
 
-> A Celery task is a Python function that can be called immediately or deferred to run in a background worker — understanding the task lifecycle, retry mechanics, and idempotency requirement is what separates reliable Celery code from brittle code.
+> A Celery task is a Python function that can be called immediately or deferred to run in a background worker  -  understanding the task lifecycle, retry mechanics, and idempotency requirement is what separates reliable Celery code from brittle code.
 
 ---
 
@@ -20,16 +20,16 @@ created: 2026-05-18
 **Core idea:**
 - `@app.task` registers a function as a Celery task; `@shared_task` avoids coupling the task to a specific app instance
 - `.delay(arg1, arg2)` enqueues with positional args; `.apply_async(args, kwargs, countdown=60, eta=datetime)` gives full control
-- Task states progress: `PENDING` → `STARTED` (if `task_track_started=True`) → `SUCCESS` or `FAILURE` or `RETRY`
-- `bind=True` passes the task instance as `self` — required for `self.retry()`, `self.request.id`, and accessing task metadata
-- Tasks may execute more than once — design them to produce the same result regardless of how many times they run
+- Task states progress: `PENDING` -> `STARTED` (if `task_track_started=True`) -> `SUCCESS` or `FAILURE` or `RETRY`
+- `bind=True` passes the task instance as `self`  -  required for `self.retry()`, `self.request.id`, and accessing task metadata
+- Tasks may execute more than once  -  design them to produce the same result regardless of how many times they run
 
 **Tricky points:**
-- `task.retry()` re-raises by default to move the task to `RETRY` state — call it inside an `except` block and pass the exception with `exc=exc`
-- `max_retries=None` means infinite retries — always set an explicit limit unless you have a specific reason not to
+- `task.retry()` re-raises by default to move the task to `RETRY` state  -  call it inside an `except` block and pass the exception with `exc=exc`
+- `max_retries=None` means infinite retries  -  always set an explicit limit unless you have a specific reason not to
 - `countdown` is seconds until the next retry attempt; use exponential backoff: `countdown=2 ** self.request.retries`
-- `apply_async(eta=datetime)` schedules the task for a specific UTC time — the worker will not execute it until then
-- `@app.task(ignore_result=True)` skips writing to the result backend — set this for fire-and-forget tasks to reduce backend load
+- `apply_async(eta=datetime)` schedules the task for a specific UTC time  -  the worker will not execute it until then
+- `@app.task(ignore_result=True)` skips writing to the result backend  -  set this for fire-and-forget tasks to reduce backend load
 
 ---
 
@@ -37,9 +37,9 @@ created: 2026-05-18
 
 A Celery task function looks like any other Python function but carries additional machinery. When you decorate a function with `@app.task`, Celery wraps it in a `Task` class that knows how to serialize itself into a broker message, track its execution state, handle retries, and store its result. The decorated function becomes an object with methods like `.delay()`, `.apply_async()`, and `.retry()`.
 
-The distinction between `@app.task` and `@shared_task` matters for project structure. `@app.task` binds the task directly to a specific Celery application instance — this creates a hard dependency between the task module and the module where the app is created. `@shared_task` defers the binding until the task is actually used, making it suitable for reusable library code or Django apps that want to avoid importing the Celery app directly.
+The distinction between `@app.task` and `@shared_task` matters for project structure. `@app.task` binds the task directly to a specific Celery application instance  -  this creates a hard dependency between the task module and the module where the app is created. `@shared_task` defers the binding until the task is actually used, making it suitable for reusable library code or Django apps that want to avoid importing the Celery app directly.
 
-The task state machine is central to understanding Celery's behavior. A task starts as `PENDING` — it exists as a message in the broker queue but no worker has acknowledged it yet. Once a worker picks it up, the state becomes `STARTED` (only if `task_track_started=True` is configured). After execution, the state is either `SUCCESS` (return value stored in backend) or `FAILURE` (exception information stored). If the task calls `self.retry()`, it transitions through `RETRY` back to `PENDING` as a new message is sent to the broker.
+The task state machine is central to understanding Celery's behavior. A task starts as `PENDING`  -  it exists as a message in the broker queue but no worker has acknowledged it yet. Once a worker picks it up, the state becomes `STARTED` (only if `task_track_started=True` is configured). After execution, the state is either `SUCCESS` (return value stored in backend) or `FAILURE` (exception information stored). If the task calls `self.retry()`, it transitions through `RETRY` back to `PENDING` as a new message is sent to the broker.
 
 ---
 
@@ -85,7 +85,7 @@ result = send_email.delay("user@example.com", "Test", "body")
 value = result.get(timeout=30)  # raises exception if task failed
 ```
 
-Idempotency is not optional in Celery — it is a requirement of the at-least-once delivery model. The broker guarantees that a task is delivered at least once, not exactly once. If a worker crashes after executing a task but before acknowledging the message, the broker will re-deliver the message to another worker. A task that creates a database record must check whether the record already exists before creating it. A task that sends an email should use a deduplication key to ensure the same email is not sent twice.
+Idempotency is not optional in Celery  -  it is a requirement of the at-least-once delivery model. The broker guarantees that a task is delivered at least once, not exactly once. If a worker crashes after executing a task but before acknowledging the message, the broker will re-deliver the message to another worker. A task that creates a database record must check whether the record already exists before creating it. A task that sends an email should use a deduplication key to ensure the same email is not sent twice.
 
 ```python
 @shared_task(bind=True)
@@ -101,7 +101,7 @@ def create_invoice(self, order_id: int):
 
 ## How It Connects
 
-Celery infrastructure — the app object, broker configuration, and worker startup — is covered in the parent note on Celery itself.
+Celery infrastructure  -  the app object, broker configuration, and worker startup  -  is covered in the parent note on Celery itself.
 
 [[celery|Celery]]
 
@@ -123,7 +123,7 @@ Reality: Celery provides no idempotency guarantees at the framework level. The d
 
 ## Why It Matters in Practice
 
-Tasks that are not idempotent silently corrupt data under failure conditions — a duplicate email, a double charge, an extra database record. These bugs are intermittent (they appear only when workers crash or the broker redelivers) and hard to reproduce in tests. Writing idempotent tasks from the start, setting explicit `max_retries`, and using exponential backoff prevents an entire category of production incidents.
+Tasks that are not idempotent silently corrupt data under failure conditions  -  a duplicate email, a double charge, an extra database record. These bugs are intermittent (they appear only when workers crash or the broker redelivers) and hard to reproduce in tests. Writing idempotent tasks from the start, setting explicit `max_retries`, and using exponential backoff prevents an entire category of production incidents.
 
 ---
 
@@ -135,7 +135,7 @@ Common question forms:
 - "What is the difference between `.delay()` and `.apply_async()`?"
 
 Answer frame:
-Idempotent means running the task N times produces the same result as running it once — required because Celery's at-least-once delivery can cause redeliveries on worker crash. Retry: use `bind=True`, catch the exception, call `self.retry(exc=exc, countdown=2**self.request.retries)` for exponential backoff with `max_retries` set. `.delay(args)` is shorthand; `.apply_async(args, kwargs, countdown, eta)` is the full version for scheduling.
+Idempotent means running the task N times produces the same result as running it once  -  required because Celery's at-least-once delivery can cause redeliveries on worker crash. Retry: use `bind=True`, catch the exception, call `self.retry(exc=exc, countdown=2**self.request.retries)` for exponential backoff with `max_retries` set. `.delay(args)` is shorthand; `.apply_async(args, kwargs, countdown, eta)` is the full version for scheduling.
 
 ---
 

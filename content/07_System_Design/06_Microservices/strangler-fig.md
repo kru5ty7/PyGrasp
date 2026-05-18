@@ -1,4 +1,4 @@
----
+﻿---
 title: 07 - Strangler Fig Pattern
 description: "How to incrementally migrate a monolith to microservices by routing new functionality to new services while the old system is gradually replaced."
 tags: [strangler-fig, migration, microservices, refactoring, layer-7, system-design]
@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Strangler Fig Pattern
 
-> The strangler fig pattern is how you migrate a monolith to microservices without a "big bang" rewrite — you grow the new system around the old one, routing specific capabilities to it until the old system can be deleted.
+> The strangler fig pattern is how you migrate a monolith to microservices without a "big bang" rewrite  -  you grow the new system around the old one, routing specific capabilities to it until the old system can be deleted.
 
 ---
 
@@ -25,23 +25,23 @@ created: 2026-05-18
 - The anti-corruption layer translates between the old system's model and the new service's model
 
 **Tricky points:**
-- The routing layer must handle both the new and old system simultaneously — it must not break existing behavior
+- The routing layer must handle both the new and old system simultaneously  -  it must not break existing behavior
 - Data migration is the hardest part: the new service needs its own data store, potentially populated from the monolith
-- The old system and new service may have different data models for the same concept — the anti-corruption layer bridges this
+- The old system and new service may have different data models for the same concept  -  the anti-corruption layer bridges this
 - "Feature flags" enable gradual rollout: send 1% of traffic to the new service, then 10%, then 100%
-- Big bang rewrites almost always fail — the strangler fig is the pragmatic alternative
+- Big bang rewrites almost always fail  -  the strangler fig is the pragmatic alternative
 
 ---
 
 ## What It Is
 
-A strangler fig is a tropical plant that germinates in the canopy of a tree, grows downward, and eventually wraps around the host tree. Over years, the fig grows into a full tree in its own right. The host tree may die and rot away inside the fig — the fig's structure supporting itself without the original tree. The fig did not destroy the host suddenly. It grew around it slowly, taking over its structural role incrementally.
+A strangler fig is a tropical plant that germinates in the canopy of a tree, grows downward, and eventually wraps around the host tree. Over years, the fig grows into a full tree in its own right. The host tree may die and rot away inside the fig  -  the fig's structure supporting itself without the original tree. The fig did not destroy the host suddenly. It grew around it slowly, taking over its structural role incrementally.
 
-Martin Fowler described the strangler fig pattern in 2004 as a way to incrementally replace a legacy system. Instead of stopping all development, writing a new system from scratch, and then switching over — the "big bang" rewrite that almost always fails — you build new functionality as separate services alongside the legacy system. Traffic is gradually routed to the new services. The legacy system is "strangled" — its responsibilities shrink until it can be decommissioned.
+Martin Fowler described the strangler fig pattern in 2004 as a way to incrementally replace a legacy system. Instead of stopping all development, writing a new system from scratch, and then switching over  -  the "big bang" rewrite that almost always fails  -  you build new functionality as separate services alongside the legacy system. Traffic is gradually routed to the new services. The legacy system is "strangled"  -  its responsibilities shrink until it can be decommissioned.
 
-The strangler fig pattern is the answer to one of the most common questions in software engineering: "We have a large, difficult-to-change monolith. How do we break it into microservices without shutting down the business for six months?" The answer is: you do not switch all at once. You identify the first capability to extract — typically one with well-defined boundaries and high business value — extract it as a new service, route the relevant traffic there, and then move to the next.
+The strangler fig pattern is the answer to one of the most common questions in software engineering: "We have a large, difficult-to-change monolith. How do we break it into microservices without shutting down the business for six months?" The answer is: you do not switch all at once. You identify the first capability to extract  -  typically one with well-defined boundaries and high business value  -  extract it as a new service, route the relevant traffic there, and then move to the next.
 
-The routing layer is the mechanism that makes the migration transparent to clients. A reverse proxy or API gateway sits in front of both the monolith and the new services. Based on URL paths, request headers, or feature flags, it routes specific requests to the new service and everything else to the monolith. Clients do not change their behavior — the routing layer is invisible to them. Initially, 100% of traffic goes to the monolith. As extraction proceeds, more and more requests go to new services.
+The routing layer is the mechanism that makes the migration transparent to clients. A reverse proxy or API gateway sits in front of both the monolith and the new services. Based on URL paths, request headers, or feature flags, it routes specific requests to the new service and everything else to the monolith. Clients do not change their behavior  -  the routing layer is invisible to them. Initially, 100% of traffic goes to the monolith. As extraction proceeds, more and more requests go to new services.
 
 ---
 
@@ -51,13 +51,13 @@ The sequence for extracting one capability:
 
 1. Define the boundary. Identify a bounded context: a set of related features that can be clearly owned by one service. User authentication, payment processing, and order management are examples of clear boundaries. User "authentication + profile + preferences + notifications" is too broad and should be split.
 
-2. Build the new service. Implement the extracted capability as a standalone service with its own API. Do not share the monolith's database — the new service gets its own data store.
+2. Build the new service. Implement the extracted capability as a standalone service with its own API. Do not share the monolith's database  -  the new service gets its own data store.
 
 3. Populate the new service's data. This is the hardest step. Options: dual-write (write to both old and new stores during a transition period), bulk migration (copy existing data from the monolith's database to the new service's database, then keep in sync), or event-based sync (use CDC to stream changes from the monolith's database to the new service).
 
 4. Set up the routing layer. Configure the proxy to route requests for the extracted capability to the new service. Start with 0% of traffic, use feature flags to gradually increase (1%, 10%, 50%, 100%).
 
-5. Monitor and validate. Compare behavior between old and new (shadow traffic — send to both, compare responses). Fix discrepancies.
+5. Monitor and validate. Compare behavior between old and new (shadow traffic  -  send to both, compare responses). Fix discrepancies.
 
 6. Decommission the old code. Once 100% of traffic uses the new service and the new service is stable, remove the corresponding code and database tables from the monolith.
 
@@ -138,7 +138,7 @@ class AuthServiceAdapter:
 
 Shadow traffic is a validation technique used during the migration. While routing real traffic to the old system, a copy of each request is also sent to the new service. Responses from both are compared. Discrepancies indicate bugs in the new service. Shadow traffic allows validating the new service's behavior against real production traffic without any user impact.
 
-The anti-corruption layer (ACL) is a translation layer between the old system's data model and the new service's model. The same concept — say, a "customer" in the monolith — may be called "user" in the new service, have different fields, or use different ID formats. The ACL translates between them, preventing the old system's conceptual model from "corrupting" the new service's clean domain model.
+The anti-corruption layer (ACL) is a translation layer between the old system's data model and the new service's model. The same concept  -  say, a "customer" in the monolith  -  may be called "user" in the new service, have different fields, or use different ID formats. The ACL translates between them, preventing the old system's conceptual model from "corrupting" the new service's clean domain model.
 
 ---
 
@@ -161,13 +161,13 @@ During the dual-running period, the outbox pattern helps synchronize data betwee
 ## Common Misconceptions
 
 Misconception 1: "You should extract microservices domain by domain, bottom-up."
-Reality: The extraction order should be driven by business value and clear boundaries, not technical structure. Extract the capabilities that need to scale independently, have frequent deployment needs, or have clear domain boundaries — regardless of where they are in the architecture. "Bottom-up" extraction of infrastructure layers before business logic often produces no business benefit.
+Reality: The extraction order should be driven by business value and clear boundaries, not technical structure. Extract the capabilities that need to scale independently, have frequent deployment needs, or have clear domain boundaries  -  regardless of where they are in the architecture. "Bottom-up" extraction of infrastructure layers before business logic often produces no business benefit.
 
-Misconception 2: "The strangler fig is a temporary pattern — once you've migrated, you can delete the proxy."
+Misconception 2: "The strangler fig is a temporary pattern  -  once you've migrated, you can delete the proxy."
 Reality: The routing layer (API gateway or reverse proxy) remains a permanent part of the architecture. It routes traffic to all services. The monolith eventually becomes one or zero services, but the routing infrastructure continues to serve the microservices that replaced it.
 
 Misconception 3: "Big bang rewrites are faster than the strangler fig approach."
-Reality: Big bang rewrites almost always take longer than estimated, often fail, and frequently produce a new system with different (not fewer) problems. The strangler fig approach delivers value incrementally — the first extracted service is in production after weeks, not months. Each service validates the migration approach before committing the entire system to it.
+Reality: Big bang rewrites almost always take longer than estimated, often fail, and frequently produce a new system with different (not fewer) problems. The strangler fig approach delivers value incrementally  -  the first extracted service is in production after weeks, not months. Each service validates the migration approach before committing the entire system to it.
 
 ---
 

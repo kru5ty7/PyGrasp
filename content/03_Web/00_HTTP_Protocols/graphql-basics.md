@@ -1,4 +1,4 @@
----
+﻿---
 title: 09 - GraphQL Basics
 description: "GraphQL is a query language for APIs that lets clients request exactly the data they need from a single endpoint."
 tags: [graphql, api, schema, queries, mutations, layer-3, web]
@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # GraphQL Basics
 
-> GraphQL replaces REST's fixed endpoint-per-resource model with a single endpoint and a typed schema, letting clients declare exactly what they need — a Python developer building client-driven APIs must understand both the power and the complexity this introduces.
+> GraphQL replaces REST's fixed endpoint-per-resource model with a single endpoint and a typed schema, letting clients declare exactly what they need  -  a Python developer building client-driven APIs must understand both the power and the complexity this introduces.
 
 ---
 
@@ -19,18 +19,18 @@ created: 2026-05-18
 
 **Core idea:**
 - A schema written in SDL (Schema Definition Language) defines all types, queries, mutations, and subscriptions
-- Clients send a query document specifying exactly which fields to return — no more, no less
+- Clients send a query document specifying exactly which fields to return  -  no more, no less
 - All requests go to one endpoint (typically `POST /graphql`) regardless of operation type
 - Mutations are writes; subscriptions are long-lived streams (often over WebSockets)
 - Resolvers are Python functions that fetch data for each field in the schema
-- The N+1 problem — where resolving a list triggers one extra query per item — is solved by the DataLoader pattern
+- The N+1 problem  -  where resolving a list triggers one extra query per item  -  is solved by the DataLoader pattern
 
 **Tricky points:**
 - GraphQL `POST` requests are not idempotent by convention even for reads (queries), which complicates HTTP caching
 - Deeply nested queries can create unexpectedly expensive database operations
 - Error handling differs from REST: GraphQL returns HTTP 200 even when the response contains errors in the `errors` field
 - Subscriptions require a stateful connection (WebSocket or SSE) and add server-side complexity
-- Authorization logic in resolvers is easy to forget — field-level access control requires explicit implementation
+- Authorization logic in resolvers is easy to forget  -  field-level access control requires explicit implementation
 
 ---
 
@@ -40,13 +40,13 @@ Think of REST as ordering from a fixed menu at a restaurant: each dish (endpoint
 
 Facebook developed GraphQL internally in 2012 and open-sourced it in 2015. The motivation was the mobile news feed: mobile clients had limited bandwidth and diverse views, and REST endpoints were either too specific (requiring many roundtrips) or too broad (transferring many fields the client never displayed). GraphQL's solution was to invert control. Instead of the server deciding what a response contains, the client declares its data requirements in a query document, and the server resolves only those fields.
 
-The schema is the contract that makes this work. Written in SDL, it defines object types (e.g., `User`, `Post`), the fields each type exposes, and the root operation types: `Query` for reads, `Mutation` for writes, and `Subscription` for real-time events. Every field in the schema has a resolver — a function that knows how to fetch or compute that field's value. The GraphQL execution engine walks the query document, invokes the appropriate resolver for each field, and assembles the result into the shape the client requested.
+The schema is the contract that makes this work. Written in SDL, it defines object types (e.g., `User`, `Post`), the fields each type exposes, and the root operation types: `Query` for reads, `Mutation` for writes, and `Subscription` for real-time events. Every field in the schema has a resolver  -  a function that knows how to fetch or compute that field's value. The GraphQL execution engine walks the query document, invokes the appropriate resolver for each field, and assembles the result into the shape the client requested.
 
 ---
 
 ## How It Actually Works
 
-In Python, the three main libraries for building GraphQL APIs are Strawberry, Ariadne, and Graphene. Strawberry is the most modern: it uses Python type annotations and decorators to generate the SDL schema automatically, following a code-first approach. Ariadne is schema-first — you write SDL manually and then attach resolver functions. Graphene predates both and uses class-based type definitions; it is still widely used in Django projects via `graphene-django`. All three can be mounted as routes inside a FastAPI or Starlette application.
+In Python, the three main libraries for building GraphQL APIs are Strawberry, Ariadne, and Graphene. Strawberry is the most modern: it uses Python type annotations and decorators to generate the SDL schema automatically, following a code-first approach. Ariadne is schema-first  -  you write SDL manually and then attach resolver functions. Graphene predates both and uses class-based type definitions; it is still widely used in Django projects via `graphene-django`. All three can be mounted as routes inside a FastAPI or Starlette application.
 
 ```python
 import strawberry
@@ -68,7 +68,7 @@ router = GraphQLRouter(schema)
 # app.include_router(router, prefix="/graphql")
 ```
 
-The N+1 problem emerges when resolving a list type. If a query asks for ten posts and each post has an `author` field, a naive resolver fetches the author for each post individually — one query to get the posts, then ten queries to get their authors. The DataLoader pattern batches those ten author lookups into a single query. In Python, `strawberry-django` and `aiodataloader` provide DataLoader implementations. The loader accumulates all requested IDs during one execution tick, then fires a single batched database query and distributes results back to the waiting resolvers.
+The N+1 problem emerges when resolving a list type. If a query asks for ten posts and each post has an `author` field, a naive resolver fetches the author for each post individually  -  one query to get the posts, then ten queries to get their authors. The DataLoader pattern batches those ten author lookups into a single query. In Python, `strawberry-django` and `aiodataloader` provide DataLoader implementations. The loader accumulates all requested IDs during one execution tick, then fires a single batched database query and distributes results back to the waiting resolvers.
 
 ---
 
@@ -82,7 +82,7 @@ GraphQL over HTTP uses the same request-response infrastructure as REST but make
 
 [[rest|REST]]
 
-FastAPI can host a GraphQL endpoint via `strawberry.fastapi.GraphQLRouter` or Ariadne's ASGI handler — integrating GraphQL into an existing FastAPI application is a common pattern.
+FastAPI can host a GraphQL endpoint via `strawberry.fastapi.GraphQLRouter` or Ariadne's ASGI handler  -  integrating GraphQL into an existing FastAPI application is a common pattern.
 
 [[fastapi|FastAPI]]
 

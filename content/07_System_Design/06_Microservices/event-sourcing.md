@@ -1,4 +1,4 @@
----
+﻿---
 title: 06 - Event Sourcing
 description: "Storing the full history of state changes as an immutable event log, replaying events to rebuild state, and when this approach is the right fit."
 tags: [event-sourcing, events, immutability, layer-7, system-design]
@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Event Sourcing
 
-> Event sourcing replaces "save the current state" with "save everything that happened" — and this simple reversal unlocks time travel, audit logs, and event-driven projections, at the cost of significant complexity.
+> Event sourcing replaces "save the current state" with "save everything that happened"  -  and this simple reversal unlocks time travel, audit logs, and event-driven projections, at the cost of significant complexity.
 
 ---
 
@@ -20,28 +20,28 @@ created: 2026-05-18
 **Core idea:**
 - Instead of storing current state, store the sequence of events that led to that state
 - Current state is derived by replaying all events from the beginning (or from a snapshot)
-- Events are immutable — they are never deleted or modified, only appended
+- Events are immutable  -  they are never deleted or modified, only appended
 - Snapshots cache the current state after N events to avoid replaying all history on every read
 - CQRS is typically combined with event sourcing: the event log is the write side; projections are the read side
 
 **Tricky points:**
-- The event log grows forever — snapshots and archiving strategies are required for production
+- The event log grows forever  -  snapshots and archiving strategies are required for production
 - Schema evolution is harder: once an event format is stored, all future replays must handle that format
 - Replaying millions of events to rebuild state is slow without snapshots
-- "Current state" queries require either a projection or a replay — there is no simple SELECT
-- Event sourcing is not appropriate for all data — financial transactions and audit logs are ideal; configuration data is not
+- "Current state" queries require either a projection or a replay  -  there is no simple SELECT
+- Event sourcing is not appropriate for all data  -  financial transactions and audit logs are ideal; configuration data is not
 
 ---
 
 ## What It Is
 
-Imagine a bank account. In a traditional system, the account record stores the current balance: `{account_id: 123, balance: 1500.00}`. When you deposit $200, the balance is updated to $1700. When you withdraw $50, it becomes $1650. The history is gone — you only have the current number. If you need to know what the balance was last Tuesday, or reproduce a series of transactions to find an error, the data is not there.
+Imagine a bank account. In a traditional system, the account record stores the current balance: `{account_id: 123, balance: 1500.00}`. When you deposit $200, the balance is updated to $1700. When you withdraw $50, it becomes $1650. The history is gone  -  you only have the current number. If you need to know what the balance was last Tuesday, or reproduce a series of transactions to find an error, the data is not there.
 
 An event-sourced account stores every transaction instead: "AccountOpened: $0", "Deposited: $500", "Withdrew: $100", "Deposited: $200", "Withdrew: $50". The current balance is derived by replaying these events: 0 + 500 - 100 + 200 - 50 = 550. The history is permanent. You can replay to any point in time to see the balance as of that moment. You can replay to understand exactly what happened during a disputed transaction.
 
-Event sourcing is the pattern of storing state changes as an immutable sequence of events rather than the current state. The event store is the single source of truth. Every change to the domain produces an event — a fact that something happened — appended to the event log. Nothing is ever updated or deleted. Current state is computed by replaying the event sequence.
+Event sourcing is the pattern of storing state changes as an immutable sequence of events rather than the current state. The event store is the single source of truth. Every change to the domain produces an event  -  a fact that something happened  -  appended to the event log. Nothing is ever updated or deleted. Current state is computed by replaying the event sequence.
 
-This approach has three distinctive properties. First, complete history: every change is recorded with who made it, when, and what changed. This is a built-in audit log. Second, temporal queries: you can reconstruct the state at any point in time by replaying events up to that timestamp. Third, multiple projections: the same event stream can be processed by multiple consumers to build different projections of the same underlying data — one for the current account balance, one for monthly statements, one for fraud detection patterns.
+This approach has three distinctive properties. First, complete history: every change is recorded with who made it, when, and what changed. This is a built-in audit log. Second, temporal queries: you can reconstruct the state at any point in time by replaying events up to that timestamp. Third, multiple projections: the same event stream can be processed by multiple consumers to build different projections of the same underlying data  -  one for the current account balance, one for monthly statements, one for fraud detection patterns.
 
 ---
 
@@ -49,7 +49,7 @@ This approach has three distinctive properties. First, complete history: every c
 
 An aggregate in event sourcing is a domain entity (like a bank account, an order, a user profile) that manages its own state through events. The aggregate has a current state (built from event replay) and produces new events when commands are applied. The event store persists these events. The aggregate's state can be reconstructed at any time by loading its events and replaying them.
 
-Snapshots prevent performance problems with long-lived aggregates. An account with 10 years of daily transactions has over 3,500 events. Replaying 3,500 events on every read is expensive. A snapshot captures the state after every N events (say, every 100 events). To load an account, load the most recent snapshot and replay only the events since that snapshot — at most 99 events. The snapshot can be updated periodically in a background job.
+Snapshots prevent performance problems with long-lived aggregates. An account with 10 years of daily transactions has over 3,500 events. Replaying 3,500 events on every read is expensive. A snapshot captures the state after every N events (say, every 100 events). To load an account, load the most recent snapshot and replay only the events since that snapshot  -  at most 99 events. The snapshot can be updated periodically in a background job.
 
 ```python
 from dataclasses import dataclass, field
@@ -81,7 +81,7 @@ class BankAccount:
         return account
 
     def _apply(self, event: BankAccountEvent) -> None:
-        """Apply a single event to update state — pure, no side effects."""
+        """Apply a single event to update state  -  pure, no side effects."""
         if event.event_type == "AccountOpened":
             self.owner_name = event.data["owner_name"]
             self.balance = event.data.get("initial_deposit", 0.0)
@@ -170,10 +170,10 @@ The Saga pattern, which coordinates multi-step distributed transactions, can use
 ## Common Misconceptions
 
 Misconception 1: "Event sourcing provides a complete audit log automatically."
-Reality: Event sourcing provides a complete log of domain state changes — what changed and when. But "who made the change" requires attaching user identity to each event explicitly. The events are only as informative as what you put in them. A good event store includes correlation IDs, user IDs, and causation IDs for full auditability.
+Reality: Event sourcing provides a complete log of domain state changes  -  what changed and when. But "who made the change" requires attaching user identity to each event explicitly. The events are only as informative as what you put in them. A good event store includes correlation IDs, user IDs, and causation IDs for full auditability.
 
 Misconception 2: "Event sourcing is just Kafka."
-Reality: Kafka is a distributed event streaming platform. Event sourcing is an architectural pattern for persisting domain state. Kafka can be used as an event store for event sourcing, but it is not ideal for it — Kafka does not natively support per-aggregate ordering, optimistic concurrency control, or snapshot management. Dedicated event stores (EventStoreDB) or purpose-built solutions on top of a relational database are more appropriate for production event sourcing.
+Reality: Kafka is a distributed event streaming platform. Event sourcing is an architectural pattern for persisting domain state. Kafka can be used as an event store for event sourcing, but it is not ideal for it  -  Kafka does not natively support per-aggregate ordering, optimistic concurrency control, or snapshot management. Dedicated event stores (EventStoreDB) or purpose-built solutions on top of a relational database are more appropriate for production event sourcing.
 
 Misconception 3: "Event sourcing eliminates the need for a database."
 Reality: Event sourcing requires an event store (a database optimized for append-only event log storage per aggregate). It also requires one or more projection stores for efficient queries. Instead of one database, a typical event-sourced system uses two or more: the event store plus projection databases (relational, document, cache, search index). This is more infrastructure, not less.

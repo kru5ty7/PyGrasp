@@ -1,6 +1,6 @@
 ﻿---
 title: 06 - Virtual Environments
-description: "A virtual environment is an isolated Python installation with its own `site-packages` directory — `python -m venv .venv` creates one; activating it redirects `python` and `pip` to the isolated environment, preventing package version conflicts between projects."
+description: "A virtual environment is an isolated Python installation with its own `site-packages` directory  -  `python -m venv .venv` creates one; activating it redirects `python` and `pip` to the isolated environment, preventing package version conflicts between projects."
 tags: [virtual-environments, venv, pip, site-packages, isolation, python-environment, layer-1, core]
 status: draft
 difficulty: beginner
@@ -11,33 +11,33 @@ created: 2026-05-17
 
 # Virtual Environments
 
-> A virtual environment is an isolated Python installation with its own `site-packages` directory — `python -m venv .venv` creates one; activating it redirects `python` and `pip` to the isolated environment, preventing package version conflicts between projects.
+> A virtual environment is an isolated Python installation with its own `site-packages` directory  -  `python -m venv .venv` creates one; activating it redirects `python` and `pip` to the isolated environment, preventing package version conflicts between projects.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- `python -m venv .venv` — creates a virtual environment in `.venv/` directory
+- `python -m venv .venv`  -  creates a virtual environment in `.venv/` directory
 - Activate: `source .venv/bin/activate` (Unix) / `.venv\Scripts\activate` (Windows PowerShell)
 - Deactivate: `deactivate`
 - When activated: `python` and `pip` refer to the venv's executables; packages install to the venv's `site-packages`
-- `pip freeze > requirements.txt` — captures installed packages and versions; `pip install -r requirements.txt` restores them
+- `pip freeze > requirements.txt`  -  captures installed packages and versions; `pip install -r requirements.txt` restores them
 
 **Tricky points:**
-- Virtual environments are not portable — they contain absolute paths; moving a venv to another directory or machine breaks it; recreate from `requirements.txt` instead
-- The venv does not include the standard library — it inherits it from the Python interpreter used to create it
-- `python -m venv --system-site-packages .venv` — creates a venv that also sees the system site-packages; useful when system packages are hard to install in the venv but generally avoided
-- `pip install` without an active venv installs to the system or user Python — `--user` flag installs to `~/.local/lib/...`
+- Virtual environments are not portable  -  they contain absolute paths; moving a venv to another directory or machine breaks it; recreate from `requirements.txt` instead
+- The venv does not include the standard library  -  it inherits it from the Python interpreter used to create it
+- `python -m venv --system-site-packages .venv`  -  creates a venv that also sees the system site-packages; useful when system packages are hard to install in the venv but generally avoided
+- `pip install` without an active venv installs to the system or user Python  -  `--user` flag installs to `~/.local/lib/...`
 - Modern tooling: `uv` (Astral), `poetry`, `hatch` manage venvs automatically; understanding the underlying `venv` + `pip` flow is still valuable
 
 ---
 
 ## What It Is
 
-Think of a virtual environment as a dedicated workbench for each project. The workshop (your system Python) has some tools on it already, but each project gets its own workbench with exactly the tools it needs — isolated from other projects. Installing a new version of a tool on one workbench does not affect other workbenches. When you work on a project, you sit at that project's workbench.
+Think of a virtual environment as a dedicated workbench for each project. The workshop (your system Python) has some tools on it already, but each project gets its own workbench with exactly the tools it needs  -  isolated from other projects. Installing a new version of a tool on one workbench does not affect other workbenches. When you work on a project, you sit at that project's workbench.
 
-Without virtual environments, all Python projects on a machine share one set of packages. Project A needs Django 3.2; Project B needs Django 4.1. Installing one breaks the other. Virtual environments give each project its own `site-packages` directory — packages are installed per-project.
+Without virtual environments, all Python projects on a machine share one set of packages. Project A needs Django 3.2; Project B needs Django 4.1. Installing one breaks the other. Virtual environments give each project its own `site-packages` directory  -  packages are installed per-project.
 
 ---
 
@@ -57,7 +57,7 @@ Without virtual environments, all Python projects on a machine share one set of 
 └── pyvenv.cfg  (stores Python version and include-system-site-packages)
 ```
 
-The `activate` script sets `PATH` to put `.venv/bin` first and sets `VIRTUAL_ENV` environment variable. With the venv activated, typing `python` runs `.venv/bin/python`, which has its own `sys.prefix` pointing to `.venv/` — this causes `site.py` to add `.venv/lib/python3.11/site-packages` to `sys.path` instead of the system site-packages.
+The `activate` script sets `PATH` to put `.venv/bin` first and sets `VIRTUAL_ENV` environment variable. With the venv activated, typing `python` runs `.venv/bin/python`, which has its own `sys.prefix` pointing to `.venv/`  -  this causes `site.py` to add `.venv/lib/python3.11/site-packages` to `sys.path` instead of the system site-packages.
 
 When you run `pip install requests` in an activated venv, `pip` installs to `.venv/lib/python3.11/site-packages/`. The system Python's site-packages is not affected.
 
@@ -68,16 +68,16 @@ When you run `pip install requests` in an activated venv, `pip` installs to `.ve
 requests==2.31.0
 flask>=2.3,<3.0
 ```
-`pip install -r requirements.txt` installs exactly these versions. `pip freeze` generates a fully pinned list (all transitive dependencies with exact versions) — good for deployment, but brittle for libraries (too rigid).
+`pip install -r requirements.txt` installs exactly these versions. `pip freeze` generates a fully pinned list (all transitive dependencies with exact versions)  -  good for deployment, but brittle for libraries (too rigid).
 
 ---
 
 ## How It Connects
 
-`sys.path` is what makes virtual environments work — activating a venv modifies `sys.path` to prioritize the venv's `site-packages` over system packages.
+`sys.path` is what makes virtual environments work  -  activating a venv modifies `sys.path` to prioritize the venv's `site-packages` over system packages.
 [[sys-path|sys.path]]
 
-`pip-and-packaging` covers distributing packages — the companion to installing them.
+`pip-and-packaging` covers distributing packages  -  the companion to installing them.
 [[pip-and-packaging|pip and Packaging]]
 
 ---
@@ -94,7 +94,7 @@ Reality: One virtual environment per **project** is the standard practice. Diffe
 
 ## Why It Matters in Practice
 
-Every Python project should have its own virtual environment. Add `.venv/` or `venv/` to `.gitignore`. Store dependencies in `requirements.txt` or `pyproject.toml`. Teammates recreate the environment from the requirements file — reproducible, consistent setup.
+Every Python project should have its own virtual environment. Add `.venv/` or `venv/` to `.gitignore`. Store dependencies in `requirements.txt` or `pyproject.toml`. Teammates recreate the environment from the requirements file  -  reproducible, consistent setup.
 
 CI/CD: create a fresh venv in each pipeline run and install from requirements. This verifies the requirements file is complete and reproducible.
 

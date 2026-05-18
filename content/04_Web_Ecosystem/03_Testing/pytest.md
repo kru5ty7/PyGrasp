@@ -1,6 +1,6 @@
----
+﻿---
 title: 02 - Pytest
-description: "pytest is the standard Python testing framework — test functions prefixed with `test_`, automatic discovery, rich assertions with plain `assert`, fixtures for setup/teardown, and plugins for coverage, async, and parametrize; run with `pytest path/` or `pytest -k pattern`."
+description: "pytest is the standard Python testing framework  -  test functions prefixed with `test_`, automatic discovery, rich assertions with plain `assert`, fixtures for setup/teardown, and plugins for coverage, async, and parametrize; run with `pytest path/` or `pytest -k pattern`."
 tags: [pytest, testing, fixtures, parametrize, markers, conftest, layer-3, web]
 status: draft
 difficulty: beginner
@@ -11,7 +11,7 @@ created: 2026-05-17
 
 # Pytest
 
-> pytest is the standard Python testing framework — test functions prefixed with `test_`, automatic discovery, rich assertions with plain `assert`, fixtures for setup/teardown, and plugins for coverage, async, and parametrize; run with `pytest path/` or `pytest -k pattern`.
+> pytest is the standard Python testing framework  -  test functions prefixed with `test_`, automatic discovery, rich assertions with plain `assert`, fixtures for setup/teardown, and plugins for coverage, async, and parametrize; run with `pytest path/` or `pytest -k pattern`.
 
 ---
 
@@ -19,17 +19,17 @@ created: 2026-05-17
 
 **Core idea:**
 - Test functions start with `test_`; test files start with `test_` or end with `_test.py`
-- Plain `assert` — pytest rewrites it to show diff on failure; no `assertEqual()`, `assertRaises()` needed
-- `pytest.raises(ExcType)` — context manager for expected exceptions
-- `-v` — verbose (show each test name); `-k "pattern"` — run tests matching pattern; `-x` — stop on first failure
-- `--cov=src --cov-report=term-missing` — coverage report (requires `pytest-cov`)
+- Plain `assert`  -  pytest rewrites it to show diff on failure; no `assertEqual()`, `assertRaises()` needed
+- `pytest.raises(ExcType)`  -  context manager for expected exceptions
+- `-v`  -  verbose (show each test name); `-k "pattern"`  -  run tests matching pattern; `-x`  -  stop on first failure
+- `--cov=src --cov-report=term-missing`  -  coverage report (requires `pytest-cov`)
 
 **Tricky points:**
-- `assert a == b` in pytest shows the values of `a` and `b` on failure — this is pytest's assertion rewriting; standard `assert` in non-pytest code does not do this
-- `conftest.py` — special file for shared fixtures; pytest loads it automatically; fixtures in `conftest.py` are available to all tests in the same directory and subdirectories
+- `assert a == b` in pytest shows the values of `a` and `b` on failure  -  this is pytest's assertion rewriting; standard `assert` in non-pytest code does not do this
+- `conftest.py`  -  special file for shared fixtures; pytest loads it automatically; fixtures in `conftest.py` are available to all tests in the same directory and subdirectories
 - Scope affects fixture lifetime: `"function"` (default, per test), `"class"`, `"module"`, `"session"` (once per `pytest` run)
-- `pytest.mark.skip("reason")` / `pytest.mark.skipif(condition, reason=...)` — conditionally skip tests
-- Parallel test execution: `pytest-xdist` with `-n auto` — runs tests on multiple CPUs; requires tests to be independent (no shared mutable state)
+- `pytest.mark.skip("reason")` / `pytest.mark.skipif(condition, reason=...)`  -  conditionally skip tests
+- Parallel test execution: `pytest-xdist` with `-n auto`  -  runs tests on multiple CPUs; requires tests to be independent (no shared mutable state)
 
 ---
 
@@ -93,7 +93,7 @@ def test_value_error_message():
         validate_age(-1)
 ```
 
-Test classes (optional — for grouping, not required):
+Test classes (optional  -  for grouping, not required):
 ```python
 class TestUserService:
     def test_create(self): ...
@@ -104,10 +104,10 @@ class TestUserService:
 
 ## How It Connects
 
-Fixtures are pytest's mechanism for setup/teardown and dependency injection — they are the foundation for database sessions, test clients, and shared state in tests.
+Fixtures are pytest's mechanism for setup/teardown and dependency injection  -  they are the foundation for database sessions, test clients, and shared state in tests.
 [[fixtures|Fixtures]]
 
-pytest-asyncio enables async test functions — required for testing FastAPI async endpoints.
+pytest-asyncio enables async test functions  -  required for testing FastAPI async endpoints.
 [[async-testing|Async Testing]]
 
 ---
@@ -115,10 +115,10 @@ pytest-asyncio enables async test functions — required for testing FastAPI asy
 ## Common Misconceptions
 
 Misconception 1: "pytest requires inheriting from `unittest.TestCase`."
-Reality: pytest runs both `unittest.TestCase` tests and plain `test_` functions. Modern pytest code uses plain functions and fixtures — no class inheritance needed.
+Reality: pytest runs both `unittest.TestCase` tests and plain `test_` functions. Modern pytest code uses plain functions and fixtures  -  no class inheritance needed.
 
 Misconception 2: "`conftest.py` must be in the project root."
-Reality: `conftest.py` can be placed at any level in the directory hierarchy — fixtures defined in it are available to all tests in that directory and below. Multiple `conftest.py` files can coexist at different levels, each providing different fixtures.
+Reality: `conftest.py` can be placed at any level in the directory hierarchy  -  fixtures defined in it are available to all tests in that directory and below. Multiple `conftest.py` files can coexist at different levels, each providing different fixtures.
 
 ---
 
@@ -126,7 +126,7 @@ Reality: `conftest.py` can be placed at any level in the directory hierarchy —
 
 Useful pytest invocations for development:
 ```bash
-pytest -x --tb=short           # fail fast, short tracebacks — fast feedback loop
+pytest -x --tb=short           # fail fast, short tracebacks  -  fast feedback loop
 pytest --lf                    # run only tests that failed last time
 pytest -v -k "auth"            # verbose, filter to auth-related tests
 pytest --cov=app --cov-report=html  # HTML coverage report
@@ -148,7 +148,7 @@ Common question forms:
 - "How do you run a single test in pytest?"
 - "What is a fixture in pytest?"
 
-Answer frame: `pytest path/file.py::test_name` runs a single test. `assert` is plain Python — pytest rewrites it to show values on failure. Fixtures are functions decorated with `@pytest.fixture` that provide setup/teardown; declared as parameters in test functions (dependency injection). `conftest.py` for shared fixtures. `-k "pattern"` to filter tests by name.
+Answer frame: `pytest path/file.py::test_name` runs a single test. `assert` is plain Python  -  pytest rewrites it to show values on failure. Fixtures are functions decorated with `@pytest.fixture` that provide setup/teardown; declared as parameters in test functions (dependency injection). `conftest.py` for shared fixtures. `-k "pattern"` to filter tests by name.
 
 ---
 

@@ -1,6 +1,6 @@
----
+﻿---
 title: 06 - Outbox Pattern
-description: "The transactional outbox pattern solves the dual-write problem — ensuring a database write and a message publish are atomic even without a distributed transaction."
+description: "The transactional outbox pattern solves the dual-write problem  -  ensuring a database write and a message publish are atomic even without a distributed transaction."
 tags: [outbox-pattern, cdc, dual-write, transactions, layer-7, system-design]
 status: draft
 difficulty: intermediate
@@ -18,18 +18,18 @@ created: 2026-05-18
 ## Quick Reference
 
 **Core idea:**
-- The dual-write problem: writing to a DB and publishing to a queue are two separate operations — either can fail
+- The dual-write problem: writing to a DB and publishing to a queue are two separate operations  -  either can fail
 - The outbox pattern: write the event to an `outbox` table in the same transaction as the business data
 - A separate process (polling relay or CDC) reads the outbox and publishes events to the message broker
-- The event is only published after the database transaction commits — guaranteed atomicity
+- The event is only published after the database transaction commits  -  guaranteed atomicity
 - CDC tools (Debezium) read the DB's replication log and emit events, eliminating polling overhead
 
 **Tricky points:**
-- The relay publishes each event at least once — consumers must still be idempotent
+- The relay publishes each event at least once  -  consumers must still be idempotent
 - Event ordering within a transaction is preserved; ordering across transactions depends on the relay implementation
-- A long-running relay failure causes the outbox table to grow — needs monitoring
+- A long-running relay failure causes the outbox table to grow  -  needs monitoring
 - The `published` flag approach (mark as done after publishing) has a window of potential re-publication on crash
-- Debezium reads the WAL directly — this is more reliable than application-level polling but adds operational complexity
+- Debezium reads the WAL directly  -  this is more reliable than application-level polling but adds operational complexity
 
 ---
 
@@ -84,7 +84,7 @@ def place_order(session: Session, user_id: int, items: list) -> dict:
             published=False
         )
         session.add(outbox_entry)
-    # Transaction commits here — both order and outbox entry are durable
+    # Transaction commits here  -  both order and outbox entry are durable
 
     return {"order_id": order_id, "total": total}
 
@@ -139,19 +139,19 @@ The ACID transaction that makes the outbox pattern work is the same transactiona
 ## Common Misconceptions
 
 Misconception 1: "The outbox pattern provides exactly-once event delivery."
-Reality: The relay may publish an event and then crash before marking it as published, causing it to be published again on restart. This is at-least-once delivery. Consumers must be idempotent: they must handle receiving the same event twice without producing incorrect results. The event ID in the payload is the key to idempotency — consumers track which event IDs they have already processed.
+Reality: The relay may publish an event and then crash before marking it as published, causing it to be published again on restart. This is at-least-once delivery. Consumers must be idempotent: they must handle receiving the same event twice without producing incorrect results. The event ID in the payload is the key to idempotency  -  consumers track which event IDs they have already processed.
 
 Misconception 2: "I can just use a two-phase commit (2PC) instead of the outbox pattern."
 Reality: Two-phase commit between a database and a message broker requires both systems to support XA transactions (a distributed transaction protocol). Most modern message brokers (Kafka, RabbitMQ, SQS) do not support XA. Even when available, 2PC adds significant latency and is a reliability bottleneck (the transaction coordinator is a SPOF). The outbox pattern achieves the same guarantee using only the database's native ACID transactions.
 
 Misconception 3: "Debezium (CDC) means my events are published in real time."
-Reality: Debezium reads the database's replication log with a small lag — typically milliseconds to seconds. It is much lower latency than a polling relay (which waits for the next poll interval), but not zero-latency. Additionally, the replication lag of the CDC connector adds to end-to-end event latency. Under heavy load, the CDC connector may fall behind and take time to catch up.
+Reality: Debezium reads the database's replication log with a small lag  -  typically milliseconds to seconds. It is much lower latency than a polling relay (which waits for the next poll interval), but not zero-latency. Additionally, the replication lag of the CDC connector adds to end-to-end event latency. Under heavy load, the CDC connector may fall behind and take time to catch up.
 
 ---
 
 ## Why It Matters in Practice
 
-The outbox pattern is the correct solution to a problem that every event-driven microservice encounters. Without it, teams either use fire-and-forget event publishing (losing events when the broker is unavailable) or build ad hoc retry mechanisms that have the same dual-write risk. The pattern is not complex — it is just an extra table and a relay process — but it requires deliberate design upfront.
+The outbox pattern is the correct solution to a problem that every event-driven microservice encounters. Without it, teams either use fire-and-forget event publishing (losing events when the broker is unavailable) or build ad hoc retry mechanisms that have the same dual-write risk. The pattern is not complex  -  it is just an extra table and a relay process  -  but it requires deliberate design upfront.
 
 For Python engineers using SQLAlchemy and Kafka, implementing the polling relay as a FastAPI background task or a Celery beat job is straightforward. Transitioning to Debezium requires infrastructure investment but eliminates polling overhead and provides better operability. The choice between polling relay and CDC depends on scale and operational maturity.
 
@@ -165,7 +165,7 @@ Common question forms:
 - "What is the transactional outbox pattern?"
 
 Answer frame:
-Define the dual-write problem: database write and message publish are independent operations — either can fail. State that distributed transactions with most brokers are not supported. Introduce the outbox: same-transaction insert into an `outbox` table. Describe the relay: polling or CDC reads the outbox and publishes to the broker. Emphasize that this is still at-least-once — consumers need idempotency. Mention Debezium as the production-grade CDC approach.
+Define the dual-write problem: database write and message publish are independent operations  -  either can fail. State that distributed transactions with most brokers are not supported. Introduce the outbox: same-transaction insert into an `outbox` table. Describe the relay: polling or CDC reads the outbox and publishes to the broker. Emphasize that this is still at-least-once  -  consumers need idempotency. Mention Debezium as the production-grade CDC approach.
 
 ---
 

@@ -1,6 +1,6 @@
----
+﻿---
 title: 11 - FastAPI Dependencies
-description: "FastAPI's `Depends()` system injects shared logic into route handlers — database sessions, authentication, pagination, and settings are common dependencies; dependencies can depend on other dependencies (chaining), and can have cleanup logic via `yield`."
+description: "FastAPI's `Depends()` system injects shared logic into route handlers  -  database sessions, authentication, pagination, and settings are common dependencies; dependencies can depend on other dependencies (chaining), and can have cleanup logic via `yield`."
 tags: [fastapi, Depends, dependency-injection, yield-dependency, db-session, layer-3, web]
 status: draft
 difficulty: intermediate
@@ -11,25 +11,25 @@ created: 2026-05-17
 
 # FastAPI Dependencies
 
-> FastAPI's `Depends()` system injects shared logic into route handlers — database sessions, authentication, pagination, and settings are common dependencies; dependencies can depend on other dependencies (chaining), and can have cleanup logic via `yield`.
+> FastAPI's `Depends()` system injects shared logic into route handlers  -  database sessions, authentication, pagination, and settings are common dependencies; dependencies can depend on other dependencies (chaining), and can have cleanup logic via `yield`.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- `Depends(callable)` — declares a dependency; FastAPI calls the callable and injects the result
+- `Depends(callable)`  -  declares a dependency; FastAPI calls the callable and injects the result
 - Dependencies run before the handler; if they raise `HTTPException`, the handler does not run
 - `yield` dependencies: code before `yield` is setup, `yield` value is injected, code after `yield` is teardown (runs after response is sent)
-- `Depends(func, use_cache=True)` — default; same dependency called multiple times in one request returns the same instance
-- `Security(callable)` — like `Depends()` but marks the dependency as a security scheme in OpenAPI docs
+- `Depends(func, use_cache=True)`  -  default; same dependency called multiple times in one request returns the same instance
+- `Security(callable)`  -  like `Depends()` but marks the dependency as a security scheme in OpenAPI docs
 
 **Tricky points:**
-- Dependencies are resolved per-request, not at startup — a `yield` database session opens and closes for each request
+- Dependencies are resolved per-request, not at startup  -  a `yield` database session opens and closes for each request
 - `use_cache=True` (default): if the same dependency function appears multiple times in a request (via chaining), it's called once and the result is shared; `use_cache=False` forces a fresh call each time
-- A `yield` dependency's teardown code runs even if the handler raises an exception — like a `finally` block
-- `yield` dependencies can raise `HTTPException` after `yield` to change the response — unusual but supported
-- Class-based dependencies: `class Paginator` with `__call__` method — useful for parameterized dependencies
+- A `yield` dependency's teardown code runs even if the handler raises an exception  -  like a `finally` block
+- `yield` dependencies can raise `HTTPException` after `yield` to change the response  -  unusual but supported
+- Class-based dependencies: `class Paginator` with `__call__` method  -  useful for parameterized dependencies
 
 ---
 
@@ -37,7 +37,7 @@ created: 2026-05-17
 
 Dependency injection in FastAPI is a declarative way to share logic across multiple endpoints without repeating it. Instead of opening a database connection in every handler, you write one `get_db()` dependency, and FastAPI calls it before each handler that declares `db: Session = Depends(get_db)`.
 
-Dependencies form a tree — a handler depends on `get_current_user`, which depends on `get_db` and `get_settings`. FastAPI resolves the entire tree, calling each dependency in the correct order and passing results down.
+Dependencies form a tree  -  a handler depends on `get_current_user`, which depends on `get_db` and `get_settings`. FastAPI resolves the entire tree, calling each dependency in the correct order and passing results down.
 
 ---
 
@@ -109,10 +109,10 @@ router = APIRouter(dependencies=[Depends(require_auth)])
 
 ## How It Connects
 
-`Depends()` is the practical realization of the dependency injection pattern — abstracting shared concerns into reusable callables.
+`Depends()` is the practical realization of the dependency injection pattern  -  abstracting shared concerns into reusable callables.
 [[dependency-injection|Dependency Injection]]
 
-Database sessions are the most common `yield` dependency — every handler that touches the database gets a fresh, auto-closing session.
+Database sessions are the most common `yield` dependency  -  every handler that touches the database gets a fresh, auto-closing session.
 [[database-sessions|Database Sessions in FastAPI]]
 
 ---
@@ -143,7 +143,7 @@ def get_test_db():
 app.dependency_overrides[get_db] = get_test_db
 ```
 
-`dependency_overrides` replaces any dependency for testing — no mocking frameworks needed.
+`dependency_overrides` replaces any dependency for testing  -  no mocking frameworks needed.
 
 ---
 
@@ -153,7 +153,7 @@ Common question forms:
 - "How does dependency injection work in FastAPI?"
 - "How do you share a database session across dependencies?"
 
-Answer frame: `Depends(callable)` — FastAPI calls the callable and injects the result into the handler. `yield` dependencies: setup before `yield`, teardown after (used for DB sessions — `yield db; finally: db.close()`). Dependencies can chain — `require_admin` depends on `get_current_user` which depends on `get_db`. `dependency_overrides` replaces dependencies in tests.
+Answer frame: `Depends(callable)`  -  FastAPI calls the callable and injects the result into the handler. `yield` dependencies: setup before `yield`, teardown after (used for DB sessions  -  `yield db; finally: db.close()`). Dependencies can chain  -  `require_admin` depends on `get_current_user` which depends on `get_db`. `dependency_overrides` replaces dependencies in tests.
 
 ---
 

@@ -1,6 +1,6 @@
----
+﻿---
 title: 03 - Context Window
-description: "The context window is the total number of tokens an LLM can process at once — it includes both the input (system prompt + conversation history + documents) and the output; tokens beyond the limit are silently truncated or cause an error; larger context = more expensive per call."
+description: "The context window is the total number of tokens an LLM can process at once  -  it includes both the input (system prompt + conversation history + documents) and the output; tokens beyond the limit are silently truncated or cause an error; larger context = more expensive per call."
 tags: [context-window, context-length, tokens, truncation, long-context, layer-4, ai]
 status: draft
 difficulty: beginner
@@ -11,7 +11,7 @@ created: 2026-05-17
 
 # Context Window
 
-> The context window is the total number of tokens an LLM can process at once — it includes both the input (system prompt + conversation history + documents) and the output; tokens beyond the limit are silently truncated or cause an error; larger context = more expensive per call.
+> The context window is the total number of tokens an LLM can process at once  -  it includes both the input (system prompt + conversation history + documents) and the output; tokens beyond the limit are silently truncated or cause an error; larger context = more expensive per call.
 
 ---
 
@@ -20,13 +20,13 @@ created: 2026-05-17
 **Core idea:**
 - Context window = maximum tokens the model sees per call (input + output combined)
 - Claude 3.5 Sonnet / Claude 3 Opus: 200,000 token context; GPT-4o: 128,000 tokens
-- `max_tokens` parameter controls the maximum output length — the rest of the context is for input
+- `max_tokens` parameter controls the maximum output length  -  the rest of the context is for input
 - Retrieval-Augmented Generation (RAG): instead of stuffing everything in context, retrieve the relevant chunks
 - "Lost in the middle" problem: models attend less to information in the middle of very long contexts
 
 **Tricky points:**
-- Large context ≠ perfect recall — experiments show models are better at using information at the beginning and end of the context; middle sections are less reliably accessed
-- Cost scales with token count — a 200k token request costs ~100x more than a 2k token request
+- Large context ≠ perfect recall  -  experiments show models are better at using information at the beginning and end of the context; middle sections are less reliably accessed
+- Cost scales with token count  -  a 200k token request costs ~100x more than a 2k token request
 - Context reuse: Claude prompt caching can reduce costs for repeated long prefixes (system prompt + static documents)
 - Output tokens are typically 3-5x more expensive per token than input tokens
 - Conversation history management: in multi-turn chats, history grows with each turn; must implement sliding window or summarization to stay within limits
@@ -35,9 +35,9 @@ created: 2026-05-17
 
 ## What It Is
 
-The context window is the LLM's working memory — everything it can "see" at once. Unlike human memory that is persistent and associative, the context window is flat and finite: each API call starts fresh with whatever you put in the `messages` array.
+The context window is the LLM's working memory  -  everything it can "see" at once. Unlike human memory that is persistent and associative, the context window is flat and finite: each API call starts fresh with whatever you put in the `messages` array.
 
-This is the central constraint in LLM application design. You can't give the model an entire codebase, database, or document library in one call — you must choose what to include. RAG exists to work around this limitation: retrieve the relevant pieces and include only those.
+This is the central constraint in LLM application design. You can't give the model an entire codebase, database, or document library in one call  -  you must choose what to include. RAG exists to work around this limitation: retrieve the relevant pieces and include only those.
 
 ---
 
@@ -117,7 +117,7 @@ Chunking strategies determine how documents are split to maximize what fits in t
 ## Common Misconceptions
 
 Misconception 1: "A larger context window means the model uses all of it effectively."
-Reality: "Lost in the middle" is well-documented — models recall information at the start and end of long contexts more reliably than information in the middle. For critical information, place it at the beginning (system prompt) or the end (most recent user message).
+Reality: "Lost in the middle" is well-documented  -  models recall information at the start and end of long contexts more reliably than information in the middle. For critical information, place it at the beginning (system prompt) or the end (most recent user message).
 
 Misconception 2: "Using the full context window is always the best approach."
 Reality: More context = higher latency and higher cost. A well-designed RAG pipeline that retrieves 5 relevant chunks is often more accurate (and much cheaper) than dumping 200 pages into context. Quality of retrieved information > quantity of information.
@@ -151,7 +151,7 @@ Common question forms:
 - "What is a context window?"
 - "How do you handle conversations that exceed the context limit?"
 
-Answer frame: Context window = max tokens per API call (input + output). Exceeding limit = error or truncation. Management strategies: sliding window (drop oldest messages), summarization (compress history), RAG (retrieve relevant chunks instead of stuffing everything). "Lost in the middle" effect — put critical info at start/end. Cost scales linearly with tokens.
+Answer frame: Context window = max tokens per API call (input + output). Exceeding limit = error or truncation. Management strategies: sliding window (drop oldest messages), summarization (compress history), RAG (retrieve relevant chunks instead of stuffing everything). "Lost in the middle" effect  -  put critical info at start/end. Cost scales linearly with tokens.
 
 ---
 

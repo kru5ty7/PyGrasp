@@ -1,6 +1,6 @@
----
+﻿---
 title: 05 - Database Sessions
-description: "In FastAPI, a database session is opened per request via a `yield` dependency — `async with AsyncSession(engine) as session: yield session` provides a fresh session, auto-commits on success, and rolls back on exceptions; the session is closed when the request ends."
+description: "In FastAPI, a database session is opened per request via a `yield` dependency  -  `async with AsyncSession(engine) as session: yield session` provides a fresh session, auto-commits on success, and rolls back on exceptions; the session is closed when the request ends."
 tags: [fastapi, database-session, AsyncSession, yield-dependency, transaction, layer-3, web]
 status: draft
 difficulty: intermediate
@@ -11,24 +11,24 @@ created: 2026-05-17
 
 # Database Sessions in FastAPI
 
-> In FastAPI, a database session is opened per request via a `yield` dependency — `async with AsyncSession(engine) as session: yield session` provides a fresh session, auto-commits on success, and rolls back on exceptions; the session is closed when the request ends.
+> In FastAPI, a database session is opened per request via a `yield` dependency  -  `async with AsyncSession(engine) as session: yield session` provides a fresh session, auto-commits on success, and rolls back on exceptions; the session is closed when the request ends.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- One session per request — opens at the start of request handling, closes after the response is sent
+- One session per request  -  opens at the start of request handling, closes after the response is sent
 - `yield` dependency: code before `yield` = setup (open session), code after = teardown (close/rollback)
-- `await session.commit()` — commit after successful handler execution
-- `await session.rollback()` — rollback on exception; prevents partial writes
-- `expire_on_commit=False` — response model can access session attributes after commit (prevents lazy-load errors after commit)
+- `await session.commit()`  -  commit after successful handler execution
+- `await session.rollback()`  -  rollback on exception; prevents partial writes
+- `expire_on_commit=False`  -  response model can access session attributes after commit (prevents lazy-load errors after commit)
 
 **Tricky points:**
-- Without `expire_on_commit=False`, accessing an ORM object's attributes after `commit()` triggers a re-fetch — but the session is already closed in a `yield` dependency; this raises `DetachedInstanceError`
-- Nested transactions (`session.begin_nested()`) create savepoints — rollback to savepoint without rolling back the outer transaction; useful for nested operations that may fail
-- Session isolation level: by default, SQLAlchemy uses the database's default (usually `READ COMMITTED`) — multiple reads in the same session may see different snapshots if another transaction commits between them
-- Do NOT share a single session across requests — SQLAlchemy sessions are not thread-safe and not designed for concurrent use
+- Without `expire_on_commit=False`, accessing an ORM object's attributes after `commit()` triggers a re-fetch  -  but the session is already closed in a `yield` dependency; this raises `DetachedInstanceError`
+- Nested transactions (`session.begin_nested()`) create savepoints  -  rollback to savepoint without rolling back the outer transaction; useful for nested operations that may fail
+- Session isolation level: by default, SQLAlchemy uses the database's default (usually `READ COMMITTED`)  -  multiple reads in the same session may see different snapshots if another transaction commits between them
+- Do NOT share a single session across requests  -  SQLAlchemy sessions are not thread-safe and not designed for concurrent use
 - `session.flush()` vs `session.commit()`: `flush()` sends SQL to DB (assigns auto-increment IDs) but stays in the transaction; `commit()` finalizes and makes changes visible to other transactions
 
 ---
@@ -37,7 +37,7 @@ created: 2026-05-17
 
 A database session is the unit of work for database interactions. It tracks changes (new objects, modifications, deletions) and sends them to the database in a coordinated transaction. In a web application, a request typically maps to one transaction: all DB operations in the handler either succeed together or roll back together.
 
-FastAPI's `yield` dependency is the idiomatic way to manage this lifecycle — setup before the handler, teardown after, with exception handling built in.
+FastAPI's `yield` dependency is the idiomatic way to manage this lifecycle  -  setup before the handler, teardown after, with exception handling built in.
 
 ---
 
@@ -77,7 +77,7 @@ async def create_user(
     await db.flush()      # generate the user.id before returning
     await db.refresh(user)  # ensure all defaults are loaded
     return user
-    # After return: get_db's finally block runs → session.commit() → session.close()
+    # After return: get_db's finally block runs -> session.commit() -> session.close()
 ```
 
 Multiple operations in one transaction:
@@ -95,7 +95,7 @@ async def transfer_funds(
     
     sender.balance -= transfer.amount
     receiver.balance += transfer.amount
-    # Both changes committed atomically — or both rolled back on exception
+    # Both changes committed atomically  -  or both rolled back on exception
     # get_db handles commit in its finally block
 ```
 
@@ -113,10 +113,10 @@ app.dependency_overrides[get_db] = get_test_db
 
 ## How It Connects
 
-`get_db()` uses SQLAlchemy's `AsyncSession` — understanding async SQLAlchemy explains why `await` is needed on all operations.
+`get_db()` uses SQLAlchemy's `AsyncSession`  -  understanding async SQLAlchemy explains why `await` is needed on all operations.
 [[sqlalchemy-async|SQLAlchemy Async]]
 
-`yield` dependencies are a FastAPI pattern where teardown runs after the response — the same pattern applies to any resource that needs setup/teardown.
+`yield` dependencies are a FastAPI pattern where teardown runs after the response  -  the same pattern applies to any resource that needs setup/teardown.
 [[fastapi-dependencies|FastAPI Dependencies]]
 
 ---
@@ -124,10 +124,10 @@ app.dependency_overrides[get_db] = get_test_db
 ## Common Misconceptions
 
 Misconception 1: "You can access ORM attributes after the session closes."
-Reality: By default (`expire_on_commit=True`), all attribute accesses after commit trigger a new SELECT. If the session is closed, this raises `DetachedInstanceError`. Solution: `expire_on_commit=False` — attributes are cached from the last load and remain accessible after commit.
+Reality: By default (`expire_on_commit=True`), all attribute accesses after commit trigger a new SELECT. If the session is closed, this raises `DetachedInstanceError`. Solution: `expire_on_commit=False`  -  attributes are cached from the last load and remain accessible after commit.
 
 Misconception 2: "A single global `session` object works for concurrent requests."
-Reality: SQLAlchemy sessions are NOT thread-safe and NOT designed for concurrent coroutines. Each request must have its own session — which is exactly what the `yield` dependency provides.
+Reality: SQLAlchemy sessions are NOT thread-safe and NOT designed for concurrent coroutines. Each request must have its own session  -  which is exactly what the `yield` dependency provides.
 
 ---
 
@@ -135,9 +135,9 @@ Reality: SQLAlchemy sessions are NOT thread-safe and NOT designed for concurrent
 
 The request-session-transaction equivalence:
 ```
-HTTP Request → dependency creates session → handler runs queries → 
-   success: commit → close session → send response
-   exception: rollback → close session → send error response
+HTTP Request -> dependency creates session -> handler runs queries -> 
+   success: commit -> close session -> send response
+   exception: rollback -> close session -> send error response
 ```
 
 This ensures atomicity: a handler that raises an exception after partially modifying the database leaves no partial changes. The rollback in the `except` block guarantees a clean state.
@@ -150,7 +150,7 @@ Common question forms:
 - "How do you manage database sessions in FastAPI?"
 - "How do you ensure a transaction is rolled back on error?"
 
-Answer frame: `yield` dependency — `async with AsyncSession(engine) as session: yield session`. Before `yield`: open session. After `yield` (in `finally` / `except`): commit on success, rollback on exception. One session per request. `expire_on_commit=False` prevents `DetachedInstanceError`. `dependency_overrides` replaces in tests for rollback after each test.
+Answer frame: `yield` dependency  -  `async with AsyncSession(engine) as session: yield session`. Before `yield`: open session. After `yield` (in `finally` / `except`): commit on success, rollback on exception. One session per request. `expire_on_commit=False` prevents `DetachedInstanceError`. `dependency_overrides` replaces in tests for rollback after each test.
 
 ---
 

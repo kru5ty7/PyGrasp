@@ -1,4 +1,4 @@
----
+﻿---
 title: 06 - Idempotency
 description: "Idempotency keys, PUT vs POST semantics, and why designing retry-safe API operations is essential for reliable distributed systems."
 tags: [idempotency, api-design, reliability, layer-7, system-design]
@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Idempotency
 
-> Idempotency is the property that makes retrying safe — and without it, your distributed system has bugs that only appear when things go wrong, which is exactly when you can least afford them.
+> Idempotency is the property that makes retrying safe  -  and without it, your distributed system has bugs that only appear when things go wrong, which is exactly when you can least afford them.
 
 ---
 
@@ -21,21 +21,21 @@ created: 2026-05-18
 - An operation is idempotent if performing it multiple times has the same result as performing it once
 - GET, PUT, DELETE are idempotent by HTTP specification; POST and PATCH are not
 - Idempotency keys: a unique client-generated ID attached to a request, allowing the server to detect duplicates
-- Payment and order creation must be idempotent — network failures cause retries, retries cause duplicates
+- Payment and order creation must be idempotent  -  network failures cause retries, retries cause duplicates
 - Deduplication window: how long the server stores idempotency keys before forgetting past requests
 
 **Tricky points:**
 - PUT is idempotent (same full replacement twice = same result); PATCH is not always (increment PATCH is not idempotent)
-- An idempotency key deduplicates based on the key, not the payload — same key with different payload returns the original response
-- The server must persist idempotency keys durably (not in memory) — a restart must remember past requests
-- Idempotency windows expire — an old idempotency key may not be recognized after weeks
+- An idempotency key deduplicates based on the key, not the payload  -  same key with different payload returns the original response
+- The server must persist idempotency keys durably (not in memory)  -  a restart must remember past requests
+- Idempotency windows expire  -  an old idempotency key may not be recognized after weeks
 - "Safe" and "idempotent" are different: GET is both; DELETE is idempotent but not safe (it has side effects)
 
 ---
 
 ## What It Is
 
-Imagine a bank's telephone service. You call to transfer $100 from savings to checking. The line drops before the bank confirms. Did the transfer happen? You do not know. You call back and try again. If the transfer was not idempotent, the bank processes it a second time and you transfer $200 total. If it was idempotent — you identify the original transfer with a reference number and the bank detects the duplicate — the second call is a no-op, and you successfully transfer $100.
+Imagine a bank's telephone service. You call to transfer $100 from savings to checking. The line drops before the bank confirms. Did the transfer happen? You do not know. You call back and try again. If the transfer was not idempotent, the bank processes it a second time and you transfer $200 total. If it was idempotent  -  you identify the original transfer with a reference number and the bank detects the duplicate  -  the second call is a no-op, and you successfully transfer $100.
 
 Idempotency is the mathematical property where applying a function multiple times produces the same result as applying it once: f(f(x)) = f(x). In HTTP APIs, it means that a client can safely retry a failed request without worrying about duplicate effects. This matters whenever a request might fail in a way that leaves the client uncertain about whether the operation succeeded: network timeouts, connection resets, server crashes, or slow responses that trigger client-side retries.
 
@@ -51,7 +51,7 @@ The idempotency key is a client-generated unique identifier, typically a UUID, i
 
 The server stores idempotency keys and their responses in a durable store (database or Redis with persistence) with a TTL. Using an in-memory store means a server restart loses all idempotency state and all pending clients will experience duplicate operations on the next retry. Using a distributed store means all instances share the same idempotency state, so a retry hitting a different server instance is correctly deduplicated.
 
-The deduplication logic must handle concurrent requests. If two requests with the same idempotency key arrive simultaneously (before either is processed), the server must ensure only one is processed. A database row with a unique constraint on the idempotency key prevents duplicate concurrent processing — the second INSERT fails with a unique constraint violation, signaling that processing is already in progress.
+The deduplication logic must handle concurrent requests. If two requests with the same idempotency key arrive simultaneously (before either is processed), the server must ensure only one is processed. A database row with a unique constraint on the idempotency key prevents duplicate concurrent processing  -  the second INSERT fails with a unique constraint violation, signaling that processing is already in progress.
 
 ```python
 import uuid
@@ -75,7 +75,7 @@ class PaymentResponse(BaseModel):
     amount_cents: int
 
 def process_payment(amount_cents: int, currency: str, source_token: str) -> dict:
-    """Actual payment processing — must only be called once per logical request."""
+    """Actual payment processing  -  must only be called once per logical request."""
     payment_id = str(uuid.uuid4())
     # Call payment processor (Stripe, etc.)
     result = stripe.charge(amount=amount_cents, currency=currency, source=source_token)
@@ -100,7 +100,7 @@ async def create_payment(
             raise HTTPException(status_code=409, detail="Request is being processed")
         return PaymentResponse(**stored["response"])
 
-    # Mark as "processing" before starting — prevents concurrent duplicates
+    # Mark as "processing" before starting  -  prevents concurrent duplicates
     # nx=True: only set if key doesn't exist (atomic check-and-set)
     claimed = r.set(cache_key, json.dumps({"status": "processing"}), nx=True, ex=3600)
     if not claimed:
@@ -140,7 +140,7 @@ In the outbox pattern, the relay may publish the same event more than once. Even
 ## Common Misconceptions
 
 Misconception 1: "PUT is always idempotent, so I should use PUT instead of POST for creation."
-Reality: PUT at a specific URL is idempotent (two PUTs to `/users/123` produce the same result). But clients do not always know the resource ID before creation — the server assigns it. Using POST for creation (where the server generates the ID) is the correct pattern. For idempotent creation (where the client provides the ID or an external idempotency key), PUT at a specific URL or POST with an idempotency key are both valid.
+Reality: PUT at a specific URL is idempotent (two PUTs to `/users/123` produce the same result). But clients do not always know the resource ID before creation  -  the server assigns it. Using POST for creation (where the server generates the ID) is the correct pattern. For idempotent creation (where the client provides the ID or an external idempotency key), PUT at a specific URL or POST with an idempotency key are both valid.
 
 Misconception 2: "GET requests don't need idempotency consideration."
 Reality: GET is defined as safe and idempotent. Most GET implementations are naturally idempotent (reading data does not change it). But a GET that triggers side effects (logging, analytics incrementing, quota deduction) may not be. Such GET requests violate the HTTP spec and should be POST operations with idempotent handling.
@@ -152,9 +152,9 @@ Reality: Any operation that creates resources, sends notifications, or modifies 
 
 ## Why It Matters in Practice
 
-Without idempotency for mutating operations, retry logic (which every reliable client should implement) creates duplicate effects. Infrastructure that retries requests automatically — load balancers, API gateways, CDNs — can trigger duplicates without the client code doing anything wrong. A network timeout does not tell the client whether the server received and processed the request — it only tells the client that no response arrived. Idempotency keys solve this uncertainty by making the retry outcome deterministic.
+Without idempotency for mutating operations, retry logic (which every reliable client should implement) creates duplicate effects. Infrastructure that retries requests automatically  -  load balancers, API gateways, CDNs  -  can trigger duplicates without the client code doing anything wrong. A network timeout does not tell the client whether the server received and processed the request  -  it only tells the client that no response arrived. Idempotency keys solve this uncertainty by making the retry outcome deterministic.
 
-For Python developers, idempotency should be a first-class design concern for any endpoint that creates, modifies, or deletes resources. FastAPI and Django REST Framework do not provide idempotency handling out of the box — it must be implemented explicitly in the handler, using the pattern shown above.
+For Python developers, idempotency should be a first-class design concern for any endpoint that creates, modifies, or deletes resources. FastAPI and Django REST Framework do not provide idempotency handling out of the box  -  it must be implemented explicitly in the handler, using the pattern shown above.
 
 ---
 

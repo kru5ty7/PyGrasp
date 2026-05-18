@@ -1,4 +1,4 @@
----
+﻿---
 title: 16 - Caching in Django
 description: "Django's caching framework provides a unified API over multiple backends that stores computed results to avoid redundant database queries and template rendering."
 tags: [django, layer-3, web]
@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Caching in Django
 
-> Caching in Django is the discipline of storing expensive computation results — database query results, rendered template fragments, or full HTTP responses — so that subsequent requests can retrieve them instantly without repeating the work.
+> Caching in Django is the discipline of storing expensive computation results  -  database query results, rendered template fragments, or full HTTP responses  -  so that subsequent requests can retrieve them instantly without repeating the work.
 
 ---
 
@@ -26,10 +26,10 @@ created: 2026-05-18
 - Cache versioning: `cache.set(key, value, version=2)` and `cache.incr_version(key)` for key-space invalidation
 
 **Tricky points:**
-- `LocMemCache` is process-local — two gunicorn workers do not share cache entries; never use it in production
-- `cache_page` caches vary by URL but not by user by default — authenticated pages cached with `cache_page` will serve the wrong user's content to other users unless `Vary: Cookie` headers are set correctly
-- Django's cache framework does not handle cache stampede (many requests simultaneously missing the same key) — `cache.get_or_set()` with a lock is required for high-traffic keys
-- `cache.clear()` clears all keys in the cache — in production with Redis, this is a very dangerous operation if the cache is shared with other applications
+- `LocMemCache` is process-local  -  two gunicorn workers do not share cache entries; never use it in production
+- `cache_page` caches vary by URL but not by user by default  -  authenticated pages cached with `cache_page` will serve the wrong user's content to other users unless `Vary: Cookie` headers are set correctly
+- Django's cache framework does not handle cache stampede (many requests simultaneously missing the same key)  -  `cache.get_or_set()` with a lock is required for high-traffic keys
+- `cache.clear()` clears all keys in the cache  -  in production with Redis, this is a very dangerous operation if the cache is shared with other applications
 
 ---
 
@@ -37,9 +37,9 @@ created: 2026-05-18
 
 Caching is a form of memoization applied to a web application: the first time a resource is requested, the system computes the answer and stores it; subsequent requests for the same resource return the stored answer without recomputation. Think of it as a fast-food kitchen's prep work. The kitchen does not slice tomatoes from scratch with every order; they slice a large batch at the beginning of the shift and pull from the prepared container until it runs out (cache expires), then replenish. The customer receives the tomatoes just as quickly as if they were freshly cut, but the kitchen's workload is reduced dramatically.
 
-Django's caching framework provides a unified Python API — `cache.get()`, `cache.set()`, `cache.delete()` — that works identically regardless of the underlying storage backend. This abstraction means you can develop locally with an in-memory cache (no Redis required), switch to Redis in staging, and verify the same behavior with a different backend without changing any application code. The `CACHES` setting maps backend names to backend configurations; the default `cache` alias points to `CACHES['default']`.
+Django's caching framework provides a unified Python API  -  `cache.get()`, `cache.set()`, `cache.delete()`  -  that works identically regardless of the underlying storage backend. This abstraction means you can develop locally with an in-memory cache (no Redis required), switch to Redis in staging, and verify the same behavior with a different backend without changing any application code. The `CACHES` setting maps backend names to backend configurations; the default `cache` alias points to `CACHES['default']`.
 
-Cache invalidation — deciding when to remove or refresh a cached value — is the hard part of caching. Django's framework provides the tools but not the strategy: `cache.delete(key)` removes a specific key, `cache.clear()` removes all keys, and cache versioning increments a version number so that old keys become unreachable without being physically deleted. The most reliable invalidation strategy in Django is to connect cache deletion to signal receivers on model saves and deletes, so the cache is always purged when the underlying data changes. Cache-aside (populate on miss, invalidate on write) is the most common pattern, but it requires careful key design to ensure the right cache entries are invalidated when related objects change.
+Cache invalidation  -  deciding when to remove or refresh a cached value  -  is the hard part of caching. Django's framework provides the tools but not the strategy: `cache.delete(key)` removes a specific key, `cache.clear()` removes all keys, and cache versioning increments a version number so that old keys become unreachable without being physically deleted. The most reliable invalidation strategy in Django is to connect cache deletion to signal receivers on model saves and deletes, so the cache is always purged when the underlying data changes. Cache-aside (populate on miss, invalidate on write) is the most common pattern, but it requires careful key design to ensure the right cache entries are invalidated when related objects change.
 
 ---
 
@@ -92,11 +92,11 @@ def article_list(request):
 
 ## How It Connects
 
-Caching is most effective when applied to the output of expensive ORM queries — understanding which queries are slow is the prerequisite for knowing what to cache.
+Caching is most effective when applied to the output of expensive ORM queries  -  understanding which queries are slow is the prerequisite for knowing what to cache.
 
 [[django-orm-queries|Django ORM Queries]]
 
-Signal-based cache invalidation connects to Django's signal system — the `post_save` signal is the hook for clearing stale cache entries.
+Signal-based cache invalidation connects to Django's signal system  -  the `post_save` signal is the hook for clearing stale cache entries.
 
 [[django-signals|Django Signals]]
 
@@ -121,9 +121,9 @@ Reality: Caching hides slow queries behind a TTL. When the cache expires, the sl
 
 ## Why It Matters in Practice
 
-Caching is one of the most effective performance improvements available to a Django application without architectural changes. A homepage that runs 15 database queries on every request, serving 1000 requests per minute, hits the database 15,000 times per minute. The same homepage with a 60-second `cache_page` caches the response after the first request, reducing database load to 15 queries per minute — a 1000x reduction for the same throughput. This is why caching is always in the conversation when a Django application's database becomes the bottleneck.
+Caching is one of the most effective performance improvements available to a Django application without architectural changes. A homepage that runs 15 database queries on every request, serving 1000 requests per minute, hits the database 15,000 times per minute. The same homepage with a 60-second `cache_page` caches the response after the first request, reducing database load to 15 queries per minute  -  a 1000x reduction for the same throughput. This is why caching is always in the conversation when a Django application's database becomes the bottleneck.
 
-The operational complexity of caching — cache invalidation logic, TTL tuning, monitoring cache hit rates, handling cache stampedes — is real, but it is substantially lower than the operational complexity of scaling the database. Teams that instrument their cache hit rates (Redis `INFO` stats or a Django cache middleware that adds `X-Cache` headers) can measure caching effectiveness and tune TTLs with data rather than guesswork.
+The operational complexity of caching  -  cache invalidation logic, TTL tuning, monitoring cache hit rates, handling cache stampedes  -  is real, but it is substantially lower than the operational complexity of scaling the database. Teams that instrument their cache hit rates (Redis `INFO` stats or a Django cache middleware that adds `X-Cache` headers) can measure caching effectiveness and tune TTLs with data rather than guesswork.
 
 ---
 

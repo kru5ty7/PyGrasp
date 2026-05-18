@@ -1,6 +1,6 @@
----
+﻿---
 title: 05 - CQRS
-description: "Command Query Responsibility Segregation — separating the write model from the read model to optimize each independently, and the eventual consistency this requires."
+description: "Command Query Responsibility Segregation  -  separating the write model from the read model to optimize each independently, and the eventual consistency this requires."
 tags: [cqrs, read-model, write-model, projections, layer-7, system-design]
 status: draft
 difficulty: intermediate
@@ -11,25 +11,25 @@ created: 2026-05-18
 
 # CQRS
 
-> CQRS is the recognition that reading data and writing data are fundamentally different operations with different requirements — separating them allows each to be optimized independently without compromising the other.
+> CQRS is the recognition that reading data and writing data are fundamentally different operations with different requirements  -  separating them allows each to be optimized independently without compromising the other.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- Commands: operations that change state (create, update, delete) — write model
-- Queries: operations that read state — read model
+- Commands: operations that change state (create, update, delete)  -  write model
+- Queries: operations that read state  -  read model
 - CQRS separates the write model (normalized, optimized for consistency) from the read model (denormalized, optimized for queries)
 - Projections: the read model is built by processing events or changes from the write model
-- Eventual consistency: the read model is updated asynchronously — it is slightly behind the write model
+- Eventual consistency: the read model is updated asynchronously  -  it is slightly behind the write model
 
 **Tricky points:**
 - CQRS does not require event sourcing, but they are commonly combined
-- The read model can be a separate database, a cache, or a search index — optimized for its query patterns
+- The read model can be a separate database, a cache, or a search index  -  optimized for its query patterns
 - "Command" in CQRS means a write operation, not the same as a command in the command pattern
 - Eventual consistency between read and write models means post-write reads may briefly see stale state
-- CQRS adds complexity — it is only worth it when read and write optimizations genuinely conflict
+- CQRS adds complexity  -  it is only worth it when read and write optimizations genuinely conflict
 
 ---
 
@@ -39,9 +39,9 @@ Think about a library. The process of acquiring and cataloging a new book (the w
 
 This is CQRS (Command Query Responsibility Segregation) in a real-world form. The principle is that the data model optimized for writing is not the same data model optimized for reading. In a typical relational database, you normalize data to avoid redundancy (write model) and then query with JOINs (read model). For complex reads with many JOINs, poor performance, and complex query logic, this compromise serves neither purpose well.
 
-CQRS separates the two responsibilities. Commands (write operations) go to the write side, which enforces business rules, maintains invariants, and stores data in a normalized, consistent form. Queries (read operations) go to the read side, which maintains one or more denormalized, pre-aggregated projections of the data optimized for specific query patterns. The projections are updated when the write side changes — either synchronously (for simple cases) or asynchronously (for complex or distributed cases).
+CQRS separates the two responsibilities. Commands (write operations) go to the write side, which enforces business rules, maintains invariants, and stores data in a normalized, consistent form. Queries (read operations) go to the read side, which maintains one or more denormalized, pre-aggregated projections of the data optimized for specific query patterns. The projections are updated when the write side changes  -  either synchronously (for simple cases) or asynchronously (for complex or distributed cases).
 
-A projection is a materialized view of the write model's data, shaped for a specific query. If the write model stores orders and customers in separate normalized tables, a projection for "customer order history" might denormalize both into a single document per customer, containing all their orders with embedded product names and prices. This projection is fast to query because no JOINs are needed at read time — the JOIN was done when the projection was built.
+A projection is a materialized view of the write model's data, shaped for a specific query. If the write model stores orders and customers in separate normalized tables, a projection for "customer order history" might denormalize both into a single document per customer, containing all their orders with embedded product names and prices. This projection is fast to query because no JOINs are needed at read time  -  the JOIN was done when the projection was built.
 
 ---
 
@@ -49,7 +49,7 @@ A projection is a materialized view of the write model's data, shaped for a spec
 
 The write model receives commands through a command handler. The command handler validates the command, applies business rules, and updates the write database. After a successful write, it publishes an event (or returns an updated aggregate) that the projection updater can use to keep the read model in sync.
 
-The projection updater subscribes to changes in the write model — either by consuming domain events from an event bus, or by polling the write database for changes. For each change, it updates the relevant projections. A single write event may trigger updates to multiple projections if different query patterns use different views of the same data.
+The projection updater subscribes to changes in the write model  -  either by consuming domain events from an event bus, or by polling the write database for changes. For each change, it updates the relevant projections. A single write event may trigger updates to multiple projections if different query patterns use different views of the same data.
 
 ```python
 from fastapi import FastAPI
@@ -104,7 +104,7 @@ class UserOrderHistory(BaseModel):
 
 @app.get("/queries/users/{user_id}/orders", response_model=UserOrderHistory)
 async def get_user_order_history(user_id: str):
-    """Query handler: reads from the denormalized read model — no JOINs needed."""
+    """Query handler: reads from the denormalized read model  -  no JOINs needed."""
     # The read model is a pre-built projection, not the normalized write DB
     history = read_db.get_user_order_history(user_id)  # fast single-document lookup
     return history
@@ -134,7 +134,7 @@ async def update_order_projections(event: dict):
             read_db.increment_product_sales(item["product_id"], item["quantity"])
 ```
 
-CQRS without event sourcing is valid and common. The write side is a standard relational database with normalized tables. The read side is a set of projections — other database tables, Redis hashes, Elasticsearch documents — that are updated in response to write events. The separation is architectural, not technology-driven.
+CQRS without event sourcing is valid and common. The write side is a standard relational database with normalized tables. The read side is a set of projections  -  other database tables, Redis hashes, Elasticsearch documents  -  that are updated in response to write events. The separation is architectural, not technology-driven.
 
 CQRS with event sourcing is the more powerful combination. The write side stores events rather than current state. Projections are built entirely from event replay. Adding a new projection means replaying the event log from the beginning to build it. This gives tremendous flexibility for analytics and reporting, at the cost of more complex infrastructure.
 
@@ -150,7 +150,7 @@ The Saga pattern produces events that update CQRS read models, providing real-ti
 
 [[saga-pattern|Saga Pattern]]
 
-CQRS's read model can be a search index (Elasticsearch), a cache (Redis), or a data warehouse — choosing the right read store depends on the query patterns.
+CQRS's read model can be a search index (Elasticsearch), a cache (Redis), or a data warehouse  -  choosing the right read store depends on the query patterns.
 
 [[data-warehousing|Data Warehousing]]
 
@@ -165,7 +165,7 @@ Misconception 2: "CQRS means I cannot query the write model directly."
 Reality: CQRS is an optimization pattern, not a prohibition. For simple reads where the write model's structure is sufficient and performance is acceptable, querying the write model directly is fine. CQRS is valuable when specific read operations are significantly more complex or have different performance requirements than the write model can efficiently serve.
 
 Misconception 3: "The read model is always more complex than the write model."
-Reality: The read model is often simpler — it is a denormalized, flat view of data that answers specific questions. The write model is where complexity lives: business rules, invariants, consistency guarantees. The read model trades consistency and normalization for query simplicity and speed.
+Reality: The read model is often simpler  -  it is a denormalized, flat view of data that answers specific questions. The write model is where complexity lives: business rules, invariants, consistency guarantees. The read model trades consistency and normalization for query simplicity and speed.
 
 ---
 

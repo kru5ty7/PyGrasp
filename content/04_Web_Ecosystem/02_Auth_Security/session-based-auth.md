@@ -1,4 +1,4 @@
----
+﻿---
 title: 06 - Session-Based Authentication
 description: "Session-based authentication stores user state on the server and identifies users via a session ID cookie, making it stateful and revocable unlike JWT-based authentication."
 tags: [sessions, authentication, cookies, csrf, layer-4, web-ecosystem]
@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Session-Based Authentication
 
-> Session-based authentication is the original web identity model — the server holds the truth about who is logged in, the browser holds only a reference key, and revoking access is as simple as deleting the server-side record.
+> Session-based authentication is the original web identity model  -  the server holds the truth about who is logged in, the browser holds only a reference key, and revoking access is as simple as deleting the server-side record.
 
 ---
 
@@ -25,32 +25,32 @@ created: 2026-05-18
 - Stateful: sessions can be revoked instantly by deleting the server-side record
 
 **Tricky points:**
-- In-memory session storage breaks immediately in multi-process or multi-server deployments — session created by worker A is not visible to worker B
-- `SameSite=Lax` (the default in modern browsers) blocks cross-origin POST requests but allows cross-origin GET navigation — a significant CSRF mitigation, but not complete protection
+- In-memory session storage breaks immediately in multi-process or multi-server deployments  -  session created by worker A is not visible to worker B
+- `SameSite=Lax` (the default in modern browsers) blocks cross-origin POST requests but allows cross-origin GET navigation  -  a significant CSRF mitigation, but not complete protection
 - Session fixation attack: attacker sets a known session ID before login; server must regenerate the session ID on successful authentication
-- Session expiry must be enforced server-side — a cookie's `Max-Age` is advisory and can be ignored by the client
-- `Secure` flag has no effect on `http://` connections — if the application runs on HTTP in development, the cookie still transmits, but this is a development-only concern
+- Session expiry must be enforced server-side  -  a cookie's `Max-Age` is advisory and can be ignored by the client
+- `Secure` flag has no effect on `http://` connections  -  if the application runs on HTTP in development, the cookie still transmits, but this is a development-only concern
 
 ---
 
 ## What It Is
 
-When you log in to a website and your browser remembers who you are across page loads, that persistence comes from one of two mechanisms: a session cookie or a token. Session-based authentication uses the cookie to carry a random identifier — the session ID — that the server maps to your identity in a lookup table. The identifier itself contains no information; it is an opaque pointer to the real session data stored on the server.
+When you log in to a website and your browser remembers who you are across page loads, that persistence comes from one of two mechanisms: a session cookie or a token. Session-based authentication uses the cookie to carry a random identifier  -  the session ID  -  that the server maps to your identity in a lookup table. The identifier itself contains no information; it is an opaque pointer to the real session data stored on the server.
 
-Think of it as a coat check ticket. When you arrive (log in), the server takes your coat (identity) and gives you a numbered ticket (session ID). When you return (make a request), you hand over the ticket and the server retrieves your coat. The ticket is worthless on its own — it only has meaning because the server maintains the coatroom. If you lose the ticket (session ID is stolen), someone else can use it to claim your coat. If the coatroom closes (server deletes the session), all tickets become invalid instantly.
+Think of it as a coat check ticket. When you arrive (log in), the server takes your coat (identity) and gives you a numbered ticket (session ID). When you return (make a request), you hand over the ticket and the server retrieves your coat. The ticket is worthless on its own  -  it only has meaning because the server maintains the coatroom. If you lose the ticket (session ID is stolen), someone else can use it to claim your coat. If the coatroom closes (server deletes the session), all tickets become invalid instantly.
 
-This stateful design has several important properties. Revocation is immediate — deleting the session record from Redis or the database makes the session ID invalid on the very next request, regardless of any cookie TTL. This is the primary advantage over JWT, where the token contains its own expiry and cannot be invalidated before that time without a blocklist. Sessions are also naturally bounded — the server controls how much data they hold and can scan them for anomalies. The trade-off is the shared state requirement: every server instance must be able to look up any session, which means session storage must be external (Redis, database) in any distributed deployment.
+This stateful design has several important properties. Revocation is immediate  -  deleting the session record from Redis or the database makes the session ID invalid on the very next request, regardless of any cookie TTL. This is the primary advantage over JWT, where the token contains its own expiry and cannot be invalidated before that time without a blocklist. Sessions are also naturally bounded  -  the server controls how much data they hold and can scan them for anomalies. The trade-off is the shared state requirement: every server instance must be able to look up any session, which means session storage must be external (Redis, database) in any distributed deployment.
 
 ---
 
 ## How It Actually Works
 
-Flask and Django have built-in session support. FastAPI does not ship with sessions natively — the `starlette-sessions` or `fastapi-sessions` libraries add this capability, backed by Redis or database storage.
+Flask and Django have built-in session support. FastAPI does not ship with sessions natively  -  the `starlette-sessions` or `fastapi-sessions` libraries add this capability, backed by Redis or database storage.
 
 A typical Redis-backed session flow in a Python web application:
 
 ```python
-# Pseudo-code representing the session lifecycle — actual API varies by framework
+# Pseudo-code representing the session lifecycle  -  actual API varies by framework
 
 # Login handler
 async def login(request, credentials):
@@ -93,17 +93,17 @@ async def logout(request, session_id=Cookie(None)):
     return response
 ```
 
-Cookie security attributes deserve deliberate attention. `HttpOnly` prevents `document.cookie` access from JavaScript, blocking XSS-based session theft. `Secure` restricts transmission to HTTPS connections. `SameSite=Strict` prevents the browser from sending the cookie on any cross-site request, including navigations — this blocks CSRF entirely but also breaks OAuth flows and login links from emails. `SameSite=Lax` allows cross-site GET navigations (links, redirects) but blocks cross-site POST — a reasonable default for most applications.
+Cookie security attributes deserve deliberate attention. `HttpOnly` prevents `document.cookie` access from JavaScript, blocking XSS-based session theft. `Secure` restricts transmission to HTTPS connections. `SameSite=Strict` prevents the browser from sending the cookie on any cross-site request, including navigations  -  this blocks CSRF entirely but also breaks OAuth flows and login links from emails. `SameSite=Lax` allows cross-site GET navigations (links, redirects) but blocks cross-site POST  -  a reasonable default for most applications.
 
 ---
 
 ## How It Connects
 
-Session-based auth and JWT represent the two main stateful vs stateless auth models — understanding both clarifies when to choose which.
+Session-based auth and JWT represent the two main stateful vs stateless auth models  -  understanding both clarifies when to choose which.
 
 [[jwt|JSON Web Tokens (JWT)]]
 
-CSRF attacks specifically target cookie-based authentication — understanding how CSRF protection works is a natural complement to understanding sessions.
+CSRF attacks specifically target cookie-based authentication  -  understanding how CSRF protection works is a natural complement to understanding sessions.
 
 [[csrf-protection|CSRF Protection]]
 
@@ -133,7 +133,7 @@ Common question forms:
 - "What cookie attributes should a session cookie have?"
 
 Answer frame:
-Session auth: server stores session data, client holds only an opaque session ID in a cookie. Each request the server looks up the session ID. Stateful — immediate revocation by deleting the server record. JWT is stateless — the token carries claims and cannot be revoked without a blocklist. Cookie attributes: `HttpOnly` (no JS access), `Secure` (HTTPS only), `SameSite=Lax` (CSRF mitigation). Redis is the standard production session store for multi-instance deployments.
+Session auth: server stores session data, client holds only an opaque session ID in a cookie. Each request the server looks up the session ID. Stateful  -  immediate revocation by deleting the server record. JWT is stateless  -  the token carries claims and cannot be revoked without a blocklist. Cookie attributes: `HttpOnly` (no JS access), `Secure` (HTTPS only), `SameSite=Lax` (CSRF mitigation). Redis is the standard production session store for multi-instance deployments.
 
 ---
 

@@ -1,4 +1,4 @@
----
+﻿---
 title: 02 - Litestar
 description: "Litestar is a strict, performance-focused ASGI framework with built-in dependency injection, DTOs, caching, and rate limiting."
 tags: [litestar, asgi, web-framework, performance, typing, layer-3, web]
@@ -20,23 +20,23 @@ created: 2026-05-18
 **Core idea:**
 - ASGI framework (formerly Starlite, renamed Litestar in 2023) built on Starlette internals with a distinct higher-level API
 - DTOs (Data Transfer Objects) separate input/output schemas from domain models, enforced at the framework level
-- Dependency injection is built-in and does not require decorator syntax — uses type annotations exclusively
+- Dependency injection is built-in and does not require decorator syntax  -  uses type annotations exclusively
 - Supports both Pydantic v2 and `attrs` for data validation
 - Built-in caching (`@get("/", cache=True)`), rate limiting, and OpenAPI documentation generation
 - Strict type enforcement at route definition time catches configuration errors before the server starts
 
 **Tricky points:**
-- DTOs are mandatory for routes that accept or return data — unlike FastAPI where you annotate directly with Pydantic models
+- DTOs are mandatory for routes that accept or return data  -  unlike FastAPI where you annotate directly with Pydantic models
 - The dependency injection API differs from FastAPI: no `Depends()` function; dependencies are declared as parameters with type annotations on handler functions
-- `Controller` classes group related handlers, similar to class-based views in Django — a pattern FastAPI does not have natively
+- `Controller` classes group related handlers, similar to class-based views in Django  -  a pattern FastAPI does not have natively
 - Pydantic v1 is not supported; the framework targets Pydantic v2 exclusively
-- Plugin architecture is central to Litestar — SQLAlchemy, Redis, and other integrations are installed as plugins, not ad-hoc middleware
+- Plugin architecture is central to Litestar  -  SQLAlchemy, Redis, and other integrations are installed as plugins, not ad-hoc middleware
 
 ---
 
 ## What It Is
 
-A software framework can be thought of on a spectrum from "library with suggestions" to "structured environment with rules". Flask sits toward the first end: it provides routing and request/response primitives, but you decide how to structure models, validation, and data flow. Django sits toward the other end: it mandates a project layout, provides ORM, admin, and forms, and expects you to follow its conventions. Litestar occupies a middle position that leans toward the opinionated side for the concerns it covers — particularly around type safety and data shapes — while remaining a general-purpose ASGI framework.
+A software framework can be thought of on a spectrum from "library with suggestions" to "structured environment with rules". Flask sits toward the first end: it provides routing and request/response primitives, but you decide how to structure models, validation, and data flow. Django sits toward the other end: it mandates a project layout, provides ORM, admin, and forms, and expects you to follow its conventions. Litestar occupies a middle position that leans toward the opinionated side for the concerns it covers  -  particularly around type safety and data shapes  -  while remaining a general-purpose ASGI framework.
 
 Litestar began as Starlite in late 2021, created as a response to perceived complexity and inconsistency in FastAPI's dependency injection model. The project was renamed Litestar in 2023 following a governance restructuring and community vote. The core philosophy is that a framework should catch as many errors as possible at application startup rather than at runtime. Litestar validates route handlers, their parameter types, return type annotations, and dependency graphs when the application is first built. If a handler's return annotation does not match the registered response model, the application raises a configuration error before the first request arrives.
 
@@ -97,7 +97,7 @@ The built-in caching and rate limiting are configured directly on route decorato
 
 ## How It Connects
 
-Litestar is built on top of Starlette's foundational ASGI primitives — understanding Starlette's request/response cycle and middleware model explains what Litestar provides on top.
+Litestar is built on top of Starlette's foundational ASGI primitives  -  understanding Starlette's request/response cycle and middleware model explains what Litestar provides on top.
 
 [[starlette|Starlette]]
 
@@ -126,7 +126,7 @@ Reality: DTOs are optional but encouraged. Routes that return primitive types (s
 
 ## Why It Matters in Practice
 
-Litestar is gaining adoption in teams that find FastAPI's loose conventions lead to inconsistency at scale. In a large FastAPI codebase, it is easy to accidentally return internal model fields, skip dependency injection for some routes, or accumulate ad-hoc validation logic. Litestar's startup-time validation and mandatory DTO layer push these issues to the surface earlier. For smaller teams or exploratory projects, that strictness can feel like friction — FastAPI's flexibility is genuinely useful when requirements are in flux.
+Litestar is gaining adoption in teams that find FastAPI's loose conventions lead to inconsistency at scale. In a large FastAPI codebase, it is easy to accidentally return internal model fields, skip dependency injection for some routes, or accumulate ad-hoc validation logic. Litestar's startup-time validation and mandatory DTO layer push these issues to the surface earlier. For smaller teams or exploratory projects, that strictness can feel like friction  -  FastAPI's flexibility is genuinely useful when requirements are in flux.
 
 The framework comparison note covers the decision matrix in full, but the practical trigger for choosing Litestar over FastAPI is usually a team that has hit the "inconsistency at scale" problem and wants a framework that enforces the patterns they want to follow anyway. The built-in caching and rate limiting also reduce dependency count for services that need those features, which simplifies maintenance and security auditing.
 

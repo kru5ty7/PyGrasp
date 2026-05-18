@@ -1,6 +1,6 @@
----
+﻿---
 title: 05 - Testing FastAPI
-description: "FastAPI is tested with `TestClient` (sync) or `AsyncClient` from `httpx` (async) — they send real HTTP requests to the app without a running server; `dependency_overrides` replaces dependencies (auth, DB) in tests; test the full request-response cycle including validation and status codes."
+description: "FastAPI is tested with `TestClient` (sync) or `AsyncClient` from `httpx` (async)  -  they send real HTTP requests to the app without a running server; `dependency_overrides` replaces dependencies (auth, DB) in tests; test the full request-response cycle including validation and status codes."
 tags: [fastapi, testing, TestClient, AsyncClient, httpx, dependency_overrides, layer-3, web]
 status: draft
 difficulty: intermediate
@@ -11,31 +11,31 @@ created: 2026-05-17
 
 # Testing FastAPI
 
-> FastAPI is tested with `TestClient` (sync) or `AsyncClient` from `httpx` (async) — they send real HTTP requests to the app without a running server; `dependency_overrides` replaces dependencies (auth, DB) in tests; test the full request-response cycle including validation and status codes.
+> FastAPI is tested with `TestClient` (sync) or `AsyncClient` from `httpx` (async)  -  they send real HTTP requests to the app without a running server; `dependency_overrides` replaces dependencies (auth, DB) in tests; test the full request-response cycle including validation and status codes.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- `TestClient(app)` — sync HTTP client for testing; from `starlette.testclient` or `fastapi.testclient`
-- `AsyncClient(app=app, base_url="http://test")` — async HTTP client from `httpx`; required for lifespan events
-- `app.dependency_overrides[real_dep] = fake_dep` — replace a dependency for all tests
-- `client.get("/path")` → `Response`; check `.status_code`, `.json()`, `.headers`
-- `TestClient` as context manager — triggers lifespan events (`startup`/`shutdown`)
+- `TestClient(app)`  -  sync HTTP client for testing; from `starlette.testclient` or `fastapi.testclient`
+- `AsyncClient(app=app, base_url="http://test")`  -  async HTTP client from `httpx`; required for lifespan events
+- `app.dependency_overrides[real_dep] = fake_dep`  -  replace a dependency for all tests
+- `client.get("/path")` -> `Response`; check `.status_code`, `.json()`, `.headers`
+- `TestClient` as context manager  -  triggers lifespan events (`startup`/`shutdown`)
 
 **Tricky points:**
-- `TestClient` does NOT trigger lifespan events by default — use `with TestClient(app) as client:` to trigger startup/shutdown
+- `TestClient` does NOT trigger lifespan events by default  -  use `with TestClient(app) as client:` to trigger startup/shutdown
 - `AsyncClient` requires `pytest-asyncio` and the app's lifespan runs within `async with AsyncClient(...):`
-- `dependency_overrides` is global on the `app` object — always clean up: `app.dependency_overrides = {}` in a fixture teardown; otherwise leaks between tests
-- The `TestClient` makes requests using Starlette's test transport — no real network, no real port, but full ASGI stack runs (middleware, routing, validation)
+- `dependency_overrides` is global on the `app` object  -  always clean up: `app.dependency_overrides = {}` in a fixture teardown; otherwise leaks between tests
+- The `TestClient` makes requests using Starlette's test transport  -  no real network, no real port, but full ASGI stack runs (middleware, routing, validation)
 - Testing files: use `client.post("/upload", files={"file": ("test.txt", b"content", "text/plain")})`
 
 ---
 
 ## What It Is
 
-Testing FastAPI means testing the full stack — routing, dependency injection, Pydantic validation, middleware — without running a real server. `TestClient` wraps the app in a test transport, allowing you to make `client.get("/users")` calls that go through the complete ASGI pipeline and return a real `Response` object.
+Testing FastAPI means testing the full stack  -  routing, dependency injection, Pydantic validation, middleware  -  without running a real server. `TestClient` wraps the app in a test transport, allowing you to make `client.get("/users")` calls that go through the complete ASGI pipeline and return a real `Response` object.
 
 `dependency_overrides` is the key tool for integration testing: replace the real database session with a test session, replace the real auth with a fake that returns a specific user, and test the handler's behavior in isolation from external services.
 
@@ -129,10 +129,10 @@ def test_admin_can_delete_user(auth_client):
 
 ## How It Connects
 
-`dependency_overrides` replaces FastAPI dependencies — understanding `Depends()` is required to use overrides effectively.
+`dependency_overrides` replaces FastAPI dependencies  -  understanding `Depends()` is required to use overrides effectively.
 [[fastapi-dependencies|FastAPI Dependencies]]
 
-The database session in tests uses a rollback-per-test pattern — combines pytest fixtures with SQLAlchemy sessions.
+The database session in tests uses a rollback-per-test pattern  -  combines pytest fixtures with SQLAlchemy sessions.
 [[database-sessions|Database Sessions in FastAPI]]
 
 ---
@@ -183,7 +183,7 @@ Common question forms:
 - "How do you test a FastAPI endpoint?"
 - "How do you mock authentication in FastAPI tests?"
 
-Answer frame: `TestClient(app)` — makes real HTTP requests to the app's ASGI stack. Check `response.status_code` and `response.json()`. `dependency_overrides[get_db] = lambda: test_session` — replace DB dependency with test session. `dependency_overrides[get_current_user] = lambda: fake_user` — bypass auth. Always reset overrides in fixture teardown. `with TestClient(app)` triggers lifespan events.
+Answer frame: `TestClient(app)`  -  makes real HTTP requests to the app's ASGI stack. Check `response.status_code` and `response.json()`. `dependency_overrides[get_db] = lambda: test_session`  -  replace DB dependency with test session. `dependency_overrides[get_current_user] = lambda: fake_user`  -  bypass auth. Always reset overrides in fixture teardown. `with TestClient(app)` triggers lifespan events.
 
 ---
 

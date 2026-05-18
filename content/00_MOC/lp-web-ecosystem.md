@@ -1,16 +1,16 @@
----
-title: Learning Path — Web Ecosystem
-description: Databases, task queues, auth, testing, and HTTP clients — the supporting infrastructure around Python web applications.
+﻿---
+title: Learning Path  -  Web Ecosystem
+description: Databases, task queues, auth, testing, and HTTP clients  -  the supporting infrastructure around Python web applications.
 tags: [moc, learning-path, web-ecosystem, layer-4]
 ---
 
-# Learning Path — Web Ecosystem
+# Learning Path  -  Web Ecosystem
 
 > The infrastructure layer around web apps. Assumes Layer 3 (FastAPI, SQLAlchemy basics).
 
 ---
 
-## Layer 4a — Databases
+## Layer 4a  -  Databases
 
 1. [[orm-basics|ORM Basics]]
 2. [[sqlalchemy-core|SQLAlchemy Core]]
@@ -26,7 +26,7 @@ tags: [moc, learning-path, web-ecosystem, layer-4]
 
 ---
 
-## Layer 4b — Task Queues
+## Layer 4b  -  Task Queues
 
 1. [[celery|Celery]]
 2. [[celery-tasks|Celery Tasks]]
@@ -38,7 +38,7 @@ tags: [moc, learning-path, web-ecosystem, layer-4]
 
 ---
 
-## Layer 4c — Authentication and Security
+## Layer 4c  -  Authentication and Security
 
 1. [[authentication-vs-authorization|Authentication vs Authorization]]
 2. [[session-based-auth|Session-Based Authentication]]
@@ -52,7 +52,7 @@ tags: [moc, learning-path, web-ecosystem, layer-4]
 
 ---
 
-## Layer 4d — Testing
+## Layer 4d  -  Testing
 
 1. [[testing-basics|Testing Basics]]
 2. [[pytest|Pytest]]
@@ -67,7 +67,7 @@ tags: [moc, learning-path, web-ecosystem, layer-4]
 
 ---
 
-## Layer 4e — HTTP Clients
+## Layer 4e  -  HTTP Clients
 
 1. [[requests-library|requests Library]]
 2. [[httpx|httpx]]

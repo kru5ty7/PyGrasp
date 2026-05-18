@@ -1,4 +1,4 @@
----
+﻿---
 title: 18 - Testing Django Apps
 description: "Django's test framework extends Python's unittest with database transaction management, an HTTP test client, and request factory tools that make unit and integration testing straightforward."
 tags: [django, layer-3, web]
@@ -11,35 +11,35 @@ created: 2026-05-18
 
 # Testing Django Apps
 
-> Testing Django apps well means knowing the difference between `TestCase` and `TransactionTestCase`, using `RequestFactory` for fast view unit tests, and choosing factories over fixtures — these three decisions determine whether your test suite is fast, reliable, and maintainable.
+> Testing Django apps well means knowing the difference between `TestCase` and `TransactionTestCase`, using `RequestFactory` for fast view unit tests, and choosing factories over fixtures  -  these three decisions determine whether your test suite is fast, reliable, and maintainable.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- `django.test.TestCase`: wraps each test in a transaction, rolls back after each — fast but cannot test transaction behavior
-- `TransactionTestCase`: commits transactions, truncates tables after each — necessary for testing `on_commit` hooks, slower
-- `Client()`: simulates full HTTP requests including middleware, session, and auth — integration tests
-- `RequestFactory`: creates request objects without middleware stack — unit tests for views in isolation
+- `django.test.TestCase`: wraps each test in a transaction, rolls back after each  -  fast but cannot test transaction behavior
+- `TransactionTestCase`: commits transactions, truncates tables after each  -  necessary for testing `on_commit` hooks, slower
+- `Client()`: simulates full HTTP requests including middleware, session, and auth  -  integration tests
+- `RequestFactory`: creates request objects without middleware stack  -  unit tests for views in isolation
 - `override_settings()`: decorator/context manager for test-specific settings configuration
 - `pytest-django` plugin: `@pytest.mark.django_db`, `db` fixture, `rf` (request factory), `client` fixture
 
 **Tricky points:**
-- `TestCase` rolls back changes, so `transaction.on_commit()` callbacks never fire inside `TestCase` — use `TransactionTestCase` or `TestCase.captureOnCommitCallbacks()` (Django 4.1+)
+- `TestCase` rolls back changes, so `transaction.on_commit()` callbacks never fire inside `TestCase`  -  use `TransactionTestCase` or `TestCase.captureOnCommitCallbacks()` (Django 4.1+)
 - `Client.login(username=..., password=...)` requires a user with the correct password hash; use `force_login(user)` to bypass password checking in tests
-- `RequestFactory` does not process middleware — `request.user` is not set automatically; set it manually: `request.user = user`
+- `RequestFactory` does not process middleware  -  `request.user` is not set automatically; set it manually: `request.user = user`
 - Fixtures (`manage.py loaddata`) are hard to maintain; `factory_boy` produces test data declaratively and adapts to model changes automatically
 
 ---
 
 ## What It Is
 
-Testing a Django application is the practice of verifying that views return correct responses, models enforce correct constraints, forms validate correctly, and the system's components work together as expected. The challenge is that Django applications are tightly coupled to a database, a request/response cycle, and a running server — all of which need to be simulated in a test environment without the overhead of a real server and a real browser. Django's test infrastructure provides the tools to simulate these components at different levels of fidelity, from a low-overhead request factory for pure view unit tests to a full HTTP client that exercises the middleware stack.
+Testing a Django application is the practice of verifying that views return correct responses, models enforce correct constraints, forms validate correctly, and the system's components work together as expected. The challenge is that Django applications are tightly coupled to a database, a request/response cycle, and a running server  -  all of which need to be simulated in a test environment without the overhead of a real server and a real browser. Django's test infrastructure provides the tools to simulate these components at different levels of fidelity, from a low-overhead request factory for pure view unit tests to a full HTTP client that exercises the middleware stack.
 
-`django.test.TestCase` is the base class for the vast majority of Django tests. It wraps each test method in a database transaction that is rolled back after the test completes, restoring the database to its pre-test state without expensive table truncation or fixture reloading. This rollback mechanism is what makes `TestCase` tests fast — the database schema and any data from `setUpTestData()` persist across tests in a class, and each test's changes are isolated by the per-test transaction. The limitation is that `TestCase` cannot test code that depends on transaction commit behavior, because the outer test transaction is never committed.
+`django.test.TestCase` is the base class for the vast majority of Django tests. It wraps each test method in a database transaction that is rolled back after the test completes, restoring the database to its pre-test state without expensive table truncation or fixture reloading. This rollback mechanism is what makes `TestCase` tests fast  -  the database schema and any data from `setUpTestData()` persist across tests in a class, and each test's changes are isolated by the per-test transaction. The limitation is that `TestCase` cannot test code that depends on transaction commit behavior, because the outer test transaction is never committed.
 
-`Client()` is Django's built-in HTTP test client. It simulates full HTTP requests — sending them through the middleware stack, through URL routing, through the view, and through template rendering — without requiring a running server. A `Client().get('/blog/')` call returns an `HttpResponse` object that includes the response's status code, headers, content, and template context (for requests that render templates). This allows assertions like `self.assertEqual(response.status_code, 200)` and `self.assertIn('article', response.context)`. `Client` is the right tool for integration tests that verify the full request pipeline, but it is slower than `RequestFactory` because it executes all middleware.
+`Client()` is Django's built-in HTTP test client. It simulates full HTTP requests  -  sending them through the middleware stack, through URL routing, through the view, and through template rendering  -  without requiring a running server. A `Client().get('/blog/')` call returns an `HttpResponse` object that includes the response's status code, headers, content, and template context (for requests that render templates). This allows assertions like `self.assertEqual(response.status_code, 200)` and `self.assertIn('article', response.context)`. `Client` is the right tool for integration tests that verify the full request pipeline, but it is slower than `RequestFactory` because it executes all middleware.
 
 ---
 
@@ -104,7 +104,7 @@ def test_article_creation(django_user_model):
 
 ## How It Connects
 
-Testing views requires understanding how `RequestFactory` and `Client` differ — `RequestFactory` bypasses middleware, so `request.user` is not set automatically and must be assigned explicitly.
+Testing views requires understanding how `RequestFactory` and `Client` differ  -  `RequestFactory` bypasses middleware, so `request.user` is not set automatically and must be assigned explicitly.
 
 [[django-views|Django Views]]
 [[django-middleware|Django Middleware]]
@@ -113,7 +113,7 @@ Testing signals, particularly `post_save` and `transaction.on_commit()` patterns
 
 [[django-signals|Django Signals]]
 
-`pytest-django` is part of the broader pytest ecosystem — understanding pytest fixtures, marks, and parametrize is prerequisite to using it effectively.
+`pytest-django` is part of the broader pytest ecosystem  -  understanding pytest fixtures, marks, and parametrize is prerequisite to using it effectively.
 
 [[pytest|Pytest]]
 
@@ -134,9 +134,9 @@ Reality: Fixtures are static JSON or YAML files that encode database state. They
 
 ## Why It Matters in Practice
 
-A well-structured test suite is what allows a Django project to be maintained safely over time. The Django codebase changes, dependencies update, and application logic evolves; tests are what catch regressions before they reach production. The specific Django testing concerns — `TestCase` vs `TransactionTestCase`, middleware stack in `Client()` vs bypass in `RequestFactory`, fixture fragility vs factory flexibility — are the practical decisions that determine whether the test suite is an asset that pays dividends or a fragile burden that developers avoid running.
+A well-structured test suite is what allows a Django project to be maintained safely over time. The Django codebase changes, dependencies update, and application logic evolves; tests are what catch regressions before they reach production. The specific Django testing concerns  -  `TestCase` vs `TransactionTestCase`, middleware stack in `Client()` vs bypass in `RequestFactory`, fixture fragility vs factory flexibility  -  are the practical decisions that determine whether the test suite is an asset that pays dividends or a fragile burden that developers avoid running.
 
-`pytest-django` has become the de-facto standard because pytest's fixture and parametrize system makes test organization cleaner and test cases more composable. A `@pytest.mark.django_db` function test is less boilerplate than a `TestCase` method, and `factory_boy` factories defined as pytest fixtures compose naturally into complex test scenarios. Teams that invest in a clean testing infrastructure — factories, well-organized test directories, CI enforcement — ship with more confidence and higher velocity.
+`pytest-django` has become the de-facto standard because pytest's fixture and parametrize system makes test organization cleaner and test cases more composable. A `@pytest.mark.django_db` function test is less boilerplate than a `TestCase` method, and `factory_boy` factories defined as pytest fixtures compose naturally into complex test scenarios. Teams that invest in a clean testing infrastructure  -  factories, well-organized test directories, CI enforcement  -  ship with more confidence and higher velocity.
 
 ---
 

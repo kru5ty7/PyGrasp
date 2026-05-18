@@ -1,4 +1,4 @@
----
+﻿---
 title: 01 - Celery
 description: "Celery is a distributed task queue that lets Python applications offload work to background worker processes via a message broker, decoupling long-running operations from the request/response cycle."
 tags: [celery, task-queue, redis, rabbitmq, workers, layer-4, web-ecosystem]
@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Celery
 
-> Celery separates the web application from slow, resource-intensive work — a request handler enqueues a task and returns immediately while a background worker processes it asynchronously.
+> Celery separates the web application from slow, resource-intensive work  -  a request handler enqueues a task and returns immediately while a background worker processes it asynchronously.
 
 ---
 
@@ -26,20 +26,20 @@ created: 2026-05-18
 
 **Tricky points:**
 - Broker and backend are separate: you need the backend only if you use `.get()` to retrieve results; without a backend, tasks are fire-and-forget
-- Tasks must be importable at the module level — Celery discovers them via the `app.autodiscover_tasks()` mechanism or explicit `include` list
-- Concurrency model defaults to `prefork` (multiprocessing) — for I/O-heavy tasks, `--pool=gevent` or `--pool=eventlet` is dramatically more efficient
-- Serialization defaults to JSON — task arguments must be JSON-serializable; avoid passing ORM model instances directly
+- Tasks must be importable at the module level  -  Celery discovers them via the `app.autodiscover_tasks()` mechanism or explicit `include` list
+- Concurrency model defaults to `prefork` (multiprocessing)  -  for I/O-heavy tasks, `--pool=gevent` or `--pool=eventlet` is dramatically more efficient
+- Serialization defaults to JSON  -  task arguments must be JSON-serializable; avoid passing ORM model instances directly
 - Always set `task_always_eager = True` in test settings so tasks execute synchronously in tests without needing a broker
 
 ---
 
 ## What It Is
 
-Imagine a restaurant kitchen. The waiter (web application) takes a customer's order, hands it to the kitchen (broker), and returns to attend other customers. The cook (Celery worker) picks up the ticket from the pass-through and prepares the dish. The waiter does not stand at the kitchen window waiting for the food — they are already helping the next customer. Celery implements exactly this pattern for software: the web application hands off work and moves on; the work happens separately.
+Imagine a restaurant kitchen. The waiter (web application) takes a customer's order, hands it to the kitchen (broker), and returns to attend other customers. The cook (Celery worker) picks up the ticket from the pass-through and prepares the dish. The waiter does not stand at the kitchen window waiting for the food  -  they are already helping the next customer. Celery implements exactly this pattern for software: the web application hands off work and moves on; the work happens separately.
 
-This decoupling solves several practical problems. Sending an email, resizing an uploaded image, generating a PDF, syncing with a third-party API — all of these take longer than an HTTP request can reasonably wait. A user clicking "send invoice" should not stare at a loading spinner for ten seconds while the server generates and emails the document. With Celery, the handler creates a task, returns "your invoice is being generated," and a worker finishes the job in the background.
+This decoupling solves several practical problems. Sending an email, resizing an uploaded image, generating a PDF, syncing with a third-party API  -  all of these take longer than an HTTP request can reasonably wait. A user clicking "send invoice" should not stare at a loading spinner for ten seconds while the server generates and emails the document. With Celery, the handler creates a task, returns "your invoice is being generated," and a worker finishes the job in the background.
 
-Celery has two required external components: a broker and an optional result backend. The broker is the message queue — Redis and RabbitMQ are the standard choices. When a producer calls `.delay()` or `.apply_async()`, Celery serializes the task name and arguments into a message and publishes it to the broker. Workers subscribe to the broker queue, receive messages, deserialize them, and execute the corresponding Python function. The result backend, when configured, stores the return value and final state of each task execution under the task's ID, allowing callers to poll for completion with `AsyncResult(task_id).get()`.
+Celery has two required external components: a broker and an optional result backend. The broker is the message queue  -  Redis and RabbitMQ are the standard choices. When a producer calls `.delay()` or `.apply_async()`, Celery serializes the task name and arguments into a message and publishes it to the broker. Workers subscribe to the broker queue, receive messages, deserialize them, and execute the corresponding Python function. The result backend, when configured, stores the return value and final state of each task execution under the task's ID, allowing callers to poll for completion with `AsyncResult(task_id).get()`.
 
 ---
 
@@ -89,13 +89,13 @@ celery -A myapp inspect active    # see what workers are currently executing
 celery -A myapp inspect reserved  # see queued tasks assigned but not started
 ```
 
-Concurrency mode selection matters significantly for performance. The default `prefork` pool spawns N subprocesses, each handling one task at a time — correct for CPU-bound work where true parallelism is needed. For I/O-bound tasks (HTTP calls, database queries), gevent or eventlet pools use cooperative multitasking to handle thousands of tasks per worker process without spawning thousands of OS threads.
+Concurrency mode selection matters significantly for performance. The default `prefork` pool spawns N subprocesses, each handling one task at a time  -  correct for CPU-bound work where true parallelism is needed. For I/O-bound tasks (HTTP calls, database queries), gevent or eventlet pools use cooperative multitasking to handle thousands of tasks per worker process without spawning thousands of OS threads.
 
 ---
 
 ## How It Connects
 
-Task definitions, retry logic, and task state management are covered in depth in the companion note — this note covers the infrastructure layer.
+Task definitions, retry logic, and task state management are covered in depth in the companion note  -  this note covers the infrastructure layer.
 
 [[celery-tasks|Celery Tasks]]
 
@@ -108,16 +108,16 @@ Celery Beat is the scheduler process that generates periodic tasks, complementin
 ## Common Misconceptions
 
 Misconception 1: "Celery workers process tasks in the order they were submitted."
-Reality: By default, Celery uses a single queue and workers process tasks in FIFO order within that queue. However, multiple workers processing the same queue can result in out-of-order execution. Priority queues require explicit routing configuration — assigning tasks to separate queues and running workers subscribed to specific queues.
+Reality: By default, Celery uses a single queue and workers process tasks in FIFO order within that queue. However, multiple workers processing the same queue can result in out-of-order execution. Priority queues require explicit routing configuration  -  assigning tasks to separate queues and running workers subscribed to specific queues.
 
 Misconception 2: "The broker and backend are the same thing."
-Reality: The broker routes task messages from producers to workers — it is only involved at enqueue and dequeue time. The backend stores results after a task completes — it is involved only if you call `.get()` on the result. You can run Celery without a backend (fire-and-forget tasks) but never without a broker.
+Reality: The broker routes task messages from producers to workers  -  it is only involved at enqueue and dequeue time. The backend stores results after a task completes  -  it is involved only if you call `.get()` on the result. You can run Celery without a backend (fire-and-forget tasks) but never without a broker.
 
 ---
 
 ## Why It Matters in Practice
 
-Celery is the most widely deployed Python background task system. Understanding its architecture — producer/broker/worker separation, the distinction between broker and backend, and the concurrency model options — is required knowledge for any Python backend developer. Misconfiguring the pool type (using prefork for thousands of I/O-bound tasks) or omitting a backend when results are needed are two of the most common operational mistakes.
+Celery is the most widely deployed Python background task system. Understanding its architecture  -  producer/broker/worker separation, the distinction between broker and backend, and the concurrency model options  -  is required knowledge for any Python backend developer. Misconfiguring the pool type (using prefork for thousands of I/O-bound tasks) or omitting a backend when results are needed are two of the most common operational mistakes.
 
 ---
 

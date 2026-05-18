@@ -1,6 +1,6 @@
----
+﻿---
 title: 02 - Tokenization in LLMs
-description: "Tokenization splits text into tokens — subword units (not words or characters) that the model processes; `tiktoken` is OpenAI's tokenizer; token count drives cost and context window usage; a word is typically 1-3 tokens; non-English text often uses more tokens per word."
+description: "Tokenization splits text into tokens  -  subword units (not words or characters) that the model processes; `tiktoken` is OpenAI's tokenizer; token count drives cost and context window usage; a word is typically 1-3 tokens; non-English text often uses more tokens per word."
 tags: [tokenization, tokens, tiktoken, BPE, byte-pair-encoding, context-window, layer-4, ai]
 status: draft
 difficulty: beginner
@@ -11,31 +11,31 @@ created: 2026-05-17
 
 # Tokenization in LLMs
 
-> Tokenization splits text into tokens — subword units (not words or characters) that the model processes; `tiktoken` is OpenAI's tokenizer; token count drives cost and context window usage; a word is typically 1-3 tokens; non-English text often uses more tokens per word.
+> Tokenization splits text into tokens  -  subword units (not words or characters) that the model processes; `tiktoken` is OpenAI's tokenizer; token count drives cost and context window usage; a word is typically 1-3 tokens; non-English text often uses more tokens per word.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- **Token**: the basic unit of LLM input/output — neither a word nor a character; a subword piece
+- **Token**: the basic unit of LLM input/output  -  neither a word nor a character; a subword piece
 - Common English word ≈ 1 token; uncommon word may be 2-4 tokens; single character may be 1 token
-- `tiktoken` — OpenAI's tokenization library; fast BPE tokenizer; works for GPT and Claude models (approximately)
+- `tiktoken`  -  OpenAI's tokenization library; fast BPE tokenizer; works for GPT and Claude models (approximately)
 - Token count determines: API cost (pricing per token), context window usage, response length
 - Vocabulary size: GPT-4 uses ~100k token vocabulary; Claude similar
 
 **Tricky points:**
-- Spaces are often part of tokens — `" hello"` (with space) and `"hello"` (without) may be different tokens
-- Code uses more tokens per character than prose — special characters (`{}`, `()`, `->`) often get their own tokens
+- Spaces are often part of tokens  -  `" hello"` (with space) and `"hello"` (without) may be different tokens
+- Code uses more tokens per character than prose  -  special characters (`{}`, `()`, `->`) often get their own tokens
 - Numbers are often tokenized digit-by-digit or in short groups: `"12345"` might be `["123", "45"]`
 - Non-ASCII text (Chinese, Arabic, emoji) uses more tokens per character than English
-- Token counting must happen before the API call — the API rejects requests that exceed context limit
+- Token counting must happen before the API call  -  the API rejects requests that exceed context limit
 
 ---
 
 ## What It Is
 
-LLMs don't process characters or words — they process tokens. Tokenization is the preprocessing step that converts raw text into a sequence of token IDs from a fixed vocabulary. The model is trained on these token sequences and generates new tokens one at a time.
+LLMs don't process characters or words  -  they process tokens. Tokenization is the preprocessing step that converts raw text into a sequence of token IDs from a fixed vocabulary. The model is trained on these token sequences and generates new tokens one at a time.
 
 Byte Pair Encoding (BPE) is the most common tokenization algorithm: it starts with individual bytes, then iteratively merges the most frequent pairs into new tokens, building a vocabulary of common subwords. This balances vocabulary coverage (no out-of-vocabulary words) with efficiency (common words = 1 token, rare words = multiple tokens).
 
@@ -98,7 +98,7 @@ if response.input_tokens < 180_000:  # Claude's context window
 
 ## How It Connects
 
-Token count determines how much text fits in the context window — understanding tokens is required to reason about context limits.
+Token count determines how much text fits in the context window  -  understanding tokens is required to reason about context limits.
 [[context-window|Context Window]]
 
 Chunking strategies for RAG split documents at token boundaries, not word boundaries, to maximize information density per chunk.
@@ -137,7 +137,7 @@ Common question forms:
 - "What is a token in the context of LLMs?"
 - "How do you estimate the cost of an API call?"
 
-Answer frame: Tokens are subword units from a fixed vocabulary — roughly 1 word = 1 token for common English words; rare words or non-English text use more. BPE is the tokenization algorithm. Cost = input tokens + output tokens × price per token. Use `tiktoken` or the API's count endpoint before sending expensive requests. Token limits determine what fits in the context window.
+Answer frame: Tokens are subword units from a fixed vocabulary  -  roughly 1 word = 1 token for common English words; rare words or non-English text use more. BPE is the tokenization algorithm. Cost = input tokens + output tokens × price per token. Use `tiktoken` or the API's count endpoint before sending expensive requests. Token limits determine what fits in the context window.
 
 ---
 

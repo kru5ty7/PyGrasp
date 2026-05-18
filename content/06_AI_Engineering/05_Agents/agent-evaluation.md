@@ -1,6 +1,6 @@
----
+﻿---
 title: 05 - Agent Evaluation
-description: "Agent evaluation measures whether agents complete tasks correctly — trajectory evaluation checks if the agent took the right steps; final answer evaluation checks output quality; LLM-as-judge scores responses when ground truth is unavailable; test datasets must include diverse failure cases."
+description: "Agent evaluation measures whether agents complete tasks correctly  -  trajectory evaluation checks if the agent took the right steps; final answer evaluation checks output quality; LLM-as-judge scores responses when ground truth is unavailable; test datasets must include diverse failure cases."
 tags: [agent-evaluation, trajectory, llm-as-judge, benchmarks, test-dataset, layer-4, ai]
 status: draft
 difficulty: intermediate
@@ -11,31 +11,31 @@ created: 2026-05-17
 
 # Agent Evaluation
 
-> Agent evaluation measures whether agents complete tasks correctly — trajectory evaluation checks if the agent took the right steps; final answer evaluation checks output quality; LLM-as-judge scores responses when ground truth is unavailable; test datasets must include diverse failure cases.
+> Agent evaluation measures whether agents complete tasks correctly  -  trajectory evaluation checks if the agent took the right steps; final answer evaluation checks output quality; LLM-as-judge scores responses when ground truth is unavailable; test datasets must include diverse failure cases.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- **Final answer evaluation**: compare agent output to expected output — works when ground truth exists
-- **Trajectory evaluation**: check if the agent took the right sequence of tool calls — catches correct-answer-wrong-path issues
-- **LLM-as-judge**: use an LLM to score agent responses on criteria (accuracy, helpfulness, safety) — required when ground truth is ambiguous
-- Test dataset: a collection of inputs with expected outputs or evaluation criteria — 50-100 diverse examples minimum
-- `langsmith` — LangChain's evaluation and tracing platform; `pytest` works for deterministic evaluations
+- **Final answer evaluation**: compare agent output to expected output  -  works when ground truth exists
+- **Trajectory evaluation**: check if the agent took the right sequence of tool calls  -  catches correct-answer-wrong-path issues
+- **LLM-as-judge**: use an LLM to score agent responses on criteria (accuracy, helpfulness, safety)  -  required when ground truth is ambiguous
+- Test dataset: a collection of inputs with expected outputs or evaluation criteria  -  50-100 diverse examples minimum
+- `langsmith`  -  LangChain's evaluation and tracing platform; `pytest` works for deterministic evaluations
 
 **Tricky points:**
-- Agents are non-deterministic — the same input may produce different tool call sequences; evaluation must account for this
-- LLM-as-judge is itself an LLM — it has biases (verbose answers score higher, first-listed option preferred); use reference answers to anchor scoring
-- Trajectory evaluation is strict — it fails if the agent uses a different (but valid) path; use it only when the path matters, not just the outcome
-- Latency and cost are first-class metrics for agents — a correct answer after 20 tool calls may be worse than a slightly-worse answer after 3
+- Agents are non-deterministic  -  the same input may produce different tool call sequences; evaluation must account for this
+- LLM-as-judge is itself an LLM  -  it has biases (verbose answers score higher, first-listed option preferred); use reference answers to anchor scoring
+- Trajectory evaluation is strict  -  it fails if the agent uses a different (but valid) path; use it only when the path matters, not just the outcome
+- Latency and cost are first-class metrics for agents  -  a correct answer after 20 tool calls may be worse than a slightly-worse answer after 3
 - Eval dataset must include edge cases: empty inputs, tool failures, ambiguous requests, multi-step tasks
 
 ---
 
 ## What It Is
 
-Evaluating agents is harder than evaluating chains — a chain has deterministic outputs, an agent has variable-length trajectories with multiple tool calls. "Did the agent answer correctly?" is often not enough — did it use the right tools? Was the path efficient? Did it handle tool failures gracefully?
+Evaluating agents is harder than evaluating chains  -  a chain has deterministic outputs, an agent has variable-length trajectories with multiple tool calls. "Did the agent answer correctly?" is often not enough  -  did it use the right tools? Was the path efficient? Did it handle tool failures gracefully?
 
 Evaluation is the mechanism that converts "it seems to work" into "it works on 87% of test cases with a p50 latency of 2.3s."
 
@@ -151,7 +151,7 @@ Misconception 1: "Pass/fail on expected output is sufficient."
 Reality: Agents often produce correct outputs via wrong paths (wasted tool calls), or produce outputs that match the expected answer string but are misleading in context. Multi-dimensional evaluation (correctness, efficiency, safety) gives a more complete picture.
 
 Misconception 2: "LLM-as-judge is objective."
-Reality: LLM judges have known biases — they prefer longer, more confident-sounding answers and may favor responses from the same model family. Always include human-verified reference answers for calibration.
+Reality: LLM judges have known biases  -  they prefer longer, more confident-sounding answers and may favor responses from the same model family. Always include human-verified reference answers for calibration.
 
 ---
 
@@ -171,7 +171,7 @@ Common question forms:
 - "How do you evaluate an LLM agent?"
 - "What metrics do you use for agent evaluation?"
 
-Answer frame: Two main approaches — final answer evaluation (compare to ground truth, needs test dataset) and LLM-as-judge (LLM scores responses on criteria, handles open-ended outputs). Trajectory evaluation checks tool call sequences. Also measure: latency, token cost, tool call count. Build a test dataset of 50-100 diverse cases including edge cases. Run as regression suite before every deployment.
+Answer frame: Two main approaches  -  final answer evaluation (compare to ground truth, needs test dataset) and LLM-as-judge (LLM scores responses on criteria, handles open-ended outputs). Trajectory evaluation checks tool call sequences. Also measure: latency, token cost, tool call count. Build a test dataset of 50-100 diverse cases including edge cases. Run as regression suite before every deployment.
 
 ---
 

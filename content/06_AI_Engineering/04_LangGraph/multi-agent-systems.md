@@ -1,6 +1,6 @@
----
+﻿---
 title: 09 - Multi-Agent Systems
-description: "Multi-agent systems in LangGraph use multiple specialized agents as subgraphs — each agent handles a domain; a supervisor or router delegates tasks; agents communicate through shared state or message passing; subgraphs compile independently and connect as nodes."
+description: "Multi-agent systems in LangGraph use multiple specialized agents as subgraphs  -  each agent handles a domain; a supervisor or router delegates tasks; agents communicate through shared state or message passing; subgraphs compile independently and connect as nodes."
 tags: [langgraph, multi-agent, subgraph, agent-collaboration, delegation, layer-4, ai]
 status: draft
 difficulty: advanced
@@ -11,7 +11,7 @@ created: 2026-05-17
 
 # Multi-Agent Systems
 
-> Multi-agent systems in LangGraph use multiple specialized agents as subgraphs — each agent handles a domain; a supervisor or router delegates tasks; agents communicate through shared state or message passing; subgraphs compile independently and connect as nodes.
+> Multi-agent systems in LangGraph use multiple specialized agents as subgraphs  -  each agent handles a domain; a supervisor or router delegates tasks; agents communicate through shared state or message passing; subgraphs compile independently and connect as nodes.
 
 ---
 
@@ -20,24 +20,24 @@ created: 2026-05-17
 **Core idea:**
 - **Subgraph**: a compiled LangGraph graph used as a node in a parent graph
 - **Supervisor**: an orchestrator node that routes tasks to specialized worker agents
-- Subgraphs communicate with the parent via shared state keys — output state from subgraph merges into parent state
-- `graph.add_node("agent_name", subgraph_app)` — add a compiled subgraph as a node
+- Subgraphs communicate with the parent via shared state keys  -  output state from subgraph merges into parent state
+- `graph.add_node("agent_name", subgraph_app)`  -  add a compiled subgraph as a node
 - Worker agents focus on one task; supervisor focuses on routing and aggregation
 
 **Tricky points:**
-- Subgraph state schema must be compatible with the parent state — shared keys must have the same type
-- Each subgraph invocation is independent unless checkpointing is configured — subgraphs don't share memory by default
+- Subgraph state schema must be compatible with the parent state  -  shared keys must have the same type
+- Each subgraph invocation is independent unless checkpointing is configured  -  subgraphs don't share memory by default
 - Parallel execution of subgraphs: use `Send` API to fan out to multiple agents simultaneously
-- Nested subgraphs add depth to the execution trace — debugging requires checking each level's state
-- Supervisor pattern can produce infinite loops if the stopping condition is not robust — always test the "task complete" routing path
+- Nested subgraphs add depth to the execution trace  -  debugging requires checking each level's state
+- Supervisor pattern can produce infinite loops if the stopping condition is not robust  -  always test the "task complete" routing path
 
 ---
 
 ## What It Is
 
-A single agent with all tools often produces mediocre results — it must reason about too many domains simultaneously. Multi-agent systems break the problem into specialized pieces: one agent searches the web, another writes code, another reviews outputs. A supervisor delegates and aggregates.
+A single agent with all tools often produces mediocre results  -  it must reason about too many domains simultaneously. Multi-agent systems break the problem into specialized pieces: one agent searches the web, another writes code, another reviews outputs. A supervisor delegates and aggregates.
 
-In LangGraph, specialization is implemented as subgraphs — compiled graphs that are plugged in as nodes in a parent graph. The supervisor node decides which subgraph to call next.
+In LangGraph, specialization is implemented as subgraphs  -  compiled graphs that are plugged in as nodes in a parent graph. The supervisor node decides which subgraph to call next.
 
 ---
 
@@ -108,7 +108,7 @@ parent_graph.add_conditional_edges(
 
 ## How It Connects
 
-The supervisor pattern is the most common multi-agent architecture — a supervisor routes between worker agents.
+The supervisor pattern is the most common multi-agent architecture  -  a supervisor routes between worker agents.
 [[supervisor-pattern|Supervisor Pattern]]
 
 Human-in-the-loop adds approval gates to multi-agent workflows.

@@ -1,16 +1,16 @@
----
-title: Learning Path — Web Frameworks
-description: HTTP through WSGI/ASGI to Flask, Django, and FastAPI — the full Python web stack in dependency order.
+﻿---
+title: Learning Path  -  Web Frameworks
+description: HTTP through WSGI/ASGI to Flask, Django, and FastAPI  -  the full Python web stack in dependency order.
 tags: [moc, learning-path, web, layer-3]
 ---
 
-# Learning Path — Web Frameworks
+# Learning Path  -  Web Frameworks
 
 > From raw HTTP to production web frameworks. Assumes Layer 2 (async/await, event loop).
 
 ---
 
-## Layer 3a — HTTP and Protocols
+## Layer 3a  -  HTTP and Protocols
 
 1. [[http-basics|HTTP Basics]]
 2. [[http-methods|HTTP Methods]]
@@ -25,7 +25,7 @@ tags: [moc, learning-path, web, layer-3]
 
 ---
 
-## Layer 3b — Python Web Interface
+## Layer 3b  -  Python Web Interface
 
 1. [[wsgi|WSGI]]
 2. [[asgi|ASGI]]
@@ -38,7 +38,7 @@ tags: [moc, learning-path, web, layer-3]
 
 ---
 
-## Layer 3c — Flask
+## Layer 3c  -  Flask
 
 1. [[flask-basics|Flask Basics]]
 2. [[flask-routing|Flask Routing]]
@@ -55,7 +55,7 @@ tags: [moc, learning-path, web, layer-3]
 
 ---
 
-## Layer 3d — Django
+## Layer 3d  -  Django
 
 1. [[django-overview|Django Overview and MVT Pattern]]
 2. [[django-project-structure|Django Project Structure]]
@@ -79,7 +79,7 @@ tags: [moc, learning-path, web, layer-3]
 
 ---
 
-## Layer 3e — FastAPI
+## Layer 3e  -  FastAPI
 
 1. [[pydantic|Pydantic]]
 2. [[pydantic-validators|Pydantic Validators]]
@@ -104,7 +104,7 @@ tags: [moc, learning-path, web, layer-3]
 
 ---
 
-## Layer 3f — Other Frameworks
+## Layer 3f  -  Other Frameworks
 
 1. [[sanic|Sanic]]
 2. [[litestar|Litestar]]

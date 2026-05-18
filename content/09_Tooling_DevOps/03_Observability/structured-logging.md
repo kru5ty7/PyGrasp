@@ -1,6 +1,6 @@
----
+﻿---
 title: 02 - Structured Logging
-description: "Structured logging emits log records as JSON objects rather than formatted strings, making every field independently queryable in log aggregation systems — the structlog library adds context binding, processor pipelines, and consistent JSON output to Python's standard logging."
+description: "Structured logging emits log records as JSON objects rather than formatted strings, making every field independently queryable in log aggregation systems  -  the structlog library adds context binding, processor pipelines, and consistent JSON output to Python's standard logging."
 tags: [structured-logging, structlog, json-logs, observability, context-binding, tooling, layer-9]
 status: draft
 difficulty: beginner
@@ -20,27 +20,27 @@ created: 2026-05-18
 **Core idea:**
 - Emit logs as JSON: `{"timestamp": "...", "level": "info", "event": "...", "request_id": "abc123"}`
 - `structlog` library provides context binding, processor pipelines, and JSON output for Python
-- `structlog.contextvars.bind_contextvars(request_id=...)` — binds context for the entire request lifecycle
+- `structlog.contextvars.bind_contextvars(request_id=...)`  -  binds context for the entire request lifecycle
 - JSON logs are queryable by field in Elasticsearch, Loki, Datadog: `level:error AND user_id:42`
 - Every log record should have consistent fields: `timestamp`, `level`, `event`, `service`, plus context fields
-- `structlog.stdlib.add_logger_name` and `structlog.stdlib.add_log_level` — processors that add standard fields
+- `structlog.stdlib.add_logger_name` and `structlog.stdlib.add_log_level`  -  processors that add standard fields
 
 **Tricky points:**
-- `structlog` wraps Python's standard `logging` module by default — it produces stdlib-compatible records that feed into existing log handlers (RotatingFileHandler, etc.)
-- Context binding in `structlog` is thread-local (or async-context-local with `contextvars`) — bind request_id at request start, and every log within the request includes it without passing it explicitly
-- JSON logs are not human-friendly at the terminal — `structlog.dev.ConsoleRenderer()` gives pretty-printed colored output for development, while `structlog.processors.JSONRenderer()` is for production
-- Log events should be constant strings (`"payment processed"`) not formatted strings (`f"Payment {txn_id} processed"`) — the variable parts go in bound context fields
+- `structlog` wraps Python's standard `logging` module by default  -  it produces stdlib-compatible records that feed into existing log handlers (RotatingFileHandler, etc.)
+- Context binding in `structlog` is thread-local (or async-context-local with `contextvars`)  -  bind request_id at request start, and every log within the request includes it without passing it explicitly
+- JSON logs are not human-friendly at the terminal  -  `structlog.dev.ConsoleRenderer()` gives pretty-printed colored output for development, while `structlog.processors.JSONRenderer()` is for production
+- Log events should be constant strings (`"payment processed"`) not formatted strings (`f"Payment {txn_id} processed"`)  -  the variable parts go in bound context fields
 - Avoid re-binding the same key in nested calls; instead bind at the outermost scope (e.g., middleware for request_id) and let inner code add its own fields
 
 ---
 
 ## What It Is
 
-Traditional Python logging produces text strings: `"2026-05-18 12:34:56 | INFO | Payment 12345 processed for user 42"`. This is readable to a human scanning a terminal, but it is opaque to a machine. To find all failed payments in Elasticsearch, you would need a regex to parse "Payment X processed for user Y" — fragile, slow, and dependent on the log format never changing.
+Traditional Python logging produces text strings: `"2026-05-18 12:34:56 | INFO | Payment 12345 processed for user 42"`. This is readable to a human scanning a terminal, but it is opaque to a machine. To find all failed payments in Elasticsearch, you would need a regex to parse "Payment X processed for user Y"  -  fragile, slow, and dependent on the log format never changing.
 
-Structured logging emits the same information as a JSON object: `{"timestamp": "2026-05-18T12:34:56", "level": "info", "event": "payment processed", "transaction_id": 12345, "user_id": 42, "amount": 99.99}`. Now every field is independently addressable. Elasticsearch indexes every key. A query like `event:"payment processed" AND level:"error"` finds all failed payment log records across all services, across all time ranges, instantly — without parsing strings or writing regex.
+Structured logging emits the same information as a JSON object: `{"timestamp": "2026-05-18T12:34:56", "level": "info", "event": "payment processed", "transaction_id": 12345, "user_id": 42, "amount": 99.99}`. Now every field is independently addressable. Elasticsearch indexes every key. A query like `event:"payment processed" AND level:"error"` finds all failed payment log records across all services, across all time ranges, instantly  -  without parsing strings or writing regex.
 
-The `structlog` library is the standard Python tool for structured logging. It wraps Python's logging module and adds three key capabilities. First, it provides a processor pipeline — a chain of functions that transform the log record before emission, adding fields like timestamps and log levels, redacting sensitive data, or converting to JSON. Second, it provides context binding — the ability to attach key-value pairs to the current execution context (request, background task) so that every log statement automatically includes them without the developer having to pass them explicitly. Third, it separates the rendering concern from the logging concern — the same logging code can produce pretty terminal output in development and JSON in production, just by changing the processors.
+The `structlog` library is the standard Python tool for structured logging. It wraps Python's logging module and adds three key capabilities. First, it provides a processor pipeline  -  a chain of functions that transform the log record before emission, adding fields like timestamps and log levels, redacting sensitive data, or converting to JSON. Second, it provides context binding  -  the ability to attach key-value pairs to the current execution context (request, background task) so that every log statement automatically includes them without the developer having to pass them explicitly. Third, it separates the rendering concern from the logging concern  -  the same logging code can produce pretty terminal output in development and JSON in production, just by changing the processors.
 
 ---
 
@@ -140,7 +140,7 @@ async def logging_middleware(request: Request, call_next):
     # Clear any context from a previous request
     structlog.contextvars.clear_contextvars()
 
-    # Bind request context — all logs within this request include these fields
+    # Bind request context  -  all logs within this request include these fields
     structlog.contextvars.bind_contextvars(
         request_id=str(uuid.uuid4()),
         method=request.method,
@@ -168,13 +168,13 @@ The JSON output of the above middleware log:
  "method": "POST", "path": "/api/payments", "status_code": 200}
 ```
 
-Every log record for that request automatically includes `request_id`, `method`, and `path` — without the payment handler explicitly knowing about these fields.
+Every log record for that request automatically includes `request_id`, `method`, and `path`  -  without the payment handler explicitly knowing about these fields.
 
 ---
 
 ## How It Connects
 
-Structured logging is the next maturity level beyond production logging — it builds on the same handler and logger infrastructure but changes the output format for machine consumption.
+Structured logging is the next maturity level beyond production logging  -  it builds on the same handler and logger infrastructure but changes the output format for machine consumption.
 
 [[logging-production|Production Logging]]
 
@@ -182,7 +182,7 @@ FastAPI middleware is the natural place to bind request context (request_id, use
 
 [[fastapi-middleware|Middleware in FastAPI]]
 
-OpenTelemetry traces and structured logs complement each other — traces show the timing and structure of a request, logs show the detailed events; linking them via trace_id makes both more useful.
+OpenTelemetry traces and structured logs complement each other  -  traces show the timing and structure of a request, logs show the detailed events; linking them via trace_id makes both more useful.
 
 [[opentelemetry|OpenTelemetry]]
 
@@ -190,14 +190,14 @@ OpenTelemetry traces and structured logs complement each other — traces show t
 
 ## Common Misconceptions
 
-Misconception 1: "Structured logging means I format the message differently — `logger.info(f'{key}={value}')` becomes `logger.info('event', key=value)`."
-Reality: The format change is the surface behavior. The deep change is that the log record becomes a dictionary of typed fields rather than a formatted string. The event string should be a constant descriptor (`"payment processed"`) and all variable data should be keyword arguments. This is what makes log aggregation queries work — you query `payment_processed AND amount>100`, not `grep "payment processed"`.
+Misconception 1: "Structured logging means I format the message differently  -  `logger.info(f'{key}={value}')` becomes `logger.info('event', key=value)`."
+Reality: The format change is the surface behavior. The deep change is that the log record becomes a dictionary of typed fields rather than a formatted string. The event string should be a constant descriptor (`"payment processed"`) and all variable data should be keyword arguments. This is what makes log aggregation queries work  -  you query `payment_processed AND amount>100`, not `grep "payment processed"`.
 
 Misconception 2: "structlog replaces Python's logging module entirely."
 Reality: structlog wraps Python's standard `logging` module by default. It uses Python loggers and handlers for the actual output. The benefit is that third-party libraries that use `logging.getLogger(__name__)` also produce structured output when structlog is configured with `ProcessorFormatter`. The two systems coexist and cooperate.
 
 Misconception 3: "JSON logs are fine for both terminal viewing and production aggregation."
-Reality: JSON logs in a terminal are nearly unreadable — a single log line can be 200+ characters of JSON with no color or indentation. structlog addresses this with its dual-renderer approach: `ConsoleRenderer` (colored, pretty, human-readable) in development, `JSONRenderer` in production. The rendering is configuration, not code — the same log calls work in both environments.
+Reality: JSON logs in a terminal are nearly unreadable  -  a single log line can be 200+ characters of JSON with no color or indentation. structlog addresses this with its dual-renderer approach: `ConsoleRenderer` (colored, pretty, human-readable) in development, `JSONRenderer` in production. The rendering is configuration, not code  -  the same log calls work in both environments.
 
 ---
 
@@ -216,7 +216,7 @@ Common question forms:
 - "How do you ensure all logs for a single request include the same correlation ID?"
 
 Answer frame:
-Explain the difference: plain text logs are grep-able by humans, structured JSON logs are queryable by machines. Describe structlog's context binding via `contextvars` — bind `request_id` in middleware, every log in that request context includes it. Explain the processor pipeline (add timestamp, level, JSON render). Note the dev (ConsoleRenderer) vs prod (JSONRenderer) configuration pattern.
+Explain the difference: plain text logs are grep-able by humans, structured JSON logs are queryable by machines. Describe structlog's context binding via `contextvars`  -  bind `request_id` in middleware, every log in that request context includes it. Explain the processor pipeline (add timestamp, level, JSON render). Note the dev (ConsoleRenderer) vs prod (JSONRenderer) configuration pattern.
 
 ---
 

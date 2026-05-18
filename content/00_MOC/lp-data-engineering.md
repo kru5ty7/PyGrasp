@@ -1,16 +1,16 @@
----
-title: Learning Path — Data Engineering
-description: NumPy, Pandas, Polars, Kafka, Airflow, dbt, and Spark — the Python data engineering stack from in-memory processing to distributed pipelines.
+﻿---
+title: Learning Path  -  Data Engineering
+description: NumPy, Pandas, Polars, Kafka, Airflow, dbt, and Spark  -  the Python data engineering stack from in-memory processing to distributed pipelines.
 tags: [moc, learning-path, data-engineering, layer-5]
 ---
 
-# Learning Path — Data Engineering
+# Learning Path  -  Data Engineering
 
 > From NumPy arrays to distributed pipelines. Assumes Layer 1 (Python internals, memory model).
 
 ---
 
-## Layer 5a — Data Processing
+## Layer 5a  -  Data Processing
 
 1. [[numpy-basics|NumPy Basics]]
 2. [[numpy-internals|NumPy Internals and Memory Layout]]
@@ -25,7 +25,7 @@ tags: [moc, learning-path, data-engineering, layer-5]
 
 ---
 
-## Layer 5b — Orchestration
+## Layer 5b  -  Orchestration
 
 1. [[airflow-basics|Apache Airflow Basics]]
 2. [[airflow-dags|Airflow DAGs]]
@@ -39,7 +39,7 @@ tags: [moc, learning-path, data-engineering, layer-5]
 
 ---
 
-## Layer 5c — Streaming
+## Layer 5c  -  Streaming
 
 1. [[kafka-basics|Apache Kafka Basics]]
 2. [[kafka-producers-consumers|Kafka Producers and Consumers]]
@@ -50,7 +50,7 @@ tags: [moc, learning-path, data-engineering, layer-5]
 
 ---
 
-## Layer 5d — Transformation and Storage
+## Layer 5d  -  Transformation and Storage
 
 1. [[dbt-basics|dbt Basics]]
 2. [[dbt-models|dbt Models]]

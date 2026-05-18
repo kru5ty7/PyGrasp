@@ -1,4 +1,4 @@
----
+﻿---
 title: 05 - gRPC Design
 description: "Protocol buffers, service definitions, streaming RPCs, and when gRPC's efficiency over REST/JSON makes it the right choice for service-to-service communication."
 tags: [grpc, protobuf, rpc, streaming, layer-7, system-design]
@@ -11,25 +11,25 @@ created: 2026-05-18
 
 # gRPC Design
 
-> gRPC is what you use when the overhead of JSON serialization and HTTP/1.1 connection management matters — and in high-throughput internal service communication, it often does.
+> gRPC is what you use when the overhead of JSON serialization and HTTP/1.1 connection management matters  -  and in high-throughput internal service communication, it often does.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- gRPC uses Protocol Buffers (protobuf) for binary serialization — 5-10x smaller and faster than JSON
+- gRPC uses Protocol Buffers (protobuf) for binary serialization  -  5-10x smaller and faster than JSON
 - Service contracts are defined in `.proto` files; client and server code is generated from them
 - HTTP/2 multiplexing: multiple RPC calls share one connection, eliminating connection overhead
 - Four communication patterns: unary, server streaming, client streaming, bidirectional streaming
 - gRPC is best for internal service-to-service communication; REST/GraphQL for external APIs
 
 **Tricky points:**
-- Proto definitions are schemas — changing them requires backward-compatible field numbering
+- Proto definitions are schemas  -  changing them requires backward-compatible field numbering
 - gRPC requires HTTP/2, which not all load balancers and proxies support natively
 - Browser clients cannot call gRPC directly without grpc-web or a translation layer
-- Protobuf field numbers are permanent — once a field is used, that number must always represent the same field
-- Error handling uses gRPC status codes (not HTTP status codes) — they map differently
+- Protobuf field numbers are permanent  -  once a field is used, that number must always represent the same field
+- Error handling uses gRPC status codes (not HTTP status codes)  -  they map differently
 
 ---
 
@@ -39,7 +39,7 @@ Imagine two offices in the same building, connected by a pneumatic tube system. 
 
 gRPC (Google Remote Procedure Call) is a high-performance, open-source RPC framework developed by Google and released in 2016. It builds on Protocol Buffers (protobuf) for message serialization and HTTP/2 for transport, combining three performance advantages: binary serialization (smaller messages), multiplexed connections (no per-request connection overhead), and code generation (strongly typed clients and servers from a schema definition).
 
-Protocol Buffers are Google's language-neutral binary serialization format. Instead of human-readable key-value JSON (`{"user_id": 1234, "name": "Alice"}`), protobuf encodes data as binary with field numbers as keys. The schema defines the encoding: field 1 is user_id (int32), field 2 is name (string). The encoded binary is 2–10x smaller than equivalent JSON and decodes 5–10x faster. The tradeoff is that binary data is not human-readable — debugging requires protobuf decoders.
+Protocol Buffers are Google's language-neutral binary serialization format. Instead of human-readable key-value JSON (`{"user_id": 1234, "name": "Alice"}`), protobuf encodes data as binary with field numbers as keys. The schema defines the encoding: field 1 is user_id (int32), field 2 is name (string). The encoded binary is 2 - 10x smaller than equivalent JSON and decodes 5 - 10x faster. The tradeoff is that binary data is not human-readable  -  debugging requires protobuf decoders.
 
 Service definitions in `.proto` files specify the contract between client and server. A service has RPC methods; each method has a request message type and a response message type. Running the `protoc` compiler generates client stub code and server interface code in any supported language (Python, Go, Java, C++, and more). The generated code handles serialization, deserialization, and transport transparently. The developer writes business logic against the generated interface.
 
@@ -52,7 +52,7 @@ The four gRPC communication patterns serve different use cases. Unary RPC is the
 HTTP/2 multiplexing is a significant performance advantage over HTTP/1.1. HTTP/1.1 processes one request at a time per connection (or requires multiple connections for concurrency). HTTP/2 allows multiple requests and responses to be interleaved on a single TCP connection, eliminating the latency of opening new connections for concurrent requests. For microservices making many parallel downstream calls, this reduces connection overhead substantially.
 
 ```proto
-// user_service.proto — service definition
+// user_service.proto  -  service definition
 syntax = "proto3";
 package user;
 
@@ -63,7 +63,7 @@ service UserService {
 }
 
 message GetUserRequest {
-  string user_id = 1;   // field number 1 — permanent identifier
+  string user_id = 1;   // field number 1  -  permanent identifier
 }
 
 message UserResponse {
@@ -145,7 +145,7 @@ def get_user_via_grpc(user_id: str) -> dict:
             raise
 ```
 
-Schema evolution in protobuf requires field number discipline. Once you assign field number 1 to `user_id`, that field number must always mean `user_id`. If you want to rename the field, you can change the name in the `.proto` file (names are not encoded in the binary format — only numbers are), but you must keep the field number the same. To add a new field, use a new field number. To remove a field, mark it as `reserved` to prevent future reuse of that number. Never reuse field numbers for different fields — this creates backward compatibility nightmares.
+Schema evolution in protobuf requires field number discipline. Once you assign field number 1 to `user_id`, that field number must always mean `user_id`. If you want to rename the field, you can change the name in the `.proto` file (names are not encoded in the binary format  -  only numbers are), but you must keep the field number the same. To add a new field, use a new field number. To remove a field, mark it as `reserved` to prevent future reuse of that number. Never reuse field numbers for different fields  -  this creates backward compatibility nightmares.
 
 ---
 
@@ -174,13 +174,13 @@ Misconception 2: "I can use gRPC for my public API instead of REST."
 Reality: Browsers cannot call gRPC directly without grpc-web, which adds a translation layer. Most developer tooling for public APIs (Postman, curl, API explorers) has better REST support than gRPC support. Unless your public API consumers all use gRPC client libraries, REST is more accessible for external-facing APIs.
 
 Misconception 3: "Changing a field name in a .proto file breaks existing clients."
-Reality: In protobuf, field names are not encoded in the binary — only field numbers are. Renaming a field in the `.proto` file changes the generated code (so existing code must be recompiled), but it does not change the binary encoding and is backward compatible with already-compiled binaries. Changing a field number, however, is a breaking binary change.
+Reality: In protobuf, field names are not encoded in the binary  -  only field numbers are. Renaming a field in the `.proto` file changes the generated code (so existing code must be recompiled), but it does not change the binary encoding and is backward compatible with already-compiled binaries. Changing a field number, however, is a breaking binary change.
 
 ---
 
 ## Why It Matters in Practice
 
-gRPC is particularly relevant in Python ML pipelines and microservices. Model serving frameworks like TensorFlow Serving expose gRPC endpoints. Large systems use gRPC for internal service-to-service calls because of the performance advantages and the contract enforcement provided by proto definitions. The schema-first development workflow — define the proto, generate both client and server code — ensures that client and server always agree on the interface.
+gRPC is particularly relevant in Python ML pipelines and microservices. Model serving frameworks like TensorFlow Serving expose gRPC endpoints. Large systems use gRPC for internal service-to-service calls because of the performance advantages and the contract enforcement provided by proto definitions. The schema-first development workflow  -  define the proto, generate both client and server code  -  ensures that client and server always agree on the interface.
 
 For Python developers, grpc-io and the grpcio package make implementing gRPC servers and clients straightforward. The generated stubs handle all the serialization and transport complexity. The main investment is in learning protobuf schema design and the schema evolution rules.
 

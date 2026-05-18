@@ -1,4 +1,4 @@
----
+﻿---
 title: 12 - Django Forms
 description: "Django's form system handles HTML form rendering, user input validation, and model persistence through a class hierarchy that separates validation logic from presentation."
 tags: [django, layer-3, web]
@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Django Forms
 
-> Django's form system is a validation and data-cleaning layer that sits between raw user input and your models — understanding `is_valid()`, `cleaned_data`, and `ModelForm.save()` is the foundation of every data-entry flow in a Django application.
+> Django's form system is a validation and data-cleaning layer that sits between raw user input and your models  -  understanding `is_valid()`, `cleaned_data`, and `ModelForm.save()` is the foundation of every data-entry flow in a Django application.
 
 ---
 
@@ -26,20 +26,20 @@ created: 2026-05-18
 - Widget separation: `forms.TextInput`, `forms.Select`, `forms.CheckboxInput` change HTML rendering without affecting validation
 
 **Tricky points:**
-- `cleaned_data` is only populated after `is_valid()` returns `True` — accessing it before calling `is_valid()` raises `AttributeError`
-- `save(commit=False)` does not save ManyToMany relationships automatically — call `form.save_m2m()` afterward
-- Field `required=True` is the default — forgetting `required=False` on optional fields causes form validation failures on empty submissions
+- `cleaned_data` is only populated after `is_valid()` returns `True`  -  accessing it before calling `is_valid()` raises `AttributeError`
+- `save(commit=False)` does not save ManyToMany relationships automatically  -  call `form.save_m2m()` afterward
+- Field `required=True` is the default  -  forgetting `required=False` on optional fields causes form validation failures on empty submissions
 - `ModelForm` does not include non-editable fields (`editable=False` models fields) by default; `auto_now_add` fields are excluded automatically
 
 ---
 
 ## What It Is
 
-Django's form system is a data cleaning pipeline wrapped in Python classes. Think of a form as a bouncer at a nightclub: it inspects every piece of data that tries to enter (the POST request body), checks that each piece conforms to the rules (type validation, length limits, regex constraints, custom business rules), rejects the entire submission if anything is wrong, and passes only the cleaned, validated data to the application code. The bouncer does not care about the visual presentation of the entrance — that is the template's job — only about whether what is coming in is acceptable.
+Django's form system is a data cleaning pipeline wrapped in Python classes. Think of a form as a bouncer at a nightclub: it inspects every piece of data that tries to enter (the POST request body), checks that each piece conforms to the rules (type validation, length limits, regex constraints, custom business rules), rejects the entire submission if anything is wrong, and passes only the cleaned, validated data to the application code. The bouncer does not care about the visual presentation of the entrance  -  that is the template's job  -  only about whether what is coming in is acceptable.
 
-`forms.Form` is the base class for forms that are not directly tied to a model. You declare fields on the class — `title = forms.CharField(max_length=200)`, `publish_date = forms.DateField()`, `notify_subscribers = forms.BooleanField(required=False)` — and Django handles rendering them as HTML inputs, parsing the submitted values from `request.POST`, and running each field's validators. This is useful for forms like contact forms, login forms, search forms, and any workflow where the data does not map directly to a single model row.
+`forms.Form` is the base class for forms that are not directly tied to a model. You declare fields on the class  -  `title = forms.CharField(max_length=200)`, `publish_date = forms.DateField()`, `notify_subscribers = forms.BooleanField(required=False)`  -  and Django handles rendering them as HTML inputs, parsing the submitted values from `request.POST`, and running each field's validators. This is useful for forms like contact forms, login forms, search forms, and any workflow where the data does not map directly to a single model row.
 
-`forms.ModelForm` is `forms.Form` with automatic field generation. You declare a `Meta` class with `model = Article` and `fields = ['title', 'body', 'tags']`, and Django generates the corresponding form fields from the model's field definitions. A `CharField(max_length=200)` on the model becomes a `CharField(max_length=200)` on the form; a `ForeignKey` becomes a `ModelChoiceField` with a queryset. The payoff is that adding a field to the model and to the form's `fields` list is all that is required to add it to the form — no redundant field declaration. The `save()` method creates or updates the model instance, handling the ORM write automatically.
+`forms.ModelForm` is `forms.Form` with automatic field generation. You declare a `Meta` class with `model = Article` and `fields = ['title', 'body', 'tags']`, and Django generates the corresponding form fields from the model's field definitions. A `CharField(max_length=200)` on the model becomes a `CharField(max_length=200)` on the form; a `ForeignKey` becomes a `ModelChoiceField` with a queryset. The payoff is that adding a field to the model and to the form's `fields` list is all that is required to add it to the form  -  no redundant field declaration. The `save()` method creates or updates the model instance, handling the ORM write automatically.
 
 ---
 
@@ -91,11 +91,11 @@ Forms are rendered in templates using `{{ form.as_p }}` or field-by-field iterat
 
 [[django-templates|Django Templates]]
 
-`ModelForm` generates fields from model definitions — understanding field types, `null`, `blank`, and `choices` options directly determines what form fields appear and how they validate.
+`ModelForm` generates fields from model definitions  -  understanding field types, `null`, `blank`, and `choices` options directly determines what form fields appear and how they validate.
 
 [[django-orm|Django ORM]]
 
-Generic CBVs like `CreateView` and `UpdateView` use `ModelForm` internally — understanding the form API explains what `form_valid()` does and when to override it.
+Generic CBVs like `CreateView` and `UpdateView` use `ModelForm` internally  -  understanding the form API explains what `form_valid()` does and when to override it.
 
 [[django-views|Django Views]]
 
@@ -110,13 +110,13 @@ Misconception 2: "ModelForm.save() handles everything, including ManyToMany fiel
 Reality: `save(commit=True)` handles everything, including ManyToMany fields. `save(commit=False)` returns an unsaved instance and does not save ManyToMany relationships. After calling `instance.save()` manually, you must also call `form.save_m2m()` to persist the ManyToMany data. This is a common omission that silently drops tag or category assignments.
 
 Misconception 3: "Django forms are only useful for HTML form rendering."
-Reality: Django forms are primarily a data validation and cleaning layer. They work perfectly well in API contexts where there is no HTML rendering — the form receives a Python dictionary rather than `request.POST`, validates it, and returns `cleaned_data`. This pattern was common before Django REST Framework standardized API development, and is still occasionally used for internal data processing pipelines.
+Reality: Django forms are primarily a data validation and cleaning layer. They work perfectly well in API contexts where there is no HTML rendering  -  the form receives a Python dictionary rather than `request.POST`, validates it, and returns `cleaned_data`. This pattern was common before Django REST Framework standardized API development, and is still occasionally used for internal data processing pipelines.
 
 ---
 
 ## Why It Matters in Practice
 
-Forms are the entry point for user data into your application, which makes them the primary attack surface for data quality issues and security vulnerabilities. A properly implemented Django form validates data type, enforces length limits, applies custom business rules, and protects against CSRF — all before a single line of view business logic runs. Bypassing forms in favor of reading `request.POST` directly means manually re-implementing all of this validation, which teams almost never do completely, leading to bugs like saving `None` to a non-nullable field or storing unvalidated user input in a database column.
+Forms are the entry point for user data into your application, which makes them the primary attack surface for data quality issues and security vulnerabilities. A properly implemented Django form validates data type, enforces length limits, applies custom business rules, and protects against CSRF  -  all before a single line of view business logic runs. Bypassing forms in favor of reading `request.POST` directly means manually re-implementing all of this validation, which teams almost never do completely, leading to bugs like saving `None` to a non-nullable field or storing unvalidated user input in a database column.
 
 `ModelForm` specifically reduces the risk of drift between the model and the form. When the model adds a `max_length` constraint, the form automatically reflects it. When the model adds a new required field, the form automatically makes it required. This synchronization is the quiet productivity win that forms provide in Django compared to frameworks where model and form definitions are entirely separate.
 

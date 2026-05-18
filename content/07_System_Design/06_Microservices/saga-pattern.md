@@ -1,4 +1,4 @@
----
+﻿---
 title: 04 - Saga Pattern
 description: "How to implement distributed transactions across microservices using choreography or orchestration, with compensating transactions to handle failures."
 tags: [saga-pattern, distributed-transactions, microservices, layer-7, system-design]
@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Saga Pattern
 
-> The Saga pattern is how you implement a business transaction that spans multiple services — accepting that distributed transactions cannot be atomic across services, and designing for compensating rollback instead.
+> The Saga pattern is how you implement a business transaction that spans multiple services  -  accepting that distributed transactions cannot be atomic across services, and designing for compensating rollback instead.
 
 ---
 
@@ -19,31 +19,31 @@ created: 2026-05-18
 
 **Core idea:**
 - A saga is a sequence of local transactions, each in one service, connected by events or commands
-- Choreography: each service reacts to an event and emits another event — the workflow emerges implicitly
+- Choreography: each service reacts to an event and emits another event  -  the workflow emerges implicitly
 - Orchestration: a central saga orchestrator issues commands to services and tracks state
 - Compensating transactions: when a step fails, previously-completed steps are reversed by compensating actions
-- Sagas provide eventual consistency, not ACID atomicity — there is a window where the system is in an intermediate state
+- Sagas provide eventual consistency, not ACID atomicity  -  there is a window where the system is in an intermediate state
 
 **Tricky points:**
-- Compensating transactions can also fail — you need a way to handle failed compensations
-- Choreography is loosely coupled but hard to monitor — you cannot easily see where a saga is in its flow
+- Compensating transactions can also fail  -  you need a way to handle failed compensations
+- Choreography is loosely coupled but hard to monitor  -  you cannot easily see where a saga is in its flow
 - Orchestration is easier to monitor but introduces a central orchestrator as a dependency
-- Sagas do not prevent concurrent sagas from reading inconsistent intermediate state — this is a "dirty read"
+- Sagas do not prevent concurrent sagas from reading inconsistent intermediate state  -  this is a "dirty read"
 - The order in which compensations must be applied is the reverse of the order of successful steps
 
 ---
 
 ## What It Is
 
-Think about booking a vacation. You book a flight, then a hotel, then a rental car. Each is confirmed separately. Now imagine the hotel is fully booked — the second step fails. You must cancel the flight you already booked (compensating transaction). If the car rental confirmation also fails, you must cancel both the flight and the hotel. The sequence of bookings that must be reversed when a later step fails is the saga.
+Think about booking a vacation. You book a flight, then a hotel, then a rental car. Each is confirmed separately. Now imagine the hotel is fully booked  -  the second step fails. You must cancel the flight you already booked (compensating transaction). If the car rental confirmation also fails, you must cancel both the flight and the hotel. The sequence of bookings that must be reversed when a later step fails is the saga.
 
-In distributed systems, a business operation often spans multiple services. Placing an order might involve: the order service creating the order, the inventory service reserving stock, the payment service charging the customer, and the shipping service scheduling delivery. Each of these is a separate service with its own database. There is no distributed transaction that makes all four atomic — that would require two-phase commit across all services, which is slow, fragile, and not supported by most message brokers.
+In distributed systems, a business operation often spans multiple services. Placing an order might involve: the order service creating the order, the inventory service reserving stock, the payment service charging the customer, and the shipping service scheduling delivery. Each of these is a separate service with its own database. There is no distributed transaction that makes all four atomic  -  that would require two-phase commit across all services, which is slow, fragile, and not supported by most message brokers.
 
-The saga pattern breaks the business operation into a sequence of local transactions, one per service. Each local transaction is ACID within its own database. If all steps succeed, the business operation completes successfully. If any step fails, the system executes compensating transactions in reverse order — each compensating transaction reverses the effect of its corresponding successful step. The system eventually reaches a consistent state, either the fully-committed state (all steps succeeded) or the fully-compensated state (all completed steps were reversed).
+The saga pattern breaks the business operation into a sequence of local transactions, one per service. Each local transaction is ACID within its own database. If all steps succeed, the business operation completes successfully. If any step fails, the system executes compensating transactions in reverse order  -  each compensating transaction reverses the effect of its corresponding successful step. The system eventually reaches a consistent state, either the fully-committed state (all steps succeeded) or the fully-compensated state (all completed steps were reversed).
 
 Choreography and orchestration are the two coordination approaches for sagas. In choreography, each service reacts to an event by executing its local transaction and then emitting an event that triggers the next step. Service A publishes "OrderCreated"; Service B hears it, reserves inventory, and publishes "InventoryReserved"; Service C hears that, charges the customer, and publishes "PaymentProcessed." If Service C fails, it publishes "PaymentFailed"; Service B hears that and publishes "InventoryReleased"; the inventory reservation is reversed. The saga's workflow is implicit in the event reactions.
 
-Orchestration uses a central saga orchestrator — a service that knows the full workflow. The orchestrator sends a command to Service A ("reserve inventory"), waits for success or failure, then sends a command to Service B ("charge customer"), and so on. If a command fails, the orchestrator sends compensating commands to all previously-succeeded services ("release inventory reservation"). The workflow is explicit and centrally managed.
+Orchestration uses a central saga orchestrator  -  a service that knows the full workflow. The orchestrator sends a command to Service A ("reserve inventory"), waits for success or failure, then sends a command to Service B ("charge customer"), and so on. If a command fails, the orchestrator sends compensating commands to all previously-succeeded services ("release inventory reservation"). The workflow is explicit and centrally managed.
 
 ---
 
@@ -51,16 +51,16 @@ Orchestration uses a central saga orchestrator — a service that knows the full
 
 Choreography saga design starts with defining the events that trigger each step and the compensating actions for each step. For an order saga:
 
-Step 1: Order Service creates order → emits `OrderCreated`
+Step 1: Order Service creates order -> emits `OrderCreated`
 Compensating: Order Service marks order as `cancelled`
 
-Step 2: Inventory Service receives `OrderCreated`, reserves stock → emits `InventoryReserved`
+Step 2: Inventory Service receives `OrderCreated`, reserves stock -> emits `InventoryReserved`
 Compensating: Inventory Service releases reservation
 
-Step 3: Payment Service receives `InventoryReserved`, charges card → emits `PaymentProcessed`
+Step 3: Payment Service receives `InventoryReserved`, charges card -> emits `PaymentProcessed`
 Compensating: Payment Service issues refund
 
-Step 4: Shipping Service receives `PaymentProcessed`, schedules delivery → emits `ShipmentScheduled`
+Step 4: Shipping Service receives `PaymentProcessed`, schedules delivery -> emits `ShipmentScheduled`
 Compensating: Shipping Service cancels shipment
 
 If payment fails, Payment Service emits `PaymentFailed`. Inventory Service hears `PaymentFailed`, releases the reservation (compensation step 2). Order Service hears `InventoryReleased`, cancels the order (compensation step 1). The cascade of compensations is triggered by failure events, not by a central coordinator.
@@ -140,7 +140,7 @@ class OrderSagaOrchestrator:
             try:
                 payment_service.refund(saga.payment_id)
             except Exception:
-                # Log and schedule for retry — compensation failures need human attention
+                # Log and schedule for retry  -  compensation failures need human attention
                 alert_on_call(f"Compensation failed: saga {saga.saga_id}")
             self._compensate_inventory(saga)
 
@@ -155,7 +155,7 @@ class OrderSagaOrchestrator:
                 alert_on_call(f"Inventory compensation failed: saga {saga.saga_id}")
 ```
 
-The saga's state must be persisted durably, with each transition stored before the corresponding service call is made. This ensures that if the orchestrator crashes mid-saga, it can resume from the last durable state when it restarts. This is the "saga log" — a durable record of where the saga is in its execution.
+The saga's state must be persisted durably, with each transition stored before the corresponding service call is made. This ensures that if the orchestrator crashes mid-saga, it can resume from the last durable state when it restarts. This is the "saga log"  -  a durable record of where the saga is in its execution.
 
 Dirty reads are an unavoidable property of sagas. Between the inventory reservation (step 2) and the payment success (step 3), the system is in an intermediate state: inventory is reserved but payment has not been confirmed. If another part of the system reads the inventory count during this window, it sees the stock as reduced before the order is confirmed. This is an isolation violation that ACID transactions prevent but sagas cannot. Mitigations include: not showing intermediate state to users, using "soft reservations" that are visible only to the saga, or accepting the temporary inconsistency as a business decision.
 
@@ -192,7 +192,7 @@ Reality: Choreography is more loosely coupled but harder to monitor, debug, and 
 
 ## Why It Matters in Practice
 
-Sagas are the practical solution to distributed transactions in microservices. Every e-commerce order placement, every financial transfer across service boundaries, every multi-step workflow — these all require saga-style coordination. Understanding the pattern means designing business workflows that handle partial failures gracefully, rather than hoping that all steps always succeed.
+Sagas are the practical solution to distributed transactions in microservices. Every e-commerce order placement, every financial transfer across service boundaries, every multi-step workflow  -  these all require saga-style coordination. Understanding the pattern means designing business workflows that handle partial failures gracefully, rather than hoping that all steps always succeed.
 
 For Python developers, the most practical starting point is orchestration with explicit saga state persisted in a database. This is more operationally visible than choreography and easier to debug. Message queue-based choreography sagas are appropriate when the service boundaries are well-established and observability tooling is in place.
 

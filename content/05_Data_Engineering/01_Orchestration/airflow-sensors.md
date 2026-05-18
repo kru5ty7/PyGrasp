@@ -1,6 +1,6 @@
----
+﻿---
 title: 04 - Airflow Sensors
-description: "Airflow Sensors are operators that repeatedly poll for a condition to be met before succeeding — their `mode` setting determines whether they occupy a worker slot the whole time or yield it between checks."
+description: "Airflow Sensors are operators that repeatedly poll for a condition to be met before succeeding  -  their `mode` setting determines whether they occupy a worker slot the whole time or yield it between checks."
 tags: [airflow, sensors, poking, reschedule, sensor-mode, layer-5, data-engineering]
 status: draft
 difficulty: intermediate
@@ -11,32 +11,32 @@ created: 2026-05-18
 
 # Airflow Sensors
 
-> A Sensor is a task that waits — and the `mode` parameter determines whether it waits by occupying a worker forever or by politely stepping aside between checks, which is the difference between blocking your pipeline and clogging your entire Airflow cluster.
+> A Sensor is a task that waits  -  and the `mode` parameter determines whether it waits by occupying a worker forever or by politely stepping aside between checks, which is the difference between blocking your pipeline and clogging your entire Airflow cluster.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- Sensors inherit from `BaseSensorOperator` and override `poke(context)` — returns `True` when condition is met, `False` to keep waiting
+- Sensors inherit from `BaseSensorOperator` and override `poke(context)`  -  returns `True` when condition is met, `False` to keep waiting
 - `mode="poke"` (default): sensor occupies a worker slot continuously, sleeping `poke_interval` seconds between checks
-- `mode="reschedule"`: sensor releases its worker slot between checks — task is rescheduled by the Airflow scheduler
+- `mode="reschedule"`: sensor releases its worker slot between checks  -  task is rescheduled by the Airflow scheduler
 - `timeout` sets the maximum wall-clock seconds before the sensor marks itself as failed
 - Common sensors: `FileSensor`, `S3KeySensor`, `HttpSensor`, `SqlSensor`, `ExternalTaskSensor`, `TimeDeltaSensor`
-- `soft_fail=True`: sensor marks as `skipped` instead of `failed` on timeout — useful for optional dependencies
+- `soft_fail=True`: sensor marks as `skipped` instead of `failed` on timeout  -  useful for optional dependencies
 
 **Tricky points:**
-- In `poke` mode, each sensor holds a worker slot for its entire duration — 10 sensors with 1-hour waits occupies 10 worker slots for an hour; set `mode="reschedule"` for long-wait sensors
-- `poke_interval` defaults to 60 seconds — reduce for time-sensitive pipelines, increase to reduce scheduler load for hour-long waits
-- `ExternalTaskSensor` checks the state of a task or DAG in another DAG run — it is the canonical way to create cross-DAG dependencies without merging them
-- `timeout` counts from when the sensor starts, not from the DAG run's start — a delayed upstream task can eat into the sensor's effective timeout
-- Sensors in `reschedule` mode cannot share state between pokes — `poke()` must re-read state from an external source every call
+- In `poke` mode, each sensor holds a worker slot for its entire duration  -  10 sensors with 1-hour waits occupies 10 worker slots for an hour; set `mode="reschedule"` for long-wait sensors
+- `poke_interval` defaults to 60 seconds  -  reduce for time-sensitive pipelines, increase to reduce scheduler load for hour-long waits
+- `ExternalTaskSensor` checks the state of a task or DAG in another DAG run  -  it is the canonical way to create cross-DAG dependencies without merging them
+- `timeout` counts from when the sensor starts, not from the DAG run's start  -  a delayed upstream task can eat into the sensor's effective timeout
+- Sensors in `reschedule` mode cannot share state between pokes  -  `poke()` must re-read state from an external source every call
 
 ---
 
 ## What It Is
 
-Think of a factory assembly line waiting for a parts delivery. One worker could stand at the loading dock and stare at the empty parking lot all day, refusing to do anything else until the truck arrives. That worker is occupied and contributes nothing for the whole wait. Alternatively, the worker could check the dock every fifteen minutes between doing other jobs, returning to their workstation in between. The delivery gets noticed within fifteen minutes of arrival, and the worker contributes productive time between checks. Airflow sensors have both modes, and choosing the wrong one is like assigning every waiting worker the first approach — all workers end up staring at empty parking lots.
+Think of a factory assembly line waiting for a parts delivery. One worker could stand at the loading dock and stare at the empty parking lot all day, refusing to do anything else until the truck arrives. That worker is occupied and contributes nothing for the whole wait. Alternatively, the worker could check the dock every fifteen minutes between doing other jobs, returning to their workstation in between. The delivery gets noticed within fifteen minutes of arrival, and the worker contributes productive time between checks. Airflow sensors have both modes, and choosing the wrong one is like assigning every waiting worker the first approach  -  all workers end up staring at empty parking lots.
 
 A Sensor is an Airflow operator specialized for waiting. Instead of performing work immediately when its upstream tasks finish, a Sensor repeatedly checks whether some external condition has become true: a file has appeared in an S3 bucket, a SQL query returns rows, an HTTP endpoint returns a success status, or another Airflow DAG run has completed. The sensor returns success only when the condition is met, letting downstream tasks proceed. If the condition is not met within the `timeout` duration, the sensor marks itself as failed and (by default) the downstream tasks are marked `upstream_failed`.
 
@@ -63,7 +63,7 @@ with DAG(
     catchup=False,
 ) as dag:
 
-    # Wait for a file to appear — reschedule mode for longer waits
+    # Wait for a file to appear  -  reschedule mode for longer waits
     wait_for_file = FileSensor(
         task_id="wait_for_input_file",
         filepath="/data/input/{{ ds }}/data.csv",
@@ -134,11 +134,11 @@ class RowCountSensor(BaseSensorOperator):
 
 ## How It Connects
 
-Sensors are specialized operators — they share the same `BaseOperator` inheritance and are configured like any task in a DAG. Understanding operator trigger rules matters for sensors too: a downstream task's `trigger_rule` determines whether it runs if the sensor times out with `soft_fail=True`.
+Sensors are specialized operators  -  they share the same `BaseOperator` inheritance and are configured like any task in a DAG. Understanding operator trigger rules matters for sensors too: a downstream task's `trigger_rule` determines whether it runs if the sensor times out with `soft_fail=True`.
 
 [[airflow-operators|Airflow Operators]]
 
-Connections and Hooks provide the credentials and connection management that most sensors use internally — a `FileSensor` uses a filesystem connection, an `S3KeySensor` uses an AWS connection.
+Connections and Hooks provide the credentials and connection management that most sensors use internally  -  a `FileSensor` uses a filesystem connection, an `S3KeySensor` uses an AWS connection.
 
 [[airflow-connections|Airflow Connections and Hooks]]
 
@@ -146,14 +146,14 @@ Connections and Hooks provide the credentials and connection management that mos
 
 ## Common Misconceptions
 
-Misconception 1: "Sensors in `poke` mode are fine — they're just waiting, not doing real work, so they don't consume resources."
+Misconception 1: "Sensors in `poke` mode are fine  -  they're just waiting, not doing real work, so they don't consume resources."
 Reality: In `poke` mode, a sensor holds a worker slot for its entire duration. A Celery executor configured with 10 workers and 10 sensors all in `poke` mode leaves zero worker slots for actual processing tasks. Use `mode="reschedule"` for any sensor with a `poke_interval` longer than a few seconds.
 
 Misconception 2: "`ExternalTaskSensor` can only sense the current execution date's matching run in the upstream DAG."
 Reality: By default, `ExternalTaskSensor` checks for the upstream task at the same execution date as the current DAG run. Use `execution_delta=timedelta(hours=1)` to check for a run that happened one hour earlier, or `execution_date_fn=some_function` for custom alignment logic. Getting this alignment wrong is the most common `ExternalTaskSensor` bug.
 
 Misconception 3: "`timeout` on a Sensor means the pipeline waits up to that many seconds before continuing with downstream tasks."
-Reality: When a Sensor times out, it raises `AirflowSensorTimeout` and the task state becomes `failed` (or `skipped` if `soft_fail=True`). Downstream tasks become `upstream_failed` or `skipped`. The pipeline does not continue normally — it stops at the failed sensor. Design pipelines with appropriate `timeout` values and handle the timeout case explicitly.
+Reality: When a Sensor times out, it raises `AirflowSensorTimeout` and the task state becomes `failed` (or `skipped` if `soft_fail=True`). Downstream tasks become `upstream_failed` or `skipped`. The pipeline does not continue normally  -  it stops at the failed sensor. Design pipelines with appropriate `timeout` values and handle the timeout case explicitly.
 
 ---
 
@@ -161,7 +161,7 @@ Reality: When a Sensor times out, it raises `AirflowSensorTimeout` and the task 
 
 Sensors are the glue between external systems and Airflow's internal dependency model. Without sensors, a pipeline that depends on an upstream data source (a file from a vendor, an S3 upload from an IoT device, another team's DAG completing) must either hardcode a fixed delay (unreliable) or be triggered externally (loses Airflow's dependency visualization). Sensors provide observable, retry-aware, alerting-capable waiting behavior that is far more operationally robust than either alternative.
 
-The `mode="reschedule"` setting is not optional at scale. In a cluster where multiple pipelines all have sensors waiting for hourly data deliveries, `poke` mode will eventually cause a sensor deadlock — all worker slots occupied by waiting sensors, no workers available to actually run tasks, the entire cluster grinding to a halt.
+The `mode="reschedule"` setting is not optional at scale. In a cluster where multiple pipelines all have sensors waiting for hourly data deliveries, `poke` mode will eventually cause a sensor deadlock  -  all worker slots occupied by waiting sensors, no workers available to actually run tasks, the entire cluster grinding to a halt.
 
 ---
 
@@ -173,7 +173,7 @@ Common question forms:
 - "How do you create cross-DAG dependencies in Airflow?"
 
 Answer frame:
-`poke` mode holds a worker slot continuously — appropriate for sub-minute waits. `reschedule` mode releases the slot between pokes — required for waits of minutes to hours to avoid worker slot exhaustion. `ExternalTaskSensor` reads another DAG/task's state from the metadata DB — the main gotcha is `execution_delta` alignment: if the upstream DAG runs at a different time, you must configure the delta correctly or the sensor will never find a matching run. Cross-DAG dependencies: `ExternalTaskSensor` (pull, observable), `TriggerDagRunOperator` (push), or external flag in S3/database.
+`poke` mode holds a worker slot continuously  -  appropriate for sub-minute waits. `reschedule` mode releases the slot between pokes  -  required for waits of minutes to hours to avoid worker slot exhaustion. `ExternalTaskSensor` reads another DAG/task's state from the metadata DB  -  the main gotcha is `execution_delta` alignment: if the upstream DAG runs at a different time, you must configure the delta correctly or the sensor will never find a matching run. Cross-DAG dependencies: `ExternalTaskSensor` (pull, observable), `TriggerDagRunOperator` (push), or external flag in S3/database.
 
 ---
 

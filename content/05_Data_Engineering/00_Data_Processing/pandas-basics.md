@@ -1,6 +1,6 @@
----
+﻿---
 title: 03 - Pandas Basics
-description: "Pandas provides `Series` and `DataFrame` — labeled, indexed data structures built on NumPy that make tabular data manipulation expressive and fast."
+description: "Pandas provides `Series` and `DataFrame`  -  labeled, indexed data structures built on NumPy that make tabular data manipulation expressive and fast."
 tags: [pandas, dataframe, series, dtype, indexing, layer-5, data-engineering]
 status: draft
 difficulty: intermediate
@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Pandas Basics
 
-> Pandas is the standard Python library for tabular data — its `Series` and `DataFrame` give you labeled, typed, indexed arrays that transform, filter, and summarize data with a readable syntax.
+> Pandas is the standard Python library for tabular data  -  its `Series` and `DataFrame` give you labeled, typed, indexed arrays that transform, filter, and summarize data with a readable syntax.
 
 ---
 
@@ -26,27 +26,27 @@ created: 2026-05-18
 - Missing values: `NaN` for floats, `pd.NA` for nullable integer/string types, `pd.NaT` for datetimes
 
 **Tricky points:**
-- `object` dtype means "arbitrary Python objects" — strings stored as `object` lose vectorization benefits
+- `object` dtype means "arbitrary Python objects"  -  strings stored as `object` lose vectorization benefits
 - Pandas `int64` column becomes `float64` if even one `NaN` is present (legacy behavior; use `Int64` nullable type to avoid)
-- `df.apply(func)` is a Python loop internally — it is not vectorized; prefer built-in methods or `np.vectorize`
+- `df.apply(func)` is a Python loop internally  -  it is not vectorized; prefer built-in methods or `np.vectorize`
 - The default `RangeIndex` is not stored in memory; a custom index is a real array that takes space
-- Column assignment to a slice may trigger `SettingWithCopyWarning` — this is a sign of chained indexing
+- Column assignment to a slice may trigger `SettingWithCopyWarning`  -  this is a sign of chained indexing
 
 ---
 
 ## What It Is
 
-Imagine a spreadsheet program — something like Excel. You have rows of data, each row representing one observation: a customer order, a weather reading, a stock price. The columns each have a name and hold one type of data: dates in one column, prices in another, category names in a third. You can sort, filter, group, and summarize data by clicking through menus. Pandas is that spreadsheet, but programmable. Instead of clicking, you write code. Instead of being limited by what the menu offers, you can express any transformation as a function. And instead of slowing down at 100,000 rows, it processes millions of rows in seconds.
+Imagine a spreadsheet program  -  something like Excel. You have rows of data, each row representing one observation: a customer order, a weather reading, a stock price. The columns each have a name and hold one type of data: dates in one column, prices in another, category names in a third. You can sort, filter, group, and summarize data by clicking through menus. Pandas is that spreadsheet, but programmable. Instead of clicking, you write code. Instead of being limited by what the menu offers, you can express any transformation as a function. And instead of slowing down at 100,000 rows, it processes millions of rows in seconds.
 
-A `Series` is Pandas's one-dimensional labeled array. It has values (a NumPy array or extension array underneath) and an index (a label for each position). The index can be integers, strings, dates, or any hashable type. A `DataFrame` is a collection of `Series` that all share the same index — think of it as a dict of `Series`, where each key is a column name and each value is a `Series` of that column's data. The alignment by index is what makes Pandas powerful: when you add two DataFrames together, Pandas aligns them on their index, not their position. If one has a row labeled `"2023-01-01"` and the other has no such label, the result is `NaN` for that row, not silent misalignment.
+A `Series` is Pandas's one-dimensional labeled array. It has values (a NumPy array or extension array underneath) and an index (a label for each position). The index can be integers, strings, dates, or any hashable type. A `DataFrame` is a collection of `Series` that all share the same index  -  think of it as a dict of `Series`, where each key is a column name and each value is a `Series` of that column's data. The alignment by index is what makes Pandas powerful: when you add two DataFrames together, Pandas aligns them on their index, not their position. If one has a row labeled `"2023-01-01"` and the other has no such label, the result is `NaN` for that row, not silent misalignment.
 
-Creating a DataFrame is straightforward: pass a dictionary of lists (`pd.DataFrame({"col": [1, 2, 3]})`), read from a CSV (`pd.read_csv("data.csv")`), or load from a Parquet file (`pd.read_parquet("data.parquet")`). Once loaded, `df.info()` gives you a summary of columns, non-null counts, and dtypes — the first thing to run on any new dataset. `df.describe()` gives statistical summaries for numeric columns. `df.head(n)` shows the first n rows. These three calls are the standard opening move when you encounter unfamiliar data.
+Creating a DataFrame is straightforward: pass a dictionary of lists (`pd.DataFrame({"col": [1, 2, 3]})`), read from a CSV (`pd.read_csv("data.csv")`), or load from a Parquet file (`pd.read_parquet("data.parquet")`). Once loaded, `df.info()` gives you a summary of columns, non-null counts, and dtypes  -  the first thing to run on any new dataset. `df.describe()` gives statistical summaries for numeric columns. `df.head(n)` shows the first n rows. These three calls are the standard opening move when you encounter unfamiliar data.
 
 ---
 
 ## How It Actually Works
 
-Internally, a `Series` is a thin Python object wrapping a one-dimensional array (typically a NumPy ndarray) and an `Index` object. The `Index` itself is an ndarray of labels with some additional structure for fast label lookup (a hash map in most cases). When you do `series["label"]`, Pandas consults this hash map to find the integer position, then uses that position to index the underlying array. For a `RangeIndex` (the default when you create a DataFrame without specifying an index), there is no actual array — labels are computed on demand from start, stop, and step parameters, so it uses essentially no memory.
+Internally, a `Series` is a thin Python object wrapping a one-dimensional array (typically a NumPy ndarray) and an `Index` object. The `Index` itself is an ndarray of labels with some additional structure for fast label lookup (a hash map in most cases). When you do `series["label"]`, Pandas consults this hash map to find the integer position, then uses that position to index the underlying array. For a `RangeIndex` (the default when you create a DataFrame without specifying an index), there is no actual array  -  labels are computed on demand from start, stop, and step parameters, so it uses essentially no memory.
 
 ```python
 import pandas as pd
@@ -76,21 +76,21 @@ s_dates = pd.Series(dates)
 print(s_dates.dt.month)  # [1, 6]
 ```
 
-The `object` dtype deserves special attention. When Pandas stores strings or mixed-type data, it falls back to `object`, which means the underlying array holds Python object pointers rather than dense byte values. String operations on `object` columns iterate over Python string objects — they are not vectorized at the C level the way numeric operations are. Pandas 1.0 introduced `StringDtype` and Pandas 2.0 expanded nullable extension types (`Int8`, `Int16`, ..., `Int64`, `Float32`, `Float64`, `boolean`, `string`) to address this. Using `pd.StringDtype()` for string columns and `pd.Int64Dtype()` for nullable integers reduces memory and improves performance for large datasets.
+The `object` dtype deserves special attention. When Pandas stores strings or mixed-type data, it falls back to `object`, which means the underlying array holds Python object pointers rather than dense byte values. String operations on `object` columns iterate over Python string objects  -  they are not vectorized at the C level the way numeric operations are. Pandas 1.0 introduced `StringDtype` and Pandas 2.0 expanded nullable extension types (`Int8`, `Int16`, ..., `Int64`, `Float32`, `Float64`, `boolean`, `string`) to address this. Using `pd.StringDtype()` for string columns and `pd.Int64Dtype()` for nullable integers reduces memory and improves performance for large datasets.
 
 ---
 
 ## How It Connects
 
-Pandas columns are backed by NumPy arrays; understanding ndarray dtype rules, vectorization, and memory layout is a prerequisite for understanding why Pandas behaves the way it does with numeric data — especially around dtype promotion when NaN appears.
+Pandas columns are backed by NumPy arrays; understanding ndarray dtype rules, vectorization, and memory layout is a prerequisite for understanding why Pandas behaves the way it does with numeric data  -  especially around dtype promotion when NaN appears.
 
 [[numpy-basics|NumPy Basics]]
 
-The internal structure of a DataFrame — how columns are stored together in blocks, how the block manager handles homogeneous vs heterogeneous dtypes — is the deeper story behind Pandas performance and memory behavior.
+The internal structure of a DataFrame  -  how columns are stored together in blocks, how the block manager handles homogeneous vs heterogeneous dtypes  -  is the deeper story behind Pandas performance and memory behavior.
 
 [[pandas-dataframe|Pandas DataFrame Internals]]
 
-Selecting and modifying data in Pandas is surprisingly subtle; the distinction between `loc`, `iloc`, and `[]` — and the chained indexing trap — builds directly on the basics established here.
+Selecting and modifying data in Pandas is surprisingly subtle; the distinction between `loc`, `iloc`, and `[]`  -  and the chained indexing trap  -  builds directly on the basics established here.
 
 [[pandas-indexing|Pandas Indexing and Selection]]
 
@@ -117,7 +117,7 @@ Reality: `apply` iterates over rows or columns in Python, calling your function 
 
 Pandas is the de facto standard for tabular data manipulation in Python data engineering. Almost every pipeline that ingests CSV, Parquet, or SQL data will touch Pandas before sending data downstream to a model, a database, or a report. Knowing the semantics of dtypes, index alignment, and which operations are truly vectorized determines whether your pipeline processes 1 million rows in 2 seconds or 60 seconds.
 
-The gotchas — `object` dtype strings, NaN promotion, `apply` performance — are the source of a large fraction of real-world Pandas performance bugs. Developers who understand what is happening under the surface choose the right dtype at read time, avoid `apply` for numeric operations, and write code that stays fast as data volumes grow.
+The gotchas  -  `object` dtype strings, NaN promotion, `apply` performance  -  are the source of a large fraction of real-world Pandas performance bugs. Developers who understand what is happening under the surface choose the right dtype at read time, avoid `apply` for numeric operations, and write code that stays fast as data volumes grow.
 
 ---
 

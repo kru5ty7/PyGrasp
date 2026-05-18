@@ -1,6 +1,6 @@
----
+﻿---
 title: 02 - Design a Rate Limiter
-description: "A walkthrough of designing a distributed rate limiter — algorithms, Redis-based implementation, where to place it, and handling edge cases."
+description: "A walkthrough of designing a distributed rate limiter  -  algorithms, Redis-based implementation, where to place it, and handling edge cases."
 tags: [system-design, case-study, rate-limiter, layer-7]
 status: draft
 difficulty: intermediate
@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Design a Rate Limiter
 
-> A rate limiter is one of the most common and instructive system design problems — it requires choosing an algorithm, making a distributed coordination decision, and reasoning about the tradeoffs between accuracy and performance.
+> A rate limiter is one of the most common and instructive system design problems  -  it requires choosing an algorithm, making a distributed coordination decision, and reasoning about the tradeoffs between accuracy and performance.
 
 ---
 
@@ -22,12 +22,12 @@ created: 2026-05-18
 - Token bucket: replenish tokens at a constant rate; consume one per request; burst up to bucket capacity
 - Sliding window log: maintain a timestamp log per client; count requests in the last N seconds
 - Sliding window counter: divide time into fixed windows with counters; interpolate across window boundary
-- Fixed window counter: simplest — count per fixed window; has edge case at window boundary
+- Fixed window counter: simplest  -  count per fixed window; has edge case at window boundary
 
 **Key design decisions:**
 - Where to enforce: API gateway (centralized), application code (per-instance, not shared), or service mesh
 - Redis data structures: sorted sets for sliding window log; counters + EXPIRE for fixed window
-- Distributed enforcement requires shared state (Redis) — in-memory enforcement is per-instance only
+- Distributed enforcement requires shared state (Redis)  -  in-memory enforcement is per-instance only
 - Rate limit key granularity: per user, per IP, per API key, per endpoint, or combinations
 - Return 429 Too Many Requests with Retry-After and X-RateLimit-* headers for client guidance
 
@@ -39,19 +39,19 @@ A rate limiter enforces a policy: "this client may make at most N requests per t
 
 The requirements divide neatly. Functional: limit clients to N requests per window (e.g., 100 requests per minute per API key). Non-functional: low latency (rate limiting check must add minimal latency to every request), high accuracy (should not allow significantly more than the configured limit), high availability (the rate limiter being unavailable must not block all requests), and horizontal scalability (must work when requests are distributed across multiple application servers).
 
-The core challenge is the distributed enforcement problem. If you enforce rate limits in application server memory, each server has its own counters. A client sending 10 requests per second to 10 servers may see each server count only 1 request — none of which triggers the limit of 5 per second per client. The counters must be stored in a shared data store accessible by all application instances. Redis is the standard choice.
+The core challenge is the distributed enforcement problem. If you enforce rate limits in application server memory, each server has its own counters. A client sending 10 requests per second to 10 servers may see each server count only 1 request  -  none of which triggers the limit of 5 per second per client. The counters must be stored in a shared data store accessible by all application instances. Redis is the standard choice.
 
 ---
 
 ## How It Actually Works
 
-**Token bucket algorithm** is the most intuitive and widely used. Each client has a "bucket" with capacity C (the burst limit). Tokens are added to the bucket at rate R (requests per second). Each request consumes one token. If the bucket is empty, the request is rejected. A client that has not made requests for a while has a full bucket and can burst up to C requests at once. This mirrors how real usage works — periodic bursts are acceptable; sustained high rates are not.
+**Token bucket algorithm** is the most intuitive and widely used. Each client has a "bucket" with capacity C (the burst limit). Tokens are added to the bucket at rate R (requests per second). Each request consumes one token. If the bucket is empty, the request is rejected. A client that has not made requests for a while has a full bucket and can burst up to C requests at once. This mirrors how real usage works  -  periodic bursts are acceptable; sustained high rates are not.
 
 **Fixed window counter** is simplest: maintain a counter per client per time window (e.g., per minute). When the counter reaches the limit, reject the request. Reset the counter at the window boundary. Problem: a client can make N requests in the last second of window T and N requests in the first second of window T+1, effectively sending 2N requests in 2 seconds without triggering the limit in either window.
 
-**Sliding window log** resolves this: maintain a sorted set of timestamps for each client's recent requests. On each request: remove timestamps older than the window size, count remaining, allow if under limit and add the new timestamp. This is accurate but memory-intensive — the sorted set can hold many timestamps for high-rate clients.
+**Sliding window log** resolves this: maintain a sorted set of timestamps for each client's recent requests. On each request: remove timestamps older than the window size, count remaining, allow if under limit and add the new timestamp. This is accurate but memory-intensive  -  the sorted set can hold many timestamps for high-rate clients.
 
-**Sliding window counter** (the practical compromise): maintain two counters — the current window and the previous window. Calculate the rate as: previous_window_count × (1 - elapsed_in_current_window / window_size) + current_window_count. This approximates sliding window behavior with constant memory usage.
+**Sliding window counter** (the practical compromise): maintain two counters  -  the current window and the previous window. Calculate the rate as: previous_window_count × (1 - elapsed_in_current_window / window_size) + current_window_count. This approximates sliding window behavior with constant memory usage.
 
 ```python
 import redis
@@ -152,9 +152,9 @@ async def rate_limit_middleware(request: Request, call_next):
     return response
 ```
 
-**Where to enforce** rate limits is an architectural decision. Enforcing at the API gateway (Nginx, Kong, AWS API Gateway) is centralized and applies before requests reach application code — the most efficient approach. Enforcing in application middleware (as above) requires Redis shared state for distributed enforcement but allows more granular control per endpoint. Service mesh (Istio's EnvoyFilter) enforces transparently at the proxy layer without application code changes.
+**Where to enforce** rate limits is an architectural decision. Enforcing at the API gateway (Nginx, Kong, AWS API Gateway) is centralized and applies before requests reach application code  -  the most efficient approach. Enforcing in application middleware (as above) requires Redis shared state for distributed enforcement but allows more granular control per endpoint. Service mesh (Istio's EnvoyFilter) enforces transparently at the proxy layer without application code changes.
 
-**The three most important design decisions:** (1) Algorithm choice: token bucket for burst tolerance, sliding window log for accuracy, fixed window for simplicity. For most APIs, token bucket is the right choice — it allows legitimate bursts while preventing sustained overuse. (2) Shared state vs in-process: always use shared state (Redis) for distributed enforcement; in-process counters only work for single-instance deployments. (3) Lua scripts for atomicity: the check-and-update must be atomic — use a Lua script in Redis, not a pipeline (pipelines are not atomic).
+**The three most important design decisions:** (1) Algorithm choice: token bucket for burst tolerance, sliding window log for accuracy, fixed window for simplicity. For most APIs, token bucket is the right choice  -  it allows legitimate bursts while preventing sustained overuse. (2) Shared state vs in-process: always use shared state (Redis) for distributed enforcement; in-process counters only work for single-instance deployments. (3) Lua scripts for atomicity: the check-and-update must be atomic  -  use a Lua script in Redis, not a pipeline (pipelines are not atomic).
 
 ---
 

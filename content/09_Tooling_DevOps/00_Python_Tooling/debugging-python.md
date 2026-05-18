@@ -1,4 +1,4 @@
----
+﻿---
 title: 09 - Debugging Python
 description: "Python debugging spans the built-in pdb module for interactive stepping through code, the breakpoint() built-in for dropping into a debugger, post-mortem analysis of crashed processes, and VS Code's debugger which integrates with Python's debug adapter protocol."
 tags: [debugging, pdb, ipdb, breakpoint, debugger, post-mortem, tooling, layer-9]
@@ -11,37 +11,37 @@ created: 2026-05-18
 
 # Debugging Python
 
-> Python debugging is the practice of pausing execution at arbitrary points to inspect state and step through code — from the built-in `pdb` interactive debugger to production post-mortem analysis of crashed processes.
+> Python debugging is the practice of pausing execution at arbitrary points to inspect state and step through code  -  from the built-in `pdb` interactive debugger to production post-mortem analysis of crashed processes.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- `breakpoint()` — drops into pdb (Python 3.7+); replaces the older `import pdb; pdb.set_trace()`
-- `n` (next) — execute the current line and stop at the next line in the same frame
-- `s` (step) — execute the current line, stepping into function calls
-- `c` (continue) — resume execution until the next breakpoint or end of program
-- `l` (list) — show surrounding source code
-- `p expr` / `pp expr` — print / pretty-print an expression
-- `bt` (backtrace) — print the full call stack from the current frame
+- `breakpoint()`  -  drops into pdb (Python 3.7+); replaces the older `import pdb; pdb.set_trace()`
+- `n` (next)  -  execute the current line and stop at the next line in the same frame
+- `s` (step)  -  execute the current line, stepping into function calls
+- `c` (continue)  -  resume execution until the next breakpoint or end of program
+- `l` (list)  -  show surrounding source code
+- `p expr` / `pp expr`  -  print / pretty-print an expression
+- `bt` (backtrace)  -  print the full call stack from the current frame
 
 **Tricky points:**
 - `n` and `s` differ at function calls: `n` steps over (executes the called function as a unit), `s` steps into (enters the called function)
-- `q` (quit) raises `BdbQuit` and exits — it does not cleanly resume; use `c` to continue past the last breakpoint
-- `PYTHONBREAKPOINT=0` disables all `breakpoint()` calls without changing code — useful to run without debugger stopping in test suites
-- `PYTHONBREAKPOINT=ipdb.set_trace` redirects `breakpoint()` to ipdb — works without changing any code
-- `pdb.pm()` (post-mortem) debugs the most recent uncaught exception's traceback — extremely useful for analyzing crashes
+- `q` (quit) raises `BdbQuit` and exits  -  it does not cleanly resume; use `c` to continue past the last breakpoint
+- `PYTHONBREAKPOINT=0` disables all `breakpoint()` calls without changing code  -  useful to run without debugger stopping in test suites
+- `PYTHONBREAKPOINT=ipdb.set_trace` redirects `breakpoint()` to ipdb  -  works without changing any code
+- `pdb.pm()` (post-mortem) debugs the most recent uncaught exception's traceback  -  extremely useful for analyzing crashes
 
 ---
 
 ## What It Is
 
-Debugging is the process of systematically understanding why a program does not behave as expected. The most primitive debugging tool is `print()` — insert a print statement, run the program, observe the output, remove the print statement. This works, but it is slow, clutters the code, and gives no interactivity. A debugger is a more powerful alternative: it pauses program execution at specified points and opens a REPL-like interface where the developer can inspect variables, evaluate expressions, and step through code one line at a time.
+Debugging is the process of systematically understanding why a program does not behave as expected. The most primitive debugging tool is `print()`  -  insert a print statement, run the program, observe the output, remove the print statement. This works, but it is slow, clutters the code, and gives no interactivity. A debugger is a more powerful alternative: it pauses program execution at specified points and opens a REPL-like interface where the developer can inspect variables, evaluate expressions, and step through code one line at a time.
 
-Python's built-in debugger is `pdb` (Python Debugger). It is implemented entirely in Python, ships with the standard library, and works everywhere CPython runs — no installation required, no editor integration required, just an interpreter and a terminal. The `breakpoint()` built-in (added in Python 3.7) provides a clean, configurable way to drop into the debugger: it calls `sys.breakpointhook()`, which by default calls `pdb.set_trace()`, but can be redirected to any debugger by setting the `PYTHONBREAKPOINT` environment variable.
+Python's built-in debugger is `pdb` (Python Debugger). It is implemented entirely in Python, ships with the standard library, and works everywhere CPython runs  -  no installation required, no editor integration required, just an interpreter and a terminal. The `breakpoint()` built-in (added in Python 3.7) provides a clean, configurable way to drop into the debugger: it calls `sys.breakpointhook()`, which by default calls `pdb.set_trace()`, but can be redirected to any debugger by setting the `PYTHONBREAKPOINT` environment variable.
 
-The mental model for pdb is that the debugger is a second interpreter running alongside your program. When execution reaches a breakpoint, control transfers to the debugger's prompt. The developer is now operating on the live program state — all variables in scope are accessible, expressions can be evaluated, and the developer can move through the call stack to inspect frames from different function invocations.
+The mental model for pdb is that the debugger is a second interpreter running alongside your program. When execution reaches a breakpoint, control transfers to the debugger's prompt. The developer is now operating on the live program state  -  all variables in scope are accessible, expressions can be evaluated, and the developer can move through the call stack to inspect frames from different function invocations.
 
 ---
 
@@ -57,7 +57,7 @@ The key pdb commands form a short vocabulary that covers most debugging needs:
 (Pdb) l 1,20  # list lines 1 to 20
 (Pdb) p x     # print the value of variable x
 (Pdb) pp data # pretty-print data (useful for dicts/lists)
-(Pdb) bt      # backtrace — print the full call stack
+(Pdb) bt      # backtrace  -  print the full call stack
 (Pdb) u       # move up one frame in the call stack
 (Pdb) d       # move down one frame in the call stack
 (Pdb) b 42    # set a breakpoint at line 42
@@ -106,7 +106,7 @@ pip install ipdb
 PYTHONBREAKPOINT=ipdb.set_trace python script.py
 ```
 
-**VS Code debugger** integrates with Python's Debug Adapter Protocol (DAP). The debugger server runs inside the Python process (via `debugpy`), and VS Code connects to it over a socket. This provides GUI breakpoints, variable inspection panels, and call stack navigation without using the terminal pdb interface. The underlying mechanism is the same — `sys.settrace` callbacks — but with a richer UI.
+**VS Code debugger** integrates with Python's Debug Adapter Protocol (DAP). The debugger server runs inside the Python process (via `debugpy`), and VS Code connects to it over a socket. This provides GUI breakpoints, variable inspection panels, and call stack navigation without using the terminal pdb interface. The underlying mechanism is the same  -  `sys.settrace` callbacks  -  but with a richer UI.
 
 A `launch.json` for VS Code:
 
@@ -135,7 +135,7 @@ A `launch.json` for VS Code:
 
 ## How It Connects
 
-The Python interpreter loop is what pdb pauses — understanding how CPython executes bytecode explains why the debugger can stop at specific lines (bytecode instructions have line number metadata).
+The Python interpreter loop is what pdb pauses  -  understanding how CPython executes bytecode explains why the debugger can stop at specific lines (bytecode instructions have line number metadata).
 
 [[interpreter-loop|The Interpreter Loop]]
 
@@ -143,7 +143,7 @@ Profiling and debugging are complementary: debugging finds incorrect behavior, p
 
 [[profiling-python|Profiling Python Code]]
 
-In pytest, `--pdb` flag drops into pdb on test failure: `pytest --pdb tests/` — the debugger opens at the point of failure in the failing test.
+In pytest, `--pdb` flag drops into pdb on test failure: `pytest --pdb tests/`  -  the debugger opens at the point of failure in the failing test.
 
 [[pytest|Pytest]]
 
@@ -152,12 +152,12 @@ In pytest, `--pdb` flag drops into pdb on test failure: `pytest --pdb tests/` �
 ## Common Misconceptions
 
 Misconception 1: "I should just add `print()` statements because pdb is complicated."
-Reality: pdb's command vocabulary is ten commands: n, s, c, l, p, pp, bt, u, d, q. These take 5 minutes to learn. pdb provides access to the live program state — arbitrary expressions, the full call stack, the ability to change variables mid-execution. print-based debugging requires re-running the program for each observation, cannot navigate the call stack, and clutters the code with statements to later remove.
+Reality: pdb's command vocabulary is ten commands: n, s, c, l, p, pp, bt, u, d, q. These take 5 minutes to learn. pdb provides access to the live program state  -  arbitrary expressions, the full call stack, the ability to change variables mid-execution. print-based debugging requires re-running the program for each observation, cannot navigate the call stack, and clutters the code with statements to later remove.
 
 Misconception 2: "The VS Code debugger is fundamentally different from pdb."
-Reality: The VS Code debugger uses `debugpy`, which implements the Debug Adapter Protocol on top of Python's `sys.settrace` — the same mechanism pdb uses. When you set a breakpoint in VS Code and hit it, the underlying mechanism is identical to `breakpoint()` dropping into pdb. The UI is different; the mechanism is the same.
+Reality: The VS Code debugger uses `debugpy`, which implements the Debug Adapter Protocol on top of Python's `sys.settrace`  -  the same mechanism pdb uses. When you set a breakpoint in VS Code and hit it, the underlying mechanism is identical to `breakpoint()` dropping into pdb. The UI is different; the mechanism is the same.
 
-Misconception 3: "Post-mortem debugging is only useful after a crash — I can only use it when something went wrong."
+Misconception 3: "Post-mortem debugging is only useful after a crash  -  I can only use it when something went wrong."
 Reality: Post-mortem debugging is also a workflow for analyzing the state at any point. Raising an exception intentionally (e.g., `raise Exception("inspect here")`) and catching it to call `pdb.pm()` is a valid debugging strategy for inspecting complex state that is hard to pause interactively.
 
 ---

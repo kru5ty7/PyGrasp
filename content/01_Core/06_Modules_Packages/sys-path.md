@@ -1,6 +1,6 @@
 ﻿---
 title: 05 - sys.path
-description: "`sys.path` is a list of directories (and zip files) that Python searches for modules and packages — it is initialized from `PYTHONPATH`, the current directory, and the standard library paths; understanding it is essential for fixing `ModuleNotFoundError` and managing multi-environment setups."
+description: "`sys.path` is a list of directories (and zip files) that Python searches for modules and packages  -  it is initialized from `PYTHONPATH`, the current directory, and the standard library paths; understanding it is essential for fixing `ModuleNotFoundError` and managing multi-environment setups."
 tags: [sys-path, PYTHONPATH, import, module-search, virtual-environments, layer-1, core]
 status: draft
 difficulty: beginner
@@ -11,24 +11,24 @@ created: 2026-05-17
 
 # sys.path
 
-> `sys.path` is a list of directories (and zip files) that Python searches for modules and packages — it is initialized from `PYTHONPATH`, the current directory, and the standard library paths; understanding it is essential for fixing `ModuleNotFoundError` and managing multi-environment setups.
+> `sys.path` is a list of directories (and zip files) that Python searches for modules and packages  -  it is initialized from `PYTHONPATH`, the current directory, and the standard library paths; understanding it is essential for fixing `ModuleNotFoundError` and managing multi-environment setups.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- `import sys; print(sys.path)` — inspect the current search path at runtime
+- `import sys; print(sys.path)`  -  inspect the current search path at runtime
 - `sys.path` contains: `""` (current directory), `PYTHONPATH` entries, standard library directories, site-packages directories
-- `sys.path.insert(0, "/my/dir")` — adds a directory at the front (highest priority)
-- `PYTHONPATH` environment variable — colon-separated (Unix) or semicolon-separated (Windows) list of directories prepended to `sys.path`
-- `site-packages` — the directory where `pip install` places packages; virtual environments have their own isolated site-packages
+- `sys.path.insert(0, "/my/dir")`  -  adds a directory at the front (highest priority)
+- `PYTHONPATH` environment variable  -  colon-separated (Unix) or semicolon-separated (Windows) list of directories prepended to `sys.path`
+- `site-packages`  -  the directory where `pip install` places packages; virtual environments have their own isolated site-packages
 
 **Tricky points:**
-- `""` (empty string) in `sys.path` means the current working directory — not the script's directory; it changes as you `os.chdir()`
-- `sys.path[0]` is typically the directory of the script being run (or `""` in interactive mode) — inserted automatically by the Python interpreter
-- `.pth` files in `site-packages` directories add extra paths to `sys.path` at startup — used by editable installs (`pip install -e .`)
-- Modifying `sys.path` at runtime only affects the current process — subprocess launches start with a fresh `sys.path`
+- `""` (empty string) in `sys.path` means the current working directory  -  not the script's directory; it changes as you `os.chdir()`
+- `sys.path[0]` is typically the directory of the script being run (or `""` in interactive mode)  -  inserted automatically by the Python interpreter
+- `.pth` files in `site-packages` directories add extra paths to `sys.path` at startup  -  used by editable installs (`pip install -e .`)
+- Modifying `sys.path` at runtime only affects the current process  -  subprocess launches start with a fresh `sys.path`
 - `site.addsitedir(path)` processes a directory including its `.pth` files, just as site-packages directories are processed at startup
 
 ---
@@ -50,22 +50,22 @@ The path is built at interpreter startup from several sources in priority order:
 4. `site` module processes `site-packages` directories and `.pth` files
 
 `PathFinder` (the default meta path finder for file-based modules) uses `sys.path` to search for modules. For each directory in `sys.path`, it checks for:
-- `<name>.py` — regular module
-- `<name>/` with `__init__.py` — regular package
-- `<name>/` without `__init__.py` — namespace package candidate
-- `<name>.so` / `<name>.pyd` — compiled extension module
+- `<name>.py`  -  regular module
+- `<name>/` with `__init__.py`  -  regular package
+- `<name>/` without `__init__.py`  -  namespace package candidate
+- `<name>.so` / `<name>.pyd`  -  compiled extension module
 
 The first match stops the search.
 
 Virtual environments work by having their own `site-packages` directory. When activated, `sys.path` is modified to include the venv's `site-packages` first. This is why `pip install` in a venv only affects that venv's `sys.path`.
 
-`.pth` files in site-packages: a file `myproject.pth` containing `/path/to/myproject` causes that path to be appended to `sys.path` at startup. This is the mechanism behind `pip install -e .` (editable installs) — a `.pth` file points to the project directory, so changes to source code are immediately visible without reinstallation.
+`.pth` files in site-packages: a file `myproject.pth` containing `/path/to/myproject` causes that path to be appended to `sys.path` at startup. This is the mechanism behind `pip install -e .` (editable installs)  -  a `.pth` file points to the project directory, so changes to source code are immediately visible without reinstallation.
 
 ---
 
 ## How It Connects
 
-The import system uses `sys.path` through `PathFinder` — one of the default `sys.meta_path` finders.
+The import system uses `sys.path` through `PathFinder`  -  one of the default `sys.meta_path` finders.
 [[import-system|The Import System]]
 
 Virtual environments create isolated `sys.path` configurations to avoid package version conflicts between projects.
@@ -89,7 +89,7 @@ Reality: `sys.path` modifications persist for the process lifetime and affect al
 
 Development workflow: `PYTHONPATH=/path/to/myproject python script.py` adds the project root to `sys.path` so `import mypackage` works without `pip install`. Alternatively, `pip install -e .` creates a `.pth` file that does the same thing persistently.
 
-Monkeypatching paths in tests: `sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))` — a common pattern in test files to make the project root importable. Better replaced by proper packaging or `conftest.py` in pytest.
+Monkeypatching paths in tests: `sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))`  -  a common pattern in test files to make the project root importable. Better replaced by proper packaging or `conftest.py` in pytest.
 
 ---
 

@@ -1,6 +1,6 @@
----
+﻿---
 title: 02 - SQLAlchemy Core
-description: "SQLAlchemy Core is the SQL expression language layer — constructs SQL as Python objects (`select()`, `insert()`, `update()`, `delete()`); works with `Engine` and `Connection`; more explicit than ORM but less than raw SQL strings; used when you need full control over queries."
+description: "SQLAlchemy Core is the SQL expression language layer  -  constructs SQL as Python objects (`select()`, `insert()`, `update()`, `delete()`); works with `Engine` and `Connection`; more explicit than ORM but less than raw SQL strings; used when you need full control over queries."
 tags: [sqlalchemy, core, engine, connection, select, insert, expression-language, layer-3, web]
 status: draft
 difficulty: intermediate
@@ -11,31 +11,31 @@ created: 2026-05-17
 
 # SQLAlchemy Core
 
-> SQLAlchemy Core is the SQL expression language layer — constructs SQL as Python objects (`select()`, `insert()`, `update()`, `delete()`); works with `Engine` and `Connection`; more explicit than ORM but less than raw SQL strings; used when you need full control over queries.
+> SQLAlchemy Core is the SQL expression language layer  -  constructs SQL as Python objects (`select()`, `insert()`, `update()`, `delete()`); works with `Engine` and `Connection`; more explicit than ORM but less than raw SQL strings; used when you need full control over queries.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- `engine = create_engine("postgresql+psycopg2://user:pass@host/db")` — connection factory; manages pool
-- `with engine.connect() as conn:` — get a connection from the pool
-- `conn.execute(select(users_table))` — run a query; returns `Result`
-- `Table("users", metadata, Column("id", Integer, primary_key=True), ...)` — explicit table definition
-- `select(User).where(User.age > 18)` — ORM-level Core (using mapped class attributes)
+- `engine = create_engine("postgresql+psycopg2://user:pass@host/db")`  -  connection factory; manages pool
+- `with engine.connect() as conn:`  -  get a connection from the pool
+- `conn.execute(select(users_table))`  -  run a query; returns `Result`
+- `Table("users", metadata, Column("id", Integer, primary_key=True), ...)`  -  explicit table definition
+- `select(User).where(User.age > 18)`  -  ORM-level Core (using mapped class attributes)
 
 **Tricky points:**
-- `engine.connect()` begins a transaction implicitly in SQLAlchemy 2.0 — commit with `conn.commit()` or use `engine.begin()` context manager (auto-commits on exit, rolls back on exception)
-- `create_engine()` does NOT connect immediately — the pool is lazy; first connection is made on first query
-- `pool_size`, `max_overflow`, `pool_timeout` — pool settings that must be tuned for production; default pool_size=5 may be too small under load
-- `text("SELECT * FROM users WHERE id = :id")` + `{"id": 42}` — raw SQL with bound parameters; still safe from SQL injection
-- Connection pool is per `Engine` instance — create one `Engine` for the application lifetime; don't create per request
+- `engine.connect()` begins a transaction implicitly in SQLAlchemy 2.0  -  commit with `conn.commit()` or use `engine.begin()` context manager (auto-commits on exit, rolls back on exception)
+- `create_engine()` does NOT connect immediately  -  the pool is lazy; first connection is made on first query
+- `pool_size`, `max_overflow`, `pool_timeout`  -  pool settings that must be tuned for production; default pool_size=5 may be too small under load
+- `text("SELECT * FROM users WHERE id = :id")` + `{"id": 42}`  -  raw SQL with bound parameters; still safe from SQL injection
+- Connection pool is per `Engine` instance  -  create one `Engine` for the application lifetime; don't create per request
 
 ---
 
 ## What It Is
 
-SQLAlchemy has two layers: Core (SQL expression language) and ORM (object mapping). Core is the foundation — it provides a Pythonic way to build SQL queries without using raw strings, while remaining close to SQL semantics. The ORM builds on Core.
+SQLAlchemy has two layers: Core (SQL expression language) and ORM (object mapping). Core is the foundation  -  it provides a Pythonic way to build SQL queries without using raw strings, while remaining close to SQL semantics. The ORM builds on Core.
 
 Core is appropriate when: you're working with large datasets that don't fit the ORM's row-by-row model, writing complex queries (CTEs, window functions), doing bulk inserts, or interacting with tables that don't have ORM models.
 
@@ -108,7 +108,7 @@ with engine.begin() as conn:
 
 ## How It Connects
 
-SQLAlchemy Core is the foundation that the ORM builds on — ORM models emit Core-level SQL expressions under the hood.
+SQLAlchemy Core is the foundation that the ORM builds on  -  ORM models emit Core-level SQL expressions under the hood.
 [[orm-basics|ORM Basics]]
 
 For async applications (FastAPI), use `create_async_engine` from `sqlalchemy.ext.asyncio` instead of the sync `create_engine`.
@@ -119,7 +119,7 @@ For async applications (FastAPI), use `create_async_engine` from `sqlalchemy.ext
 ## Common Misconceptions
 
 Misconception 1: "`create_engine` opens a database connection."
-Reality: `create_engine` creates a connection pool factory — no connection is made until the first query. The `pool_size` defines the maximum idle connections kept in the pool; actual connections are checked out on demand.
+Reality: `create_engine` creates a connection pool factory  -  no connection is made until the first query. The `pool_size` defines the maximum idle connections kept in the pool; actual connections are checked out on demand.
 
 Misconception 2: "You must choose either Core or ORM."
 Reality: Core and ORM are used together. ORM models for domain logic and simple queries; Core expressions for bulk operations, complex queries, or performance-sensitive code paths. You can mix them in the same application.
@@ -150,7 +150,7 @@ Common question forms:
 - "What is the difference between SQLAlchemy Core and ORM?"
 - "How do you connect to a database with SQLAlchemy?"
 
-Answer frame: **Core** = SQL expression language (build queries as Python objects); **ORM** = maps Python classes to tables. `create_engine(url)` creates the connection pool (lazy — no immediate connection). `engine.begin()` for auto-committing transactions. Core is faster for bulk operations; ORM is better for domain object modeling. `pool_pre_ping=True` for stale connection handling in production.
+Answer frame: **Core** = SQL expression language (build queries as Python objects); **ORM** = maps Python classes to tables. `create_engine(url)` creates the connection pool (lazy  -  no immediate connection). `engine.begin()` for auto-committing transactions. Core is faster for bulk operations; ORM is better for domain object modeling. `pool_pre_ping=True` for stale connection handling in production.
 
 ---
 

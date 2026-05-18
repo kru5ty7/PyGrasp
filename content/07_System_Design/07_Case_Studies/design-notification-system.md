@@ -1,6 +1,6 @@
----
+﻿---
 title: 03 - Design a Notification System
-description: "A walkthrough of designing a multi-channel notification system — fanout architecture, template rendering, delivery guarantees, and preference management."
+description: "A walkthrough of designing a multi-channel notification system  -  fanout architecture, template rendering, delivery guarantees, and preference management."
 tags: [system-design, case-study, notifications, layer-7]
 status: draft
 difficulty: intermediate
@@ -11,21 +11,21 @@ created: 2026-05-18
 
 # Design a Notification System
 
-> A notification system is deceptively simple on the surface — "just send a message" — but the combination of multiple channels, high volume, delivery guarantees, user preferences, and third-party provider failures makes it one of the more architecturally rich problems in a system design interview.
+> A notification system is deceptively simple on the surface  -  "just send a message"  -  but the combination of multiple channels, high volume, delivery guarantees, user preferences, and third-party provider failures makes it one of the more architecturally rich problems in a system design interview.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- Notifications flow through three stages: triggering event → notification service → channel delivery (email, push, SMS)
-- Fanout: one triggering event produces many individual notifications (e.g., one post liked → notify the author)
+- Notifications flow through three stages: triggering event -> notification service -> channel delivery (email, push, SMS)
+- Fanout: one triggering event produces many individual notifications (e.g., one post liked -> notify the author)
 - Worker queues decouple the notification service from channel-specific delivery workers
 - Each channel (email via SES/SendGrid, push via APNs/FCM, SMS via Twilio) has different throughput, latency, and cost characteristics
 - User preferences determine which channels a user wants to receive which notification types on
 
 **Key design decisions:**
-- Separate queues per channel: an email queue, a push queue, an SMS queue — each with its own worker pool and retry logic
+- Separate queues per channel: an email queue, a push queue, an SMS queue  -  each with its own worker pool and retry logic
 - Idempotency key per notification to prevent duplicate sends on retry
 - Template service: store notification templates in the database, render at send time with dynamic variables
 - Device token management: mobile push requires storing and invalidating device tokens; a token can become stale when a user uninstalls and reinstalls the app
@@ -35,7 +35,7 @@ created: 2026-05-18
 
 ## What It Is
 
-A notification system is a piece of infrastructure that other services use to communicate with users. When a user is mentioned in a comment, the comments service does not send the notification — it calls the notification service with an event, and the notification service determines who should be notified, on which channels, and then delivers the message. This separation matters because the notification service needs to enforce cross-cutting concerns that no individual product service should own: user preferences (do not email me, only push), rate limiting (do not send ten emails in a minute), deduplication (if the same event fires twice, do not send twice), and delivery tracking (did the email actually get delivered?).
+A notification system is a piece of infrastructure that other services use to communicate with users. When a user is mentioned in a comment, the comments service does not send the notification  -  it calls the notification service with an event, and the notification service determines who should be notified, on which channels, and then delivers the message. This separation matters because the notification service needs to enforce cross-cutting concerns that no individual product service should own: user preferences (do not email me, only push), rate limiting (do not send ten emails in a minute), deduplication (if the same event fires twice, do not send twice), and delivery tracking (did the email actually get delivered?).
 
 The problem divides into four functional requirements and four non-functional ones. Functional: users can set notification preferences per channel and per notification type; the system supports email, SMS, and mobile push; other services can trigger notifications through an API; and the system tracks delivery status. Non-functional: high throughput (a social platform may need to send millions of notifications per day), low latency for push notifications (a message notification should arrive in seconds), at-least-once delivery guarantees (missed notifications are worse than duplicate ones), and graceful degradation when a third-party provider (SendGrid, FCM) is down.
 
@@ -49,7 +49,7 @@ The scale of a real notification system is dominated by the fanout problem. If a
 
 **Fanout** for high-follower actors (celebrities, viral content) cannot be done synchronously. The standard pattern is to enqueue a fanout job that expands the recipient list asynchronously. For normal users, direct per-recipient enqueue is fine. For accounts with more than a threshold number of followers (say, 100,000), the fanout is offloaded to a dedicated high-volume fanout worker that pages through the follower list and enqueues individual notifications in batches.
 
-**Channel routing** happens after preference lookup. The notification service checks the user's preferences for this notification type and this channel. If the user has disabled email for social notifications but enabled push, only a push notification is enqueued. The channel-specific queues isolate different delivery mechanisms — a backlog in the email queue (caused by a SendGrid outage) does not affect push delivery.
+**Channel routing** happens after preference lookup. The notification service checks the user's preferences for this notification type and this channel. If the user has disabled email for social notifications but enabled push, only a push notification is enqueued. The channel-specific queues isolate different delivery mechanisms  -  a backlog in the email queue (caused by a SendGrid outage) does not affect push delivery.
 
 ```python
 from fastapi import FastAPI
@@ -136,7 +136,7 @@ async def deliver_push_notification(task: dict):
                 timeout=10.0
             )
             if response.status_code == 404:
-                # Device token is stale (app uninstalled) — remove it
+                # Device token is stale (app uninstalled)  -  remove it
                 invalidate_device_token(recipient_id, token)
             elif response.status_code != 200:
                 # Retry: re-enqueue with backoff
@@ -153,7 +153,7 @@ def render_template(event_type: str, context: dict) -> dict:
 
 **Delivery tracking** requires persisting delivery outcomes. For email, webhooks from SendGrid or SES confirm delivery, bounces, and opens. For push, FCM returns immediate success/failure per token. For SMS, Twilio provides delivery receipts asynchronously via webhook. These outcomes update a `notification_logs` table used for analytics and debugging.
 
-**The three most important design decisions:** (1) Queue per channel — isolation prevents one slow channel from blocking others. (2) Idempotency on every notification — retry is the default behavior; deduplication prevents user-visible duplicates. (3) Async fanout for high-follower accounts — synchronous fanout would timeout; the notification service must detect when recipient count is large and hand off to a dedicated fanout worker.
+**The three most important design decisions:** (1) Queue per channel  -  isolation prevents one slow channel from blocking others. (2) Idempotency on every notification  -  retry is the default behavior; deduplication prevents user-visible duplicates. (3) Async fanout for high-follower accounts  -  synchronous fanout would timeout; the notification service must detect when recipient count is large and hand off to a dedicated fanout worker.
 
 ---
 
@@ -171,7 +171,7 @@ Common question forms:
 - "How do you ensure push notifications are not sent twice on retry?"
 
 Answer frame:
-Requirements: multi-channel (email, push, SMS), user preferences, delivery guarantees. Fanout problem: single event → many notifications → separate fanout from delivery. Queue per channel for isolation. Preference lookup: user settings determine which channels fire for which event types. Idempotency key on each notification to handle retries. Device token management: stale tokens returned by FCM must be invalidated. Delivery tracking: webhook callbacks update notification_logs. Scale: separate worker pools per channel, high-volume accounts use async fanout workers.
+Requirements: multi-channel (email, push, SMS), user preferences, delivery guarantees. Fanout problem: single event -> many notifications -> separate fanout from delivery. Queue per channel for isolation. Preference lookup: user settings determine which channels fire for which event types. Idempotency key on each notification to handle retries. Device token management: stale tokens returned by FCM must be invalidated. Delivery tracking: webhook callbacks update notification_logs. Scale: separate worker pools per channel, high-volume accounts use async fanout workers.
 
 ---
 

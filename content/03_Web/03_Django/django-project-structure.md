@@ -1,4 +1,4 @@
----
+﻿---
 title: 02 - Django Project Structure
 description: "A Django project is a configuration container that wires together one or more self-contained apps, each responsible for a specific slice of application functionality."
 tags: [django, layer-3, web]
@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Django Project Structure
 
-> Django's two-level project/app split is not bureaucratic overhead — it is the mechanism that lets teams build reusable components, publish them to PyPI, and install them into any Django project with a single line in `INSTALLED_APPS`.
+> Django's two-level project/app split is not bureaucratic overhead  -  it is the mechanism that lets teams build reusable components, publish them to PyPI, and install them into any Django project with a single line in `INSTALLED_APPS`.
 
 ---
 
@@ -26,7 +26,7 @@ created: 2026-05-18
 - Reusable apps follow a convention that lets them be installed with `pip install` and added to any project
 
 **Tricky points:**
-- The project directory and the inner configuration package share the same name by default — this trips up newcomers
+- The project directory and the inner configuration package share the same name by default  -  this trips up newcomers
 - An app must appear in `INSTALLED_APPS` for Django to discover its models and run its migrations
 - `apps.py` defines the `AppConfig` class; the `ready()` method is where signal connections should be registered
 - `STATIC_ROOT` is where `collectstatic` writes files; it is not where you put your source static files
@@ -35,50 +35,50 @@ created: 2026-05-18
 
 ## What It Is
 
-A Django project is like a city, and Django apps are the buildings within it. The city provides infrastructure — road networks (URL routing), power grids (settings), emergency services (middleware, auth) — but it does not dictate what any individual building does. Each building is self-contained: it has its own floor plan (models), its own staff (views), its own signage (URLs), and its own records (migrations). Buildings can be picked up and moved to another city; a `blog` app built for one project can be installed into an entirely different project by adding it to `INSTALLED_APPS`.
+A Django project is like a city, and Django apps are the buildings within it. The city provides infrastructure  -  road networks (URL routing), power grids (settings), emergency services (middleware, auth)  -  but it does not dictate what any individual building does. Each building is self-contained: it has its own floor plan (models), its own staff (views), its own signage (URLs), and its own records (migrations). Buildings can be picked up and moved to another city; a `blog` app built for one project can be installed into an entirely different project by adding it to `INSTALLED_APPS`.
 
 The outer project directory holds the configuration package, which shares its name with the project. Inside that package, `settings.py` is the central configuration file that controls every aspect of Django's behavior. `urls.py` is the root URL configuration; all app-level URL files are pulled in via `include()`. `wsgi.py` and `asgi.py` are the entry points for the web server. The `manage.py` file at the root of the project wraps `django-admin` commands with the project's settings already loaded, so every management command runs in the context of the correct project.
 
-Reusable apps are Django's unit of code sharing. A well-written app declares its own `AppConfig` subclass in `apps.py`, keeps all database interaction inside its own models, defines its own URL namespace, ships its own migrations, and has no hard imports of other project-specific apps. This is why third-party packages like `django-rest-framework`, `django-allauth`, and `django-celery-results` can be installed and dropped into any project — they are just well-structured Django apps.
+Reusable apps are Django's unit of code sharing. A well-written app declares its own `AppConfig` subclass in `apps.py`, keeps all database interaction inside its own models, defines its own URL namespace, ships its own migrations, and has no hard imports of other project-specific apps. This is why third-party packages like `django-rest-framework`, `django-allauth`, and `django-celery-results` can be installed and dropped into any project  -  they are just well-structured Django apps.
 
 ---
 
 ## How It Actually Works
 
-When Django starts, it reads `INSTALLED_APPS` and imports each app's `AppConfig`. The app registry (`django.apps.apps`) builds a map of every model class keyed by `app_label.ModelName`. This registry is what allows `ForeignKey('auth.User', ...)` to reference a model by string rather than importing it directly, which avoids circular imports. The registry also controls the order in which `migrate` processes migrations — an app can only be migrated after all of its dependencies are already migrated.
+When Django starts, it reads `INSTALLED_APPS` and imports each app's `AppConfig`. The app registry (`django.apps.apps`) builds a map of every model class keyed by `app_label.ModelName`. This registry is what allows `ForeignKey('auth.User', ...)` to reference a model by string rather than importing it directly, which avoids circular imports. The registry also controls the order in which `migrate` processes migrations  -  an app can only be migrated after all of its dependencies are already migrated.
 
-The `AppConfig.ready()` hook runs once, after all apps are loaded, and is the canonical place to connect signal receivers. Without `ready()`, a signal connection placed at module level in `models.py` would be executed the moment Django imports that module — which can cause the receiver to fire before the full app registry is available, leading to subtle `AppRegistryNotReady` errors. The `apps.py` pattern centralizes this initialization explicitly.
+The `AppConfig.ready()` hook runs once, after all apps are loaded, and is the canonical place to connect signal receivers. Without `ready()`, a signal connection placed at module level in `models.py` would be executed the moment Django imports that module  -  which can cause the receiver to fire before the full app registry is available, leading to subtle `AppRegistryNotReady` errors. The `apps.py` pattern centralizes this initialization explicitly.
 
 ```
-myproject/                  ← outer project root (git repo root)
+myproject/                  <- outer project root (git repo root)
     manage.py
-    myproject/              ← configuration package (same name)
+    myproject/              <- configuration package (same name)
         __init__.py
-        settings.py         ← INSTALLED_APPS, DATABASES, MIDDLEWARE, TEMPLATES
-        urls.py             ← ROOT_URLCONF
+        settings.py         <- INSTALLED_APPS, DATABASES, MIDDLEWARE, TEMPLATES
+        urls.py             <- ROOT_URLCONF
         wsgi.py
         asgi.py
-    myapp/                  ← a Django app
+    myapp/                  <- a Django app
         __init__.py
-        apps.py             ← AppConfig subclass, ready() for signals
-        models.py           ← Model subclasses
-        views.py            ← View functions / CBVs
-        urls.py             ← app-level urlpatterns
-        admin.py            ← ModelAdmin registrations
+        apps.py             <- AppConfig subclass, ready() for signals
+        models.py           <- Model subclasses
+        views.py            <- View functions / CBVs
+        urls.py             <- app-level urlpatterns
+        admin.py            <- ModelAdmin registrations
         migrations/
             __init__.py
             0001_initial.py
         templates/
-            myapp/          ← templates namespaced under app name
+            myapp/          <- templates namespaced under app name
         static/
-            myapp/          ← static files namespaced under app name
+            myapp/          <- static files namespaced under app name
 ```
 
 ---
 
 ## How It Connects
 
-Every model defined in an app's `models.py` becomes visible to the rest of Django only after that app appears in `INSTALLED_APPS` — this is how the ORM and migrations discover the schema.
+Every model defined in an app's `models.py` becomes visible to the rest of Django only after that app appears in `INSTALLED_APPS`  -  this is how the ORM and migrations discover the schema.
 
 [[django-orm|Django ORM]]
 [[django-migrations|Django Migrations]]
@@ -109,9 +109,9 @@ Reality: `STATIC_ROOT` is the destination directory that `collectstatic` writes 
 
 ## Why It Matters in Practice
 
-Teams that understand the project/app split build systems that are easier to test, easier to reuse, and easier to reason about. When an app is genuinely self-contained — its own models, URLs, views, and migrations — it can be extracted into its own package and published, or it can be swapped out without touching the rest of the project. This modularity becomes critical in larger codebases where different teams own different functional areas.
+Teams that understand the project/app split build systems that are easier to test, easier to reuse, and easier to reason about. When an app is genuinely self-contained  -  its own models, URLs, views, and migrations  -  it can be extracted into its own package and published, or it can be swapped out without touching the rest of the project. This modularity becomes critical in larger codebases where different teams own different functional areas.
 
-The `INSTALLED_APPS` list is also a lightweight dependency graph. Reading it tells you immediately which third-party libraries the project uses, which internal apps are active, and — by looking at which apps `AppConfig.ready()` hooks run — what side effects occur at startup. Keeping this list clean and minimal is one of the most impactful things a team can do to keep startup time and cognitive load manageable.
+The `INSTALLED_APPS` list is also a lightweight dependency graph. Reading it tells you immediately which third-party libraries the project uses, which internal apps are active, and  -  by looking at which apps `AppConfig.ready()` hooks run  -  what side effects occur at startup. Keeping this list clean and minimal is one of the most impactful things a team can do to keep startup time and cognitive load manageable.
 
 ---
 

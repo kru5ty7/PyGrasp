@@ -1,4 +1,4 @@
----
+﻿---
 title: 01 - API Design Principles
 description: "Resource naming, HTTP method semantics, error response formats, and the principles that make an API predictable and easy for consumers to use correctly."
 tags: [api-design, rest, http, layer-7, system-design]
@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # API Design Principles
 
-> A well-designed API is self-documenting — every name, method, and status code tells the consumer what happened and what to do next without reading the docs.
+> A well-designed API is self-documenting  -  every name, method, and status code tells the consumer what happened and what to do next without reading the docs.
 
 ---
 
@@ -25,9 +25,9 @@ created: 2026-05-18
 - Consistency within an API is more important than any individual design choice
 
 **Tricky points:**
-- POST is not "do something" — it creates a resource or triggers a specific action
-- 404 Not Found vs 403 Forbidden vs 401 Unauthorized are semantically different — use them correctly
-- PUT replaces the entire resource; PATCH modifies specific fields — misusing them causes incorrect idempotency assumptions
+- POST is not "do something"  -  it creates a resource or triggers a specific action
+- 404 Not Found vs 403 Forbidden vs 401 Unauthorized are semantically different  -  use them correctly
+- PUT replaces the entire resource; PATCH modifies specific fields  -  misusing them causes incorrect idempotency assumptions
 - Do not leak internal implementation details (database IDs, internal service names) in API responses
 - Avoid verbs in URLs: `/createUser` is wrong; `POST /users` is correct
 
@@ -37,13 +37,13 @@ created: 2026-05-18
 
 Imagine you are using a hotel's concierge service over the phone. A well-designed concierge follows predictable patterns: "I'd like to make a reservation" creates something new. "Can you look up my reservation?" retrieves it. "Please cancel my reservation" removes it. You know what to expect: a reservation number, a confirmation, a cancellation notice. The language is consistent, the outcomes are predictable, and errors are explained clearly: "That reservation doesn't exist", "That date is fully booked."
 
-A poorly designed concierge uses random verbs, gives you error codes with no explanation, and handles the same kind of request differently on Tuesday than on Friday. An API is a programmatic interface — and the same principles of consistency, predictability, and clarity apply.
+A poorly designed concierge uses random verbs, gives you error codes with no explanation, and handles the same kind of request differently on Tuesday than on Friday. An API is a programmatic interface  -  and the same principles of consistency, predictability, and clarity apply.
 
-REST (Representational State Transfer) is the architectural style that most web APIs follow today. It structures APIs around resources (things — nouns) accessed via URLs, using HTTP methods to express the type of action. A resource is anything you can name: a user, an order, a product, a session. The URL identifies which resource. The HTTP method identifies what you want to do with it.
+REST (Representational State Transfer) is the architectural style that most web APIs follow today. It structures APIs around resources (things  -  nouns) accessed via URLs, using HTTP methods to express the type of action. A resource is anything you can name: a user, an order, a product, a session. The URL identifies which resource. The HTTP method identifies what you want to do with it.
 
-Resource naming should use plural nouns: `/users` for the collection, `/users/{id}` for an individual user. Nested resources express relationships: `/users/{id}/orders` for a specific user's orders. The key principle is that the URL is a stable address for a resource — it does not encode the action (no `/createUser`, no `/getUserById`). The action is expressed by the HTTP method.
+Resource naming should use plural nouns: `/users` for the collection, `/users/{id}` for an individual user. Nested resources express relationships: `/users/{id}/orders` for a specific user's orders. The key principle is that the URL is a stable address for a resource  -  it does not encode the action (no `/createUser`, no `/getUserById`). The action is expressed by the HTTP method.
 
-HTTP method semantics are a contract. GET is safe (no state change) and idempotent (same result every time). POST creates a resource or triggers an action — it is neither safe nor idempotent (two POSTs create two resources). PUT replaces a resource entirely — the client sends the full new state. PUT is idempotent (doing it twice results in the same state). PATCH modifies specific fields — it is not necessarily idempotent (a PATCH that increments a counter is not idempotent). DELETE removes a resource — it is idempotent (deleting twice has the same result as deleting once: the resource is gone).
+HTTP method semantics are a contract. GET is safe (no state change) and idempotent (same result every time). POST creates a resource or triggers an action  -  it is neither safe nor idempotent (two POSTs create two resources). PUT replaces a resource entirely  -  the client sends the full new state. PUT is idempotent (doing it twice results in the same state). PATCH modifies specific fields  -  it is not necessarily idempotent (a PATCH that increments a counter is not idempotent). DELETE removes a resource  -  it is idempotent (deleting twice has the same result as deleting once: the resource is gone).
 
 ---
 
@@ -51,13 +51,13 @@ HTTP method semantics are a contract. GET is safe (no state change) and idempote
 
 Status codes are the API's way of communicating the outcome of a request. Using them correctly means consumers can handle responses generically rather than parsing the body for clues about what happened.
 
-The `2xx` range signals success. `200 OK` means the request succeeded and the response body contains the result. `201 Created` means a new resource was created and typically includes the resource's URL in the `Location` header. `204 No Content` means the request succeeded but there is nothing to return (common for DELETE and PUT responses). `202 Accepted` means the request was received and will be processed asynchronously — the actual work has not completed yet.
+The `2xx` range signals success. `200 OK` means the request succeeded and the response body contains the result. `201 Created` means a new resource was created and typically includes the resource's URL in the `Location` header. `204 No Content` means the request succeeded but there is nothing to return (common for DELETE and PUT responses). `202 Accepted` means the request was received and will be processed asynchronously  -  the actual work has not completed yet.
 
-The `4xx` range signals client errors — something the client did wrong. `400 Bad Request` means the request was malformed. `401 Unauthorized` means the client is not authenticated — it should provide credentials. `403 Forbidden` means the client is authenticated but lacks permission. `404 Not Found` means the resource does not exist. `409 Conflict` means the request conflicts with existing state (e.g., creating a user with a duplicate email). `422 Unprocessable Entity` means the request was syntactically valid but semantically invalid (e.g., a well-formed request with an invalid business rule violation).
+The `4xx` range signals client errors  -  something the client did wrong. `400 Bad Request` means the request was malformed. `401 Unauthorized` means the client is not authenticated  -  it should provide credentials. `403 Forbidden` means the client is authenticated but lacks permission. `404 Not Found` means the resource does not exist. `409 Conflict` means the request conflicts with existing state (e.g., creating a user with a duplicate email). `422 Unprocessable Entity` means the request was syntactically valid but semantically invalid (e.g., a well-formed request with an invalid business rule violation).
 
-The `5xx` range signals server errors — problems the server is responsible for. `500 Internal Server Error` is a catch-all for unexpected server failures. `503 Service Unavailable` means the server is temporarily unable to handle requests (overloaded, in maintenance).
+The `5xx` range signals server errors  -  problems the server is responsible for. `500 Internal Server Error` is a catch-all for unexpected server failures. `503 Service Unavailable` means the server is temporarily unable to handle requests (overloaded, in maintenance).
 
-Error responses should be consistent and machine-readable. A standard error format includes: a stable error code (not an HTTP status code — a string like `"USER_NOT_FOUND"` or `"INVALID_PAYMENT_METHOD"`), a human-readable message, and optionally a details array with field-level validation errors.
+Error responses should be consistent and machine-readable. A standard error format includes: a stable error code (not an HTTP status code  -  a string like `"USER_NOT_FOUND"` or `"INVALID_PAYMENT_METHOD"`), a human-readable message, and optionally a details array with field-level validation errors.
 
 ```python
 # FastAPI: well-structured API endpoint with proper status codes and error format
@@ -124,7 +124,7 @@ async def delete_user(user_id: str):
     # 204: no body returned
 ```
 
-Request and response design should be deliberate about what is included. Never return more data than necessary — each additional field exposes more API surface area that becomes a compatibility commitment. Never return internal IDs or schema details that clients have no use for. Dates should be ISO 8601 format with timezone (`2026-05-18T10:30:00Z`). Amounts should be integers in the smallest unit (cents, not dollars) to avoid floating-point issues.
+Request and response design should be deliberate about what is included. Never return more data than necessary  -  each additional field exposes more API surface area that becomes a compatibility commitment. Never return internal IDs or schema details that clients have no use for. Dates should be ISO 8601 format with timezone (`2026-05-18T10:30:00Z`). Amounts should be integers in the smallest unit (cents, not dollars) to avoid floating-point issues.
 
 ---
 
@@ -134,7 +134,7 @@ API versioning is the mechanism for evolving an API without breaking existing co
 
 [[api-versioning|API Versioning]]
 
-Idempotency — the property that a request can be safely retried without causing duplicate effects — is a key consequence of correct HTTP method semantics. PUT and DELETE are idempotent; POST and PATCH may not be.
+Idempotency  -  the property that a request can be safely retried without causing duplicate effects  -  is a key consequence of correct HTTP method semantics. PUT and DELETE are idempotent; POST and PATCH may not be.
 
 [[idempotency|Idempotency]]
 
@@ -152,14 +152,14 @@ Reality: POST is for creating resources or triggering actions with no natural id
 Misconception 2: "404 is fine to return when the user is not authorized to see a resource."
 Reality: Returning 404 when the resource exists but the user lacks permission reveals the existence of the resource, which may be a security concern. The correct choice is 403 Forbidden (the resource exists, you lack access). However, in some security contexts (where revealing existence is itself sensitive), 404 is intentionally used to avoid leaking information about what exists. This is a deliberate security decision, not a default.
 
-Misconception 3: "HTTP status codes in the 2xx range all mean success — I can use them interchangeably."
+Misconception 3: "HTTP status codes in the 2xx range all mean success  -  I can use them interchangeably."
 Reality: 200, 201, 202, and 204 have specific meanings. A client that creates a resource expects 201 Created with a Location header. A client that deletes a resource expects 204 No Content. Returning 200 for all success responses loses these signals and forces clients to parse the body to understand what happened.
 
 ---
 
 ## Why It Matters in Practice
 
-A well-designed API is adopted quickly and used correctly. A poorly designed API causes support tickets, incorrect usage, security issues from improperly handled status codes, and costly breaking changes when the API needs to evolve. For Python developers building FastAPI or Django REST framework APIs, these principles are supported by the framework — FastAPI's `status_code`, `response_model`, and Pydantic validation enforce many of these decisions automatically.
+A well-designed API is adopted quickly and used correctly. A poorly designed API causes support tickets, incorrect usage, security issues from improperly handled status codes, and costly breaking changes when the API needs to evolve. For Python developers building FastAPI or Django REST framework APIs, these principles are supported by the framework  -  FastAPI's `status_code`, `response_model`, and Pydantic validation enforce many of these decisions automatically.
 
 The consistency principle deserves emphasis: within a single API, every endpoint should follow the same conventions for naming, error format, status codes, and field names. Inconsistency is the number one complaint developers have about APIs they use.
 

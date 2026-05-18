@@ -1,6 +1,6 @@
----
+﻿---
 title: 03 - Fixtures
-description: "pytest fixtures are functions decorated with `@pytest.fixture` that provide setup, teardown, and shared state to tests — declared as test function parameters; `yield` fixtures run teardown after the test; `scope` controls how often they run (function/module/session)."
+description: "pytest fixtures are functions decorated with `@pytest.fixture` that provide setup, teardown, and shared state to tests  -  declared as test function parameters; `yield` fixtures run teardown after the test; `scope` controls how often they run (function/module/session)."
 tags: [pytest, fixtures, yield-fixture, scope, conftest, dependency-injection, layer-3, web]
 status: draft
 difficulty: intermediate
@@ -11,23 +11,23 @@ created: 2026-05-17
 
 # Fixtures
 
-> pytest fixtures are functions decorated with `@pytest.fixture` that provide setup, teardown, and shared state to tests — declared as test function parameters; `yield` fixtures run teardown after the test; `scope` controls how often they run (function/module/session).
+> pytest fixtures are functions decorated with `@pytest.fixture` that provide setup, teardown, and shared state to tests  -  declared as test function parameters; `yield` fixtures run teardown after the test; `scope` controls how often they run (function/module/session).
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- `@pytest.fixture` — decorates a function; pytest calls it and injects the result into tests that declare it as a parameter
+- `@pytest.fixture`  -  decorates a function; pytest calls it and injects the result into tests that declare it as a parameter
 - `yield` in a fixture: code before `yield` is setup, code after is teardown (runs after test completes)
-- `scope="function"` (default) — fixture runs once per test; `scope="module"` — once per file; `scope="session"` — once per test run
-- Fixtures can depend on other fixtures — declare as parameters; pytest resolves the dependency graph
-- `conftest.py` — shared fixture file; automatically loaded; fixtures available to all tests in scope
+- `scope="function"` (default)  -  fixture runs once per test; `scope="module"`  -  once per file; `scope="session"`  -  once per test run
+- Fixtures can depend on other fixtures  -  declare as parameters; pytest resolves the dependency graph
+- `conftest.py`  -  shared fixture file; automatically loaded; fixtures available to all tests in scope
 
 **Tricky points:**
-- A higher-scope fixture cannot depend on a lower-scope fixture — `session`-scoped fixture cannot use a `function`-scoped fixture (different lifetime); pytest raises an error
-- `yield` fixture teardown runs even if the test fails — guarantees cleanup regardless of test outcome
-- `autouse=True` — fixture applied to all tests in scope without being explicitly declared; use sparingly
+- A higher-scope fixture cannot depend on a lower-scope fixture  -  `session`-scoped fixture cannot use a `function`-scoped fixture (different lifetime); pytest raises an error
+- `yield` fixture teardown runs even if the test fails  -  guarantees cleanup regardless of test outcome
+- `autouse=True`  -  fixture applied to all tests in scope without being explicitly declared; use sparingly
 - Fixture overriding: a `conftest.py` closer to the test file overrides one higher up; test file can also override fixtures locally
 - Factories as fixtures: return a factory function to allow creating multiple instances in one test
 
@@ -37,7 +37,7 @@ created: 2026-05-17
 
 Fixtures replace `setUp`/`tearDown` from JUnit-style testing with a composable, dependency-injection model. Instead of one monolithic `setUp` that runs everything, each test declares exactly which fixtures it needs, and pytest provides them. This makes setup explicit, reusable, and composable.
 
-The `yield` fixture pattern is directly analogous to the `yield` dependency in FastAPI — setup before, teardown after, cleanup guaranteed via the generator protocol.
+The `yield` fixture pattern is directly analogous to the `yield` dependency in FastAPI  -  setup before, teardown after, cleanup guaranteed via the generator protocol.
 
 ---
 
@@ -67,14 +67,14 @@ def temp_directory(tmp_path):
     directory = tmp_path / "test_dir"
     directory.mkdir()
     yield directory  # test runs here
-    # teardown: shutil.rmtree(directory) — but tmp_path handles it automatically
+    # teardown: shutil.rmtree(directory)  -  but tmp_path handles it automatically
     
 @pytest.fixture
 def db_connection():
     conn = create_test_connection()
     conn.execute("BEGIN")
     yield conn
-    conn.execute("ROLLBACK")  # always rollback — no state persists between tests
+    conn.execute("ROLLBACK")  # always rollback  -  no state persists between tests
     conn.close()
 ```
 
@@ -109,7 +109,7 @@ def db_url(request):
     return "postgresql://localhost/testdb"
 
 def test_connection(db_url):
-    # runs twice — once for each db_url value
+    # runs twice  -  once for each db_url value
     engine = create_engine(db_url)
     assert engine.connect()
 ```
@@ -138,10 +138,10 @@ def test_two_users(make_user):
 
 ## How It Connects
 
-Fixtures are the mechanism behind FastAPI's `TestClient` and async test database sessions — the test client and DB session are fixtures.
+Fixtures are the mechanism behind FastAPI's `TestClient` and async test database sessions  -  the test client and DB session are fixtures.
 [[testing-fastapi|Testing FastAPI]]
 
-pytest's fixture system has the same dependency injection pattern as FastAPI's `Depends()` — both resolve a dependency graph at runtime.
+pytest's fixture system has the same dependency injection pattern as FastAPI's `Depends()`  -  both resolve a dependency graph at runtime.
 [[fastapi-dependencies|FastAPI Dependencies]]
 
 ---
@@ -172,10 +172,10 @@ def engine():
 def db_session(engine):
     with Session(engine) as session:
         yield session
-        session.rollback()  # always rollback → no test pollution
+        session.rollback()  # always rollback -> no test pollution
 ```
 
-`scope="session"` for the engine (expensive to create) + `scope="function"` (default) for the session (cheap, must be fresh per test) — this pattern is the foundation of most web app test suites.
+`scope="session"` for the engine (expensive to create) + `scope="function"` (default) for the session (cheap, must be fresh per test)  -  this pattern is the foundation of most web app test suites.
 
 ---
 
@@ -185,7 +185,7 @@ Common question forms:
 - "How do you set up and tear down test state in pytest?"
 - "What is a yield fixture?"
 
-Answer frame: `@pytest.fixture` — function that provides setup and optionally teardown. Declare as test parameter — pytest injects. `yield` fixture: code before yield runs before the test, code after runs after (guaranteed cleanup). `scope` controls reuse: `"function"` = per test (default), `"module"` = per file, `"session"` = once per run. `conftest.py` for shared fixtures across tests. Fixtures can depend on other fixtures.
+Answer frame: `@pytest.fixture`  -  function that provides setup and optionally teardown. Declare as test parameter  -  pytest injects. `yield` fixture: code before yield runs before the test, code after runs after (guaranteed cleanup). `scope` controls reuse: `"function"` = per test (default), `"module"` = per file, `"session"` = once per run. `conftest.py` for shared fixtures across tests. Fixtures can depend on other fixtures.
 
 ---
 

@@ -1,6 +1,6 @@
----
+﻿---
 title: 05 - Serialization and Deserialization
-description: "Serialization converts Python objects to a transmissible format (JSON, bytes); deserialization converts back — Pydantic's `model_dump()` serializes to dict and `model_dump_json()` to JSON string; `model.model_validate(data)` deserializes; custom serializers with `@field_serializer` control field output."
+description: "Serialization converts Python objects to a transmissible format (JSON, bytes); deserialization converts back  -  Pydantic's `model_dump()` serializes to dict and `model_dump_json()` to JSON string; `model.model_validate(data)` deserializes; custom serializers with `@field_serializer` control field output."
 tags: [serialization, deserialization, pydantic, model_dump, model_validate, json, layer-3, web]
 status: draft
 difficulty: intermediate
@@ -11,25 +11,25 @@ created: 2026-05-17
 
 # Serialization and Deserialization
 
-> Serialization converts Python objects to a transmissible format (JSON, bytes); deserialization converts back — Pydantic's `model_dump()` serializes to dict and `model_dump_json()` to JSON string; `model.model_validate(data)` deserializes; custom serializers with `@field_serializer` control field output.
+> Serialization converts Python objects to a transmissible format (JSON, bytes); deserialization converts back  -  Pydantic's `model_dump()` serializes to dict and `model_dump_json()` to JSON string; `model.model_validate(data)` deserializes; custom serializers with `@field_serializer` control field output.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- `model.model_dump()` — serialize to Python dict
-- `model.model_dump_json()` — serialize to JSON string (bytes)
-- `Model.model_validate(data)` — deserialize from dict (with validation)
-- `Model.model_validate_json(json_str)` — deserialize from JSON string
-- `@field_serializer("field_name")` — custom serialization for a specific field
+- `model.model_dump()`  -  serialize to Python dict
+- `model.model_dump_json()`  -  serialize to JSON string (bytes)
+- `Model.model_validate(data)`  -  deserialize from dict (with validation)
+- `Model.model_validate_json(json_str)`  -  deserialize from JSON string
+- `@field_serializer("field_name")`  -  custom serialization for a specific field
 
 **Tricky points:**
-- `model_dump(exclude_none=True)` — omit fields with `None` values; useful for PATCH requests where you don't want to send unchanged fields
-- `model_dump(mode="json")` — applies JSON-compatible serialization (e.g., `datetime` → ISO 8601 string) even in the dict output
-- `by_alias=True` — use field aliases in the output (needed when a model has `alias=` set on fields)
-- Python `datetime` objects are not JSON-serializable by default — Pydantic converts them to ISO 8601 strings in `model_dump_json()`; raw `json.dumps()` on a `datetime` raises `TypeError`
-- `model_dump(include={"field1", "field2"})` / `exclude={"password"}` — whitelist/blacklist fields in output
+- `model_dump(exclude_none=True)`  -  omit fields with `None` values; useful for PATCH requests where you don't want to send unchanged fields
+- `model_dump(mode="json")`  -  applies JSON-compatible serialization (e.g., `datetime` -> ISO 8601 string) even in the dict output
+- `by_alias=True`  -  use field aliases in the output (needed when a model has `alias=` set on fields)
+- Python `datetime` objects are not JSON-serializable by default  -  Pydantic converts them to ISO 8601 strings in `model_dump_json()`; raw `json.dumps()` on a `datetime` raises `TypeError`
+- `model_dump(include={"field1", "field2"})` / `exclude={"password"}`  -  whitelist/blacklist fields in output
 
 ---
 
@@ -61,7 +61,7 @@ user = User(id=UUID("..."), name="Alice", created_at=datetime.now(), password_ha
 user.model_dump()
 # {'id': UUID('...'), 'name': 'Alice', 'created_at': datetime(...), 'password_hash': '...'}
 
-# To JSON (datetime → ISO string, UUID → string):
+# To JSON (datetime -> ISO string, UUID -> string):
 user.model_dump_json()
 # '{"id":"...","name":"Alice","created_at":"2026-01-01T12:00:00","password_hash":"..."}'
 
@@ -81,7 +81,7 @@ class Price(BaseModel):
     
     @field_serializer("amount")
     def serialize_amount(self, v: Decimal) -> str:
-        return f"{v:.2f}"  # Decimal → "19.99" instead of Decimal('19.99')
+        return f"{v:.2f}"  # Decimal -> "19.99" instead of Decimal('19.99')
 
 Price(amount=Decimal("19.99"), currency="USD").model_dump_json()
 # '{"amount":"19.99","currency":"USD"}'
@@ -90,19 +90,19 @@ Price(amount=Decimal("19.99"), currency="USD").model_dump_json()
 Deserialization:
 ```python
 data = {"id": "a1b2c3d4-...", "name": "Alice", "created_at": "2026-01-01T12:00:00", "password_hash": "..."}
-user = User.model_validate(data)  # string ID → UUID, string datetime → datetime
+user = User.model_validate(data)  # string ID -> UUID, string datetime -> datetime
 
 json_str = '{"id": "a1b2c3d4-...", "name": "Alice", ...}'
 user = User.model_validate_json(json_str)
 ```
 
-Response model in FastAPI — serialize and filter:
+Response model in FastAPI  -  serialize and filter:
 ```python
 class UserResponse(BaseModel):
     id: UUID
     name: str
     created_at: datetime
-    # no password_hash — excluded by using a separate response model
+    # no password_hash  -  excluded by using a separate response model
 
 @app.get("/users/{id}", response_model=UserResponse)
 async def get_user(id: int):
@@ -114,10 +114,10 @@ async def get_user(id: int):
 
 ## How It Connects
 
-Pydantic models drive serialization — `model_dump()` and `model_dump_json()` are core Pydantic methods.
+Pydantic models drive serialization  -  `model_dump()` and `model_dump_json()` are core Pydantic methods.
 [[pydantic|Pydantic]]
 
-In FastAPI, `response_model` triggers serialization of the handler's return value — only the fields on the response model are included in the output.
+In FastAPI, `response_model` triggers serialization of the handler's return value  -  only the fields on the response model are included in the output.
 [[response-model|Response Models]]
 
 ---
@@ -128,7 +128,7 @@ Misconception 1: "Pydantic's `model_dump()` produces JSON-safe output."
 Reality: `model_dump()` produces a Python dict which may contain non-JSON-serializable types (`UUID`, `datetime`, `Decimal`). To get JSON-safe values, use `model_dump(mode="json")` or `model_dump_json()`.
 
 Misconception 2: "Using `response_model` in FastAPI automatically excludes sensitive fields."
-Reality: `response_model` only includes fields that are on the response model class — it is your responsibility to define a response model that excludes sensitive fields. If you return the full database model and set `response_model=UserResponse`, only the fields declared on `UserResponse` appear in the output.
+Reality: `response_model` only includes fields that are on the response model class  -  it is your responsibility to define a response model that excludes sensitive fields. If you return the full database model and set `response_model=UserResponse`, only the fields declared on `UserResponse` appear in the output.
 
 ---
 
@@ -148,7 +148,7 @@ async def update_user(id: int, update: UserUpdate):
     await db.update_user(id, changes)
 ```
 
-`exclude_unset=True` is the standard pattern for PATCH endpoints — it distinguishes "client sent null" from "client didn't mention this field."
+`exclude_unset=True` is the standard pattern for PATCH endpoints  -  it distinguishes "client sent null" from "client didn't mention this field."
 
 ---
 
@@ -158,7 +158,7 @@ Common question forms:
 - "How do you convert a Pydantic model to JSON?"
 - "How do you exclude sensitive fields from API responses?"
 
-Answer frame: `model_dump()` → dict; `model_dump_json()` → JSON string. `model_dump(mode="json")` ensures dict contains JSON-safe types. `exclude={"password_hash"}` or use a separate response model class. `exclude_unset=True` for PATCH endpoints — only includes fields the client sent. `model_validate(data)` for deserialization with type coercion.
+Answer frame: `model_dump()` -> dict; `model_dump_json()` -> JSON string. `model_dump(mode="json")` ensures dict contains JSON-safe types. `exclude={"password_hash"}` or use a separate response model class. `exclude_unset=True` for PATCH endpoints  -  only includes fields the client sent. `model_validate(data)` for deserialization with type coercion.
 
 ---
 

@@ -1,6 +1,6 @@
----
+﻿---
 title: 06 - Async Testing
-description: "`pytest-asyncio` enables async test functions — `async def test_something()` runs in an event loop; `@pytest.mark.asyncio` marks a test async (or use `asyncio_mode = 'auto'`); `AsyncClient` from `httpx` tests FastAPI async endpoints with async syntax."
+description: "`pytest-asyncio` enables async test functions  -  `async def test_something()` runs in an event loop; `@pytest.mark.asyncio` marks a test async (or use `asyncio_mode = 'auto'`); `AsyncClient` from `httpx` tests FastAPI async endpoints with async syntax."
 tags: [pytest-asyncio, async-testing, AsyncClient, httpx, asyncio_mode, layer-3, web]
 status: draft
 difficulty: intermediate
@@ -11,31 +11,31 @@ created: 2026-05-17
 
 # Async Testing
 
-> `pytest-asyncio` enables async test functions — `async def test_something()` runs in an event loop; `@pytest.mark.asyncio` marks a test async (or use `asyncio_mode = 'auto'`); `AsyncClient` from `httpx` tests FastAPI async endpoints with async syntax.
+> `pytest-asyncio` enables async test functions  -  `async def test_something()` runs in an event loop; `@pytest.mark.asyncio` marks a test async (or use `asyncio_mode = 'auto'`); `AsyncClient` from `httpx` tests FastAPI async endpoints with async syntax.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- `pip install pytest-asyncio httpx` — required packages for async FastAPI testing
-- `asyncio_mode = "auto"` in `pytest.ini` — auto-detect async test functions; no per-test decorator needed
-- `async def test_example():` — async test function
-- `AsyncClient(app=app, base_url="http://test")` — async HTTP client; use as `async with AsyncClient(...) as client:`
+- `pip install pytest-asyncio httpx`  -  required packages for async FastAPI testing
+- `asyncio_mode = "auto"` in `pytest.ini`  -  auto-detect async test functions; no per-test decorator needed
+- `async def test_example():`  -  async test function
+- `AsyncClient(app=app, base_url="http://test")`  -  async HTTP client; use as `async with AsyncClient(...) as client:`
 - Async fixtures: `@pytest.fixture` on `async def` function (requires `asyncio_mode = "auto"` or explicit `@pytest_asyncio.fixture`)
 
 **Tricky points:**
-- `asyncio_mode = "auto"` (pytest.ini option) is the recommended configuration — without it, every async test needs `@pytest.mark.asyncio`
-- Event loop scope: by default, each test gets a new event loop — session-scoped async fixtures require `loop_scope="session"` in newer pytest-asyncio
-- `AsyncClient` triggers FastAPI's lifespan events — `async with AsyncClient(app=app, ...)` is the preferred way to test with lifespan (DB pool init, Redis connect)
-- `TestClient` (sync) wraps the async app in a synchronous interface — fine for most tests; `AsyncClient` is needed when the test itself needs to be async (e.g., async fixtures, await in test body)
+- `asyncio_mode = "auto"` (pytest.ini option) is the recommended configuration  -  without it, every async test needs `@pytest.mark.asyncio`
+- Event loop scope: by default, each test gets a new event loop  -  session-scoped async fixtures require `loop_scope="session"` in newer pytest-asyncio
+- `AsyncClient` triggers FastAPI's lifespan events  -  `async with AsyncClient(app=app, ...)` is the preferred way to test with lifespan (DB pool init, Redis connect)
+- `TestClient` (sync) wraps the async app in a synchronous interface  -  fine for most tests; `AsyncClient` is needed when the test itself needs to be async (e.g., async fixtures, await in test body)
 - Mixing sync and async fixtures: sync fixtures can be used in async tests; async fixtures cannot be used in sync tests
 
 ---
 
 ## What It Is
 
-When your FastAPI handlers are `async def`, your integration tests may also need to be async — especially when they share async fixtures (like an `AsyncSession`) or use `AsyncClient`. `pytest-asyncio` is the plugin that enables this: it wraps async test functions in an event loop, making `await` work in test bodies.
+When your FastAPI handlers are `async def`, your integration tests may also need to be async  -  especially when they share async fixtures (like an `AsyncSession`) or use `AsyncClient`. `pytest-asyncio` is the plugin that enables this: it wraps async test functions in an event loop, making `await` work in test bodies.
 
 The typical setup: `asyncio_mode = "auto"` in `pyproject.toml` so all `async def test_*` functions run automatically, and `AsyncClient` as the HTTP client in a module-scoped or session-scoped async fixture.
 
@@ -114,10 +114,10 @@ async def test_fetch_user_data():
 
 ## How It Connects
 
-`pytest-asyncio` builds on pytest fixtures — async fixtures are used the same way as sync ones.
+`pytest-asyncio` builds on pytest fixtures  -  async fixtures are used the same way as sync ones.
 [[fixtures|Fixtures]]
 
-`AsyncClient` is the async equivalent of `TestClient` — both test the FastAPI ASGI stack without a real server.
+`AsyncClient` is the async equivalent of `TestClient`  -  both test the FastAPI ASGI stack without a real server.
 [[testing-fastapi|Testing FastAPI]]
 
 ---
@@ -128,14 +128,14 @@ Misconception 1: "You need `@pytest.mark.asyncio` on every async test."
 Reality: With `asyncio_mode = "auto"` in pytest configuration, all `async def test_*` functions run automatically. The decorator is only needed without this setting or when using `asyncio_mode = "strict"`.
 
 Misconception 2: "`TestClient` can't test async FastAPI handlers."
-Reality: `TestClient` runs the async ASGI app in a synchronous wrapper — it creates an event loop internally. Most async FastAPI tests work fine with `TestClient`. `AsyncClient` is specifically needed when the test itself needs to `await` or when async lifespan events must run (like async DB pool initialization).
+Reality: `TestClient` runs the async ASGI app in a synchronous wrapper  -  it creates an event loop internally. Most async FastAPI tests work fine with `TestClient`. `AsyncClient` is specifically needed when the test itself needs to `await` or when async lifespan events must run (like async DB pool initialization).
 
 ---
 
 ## Why It Matters in Practice
 
 When to use `AsyncClient` over `TestClient`:
-- App uses lifespan events that initialize async resources (DB pool, Redis) — `async with AsyncClient` triggers them
+- App uses lifespan events that initialize async resources (DB pool, Redis)  -  `async with AsyncClient` triggers them
 - Tests share async fixtures (async DB sessions, async cache)
 - Testing streaming/WebSocket responses (requires async iteration)
 - Test code itself needs `await` (e.g., pre-seeding data via async ORM before the request)
@@ -150,7 +150,7 @@ Common question forms:
 - "How do you write async tests for FastAPI?"
 - "What is `pytest-asyncio`?"
 
-Answer frame: `pytest-asyncio` runs `async def test_*` functions in an event loop. Set `asyncio_mode = "auto"` in `pyproject.toml` — no per-test decorator needed. Use `AsyncClient(app=app, base_url="http://test")` as async context manager for HTTP testing. Async fixtures work the same as sync ones. `AsyncClient` triggers lifespan events; `TestClient` does only inside `with TestClient(app)`.
+Answer frame: `pytest-asyncio` runs `async def test_*` functions in an event loop. Set `asyncio_mode = "auto"` in `pyproject.toml`  -  no per-test decorator needed. Use `AsyncClient(app=app, base_url="http://test")` as async context manager for HTTP testing. Async fixtures work the same as sync ones. `AsyncClient` triggers lifespan events; `TestClient` does only inside `with TestClient(app)`.
 
 ---
 

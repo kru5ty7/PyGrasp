@@ -1,6 +1,6 @@
----
+﻿---
 title: 14 - Background Tasks
-description: "`fastapi.BackgroundTask` runs a function after the response is sent — injected via `BackgroundTasks` parameter; used for non-blocking post-response work (emails, notifications, cache invalidation); for long-running jobs, use Celery or asyncio Tasks instead."
+description: "`fastapi.BackgroundTask` runs a function after the response is sent  -  injected via `BackgroundTasks` parameter; used for non-blocking post-response work (emails, notifications, cache invalidation); for long-running jobs, use Celery or asyncio Tasks instead."
 tags: [fastapi, background-tasks, BackgroundTasks, post-response, layer-3, web]
 status: draft
 difficulty: intermediate
@@ -11,22 +11,22 @@ created: 2026-05-17
 
 # Background Tasks
 
-> `fastapi.BackgroundTask` runs a function after the response is sent — injected via `BackgroundTasks` parameter; used for non-blocking post-response work (emails, notifications, cache invalidation); for long-running jobs, use Celery or asyncio Tasks instead.
+> `fastapi.BackgroundTask` runs a function after the response is sent  -  injected via `BackgroundTasks` parameter; used for non-blocking post-response work (emails, notifications, cache invalidation); for long-running jobs, use Celery or asyncio Tasks instead.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- `background_tasks: BackgroundTasks` — FastAPI injects this automatically when declared as a parameter
-- `background_tasks.add_task(func, *args, **kwargs)` — schedules `func` to run after the response is sent
+- `background_tasks: BackgroundTasks`  -  FastAPI injects this automatically when declared as a parameter
+- `background_tasks.add_task(func, *args, **kwargs)`  -  schedules `func` to run after the response is sent
 - Both sync and async functions can be added as background tasks
-- `BackgroundTasks` can also be injected into dependencies — dependency can add tasks without the handler knowing
+- `BackgroundTasks` can also be injected into dependencies  -  dependency can add tasks without the handler knowing
 
 **Tricky points:**
-- Background tasks run in the same process/event loop as the request handler — they are NOT in a separate worker; a long-running task blocks other requests
-- If the server restarts, pending background tasks are lost — there is no persistence or retry mechanism
-- `BackgroundTasks` does NOT run tasks concurrently with the request — tasks run after the response is sent; the client receives the response before tasks complete
+- Background tasks run in the same process/event loop as the request handler  -  they are NOT in a separate worker; a long-running task blocks other requests
+- If the server restarts, pending background tasks are lost  -  there is no persistence or retry mechanism
+- `BackgroundTasks` does NOT run tasks concurrently with the request  -  tasks run after the response is sent; the client receives the response before tasks complete
 - Adding a sync blocking function as a background task runs it in a thread pool (FastAPI wraps sync background tasks in `run_in_executor`); adding an async function awaits it directly
 - For actually long-running or reliable background work, use Celery, ARQ, or Dramatiq with a message broker
 
@@ -90,7 +90,7 @@ def get_current_user_with_tracking(
 
 ## How It Connects
 
-Background tasks are a lightweight alternative to asyncio tasks for post-response work — for truly concurrent in-flight work, use `asyncio.create_task()` instead.
+Background tasks are a lightweight alternative to asyncio tasks for post-response work  -  for truly concurrent in-flight work, use `asyncio.create_task()` instead.
 [[asyncio-tasks|Asyncio Tasks]]
 
 For reliable, distributed background jobs (retry, scheduling, cross-process), Celery or similar task queues are the right tool.
@@ -130,7 +130,7 @@ Common question forms:
 - "How do you send an email after responding to a request in FastAPI?"
 - "What are background tasks in FastAPI?"
 
-Answer frame: `BackgroundTasks` parameter — `background_tasks.add_task(func, *args)` schedules a function to run after the response is sent. Best for fast, best-effort post-response work (emails, cache invalidation). NOT for long-running or critical work — use Celery/task queues for persistence and retry. Tasks run in the same process — a slow task blocks the event loop.
+Answer frame: `BackgroundTasks` parameter  -  `background_tasks.add_task(func, *args)` schedules a function to run after the response is sent. Best for fast, best-effort post-response work (emails, cache invalidation). NOT for long-running or critical work  -  use Celery/task queues for persistence and retry. Tasks run in the same process  -  a slow task blocks the event loop.
 
 ---
 

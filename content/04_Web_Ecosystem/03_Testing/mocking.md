@@ -1,6 +1,6 @@
----
+﻿---
 title: 04 - Mocking
-description: "Mocking replaces real dependencies with controllable fakes during testing — `unittest.mock.patch` temporarily replaces an object; `MagicMock` is a flexible stand-in; `pytest-mock` provides the `mocker` fixture; use mocks to isolate unit tests from external services (databases, APIs, file systems)."
+description: "Mocking replaces real dependencies with controllable fakes during testing  -  `unittest.mock.patch` temporarily replaces an object; `MagicMock` is a flexible stand-in; `pytest-mock` provides the `mocker` fixture; use mocks to isolate unit tests from external services (databases, APIs, file systems)."
 tags: [mocking, unittest-mock, patch, MagicMock, pytest-mock, side_effect, layer-3, web]
 status: draft
 difficulty: intermediate
@@ -11,7 +11,7 @@ created: 2026-05-17
 
 # Mocking
 
-> Mocking replaces real dependencies with controllable fakes during testing — `unittest.mock.patch` temporarily replaces an object; `MagicMock` is a flexible stand-in; `pytest-mock` provides the `mocker` fixture; use mocks to isolate unit tests from external services (databases, APIs, file systems).
+> Mocking replaces real dependencies with controllable fakes during testing  -  `unittest.mock.patch` temporarily replaces an object; `MagicMock` is a flexible stand-in; `pytest-mock` provides the `mocker` fixture; use mocks to isolate unit tests from external services (databases, APIs, file systems).
 
 ---
 
@@ -19,17 +19,17 @@ created: 2026-05-17
 
 **Core idea:**
 - `from unittest.mock import patch, MagicMock, AsyncMock`
-- `@patch("mymodule.requests.get")` — replaces `requests.get` within `mymodule` during the test
-- `mock.return_value = x` — set what the mock returns when called
-- `mock.side_effect = Exception(...)` — make the mock raise an exception
-- `mock.assert_called_once_with(arg)` — verify the mock was called correctly
-- `AsyncMock` — for mocking `async def` functions (returns an awaitable)
+- `@patch("mymodule.requests.get")`  -  replaces `requests.get` within `mymodule` during the test
+- `mock.return_value = x`  -  set what the mock returns when called
+- `mock.side_effect = Exception(...)`  -  make the mock raise an exception
+- `mock.assert_called_once_with(arg)`  -  verify the mock was called correctly
+- `AsyncMock`  -  for mocking `async def` functions (returns an awaitable)
 
 **Tricky points:**
-- Patch the name where it's used, not where it's defined — `@patch("myapp.services.requests.get")` not `@patch("requests.get")` if `myapp.services` imports `requests`
-- `MagicMock` auto-creates attributes and methods on access — `mock.anything.chained.call()` works without setup; this can hide typos in attribute names
-- `spec=SomeClass` — mock that only allows attributes/methods that exist on `SomeClass`; prevents attribute typos in tests
-- `AsyncMock` for async functions — `MagicMock` returns a regular value, not a coroutine; calling `await mock()` on a `MagicMock` raises `TypeError`
+- Patch the name where it's used, not where it's defined  -  `@patch("myapp.services.requests.get")` not `@patch("requests.get")` if `myapp.services` imports `requests`
+- `MagicMock` auto-creates attributes and methods on access  -  `mock.anything.chained.call()` works without setup; this can hide typos in attribute names
+- `spec=SomeClass`  -  mock that only allows attributes/methods that exist on `SomeClass`; prevents attribute typos in tests
+- `AsyncMock` for async functions  -  `MagicMock` returns a regular value, not a coroutine; calling `await mock()` on a `MagicMock` raises `TypeError`
 - Over-mocking: mocking implementation details (private methods, internal state) creates brittle tests that break on refactoring; mock at the boundary (external APIs, I/O)
 
 ---
@@ -38,7 +38,7 @@ created: 2026-05-17
 
 Mocking allows you to test code in isolation by replacing dependencies with controlled fakes. A function that calls an external API, writes to a file, or queries a database is hard to test without the real infrastructure. A mock replaces the dependency with an object you control: you specify what it returns, verify it was called correctly, and make it raise exceptions to test error paths.
 
-The key principle: mock at the boundary between your code and the outside world. Don't mock internal Python functions or your own business logic — those should be tested with real behavior.
+The key principle: mock at the boundary between your code and the outside world. Don't mock internal Python functions or your own business logic  -  those should be tested with real behavior.
 
 ---
 
@@ -96,7 +96,7 @@ async def test_async_handler(mock_fetch):
     mock_fetch.assert_awaited_once_with(1)
 ```
 
-`pytest-mock` — cleaner syntax via `mocker` fixture:
+`pytest-mock`  -  cleaner syntax via `mocker` fixture:
 ```python
 def test_with_mocker(mocker):
     mock_send = mocker.patch("myapp.email.send_email")
@@ -105,17 +105,17 @@ def test_with_mocker(mocker):
     register_user("alice@example.com")
     
     mock_send.assert_called_once()
-    # auto-cleaned up after test — no need for context manager or decorator
+    # auto-cleaned up after test  -  no need for context manager or decorator
 ```
 
 ---
 
 ## How It Connects
 
-Mocking is used in unit tests to isolate functions from their dependencies — together with fixtures, it's how you set up unit test environments.
+Mocking is used in unit tests to isolate functions from their dependencies  -  together with fixtures, it's how you set up unit test environments.
 [[fixtures|Fixtures]]
 
-In FastAPI testing, `dependency_overrides` is the preferred alternative to mocking for replacing dependencies — it works at the FastAPI level rather than patching Python names.
+In FastAPI testing, `dependency_overrides` is the preferred alternative to mocking for replacing dependencies  -  it works at the FastAPI level rather than patching Python names.
 [[testing-fastapi|Testing FastAPI]]
 
 ---
@@ -168,7 +168,7 @@ Common question forms:
 - "How do you mock an external API call in tests?"
 - "What is the difference between `patch` and `MagicMock`?"
 
-Answer frame: `MagicMock` is a flexible fake object — set `.return_value`, `.side_effect`, check `.assert_called_once_with()`. `patch` temporarily replaces a name in a module with a mock — patch where it's used, not where it's defined. `AsyncMock` for async functions. `side_effect=Exception` to test error handling. For FastAPI: prefer `dependency_overrides` over patching to replace dependencies.
+Answer frame: `MagicMock` is a flexible fake object  -  set `.return_value`, `.side_effect`, check `.assert_called_once_with()`. `patch` temporarily replaces a name in a module with a mock  -  patch where it's used, not where it's defined. `AsyncMock` for async functions. `side_effect=Exception` to test error handling. For FastAPI: prefer `dependency_overrides` over patching to replace dependencies.
 
 ---
 

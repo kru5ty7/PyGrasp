@@ -1,4 +1,4 @@
----
+﻿---
 title: 10 - gRPC Basics
 description: "gRPC is a high-performance RPC framework that uses Protocol Buffers for serialization and HTTP/2 for transport."
 tags: [grpc, protobuf, rpc, streaming, http2, layer-3, web]
@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # gRPC Basics
 
-> gRPC is Google's open-source RPC framework that combines Protocol Buffers, HTTP/2, and generated code stubs to deliver strongly typed, high-throughput service-to-service communication — essential knowledge for any Python developer working in a polyglot microservices environment.
+> gRPC is Google's open-source RPC framework that combines Protocol Buffers, HTTP/2, and generated code stubs to deliver strongly typed, high-throughput service-to-service communication  -  essential knowledge for any Python developer working in a polyglot microservices environment.
 
 ---
 
@@ -21,13 +21,13 @@ created: 2026-05-18
 - `.proto` files define services and messages; `grpcio-tools` generates Python stubs from them
 - Four RPC patterns: unary, server streaming, client streaming, and bidirectional streaming
 - HTTP/2 is the mandatory transport; all streams run over one multiplexed connection
-- Protocol Buffers serialize data as compact binary, not JSON — typically 3-10x smaller and faster to parse
+- Protocol Buffers serialize data as compact binary, not JSON  -  typically 3-10x smaller and faster to parse
 - `grpcio` is the sync Python library; `grpc.aio` provides the async interface for asyncio applications
 - gRPC uses status codes (OK, NOT_FOUND, UNAVAILABLE) that map differently from HTTP status codes
 
 **Tricky points:**
 - `.proto` schema changes must be backward-compatible: add fields (new field numbers), never reuse or remove numbers
-- `grpc.aio` and `grpcio` stubs are not interchangeable — async stubs must be generated or wrapped explicitly
+- `grpc.aio` and `grpcio` stubs are not interchangeable  -  async stubs must be generated or wrapped explicitly
 - gRPC does not natively work in browsers (requires grpc-web proxy) because browsers cannot control HTTP/2 framing
 - Deadlines must be set explicitly; gRPC will wait indefinitely by default
 - Interceptors are the gRPC equivalent of middleware and are the correct place for auth, logging, and retry logic
@@ -36,7 +36,7 @@ created: 2026-05-18
 
 ## What It Is
 
-Imagine two departments in a large company that need to exchange information constantly. They could send memos in plain English (REST with JSON), but the recipient has to read each memo, parse the meaning, and decide what to do. Alternatively, they could agree on a shared form with numbered fields — the sender fills in field 3 (user ID) and field 7 (account balance), folds the form tightly, and hands it over. The recipient knows exactly what each field means because they have the same form definition. The overhead of interpretation disappears, and the envelope is much smaller. gRPC with Protocol Buffers is the second approach.
+Imagine two departments in a large company that need to exchange information constantly. They could send memos in plain English (REST with JSON), but the recipient has to read each memo, parse the meaning, and decide what to do. Alternatively, they could agree on a shared form with numbered fields  -  the sender fills in field 3 (user ID) and field 7 (account balance), folds the form tightly, and hands it over. The recipient knows exactly what each field means because they have the same form definition. The overhead of interpretation disappears, and the envelope is much smaller. gRPC with Protocol Buffers is the second approach.
 
 Google developed gRPC (initially called "Stubby") to handle the enormous volume of internal service-to-service calls across its data centres. The framework became open-source in 2015 and is now used extensively by companies running microservice architectures with high call volumes and strict latency requirements. The core insight is that service boundaries should be as efficient as in-process function calls, which requires strong contracts, compact serialization, and a transport protocol that does not waste round-trips.
 
@@ -73,7 +73,7 @@ Interceptors are the extension point for cross-cutting concerns. A server-side i
 
 ## How It Connects
 
-gRPC is built on HTTP/2 and cannot function without it — understanding HTTP/2 multiplexing and binary framing explains why gRPC can handle many concurrent streaming calls efficiently over a single connection.
+gRPC is built on HTTP/2 and cannot function without it  -  understanding HTTP/2 multiplexing and binary framing explains why gRPC can handle many concurrent streaming calls efficiently over a single connection.
 
 [[http2-and-http3|HTTP/2 and HTTP/3]]
 
@@ -81,7 +81,7 @@ The ASGI server choice matters for gRPC in Python: gRPC has its own server (`grp
 
 [[asgi|ASGI]]
 
-gRPC is often compared to REST — both are inter-service communication protocols, but they occupy different trade-off positions around typing strength, ecosystem tooling, and human debuggability.
+gRPC is often compared to REST  -  both are inter-service communication protocols, but they occupy different trade-off positions around typing strength, ecosystem tooling, and human debuggability.
 
 [[rest|REST]]
 
@@ -102,9 +102,9 @@ Reality: Browsers do not expose the HTTP/2 framing layer that gRPC requires. The
 
 ## Why It Matters in Practice
 
-gRPC is the dominant inter-service communication protocol in Kubernetes-based microservice systems. If you work in a polyglot environment — Python services calling Go or Java services, for example — gRPC's cross-language contract enforcement via `.proto` files eliminates entire categories of integration bugs. The generated stubs mean that a schema change in one service immediately surfaces as a compile-time error (or mypy error in Python) in its callers.
+gRPC is the dominant inter-service communication protocol in Kubernetes-based microservice systems. If you work in a polyglot environment  -  Python services calling Go or Java services, for example  -  gRPC's cross-language contract enforcement via `.proto` files eliminates entire categories of integration bugs. The generated stubs mean that a schema change in one service immediately surfaces as a compile-time error (or mypy error in Python) in its callers.
 
-For Python specifically, the friction point is the code generation step. Unlike REST where you can write a client with a few lines of `httpx`, gRPC requires running `grpcio-tools` as part of your build process and managing generated files. Teams that solve this — either by committing generated files or building them in CI — gain significant reliability in service interfaces. `grpc.aio` integrates cleanly with FastAPI's async model when you need to make outbound gRPC calls from an ASGI application.
+For Python specifically, the friction point is the code generation step. Unlike REST where you can write a client with a few lines of `httpx`, gRPC requires running `grpcio-tools` as part of your build process and managing generated files. Teams that solve this  -  either by committing generated files or building them in CI  -  gain significant reliability in service interfaces. `grpc.aio` integrates cleanly with FastAPI's async model when you need to make outbound gRPC calls from an ASGI application.
 
 ---
 
@@ -116,7 +116,7 @@ Common question forms:
 - "How does Protocol Buffers serialization differ from JSON?"
 
 Answer frame:
-A strong answer to the first question leads with use cases — high-throughput internal microservices, streaming data, polyglot environments — rather than just listing technical features. For the four RPC types, describing a concrete use case for each (unary for lookup, server streaming for live feeds, client streaming for bulk ingestion, bidirectional for real-time interaction) demonstrates practical understanding. For the serialization question, contrasting binary compact encoding with self-describing JSON and explaining why this matters for latency and bandwidth at scale is the core of a strong answer.
+A strong answer to the first question leads with use cases  -  high-throughput internal microservices, streaming data, polyglot environments  -  rather than just listing technical features. For the four RPC types, describing a concrete use case for each (unary for lookup, server streaming for live feeds, client streaming for bulk ingestion, bidirectional for real-time interaction) demonstrates practical understanding. For the serialization question, contrasting binary compact encoding with self-describing JSON and explaining why this matters for latency and bandwidth at scale is the core of a strong answer.
 
 ---
 

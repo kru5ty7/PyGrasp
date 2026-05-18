@@ -1,6 +1,6 @@
----
+ï»¿---
 title: 15 - Async Patterns
-description: "Common async programming patterns: fan-out/fan-in with `gather`, producer-consumer with `asyncio.Queue`, circuit breaker with `asyncio.Semaphore`, retry with exponential backoff, and timeout composition with `asyncio.wait_for` — these patterns compose to handle real-world async workloads."
+description: "Common async programming patterns: fan-out/fan-in with `gather`, producer-consumer with `asyncio.Queue`, circuit breaker with `asyncio.Semaphore`, retry with exponential backoff, and timeout composition with `asyncio.wait_for`  -  these patterns compose to handle real-world async workloads."
 tags: [async-patterns, fan-out, producer-consumer, circuit-breaker, retry, timeout, layer-2, concurrency]
 status: draft
 difficulty: intermediate
@@ -11,24 +11,24 @@ created: 2026-05-17
 
 # Async Patterns
 
-> Common async programming patterns: fan-out/fan-in with `gather`, producer-consumer with `asyncio.Queue`, circuit breaker with `asyncio.Semaphore`, retry with exponential backoff, and timeout composition with `asyncio.wait_for` — these patterns compose to handle real-world async workloads.
+> Common async programming patterns: fan-out/fan-in with `gather`, producer-consumer with `asyncio.Queue`, circuit breaker with `asyncio.Semaphore`, retry with exponential backoff, and timeout composition with `asyncio.wait_for`  -  these patterns compose to handle real-world async workloads.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- **Fan-out/fan-in**: `await asyncio.gather(*tasks)` — scatter work across concurrent tasks, collect results
+- **Fan-out/fan-in**: `await asyncio.gather(*tasks)`  -  scatter work across concurrent tasks, collect results
 - **Producer-consumer**: `asyncio.Queue` bridges producers and consumers; `await queue.join()` waits for all items
 - **Rate limiting**: `asyncio.Semaphore(n)` caps concurrent operations at `n`
-- **Timeout**: `await asyncio.wait_for(coro, timeout=5.0)` — raises `asyncio.TimeoutError` on timeout
+- **Timeout**: `await asyncio.wait_for(coro, timeout=5.0)`  -  raises `asyncio.TimeoutError` on timeout
 - **Retry with backoff**: `while retries > 0: try: await op() except: await asyncio.sleep(backoff); retries -= 1`
 
 **Tricky points:**
-- `asyncio.wait_for` cancels the inner task on timeout — the task receives `CancelledError`; if the task catches `CancelledError` and continues, the timeout has no effect
-- `asyncio.gather` with `return_exceptions=False` cancels all tasks if any raises — use `return_exceptions=True` to collect partial results and handle errors per-task
-- In a producer-consumer setup, producers must signal completion (e.g., `None` sentinel, `queue.join()`) — without it, consumers loop forever
-- `asyncio.TaskGroup` (Python 3.11+) cancels all sibling tasks if any raises — use it instead of `gather` when you want all-or-nothing semantics with better error visibility
+- `asyncio.wait_for` cancels the inner task on timeout  -  the task receives `CancelledError`; if the task catches `CancelledError` and continues, the timeout has no effect
+- `asyncio.gather` with `return_exceptions=False` cancels all tasks if any raises  -  use `return_exceptions=True` to collect partial results and handle errors per-task
+- In a producer-consumer setup, producers must signal completion (e.g., `None` sentinel, `queue.join()`)  -  without it, consumers loop forever
+- `asyncio.TaskGroup` (Python 3.11+) cancels all sibling tasks if any raises  -  use it instead of `gather` when you want all-or-nothing semantics with better error visibility
 
 ---
 
@@ -130,7 +130,7 @@ async def main(urls):
 
 ## How It Connects
 
-`asyncio.gather` and `asyncio.wait` are the primitives for fan-out/fan-in — understanding their cancellation semantics is required to use them correctly.
+`asyncio.gather` and `asyncio.wait` are the primitives for fan-out/fan-in  -  understanding their cancellation semantics is required to use them correctly.
 [[asyncio-gather|asyncio.gather and asyncio.wait]]
 
 `asyncio.Queue` is the backbone of producer-consumer patterns in async programs.
@@ -141,7 +141,7 @@ async def main(urls):
 ## Common Misconceptions
 
 Misconception 1: "Async code automatically handles failures gracefully."
-Reality: Unhandled exceptions in gathered tasks cancel siblings (with `return_exceptions=False`) or are silently swallowed (with `return_exceptions=True` if you don't check the results). Explicit error handling — `return_exceptions=True` + type checking on results — is necessary to handle partial failures without losing work.
+Reality: Unhandled exceptions in gathered tasks cancel siblings (with `return_exceptions=False`) or are silently swallowed (with `return_exceptions=True` if you don't check the results). Explicit error handling  -  `return_exceptions=True` + type checking on results  -  is necessary to handle partial failures without losing work.
 
 Misconception 2: "More concurrent tasks always means faster throughput."
 Reality: Unbounded concurrency overwhelms downstream services (rate limits, connection limits), causes `ConnectionRefusedError`, and can make overall throughput worse. `asyncio.Semaphore` for rate limiting and `asyncio.Queue(maxsize=n)` for backpressure are the standard tools for controlling concurrency.
@@ -178,7 +178,7 @@ async def data_pipeline(source_urls, dest_db, max_concurrent=20, timeout=10.0):
     return summary
 ```
 
-This pattern — semaphore + wait_for + gather with return_exceptions + status tracking — is the standard structure for robust batch async operations in production.
+This pattern  -  semaphore + wait_for + gather with return_exceptions + status tracking  -  is the standard structure for robust batch async operations in production.
 
 ---
 
@@ -188,7 +188,7 @@ Common question forms:
 - "How would you implement a rate-limited async HTTP client?"
 - "How do you handle partial failures in `asyncio.gather`?"
 
-Answer frame: Rate limiting: `asyncio.Semaphore(n)` + `async with sem:` inside each task. Partial failures: `gather(*tasks, return_exceptions=True)` — check each result for `isinstance(result, Exception)`. Timeouts: `asyncio.wait_for(coro, timeout=n)` — catches `TimeoutError`. Retry: coroutine factory + loop with `await asyncio.sleep(backoff)`. For pipelines, `asyncio.Queue` with sentinels (None) to signal producer completion; `await queue.join()` to wait for all items to be processed.
+Answer frame: Rate limiting: `asyncio.Semaphore(n)` + `async with sem:` inside each task. Partial failures: `gather(*tasks, return_exceptions=True)`  -  check each result for `isinstance(result, Exception)`. Timeouts: `asyncio.wait_for(coro, timeout=n)`  -  catches `TimeoutError`. Retry: coroutine factory + loop with `await asyncio.sleep(backoff)`. For pipelines, `asyncio.Queue` with sentinels (None) to signal producer completion; `await queue.join()` to wait for all items to be processed.
 
 ---
 

@@ -1,6 +1,6 @@
----
+﻿---
 title: 04 - Agent Memory
-description: "Agent memory has four types — in-context (messages in the prompt), external (vector store / database), episodic (past interaction summaries), and semantic (facts about the world or user); LangGraph checkpointing handles in-context persistence; external memory requires explicit retrieval."
+description: "Agent memory has four types  -  in-context (messages in the prompt), external (vector store / database), episodic (past interaction summaries), and semantic (facts about the world or user); LangGraph checkpointing handles in-context persistence; external memory requires explicit retrieval."
 tags: [agent-memory, in-context, external-memory, episodic-memory, semantic-memory, layer-4, ai]
 status: draft
 difficulty: intermediate
@@ -11,31 +11,31 @@ created: 2026-05-17
 
 # Agent Memory
 
-> Agent memory has four types — in-context (messages in the prompt), external (vector store / database), episodic (past interaction summaries), and semantic (facts about the world or user); LangGraph checkpointing handles in-context persistence; external memory requires explicit retrieval.
+> Agent memory has four types  -  in-context (messages in the prompt), external (vector store / database), episodic (past interaction summaries), and semantic (facts about the world or user); LangGraph checkpointing handles in-context persistence; external memory requires explicit retrieval.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- **In-context memory**: the message history passed to the LLM — limited by context window; lost without checkpointing
+- **In-context memory**: the message history passed to the LLM  -  limited by context window; lost without checkpointing
 - **External memory**: facts stored in a vector store or database; retrieved on demand via a retrieval step
-- **Episodic memory**: summaries of past sessions stored externally — agent retrieves relevant past experiences
-- **Semantic memory**: persistent facts about the user or domain — "user prefers concise responses", "project deadline is Friday"
+- **Episodic memory**: summaries of past sessions stored externally  -  agent retrieves relevant past experiences
+- **Semantic memory**: persistent facts about the user or domain  -  "user prefers concise responses", "project deadline is Friday"
 - LangGraph checkpointing = in-context persistence across turns; external memory = anything beyond the context window
 
 **Tricky points:**
-- In-context memory grows every turn — without pruning, long conversations eventually hit the context limit
-- External memory retrieval adds latency — every turn now requires a vector search before the LLM call
-- Semantic memory requires explicit update logic — the agent must decide when to write new facts
-- Memory retrieval quality determines agent quality — if the agent retrieves irrelevant memories, it's worse than no memory
+- In-context memory grows every turn  -  without pruning, long conversations eventually hit the context limit
+- External memory retrieval adds latency  -  every turn now requires a vector search before the LLM call
+- Semantic memory requires explicit update logic  -  the agent must decide when to write new facts
+- Memory retrieval quality determines agent quality  -  if the agent retrieves irrelevant memories, it's worse than no memory
 - Different memory types serve different timescales: in-context (current session), external (across sessions, weeks/months)
 
 ---
 
 ## What It Is
 
-LLMs are stateless — they don't remember anything between API calls. Memory in agents is entirely constructed by the framework: the current context window is in-context memory; anything that persists beyond it requires external storage.
+LLMs are stateless  -  they don't remember anything between API calls. Memory in agents is entirely constructed by the framework: the current context window is in-context memory; anything that persists beyond it requires external storage.
 
 The four memory types map to what needs to be remembered:
 - **In-context**: what was said this session (conversation history)
@@ -133,20 +133,20 @@ Vector databases are the backing store for external memory retrieval.
 ## Common Misconceptions
 
 Misconception 1: "Longer context = better memory."
-Reality: Very long contexts increase cost, latency, and the lost-in-the-middle problem — the LLM pays less attention to information in the middle of a long context. Summarization or retrieval-based memory often outperforms raw context extension.
+Reality: Very long contexts increase cost, latency, and the lost-in-the-middle problem  -  the LLM pays less attention to information in the middle of a long context. Summarization or retrieval-based memory often outperforms raw context extension.
 
 Misconception 2: "Checkpointing is the same as memory."
-Reality: Checkpointing persists conversation history for a session. Memory in the broader sense includes external knowledge the agent can look up — retrieval from a vector store, database queries, or any external source.
+Reality: Checkpointing persists conversation history for a session. Memory in the broader sense includes external knowledge the agent can look up  -  retrieval from a vector store, database queries, or any external source.
 
 ---
 
 ## Why It Matters in Practice
 
 Design questions for agent memory:
-1. **What needs to persist beyond a session?** → External memory
-2. **How much history fits in context?** → Trimming or summarization strategy
-3. **Should the agent learn new facts?** → Write memory tool + explicit update logic
-4. **Are memories user-specific?** → Metadata filtering on retrieval
+1. **What needs to persist beyond a session?** -> External memory
+2. **How much history fits in context?** -> Trimming or summarization strategy
+3. **Should the agent learn new facts?** -> Write memory tool + explicit update logic
+4. **Are memories user-specific?** -> Metadata filtering on retrieval
 
 ---
 
@@ -156,7 +156,7 @@ Common question forms:
 - "How does an agent remember things?"
 - "What are the types of memory in an agent system?"
 
-Answer frame: Four types — in-context (message history), external (vector store retrieval), episodic (past session summaries), semantic (persistent facts). In-context: LangGraph checkpointing across turns. External: vector store + retrieval step before LLM call. Key tradeoff: in-context = fast, limited by window; external = unlimited, requires retrieval latency.
+Answer frame: Four types  -  in-context (message history), external (vector store retrieval), episodic (past session summaries), semantic (persistent facts). In-context: LangGraph checkpointing across turns. External: vector store + retrieval step before LLM call. Key tradeoff: in-context = fast, limited by window; external = unlimited, requires retrieval latency.
 
 ---
 

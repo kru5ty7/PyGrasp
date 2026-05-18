@@ -1,4 +1,4 @@
----
+﻿---
 title: 15 - Django Channels
 description: "Django Channels extends Django to handle WebSockets and other long-lived async protocols by replacing the WSGI request-response model with ASGI consumers and a channel layer."
 tags: [django, layer-3, web]
@@ -23,19 +23,19 @@ created: 2026-05-18
 - Channel layer (Redis-backed via `channels-redis`): enables passing messages between consumers across processes
 - `channel_layer.group_add(group_name, channel_name)` adds a consumer to a broadcast group
 - `channel_layer.group_send(group_name, message)` sends a message to all consumers in a group
-- ASGI server required: Daphne (Channels' own server) or Uvicorn — gunicorn/WSGI cannot run Channels
+- ASGI server required: Daphne (Channels' own server) or Uvicorn  -  gunicorn/WSGI cannot run Channels
 
 **Tricky points:**
-- Django Channels does not replace Django's WSGI views — HTTP requests are handled by Django's normal view system through ASGI's HTTP protocol handler
-- `WebsocketConsumer` runs synchronously in a thread pool; `AsyncWebsocketConsumer` runs in the event loop — mixing sync ORM calls in async consumers requires `database_sync_to_async`
-- The channel layer is optional for single-server setups — without it, a consumer can only communicate with its own connection
-- Channels consumers do not have `request` — they have `self.scope`, which contains connection metadata like user, path, and headers
+- Django Channels does not replace Django's WSGI views  -  HTTP requests are handled by Django's normal view system through ASGI's HTTP protocol handler
+- `WebsocketConsumer` runs synchronously in a thread pool; `AsyncWebsocketConsumer` runs in the event loop  -  mixing sync ORM calls in async consumers requires `database_sync_to_async`
+- The channel layer is optional for single-server setups  -  without it, a consumer can only communicate with its own connection
+- Channels consumers do not have `request`  -  they have `self.scope`, which contains connection metadata like user, path, and headers
 
 ---
 
 ## What It Is
 
-Django's default architecture assumes a request comes in, a view processes it, and a response goes out. This model works perfectly for traditional web pages and REST APIs, but it breaks down for real-time features. A chat application needs the server to push a message to a browser the moment another user sends it. A live dashboard needs to stream data updates as they happen. A multiplayer game needs the server to broadcast position updates to all connected players simultaneously. These use cases require a persistent, bidirectional connection — specifically, a WebSocket — that is alive for the duration of the browser session, not just the duration of a single HTTP request.
+Django's default architecture assumes a request comes in, a view processes it, and a response goes out. This model works perfectly for traditional web pages and REST APIs, but it breaks down for real-time features. A chat application needs the server to push a message to a browser the moment another user sends it. A live dashboard needs to stream data updates as they happen. A multiplayer game needs the server to broadcast position updates to all connected players simultaneously. These use cases require a persistent, bidirectional connection  -  specifically, a WebSocket  -  that is alive for the duration of the browser session, not just the duration of a single HTTP request.
 
 Django Channels replaces the WSGI entry point with an ASGI entry point and introduces the concept of a consumer to handle persistent connections. A consumer is to a long-lived connection what a view is to an HTTP request: it is the Python class that handles the protocol lifecycle. `AsyncWebsocketConsumer` has three key methods: `connect()` called when a WebSocket handshake completes, `receive()` called when the client sends a message, and `disconnect()` called when the connection closes. Unlike a view, which runs once and exits, a consumer instance lives for the duration of the connection.
 
@@ -47,7 +47,7 @@ The channel layer is what enables Channels to scale beyond a single consumer. Wi
 
 Channels implements the ASGI specification, which defines how async servers communicate with async applications. The ASGI `application` callable receives a `scope` dictionary (connection metadata), a `receive` callable (for incoming events), and a `send` callable (for outgoing events). The `ProtocolTypeRouter` in Channels maps the `scope['type']` to the appropriate handler: `type='http'` routes to Django's normal ASGI HTTP handler (which runs your views), and `type='websocket'` routes to the WebSocket consumer. This means a single Channels application handles both HTTP requests (via Django views) and WebSocket connections (via consumers) through the same ASGI entry point.
 
-The `database_sync_to_async` decorator is critical for `AsyncWebsocketConsumer` implementations. Django's ORM is synchronous — it uses Python's DB-API 2.0 interface which makes blocking system calls. Calling ORM methods directly inside an `async def` method blocks the event loop, preventing other coroutines from running. `database_sync_to_async` wraps the synchronous call and runs it in a thread pool, freeing the event loop. This pattern applies to any synchronous Django code called from async consumers: `sync_to_async(get_user)()` or `await database_sync_to_async(MyModel.objects.filter)(pk=pk)`.
+The `database_sync_to_async` decorator is critical for `AsyncWebsocketConsumer` implementations. Django's ORM is synchronous  -  it uses Python's DB-API 2.0 interface which makes blocking system calls. Calling ORM methods directly inside an `async def` method blocks the event loop, preventing other coroutines from running. `database_sync_to_async` wraps the synchronous call and runs it in a thread pool, freeing the event loop. This pattern applies to any synchronous Django code called from async consumers: `sync_to_async(get_user)()` or `await database_sync_to_async(MyModel.objects.filter)(pk=pk)`.
 
 ```python
 # consumers.py
@@ -93,12 +93,12 @@ application = ProtocolTypeRouter({
 
 ## How It Connects
 
-Channels requires an ASGI server — understanding the difference between WSGI and ASGI, and why gunicorn cannot run Channels, requires reading the server interface comparison.
+Channels requires an ASGI server  -  understanding the difference between WSGI and ASGI, and why gunicorn cannot run Channels, requires reading the server interface comparison.
 
 [[asgi|ASGI]]
 [[wsgi-vs-asgi|WSGI vs ASGI]]
 
-The `AsyncWebsocketConsumer` pattern requires async Python — understanding `async`/`await` and the event loop is prerequisite to understanding why `database_sync_to_async` is necessary.
+The `AsyncWebsocketConsumer` pattern requires async Python  -  understanding `async`/`await` and the event loop is prerequisite to understanding why `database_sync_to_async` is necessary.
 
 [[async-await|Async/Await]]
 [[asyncio|Asyncio]]
@@ -118,7 +118,7 @@ Misconception 2: "WebsocketConsumer and AsyncWebsocketConsumer are interchangeab
 Reality: `WebsocketConsumer` runs in a thread pool (safe for synchronous Django code, including ORM calls), while `AsyncWebsocketConsumer` runs in the event loop (more efficient for I/O-bound work, but ORM calls require `database_sync_to_async`). Mixing async consumers with synchronous ORM calls without the wrapper blocks the event loop and causes intermittent performance degradation under concurrent connections.
 
 Misconception 3: "The channel layer is required for Django Channels to work."
-Reality: The channel layer is only required for cross-consumer messaging (broadcasting to multiple connections). A single-consumer use case — a consumer that only communicates with its own connection, like a personal notification stream — works without a channel layer. The channel layer adds operational complexity (a Redis dependency) and should only be added when inter-consumer messaging is genuinely needed.
+Reality: The channel layer is only required for cross-consumer messaging (broadcasting to multiple connections). A single-consumer use case  -  a consumer that only communicates with its own connection, like a personal notification stream  -  works without a channel layer. The channel layer adds operational complexity (a Redis dependency) and should only be added when inter-consumer messaging is genuinely needed.
 
 ---
 

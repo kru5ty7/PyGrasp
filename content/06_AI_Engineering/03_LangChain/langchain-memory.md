@@ -1,6 +1,6 @@
----
+﻿---
 title: 04 - Memory in LangChain
-description: "LangChain memory persists conversation history across chain invocations — `ConversationBufferMemory` keeps all messages; `ConversationSummaryMemory` summarizes old messages to save tokens; in LCEL, memory is explicit: load history → pass to prompt → append new exchange to history."
+description: "LangChain memory persists conversation history across chain invocations  -  `ConversationBufferMemory` keeps all messages; `ConversationSummaryMemory` summarizes old messages to save tokens; in LCEL, memory is explicit: load history -> pass to prompt -> append new exchange to history."
 tags: [langchain, memory, conversation-history, ConversationBufferMemory, LCEL, layer-4, ai]
 status: draft
 difficulty: intermediate
@@ -11,7 +11,7 @@ created: 2026-05-17
 
 # Memory in LangChain
 
-> LangChain memory persists conversation history across chain invocations — `ConversationBufferMemory` keeps all messages; `ConversationSummaryMemory` summarizes old messages to save tokens; in LCEL, memory is explicit: load history → pass to prompt → append new exchange to history.
+> LangChain memory persists conversation history across chain invocations  -  `ConversationBufferMemory` keeps all messages; `ConversationSummaryMemory` summarizes old messages to save tokens; in LCEL, memory is explicit: load history -> pass to prompt -> append new exchange to history.
 
 ---
 
@@ -19,23 +19,23 @@ created: 2026-05-17
 
 **Core idea:**
 - **In-memory**: `ConversationBufferMemory` stores all messages in a Python list (lost on restart)
-- **Summary memory**: `ConversationSummaryMemory` uses LLM to compress old messages — saves tokens, loses detail
-- **LCEL pattern**: manage history explicitly — load from store → inject into prompt → save new messages after response
-- `RunnableWithMessageHistory` — LCEL wrapper that handles history load/save automatically
+- **Summary memory**: `ConversationSummaryMemory` uses LLM to compress old messages  -  saves tokens, loses detail
+- **LCEL pattern**: manage history explicitly  -  load from store -> inject into prompt -> save new messages after response
+- `RunnableWithMessageHistory`  -  LCEL wrapper that handles history load/save automatically
 - Per-user memory: `session_id` scopes memory to a specific conversation/user
 
 **Tricky points:**
-- LangChain memory is NOT persistent by default — `ConversationBufferMemory` is in-memory; restart = lost history; use `RedisChatMessageHistory` or similar for persistence
-- Growing history = growing token count — without pruning or summarization, long conversations hit the context limit
-- `ConversationSummaryMemory` introduces LLM calls for summarization — adds latency and cost; only worthwhile for very long conversations
-- In LCEL, the `session_id` must be stable across requests for the same user/session — use a UUID generated at conversation start
+- LangChain memory is NOT persistent by default  -  `ConversationBufferMemory` is in-memory; restart = lost history; use `RedisChatMessageHistory` or similar for persistence
+- Growing history = growing token count  -  without pruning or summarization, long conversations hit the context limit
+- `ConversationSummaryMemory` introduces LLM calls for summarization  -  adds latency and cost; only worthwhile for very long conversations
+- In LCEL, the `session_id` must be stable across requests for the same user/session  -  use a UUID generated at conversation start
 - Thread safety: Python dict for session storage is not thread-safe for concurrent requests; use Redis or a database for production
 
 ---
 
 ## What It Is
 
-LLMs are stateless — each API call starts fresh. Memory is what makes a chatbot feel like a conversation rather than isolated Q&A. LangChain provides memory components that load previous messages before each LLM call and save new messages after.
+LLMs are stateless  -  each API call starts fresh. Memory is what makes a chatbot feel like a conversation rather than isolated Q&A. LangChain provides memory components that load previous messages before each LLM call and save new messages after.
 
 The LCEL-native approach is explicit: you manage the history store, load it at the start of each chain invocation, and save the new messages after. `RunnableWithMessageHistory` wraps this pattern into a reusable component.
 
@@ -119,10 +119,10 @@ def get_session_history(session_id: str) -> RedisChatMessageHistory:
 
 ## How It Connects
 
-Memory is injected into chains via `MessagesPlaceholder` in the prompt template — the chain structure remains the same; memory just adds the history to the input.
+Memory is injected into chains via `MessagesPlaceholder` in the prompt template  -  the chain structure remains the same; memory just adds the history to the input.
 [[chains|Chains]]
 
-Long conversations use the context window — understanding context limits is required to reason about when memory must be pruned or summarized.
+Long conversations use the context window  -  understanding context limits is required to reason about when memory must be pruned or summarized.
 [[context-window|Context Window]]
 
 ---
@@ -130,10 +130,10 @@ Long conversations use the context window — understanding context limits is re
 ## Common Misconceptions
 
 Misconception 1: "LangChain handles memory persistence automatically."
-Reality: Default memory stores are in-process Python objects — lost on restart. For persistent memory, explicitly use `RedisChatMessageHistory`, `PostgresChatMessageHistory`, or a custom store backed by a database.
+Reality: Default memory stores are in-process Python objects  -  lost on restart. For persistent memory, explicitly use `RedisChatMessageHistory`, `PostgresChatMessageHistory`, or a custom store backed by a database.
 
 Misconception 2: "Summary memory is always better for long conversations."
-Reality: Summary memory loses detail — important details from early in the conversation may be compressed out. For many use cases, a sliding window (keep last N messages) is simpler and more predictable than summarization.
+Reality: Summary memory loses detail  -  important details from early in the conversation may be compressed out. For many use cases, a sliding window (keep last N messages) is simpler and more predictable than summarization.
 
 ---
 
@@ -158,7 +158,7 @@ Common question forms:
 - "How does conversation memory work in LangChain?"
 - "How do you persist conversation history?"
 
-Answer frame: LLMs are stateless — memory is added explicitly by loading history before each call and saving after. LangChain provides `ConversationBufferMemory` (all messages, in-memory), `ConversationSummaryMemory` (summarized, saves tokens). In LCEL: `MessagesPlaceholder` in the prompt + explicit history management. `RunnableWithMessageHistory` automates load/save. For persistence: `RedisChatMessageHistory` or database-backed store.
+Answer frame: LLMs are stateless  -  memory is added explicitly by loading history before each call and saving after. LangChain provides `ConversationBufferMemory` (all messages, in-memory), `ConversationSummaryMemory` (summarized, saves tokens). In LCEL: `MessagesPlaceholder` in the prompt + explicit history management. `RunnableWithMessageHistory` automates load/save. For persistence: `RedisChatMessageHistory` or database-backed store.
 
 ---
 
