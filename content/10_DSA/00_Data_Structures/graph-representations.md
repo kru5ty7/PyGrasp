@@ -1,5 +1,5 @@
----
-title: Graph Representations
+﻿---
+title: 16 - Graph Representations
 description: Graph representations determine how a graph is stored in memory, with adjacency lists and adjacency matrices offering fundamentally different performance trade-offs.
 tags: [dsa, layer-10, graph, adjacency-list, adjacency-matrix]
 status: draft

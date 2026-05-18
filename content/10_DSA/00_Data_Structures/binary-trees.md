@@ -1,5 +1,5 @@
----
-title: Binary Trees
+﻿---
+title: 10 - Binary Trees
 description: A binary tree is a hierarchical structure where each node has at most two children, forming the foundation for search trees, heaps, and expression parsers.
 tags: [dsa, layer-10, binary-tree, tree]
 status: draft

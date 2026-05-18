@@ -1,5 +1,5 @@
----
-title: IAM Policies
+﻿---
+title: 08 - IAM Policies
 description: IAM policies are JSON documents that define what actions are allowed or denied on which AWS resources — they are the mechanism by which every permission in AWS is granted or restricted.
 tags: [aws, cloud, layer-11, iam, policies, permissions]
 status: draft

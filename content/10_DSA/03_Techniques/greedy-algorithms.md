@@ -1,5 +1,5 @@
----
-title: Greedy Algorithms
+﻿---
+title: 38 - Greedy Algorithms
 description: A class of algorithms that make the locally optimal choice at each step, relying on the greedy choice property to guarantee a globally optimal solution.
 tags: [dsa, layer-10, greedy, optimization]
 status: draft

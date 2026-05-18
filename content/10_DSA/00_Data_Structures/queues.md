@@ -1,5 +1,5 @@
----
-title: Queues
+﻿---
+title: 06 - Queues
 description: A queue is a FIFO (First In, First Out) structure where elements are added at the back and removed from the front.
 tags: [dsa, layer-10, queue, fifo]
 status: draft

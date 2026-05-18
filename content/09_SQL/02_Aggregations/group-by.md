@@ -1,5 +1,5 @@
----
-title: GROUP BY
+﻿---
+title: 19 - GROUP BY
 description: GROUP BY partitions a query's rows into groups so that aggregate functions can produce one result per group instead of one result for the whole table.
 tags: [sql, layer-9, grouping, aggregation]
 status: draft

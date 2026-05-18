@@ -1,5 +1,5 @@
----
-title: Linear Search
+﻿---
+title: 27 - Linear Search
 description: Linear search examines each element in sequence until the target is found or the collection is exhausted, making it the universal search for unsorted or unindexed data.
 tags: [dsa, layer-10, searching, linear-search]
 status: draft

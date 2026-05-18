@@ -1,5 +1,5 @@
----
-title: Joins Overview
+﻿---
+title: 10 - Joins Overview
 description: A join combines rows from two or more tables based on a related column, forming the foundation of relational data retrieval.
 tags: [sql, layer-9, joins]
 status: draft

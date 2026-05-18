@@ -1,5 +1,5 @@
----
-title: Hash Tables
+﻿---
+title: 08 - Hash Tables
 description: A hash table maps keys to values via a hash function, enabling O(1) average lookup, insert, and delete.
 tags: [dsa, layer-10, hash-table, hash-map]
 status: draft

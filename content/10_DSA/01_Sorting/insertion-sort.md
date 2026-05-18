@@ -1,5 +1,5 @@
----
-title: Insertion Sort
+﻿---
+title: 20 - Insertion Sort
 description: A sorting algorithm that builds a sorted array incrementally by inserting each new element into its correct position within the already-sorted prefix.
 tags: [dsa, layer-10, sorting, insertion-sort]
 status: draft

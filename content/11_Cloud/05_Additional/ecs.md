@@ -1,5 +1,5 @@
----
-title: ECS (Elastic Container Service)
+﻿---
+title: 49 - ECS (Elastic Container Service)
 description: ECS is AWS's managed container orchestration service — it runs Docker containers at scale without Kubernetes complexity, using Fargate (serverless compute) or EC2 (managed instances) as the backing infrastructure.
 tags: [aws, cloud, layer-11, ecs, containers, fargate]
 status: draft

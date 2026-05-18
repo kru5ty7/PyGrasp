@@ -1,5 +1,5 @@
----
-title: SQL Interview Patterns
+﻿---
+title: 45 - SQL Interview Patterns
 description: The canonical SQL interview problem patterns and the query structure to solve each one.
 tags: [sql, layer-9, interviews, patterns, window-functions, cte]
 status: draft

@@ -1,5 +1,5 @@
----
-title: Cycle Detection
+﻿---
+title: 47 - Cycle Detection
 description: Algorithms for determining whether a graph or linked list contains a cycle, with different approaches required for undirected graphs, directed graphs, and linked lists.
 tags: [dsa, layer-10, cycle-detection, dfs, floyd]
 status: draft

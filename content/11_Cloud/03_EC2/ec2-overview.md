@@ -1,5 +1,5 @@
----
-title: EC2 Overview
+﻿---
+title: 23 - EC2 Overview
 description: EC2 (Elastic Compute Cloud) provides on-demand virtual machines on AWS — the foundation for running Python web applications, data pipelines, and any workload that needs full control over the OS and runtime environment.
 tags: [aws, cloud, layer-11, ec2, compute]
 status: draft

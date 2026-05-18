@@ -1,5 +1,5 @@
----
-title: Recursion
+﻿---
+title: 33 - Recursion
 description: A function that calls itself with a smaller input until it reaches a base case, enabling elegant solutions to problems with self-similar structure.
 tags: [dsa, layer-10, recursion, call-stack]
 status: draft

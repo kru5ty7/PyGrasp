@@ -1,5 +1,5 @@
----
-title: Views
+﻿---
+title: 38 - Views
 description: A view is a named saved SELECT query that behaves like a table, letting you abstract complexity and control data exposure without duplicating data.
 tags: [sql, layer-9, views, abstraction]
 status: draft

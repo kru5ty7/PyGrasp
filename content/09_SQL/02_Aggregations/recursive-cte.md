@@ -1,5 +1,5 @@
----
-title: Recursive CTEs
+﻿---
+title: 24 - Recursive CTEs
 description: Recursive CTEs extend the WITH clause with a self-referencing UNION ALL structure that enables SQL to traverse hierarchical and graph-structured data without application-level recursion.
 tags: [sql, layer-9, cte, recursion, hierarchical]
 status: draft

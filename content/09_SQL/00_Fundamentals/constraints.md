@@ -1,5 +1,5 @@
----
-title: Constraints (PRIMARY KEY, FOREIGN KEY, UNIQUE, NOT NULL, CHECK)
+﻿---
+title: 09 - Constraints (PRIMARY KEY, FOREIGN KEY, UNIQUE, NOT NULL, CHECK)
 description: Database constraints are the enforcement layer for data integrity rules, and pushing those rules into the database rather than relying solely on application code is the only way to guarantee they hold under all conditions.
 tags: [sql, layer-9, constraints, schema, integrity]
 status: draft

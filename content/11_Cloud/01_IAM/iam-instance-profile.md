@@ -1,5 +1,5 @@
----
-title: EC2 Instance Profiles
+﻿---
+title: 13 - EC2 Instance Profiles
 description: An instance profile is a container for an IAM role that attaches the role to an EC2 instance, allowing code running on the instance to call AWS APIs without any access keys.
 tags: [aws, cloud, layer-11, iam, ec2, instance-profile]
 status: draft

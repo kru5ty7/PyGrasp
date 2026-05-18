@@ -1,5 +1,5 @@
----
-title: Self Join
+﻿---
+title: 15 - Self Join
 description: A self join joins a table to itself using aliases, enabling queries over hierarchical or recursive relationships stored within a single table.
 tags: [sql, layer-9, joins, hierarchical]
 status: draft

@@ -1,5 +1,5 @@
----
-title: Aggregate Functions (COUNT, SUM, AVG, MIN, MAX)
+﻿---
+title: 18 - Aggregate Functions (COUNT, SUM, AVG, MIN, MAX)
 description: Aggregate functions collapse multiple rows into a single scalar result, forming the foundation of every summary query in SQL.
 tags: [sql, layer-9, aggregation, functions]
 status: draft

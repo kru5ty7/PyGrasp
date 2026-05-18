@@ -1,5 +1,5 @@
----
-title: Triggers
+﻿---
+title: 41 - Triggers
 description: A trigger is a database callback that fires automatically when a specified event occurs on a table, enabling automatic auditing, validation, and derived data maintenance.
 tags: [sql, layer-9, triggers, automation]
 status: draft

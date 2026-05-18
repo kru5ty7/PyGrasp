@@ -1,5 +1,5 @@
----
-title: S3 Storage Classes
+﻿---
+title: 19 - S3 Storage Classes
 description: S3 storage classes let you trade retrieval speed and availability against storage cost — choosing the wrong class for your access pattern means either paying too much or waiting hours to retrieve critical data.
 tags: [aws, cloud, layer-11, s3, storage-classes, cost]
 status: draft

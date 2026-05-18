@@ -1,5 +1,5 @@
----
-title: SQL Data Types
+﻿---
+title: 08 - SQL Data Types
 description: SQL data types define what values a column can hold and how the database stores and compares them, and choosing the wrong type at schema creation time causes correctness problems that are expensive to fix later.
 tags: [sql, layer-9, types, schema]
 status: draft

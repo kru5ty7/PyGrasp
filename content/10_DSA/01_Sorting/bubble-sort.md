@@ -1,5 +1,5 @@
----
-title: Bubble Sort
+﻿---
+title: 18 - Bubble Sort
 description: A comparison-based sorting algorithm that repeatedly swaps adjacent out-of-order elements, bubbling the largest values to the end of the array.
 tags: [dsa, layer-10, sorting, bubble-sort]
 status: draft

@@ -1,5 +1,5 @@
----
-title: Balanced Trees (AVL, Red-Black)
+﻿---
+title: 12 - Balanced Trees (AVL, Red-Black)
 description: Balanced trees automatically rebalance after insertions and deletions to guarantee O(log n) height and therefore O(log n) all operations.
 tags: [dsa, layer-10, avl-tree, red-black-tree, balanced]
 status: draft

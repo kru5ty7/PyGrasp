@@ -1,5 +1,5 @@
----
-title: HAVING Clause
+﻿---
+title: 20 - HAVING Clause
 description: HAVING filters groups after aggregation, filling the role WHERE cannot play when the filter condition references an aggregate result.
 tags: [sql, layer-9, filtering, aggregation]
 status: draft

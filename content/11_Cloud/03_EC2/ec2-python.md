@@ -1,5 +1,5 @@
----
-title: Managing EC2 with Python (boto3)
+﻿---
+title: 29 - Managing EC2 with Python (boto3)
 description: The core boto3 patterns for EC2 management — describing, launching, stopping, and tagging instances, handling pagination, and using waiters for state transitions.
 tags: [aws, cloud, layer-11, ec2, boto3, python]
 status: draft

@@ -1,5 +1,5 @@
----
-title: AWS CLI
+﻿---
+title: 03 - AWS CLI
 description: The AWS CLI is the command-line interface for interacting with AWS services — essential for scripting, automation, and verifying what your Python code does.
 tags: [aws, cloud, layer-11, cli, tooling]
 status: draft

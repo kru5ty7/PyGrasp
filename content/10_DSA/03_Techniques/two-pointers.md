@@ -1,5 +1,5 @@
----
-title: Two Pointers Technique
+﻿---
+title: 39 - Two Pointers Technique
 description: A technique that uses two indices moving through an array to reduce many O(n²) brute-force problems to O(n) by exploiting sorted order or structural properties.
 tags: [dsa, layer-10, two-pointers, arrays]
 status: draft

@@ -1,5 +1,5 @@
----
-title: DDL — CREATE, ALTER, DROP
+﻿---
+title: 03 - DDL — CREATE, ALTER, DROP
 description: DDL statements define the structure of a database rather than its data, and running them incorrectly in production can destroy schema history or lock tables for minutes.
 tags: [sql, layer-9, ddl, schema]
 status: draft

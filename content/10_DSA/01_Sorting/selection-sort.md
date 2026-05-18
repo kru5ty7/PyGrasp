@@ -1,5 +1,5 @@
----
-title: Selection Sort
+﻿---
+title: 19 - Selection Sort
 description: A comparison-based sorting algorithm that repeatedly selects the minimum element from the unsorted portion and places it at the front, making exactly n-1 swaps total.
 tags: [dsa, layer-10, sorting, selection-sort]
 status: draft

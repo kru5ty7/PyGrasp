@@ -1,5 +1,5 @@
----
-title: Backtracking
+﻿---
+title: 41 - Backtracking
 description: An exhaustive search with pruning that builds solutions incrementally and abandons partial solutions as soon as they cannot lead to a valid complete solution.
 tags: [dsa, layer-10, backtracking, recursion]
 status: draft

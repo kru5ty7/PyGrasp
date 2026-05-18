@@ -1,5 +1,5 @@
----
-title: Bit Manipulation
+﻿---
+title: 42 - Bit Manipulation
 description: Direct operation on the binary representation of integers using bitwise operators to achieve constant-time tricks that would otherwise require arithmetic or data structures.
 tags: [dsa, layer-10, bits, bitwise-operators]
 status: draft

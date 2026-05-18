@@ -1,5 +1,5 @@
----
-title: Tries
+﻿---
+title: 14 - Tries
 description: A trie (prefix tree) stores strings character-by-character in a tree, enabling O(L) insert, search, and prefix search independent of how many strings are stored.
 tags: [dsa, layer-10, trie, prefix-tree]
 status: draft

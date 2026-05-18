@@ -1,5 +1,5 @@
----
-title: Graphs
+﻿---
+title: 15 - Graphs
 description: A graph is a set of vertices connected by edges, making it the most general structure for modelling relationships and networks.
 tags: [dsa, layer-10, graph, directed, undirected]
 status: draft

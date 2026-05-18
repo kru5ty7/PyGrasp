@@ -1,5 +1,5 @@
----
-title: Timsort — Python's Sorting Algorithm
+﻿---
+title: 26 - Timsort — Python's Sorting Algorithm
 description: Timsort is Python's built-in sorting algorithm, a hybrid of merge sort and insertion sort that exploits naturally ordered subsequences in real-world data for exceptional performance.
 tags: [dsa, layer-10, sorting, timsort, python-internals]
 status: draft

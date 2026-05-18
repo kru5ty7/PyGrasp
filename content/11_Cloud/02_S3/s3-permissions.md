@@ -1,5 +1,5 @@
----
-title: S3 Bucket Policies and ACLs
+﻿---
+title: 17 - S3 Bucket Policies and ACLs
 description: S3 access is controlled by three layered mechanisms — IAM policies, bucket policies, and ACLs — and understanding their interaction and precedence prevents both security gaps and accidental lockouts.
 tags: [aws, cloud, layer-11, s3, permissions, bucket-policy]
 status: draft

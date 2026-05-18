@@ -1,5 +1,5 @@
----
-title: AWS Pricing Model
+﻿---
+title: 05 - AWS Pricing Model
 description: AWS charges on a pay-as-you-go basis across multiple dimensions — compute time, storage, API requests, and data transfer — and understanding these dimensions prevents unexpected bills that derail projects.
 tags: [aws, cloud, layer-11, pricing, cost]
 status: draft

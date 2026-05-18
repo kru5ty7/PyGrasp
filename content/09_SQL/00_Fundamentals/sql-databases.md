@@ -1,5 +1,5 @@
----
-title: SQL Databases (PostgreSQL, MySQL, SQLite)
+﻿---
+title: 02 - SQL Databases (PostgreSQL, MySQL, SQLite)
 description: PostgreSQL, MySQL, and SQLite are the three most common SQL databases in Python development, and choosing the wrong one for a project creates problems that are expensive to fix later.
 tags: [sql, layer-9, fundamentals, postgresql, mysql, sqlite]
 status: draft

@@ -1,5 +1,5 @@
----
-title: Stacks
+﻿---
+title: 05 - Stacks
 description: A stack is a LIFO (Last In, First Out) structure where all insertions and removals happen at one end, called the top.
 tags: [dsa, layer-10, stack, lifo]
 status: draft

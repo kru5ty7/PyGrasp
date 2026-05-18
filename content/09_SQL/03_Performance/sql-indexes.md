@@ -1,5 +1,5 @@
----
-title: SQL Indexes
+﻿---
+title: 25 - SQL Indexes
 description: An index is a separate data structure the database maintains to speed up row lookups, trading write overhead for read performance.
 tags: [sql, layer-9, indexes, performance]
 status: draft

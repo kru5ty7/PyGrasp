@@ -1,5 +1,5 @@
----
-title: Subqueries
+﻿---
+title: 16 - Subqueries
 description: A subquery is a SELECT statement nested inside another SQL statement, enabling modular query composition and expressive filtering that a flat query cannot achieve.
 tags: [sql, layer-9, subqueries]
 status: draft

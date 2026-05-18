@@ -1,5 +1,5 @@
----
-title: Covering Indexes
+﻿---
+title: 28 - Covering Indexes
 description: A covering index contains every column a query needs, allowing the database to answer the query entirely from the index without touching the actual table rows.
 tags: [sql, layer-9, indexes, covering, performance]
 status: draft

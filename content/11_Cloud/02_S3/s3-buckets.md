@@ -1,5 +1,5 @@
----
-title: S3 Buckets and Objects
+﻿---
+title: 15 - S3 Buckets and Objects
 description: A bucket is the top-level container in S3 — globally unique, region-bound — and every file you store inside it is an object identified entirely by its key string.
 tags: [aws, cloud, layer-11, s3, buckets]
 status: draft

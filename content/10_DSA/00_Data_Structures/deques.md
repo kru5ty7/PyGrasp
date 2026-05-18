@@ -1,5 +1,5 @@
----
-title: Deques
+﻿---
+title: 07 - Deques
 description: A deque (double-ended queue) supports O(1) insertion and removal at both ends, making it the correct structure for queue and sliding-window operations in Python.
 tags: [dsa, layer-10, deque, double-ended-queue]
 status: draft

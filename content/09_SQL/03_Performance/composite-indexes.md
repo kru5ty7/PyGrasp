@@ -1,5 +1,5 @@
----
-title: Composite Indexes
+﻿---
+title: 27 - Composite Indexes
 description: A composite index covers multiple columns in a defined order, and that order determines exactly which query patterns the index can serve — getting it wrong means the index is silently ignored.
 tags: [sql, layer-9, indexes, composite, performance]
 status: draft

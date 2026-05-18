@@ -1,5 +1,5 @@
----
-title: AWS Regions and Availability Zones
+﻿---
+title: 02 - AWS Regions and Availability Zones
 description: AWS infrastructure is divided into Regions (geographic areas) and Availability Zones (isolated data centres within a region), and deploying across AZs is the primary mechanism for high availability.
 tags: [aws, cloud, layer-11, regions, availability-zones]
 status: draft

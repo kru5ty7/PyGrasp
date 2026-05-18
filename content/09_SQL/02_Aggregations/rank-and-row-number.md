@@ -1,5 +1,5 @@
----
-title: RANK, DENSE_RANK, ROW_NUMBER
+﻿---
+title: 22 - RANK, DENSE_RANK, ROW_NUMBER
 description: Three window functions that assign ordinal positions to rows within a partition, each with distinct tie-handling behavior that determines which one is appropriate for a given ranking problem.
 tags: [sql, layer-9, window-functions, ranking]
 status: draft

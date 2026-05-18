@@ -1,5 +1,5 @@
----
-title: Merge Sort
+﻿---
+title: 21 - Merge Sort
 description: A divide-and-conquer sorting algorithm that recursively splits the array in half, sorts each half, and merges the sorted halves into a single sorted result.
 tags: [dsa, layer-10, sorting, merge-sort, divide-and-conquer]
 status: draft

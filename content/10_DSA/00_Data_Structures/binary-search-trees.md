@@ -1,5 +1,5 @@
----
-title: Binary Search Trees
+﻿---
+title: 11 - Binary Search Trees
 description: A BST is a binary tree with an ordering property that enables O(log n) average search, insert, and delete.
 tags: [dsa, layer-10, bst, binary-search-tree]
 status: draft

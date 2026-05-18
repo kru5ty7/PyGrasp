@@ -1,5 +1,5 @@
----
-title: EC2 Security Groups
+﻿---
+title: 26 - EC2 Security Groups
 description: A security group is a stateful virtual firewall attached to an EC2 instance that controls which inbound and outbound traffic is allowed — misconfigured security groups are the most common cause of EC2 connectivity failures.
 tags: [aws, cloud, layer-11, ec2, security-groups, networking]
 status: draft

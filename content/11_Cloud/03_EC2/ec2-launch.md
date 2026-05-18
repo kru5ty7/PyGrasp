@@ -1,5 +1,5 @@
----
-title: Launching EC2 Instances
+﻿---
+title: 25 - Launching EC2 Instances
 description: Launching an EC2 instance requires choosing an AMI, instance type, key pair, security group, subnet, and storage — understanding each choice at launch time prevents connectivity failures and data loss later.
 tags: [aws, cloud, layer-11, ec2, launch]
 status: draft

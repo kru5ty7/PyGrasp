@@ -1,5 +1,5 @@
----
-title: CloudWatch
+﻿---
+title: 46 - CloudWatch
 description: CloudWatch is AWS's monitoring and observability service — it centralises logs, metrics, and alarms from all AWS services and your own application code into a single, queryable platform.
 tags: [aws, cloud, layer-11, cloudwatch, monitoring, logging]
 status: draft

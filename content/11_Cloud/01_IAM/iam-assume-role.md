@@ -1,5 +1,5 @@
----
-title: Assuming IAM Roles (STS)
+﻿---
+title: 11 - Assuming IAM Roles (STS)
 description: Assuming a role means exchanging your current credentials for temporary credentials scoped to that role's permissions — this is the mechanism for cross-account access, privilege scoping, and third-party delegation in AWS.
 tags: [aws, cloud, layer-11, iam, sts, assume-role]
 status: draft

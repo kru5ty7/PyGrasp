@@ -1,5 +1,5 @@
----
-title: DML — INSERT, UPDATE, DELETE
+﻿---
+title: 04 - DML — INSERT, UPDATE, DELETE
 description: DML statements change the data inside a database's tables, and every one of them can cause irreversible data loss if used without care or proper transaction management.
 tags: [sql, layer-9, dml, mutations]
 status: draft

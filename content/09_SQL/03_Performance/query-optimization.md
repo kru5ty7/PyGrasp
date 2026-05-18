@@ -1,5 +1,5 @@
----
-title: Query Optimization
+﻿---
+title: 30 - Query Optimization
 description: Query optimization is the practice of rewriting SQL and designing indexes so that queries execute faster without changing their results — a skill that separates developers who understand the database from those who only use it.
 tags: [sql, layer-9, performance, optimization]
 status: draft

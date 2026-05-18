@@ -1,5 +1,5 @@
----
-title: Disjoint Sets (Union-Find)
+﻿---
+title: 17 - Disjoint Sets (Union-Find)
 description: Union-Find tracks which elements belong to which group, supporting near-O(1) find and union operations through path compression and union by rank.
 tags: [dsa, layer-10, union-find, disjoint-set]
 status: draft

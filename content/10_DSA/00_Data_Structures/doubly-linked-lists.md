@@ -1,5 +1,5 @@
----
-title: Doubly Linked Lists
+﻿---
+title: 04 - Doubly Linked Lists
 description: A doubly linked list extends the singly linked list with backward pointers, enabling O(1) deletion of any known node.
 tags: [dsa, layer-10, linked-list, doubly-linked]
 status: draft

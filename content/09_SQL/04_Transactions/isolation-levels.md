@@ -1,5 +1,5 @@
----
-title: Isolation Levels
+﻿---
+title: 34 - Isolation Levels
 description: Isolation levels define which concurrency anomalies a transaction is protected from and which it permits, trading correctness guarantees for throughput.
 tags: [sql, layer-9, isolation, transactions, concurrency]
 status: draft

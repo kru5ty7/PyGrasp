@@ -1,5 +1,5 @@
----
-title: SNS (Simple Notification Service)
+﻿---
+title: 44 - SNS (Simple Notification Service)
 description: SNS is AWS's managed pub/sub service — a single published message is pushed to all subscribers simultaneously, enabling fan-out, alerts, and multi-consumer event distribution.
 tags: [aws, cloud, layer-11, sns, messaging, pub-sub]
 status: draft

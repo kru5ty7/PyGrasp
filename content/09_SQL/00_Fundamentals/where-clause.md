@@ -1,5 +1,5 @@
----
-title: WHERE Clause
+﻿---
+title: 06 - WHERE Clause
 description: The WHERE clause filters rows from a query's source before any other processing, and its NULL-handling and operator-precedence rules are the source of some of SQL's most persistent bugs.
 tags: [sql, layer-9, filtering, where]
 status: draft

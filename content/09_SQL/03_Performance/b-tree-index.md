@@ -1,5 +1,5 @@
----
-title: B-Tree Index Internals
+﻿---
+title: 26 - B-Tree Index Internals
 description: The B-tree is the default index structure in PostgreSQL and MySQL — a self-balancing sorted tree that supports equality, range, and ordering operations in O(log n) time.
 tags: [sql, layer-9, indexes, b-tree, internals]
 status: draft

@@ -1,5 +1,5 @@
----
-title: S3 Versioning
+﻿---
+title: 20 - S3 Versioning
 description: S3 versioning keeps a full history of every object version in a bucket, protecting against accidental deletion and enabling rollback — but it requires understanding how delete markers work to avoid confusing failures.
 tags: [aws, cloud, layer-11, s3, versioning]
 status: draft

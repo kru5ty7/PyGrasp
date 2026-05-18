@@ -1,5 +1,5 @@
----
-title: Materialized Views
+﻿---
+title: 39 - Materialized Views
 description: A materialized view is a view whose query results are physically stored on disk, enabling fast reads at the cost of data freshness.
 tags: [sql, layer-9, views, materialized, performance]
 status: draft

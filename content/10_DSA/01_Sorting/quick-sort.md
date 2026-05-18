@@ -1,5 +1,5 @@
----
-title: Quick Sort
+﻿---
+title: 22 - Quick Sort
 description: A divide-and-conquer sorting algorithm that partitions an array around a pivot element and recursively sorts each partition, achieving O(n log n) average time in-place.
 tags: [dsa, layer-10, sorting, quick-sort, divide-and-conquer]
 status: draft

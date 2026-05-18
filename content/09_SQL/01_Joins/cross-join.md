@@ -1,5 +1,5 @@
----
-title: CROSS JOIN
+﻿---
+title: 14 - CROSS JOIN
 description: CROSS JOIN produces the Cartesian product of two tables — every row from the left paired with every row from the right — which is powerful for generating combinations but catastrophic when done by accident.
 tags: [sql, layer-9, joins, cartesian-product]
 status: draft

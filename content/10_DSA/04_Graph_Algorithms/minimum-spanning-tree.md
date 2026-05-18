@@ -1,5 +1,5 @@
----
-title: Minimum Spanning Tree
+﻿---
+title: 46 - Minimum Spanning Tree
 description: A spanning tree of a weighted undirected graph that connects all vertices with the minimum possible total edge weight, using exactly V-1 edges and no cycles.
 tags: [dsa, layer-10, mst, kruskal, prim]
 status: draft

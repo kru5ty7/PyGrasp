@@ -1,5 +1,5 @@
----
-title: Locking in SQL
+﻿---
+title: 35 - Locking in SQL
 description: Locks coordinate concurrent access to shared data by controlling which operations on the same rows or tables can proceed simultaneously.
 tags: [sql, layer-9, locks, concurrency, transactions]
 status: draft

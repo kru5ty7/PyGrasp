@@ -1,5 +1,5 @@
----
-title: Counting Sort
+﻿---
+title: 24 - Counting Sort
 description: A non-comparison sorting algorithm that counts the frequency of each value and reconstructs a sorted output in O(n + k) time, where k is the range of input values.
 tags: [dsa, layer-10, sorting, counting-sort, linear-sort]
 status: draft

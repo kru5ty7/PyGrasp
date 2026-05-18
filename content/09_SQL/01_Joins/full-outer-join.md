@@ -1,5 +1,5 @@
----
-title: FULL OUTER JOIN
+﻿---
+title: 13 - FULL OUTER JOIN
 description: FULL OUTER JOIN returns all rows from both tables, filling NULLs where no match exists on either side — making it the tool for data reconciliation when you need to see everything from both sources simultaneously.
 tags: [sql, layer-9, joins, outer-join]
 status: draft

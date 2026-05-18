@@ -1,5 +1,5 @@
----
-title: Heaps and Priority Queues
+﻿---
+title: 13 - Heaps and Priority Queues
 description: A heap is a complete binary tree stored as an array where the parent is always the minimum (min-heap) or maximum (max-heap) of its subtree.
 tags: [dsa, layer-10, heap, priority-queue]
 status: draft

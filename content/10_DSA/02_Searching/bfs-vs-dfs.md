@@ -1,5 +1,5 @@
----
-title: BFS vs DFS
+﻿---
+title: 32 - BFS vs DFS
 description: A direct comparison of breadth-first search and depth-first search — when to use each, how they differ in memory use and traversal order, and how to choose between them for any graph problem.
 tags: [dsa, layer-10, bfs, dfs, graph-traversal]
 status: draft

@@ -1,5 +1,5 @@
----
-title: EC2 User Data Scripts
+﻿---
+title: 28 - EC2 User Data Scripts
 description: User data is a script that runs once when an EC2 instance first launches — the standard mechanism for bootstrapping software installation, service configuration, and code deployment without manual SSH intervention.
 tags: [aws, cloud, layer-11, ec2, user-data, bootstrap]
 status: draft

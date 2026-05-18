@@ -1,5 +1,5 @@
----
-title: S3 Event Notifications
+﻿---
+title: 21 - S3 Event Notifications
 description: S3 event notifications let you trigger downstream processing automatically when objects are created, deleted, or restored — the foundation of event-driven data pipelines on AWS.
 tags: [aws, cloud, layer-11, s3, events, lambda]
 status: draft

@@ -1,5 +1,5 @@
----
-title: EC2 Key Pairs and SSH
+﻿---
+title: 27 - EC2 Key Pairs and SSH
 description: EC2 key pairs are RSA or ED25519 keypairs where AWS holds the public key and you hold the private key — the foundation of SSH access to Linux EC2 instances, with modern alternatives that avoid the risks of lost or shared key files.
 tags: [aws, cloud, layer-11, ec2, ssh, key-pairs]
 status: draft

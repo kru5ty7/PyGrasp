@@ -1,5 +1,5 @@
----
-title: RDS
+﻿---
+title: 45 - RDS
 description: RDS is AWS's managed relational database service — it handles OS patching, automated backups, and Multi-AZ failover while you focus on schema design and query performance.
 tags: [aws, cloud, layer-11, rds, database, managed]
 status: draft

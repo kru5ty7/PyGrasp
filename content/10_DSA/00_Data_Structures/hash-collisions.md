@@ -1,5 +1,5 @@
----
-title: Hash Collisions
+﻿---
+title: 09 - Hash Collisions
 description: A hash collision occurs when two different keys produce the same bucket index, requiring a resolution strategy to maintain correctness.
 tags: [dsa, layer-10, hash-table, collisions]
 status: draft

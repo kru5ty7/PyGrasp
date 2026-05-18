@@ -1,5 +1,5 @@
----
-title: IAM Users and Groups
+﻿---
+title: 07 - IAM Users and Groups
 description: IAM users are long-term identities for people or applications, and groups are collections of users that share permissions — both are the human-facing side of IAM access management.
 tags: [aws, cloud, layer-11, iam, users, groups]
 status: draft

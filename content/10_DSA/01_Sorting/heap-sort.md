@@ -1,5 +1,5 @@
----
-title: Heap Sort
+﻿---
+title: 23 - Heap Sort
 description: An in-place sorting algorithm that builds a max-heap from the array, then repeatedly extracts the maximum element to produce a sorted sequence in O(n log n) guaranteed time.
 tags: [dsa, layer-10, sorting, heap-sort]
 status: draft

@@ -1,5 +1,5 @@
----
-title: LEFT and RIGHT JOIN
+﻿---
+title: 12 - LEFT and RIGHT JOIN
 description: LEFT JOIN returns all rows from the left table plus matched rows from the right, filling unmatched right-side columns with NULL — making it the essential tool for finding optional or missing relationships.
 tags: [sql, layer-9, joins, outer-join]
 status: draft

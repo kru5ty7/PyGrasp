@@ -1,5 +1,5 @@
----
-title: Lambda Environment Variables
+﻿---
+title: 37 - Lambda Environment Variables
 description: Lambda environment variables provide per-function runtime configuration — understanding their limits, encryption model, and secure secret management prevents misconfiguration in production.
 tags: [aws, cloud, layer-11, lambda, environment-variables, configuration]
 status: draft

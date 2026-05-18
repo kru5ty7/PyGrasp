@@ -1,5 +1,5 @@
----
-title: IAM Roles with Python (boto3)
+﻿---
+title: 10 - IAM Roles with Python (boto3)
 description: When Python code runs on Lambda, EC2, or ECS with an IAM role attached, boto3 automatically retrieves temporary credentials from the execution environment — no access keys in code or environment variables required.
 tags: [aws, cloud, layer-11, iam, boto3, roles]
 status: draft

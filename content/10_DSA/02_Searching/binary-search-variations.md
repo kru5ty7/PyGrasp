@@ -1,5 +1,5 @@
----
-title: Binary Search Variations
+﻿---
+title: 29 - Binary Search Variations
 description: Binary search applied to finding boundary positions, insertion points, searching rotated arrays, and solving optimisation problems by searching on the answer rather than the array.
 tags: [dsa, layer-10, searching, binary-search]
 status: draft

@@ -1,5 +1,5 @@
----
-title: ACID Properties
+﻿---
+title: 33 - ACID Properties
 description: ACID is the four-property contract that defines what a reliable database transaction must guarantee — atomicity, consistency, isolation, and durability.
 tags: [sql, layer-9, acid, transactions, consistency]
 status: draft

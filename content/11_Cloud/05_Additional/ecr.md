@@ -1,5 +1,5 @@
----
-title: ECR (Elastic Container Registry)
+﻿---
+title: 48 - ECR (Elastic Container Registry)
 description: ECR is AWS's managed Docker container registry — it stores, versions, and secures container images for deployment to Lambda, ECS, EKS, and EC2 within the same AWS account.
 tags: [aws, cloud, layer-11, ecr, docker, containers]
 status: draft

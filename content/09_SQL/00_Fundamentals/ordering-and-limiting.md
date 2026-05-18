@@ -1,5 +1,5 @@
----
-title: ORDER BY, LIMIT, OFFSET
+﻿---
+title: 07 - ORDER BY, LIMIT, OFFSET
 description: ORDER BY, LIMIT, and OFFSET control the order and size of a query's result set, but OFFSET-based pagination degrades severely on large tables and cursor-based pagination is almost always the better choice.
 tags: [sql, layer-9, ordering, pagination]
 status: draft

@@ -1,5 +1,5 @@
----
-title: Elastic Load Balancer
+﻿---
+title: 31 - Elastic Load Balancer
 description: AWS Elastic Load Balancers distribute incoming traffic across multiple EC2 instances, perform health checks, terminate SSL, and enable zero-downtime deployments — the Application Load Balancer is the standard choice for Python web applications.
 tags: [aws, cloud, layer-11, ec2, elb, load-balancing]
 status: draft

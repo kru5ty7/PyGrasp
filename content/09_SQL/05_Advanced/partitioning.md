@@ -1,5 +1,5 @@
----
-title: Table Partitioning
+﻿---
+title: 42 - Table Partitioning
 description: Table partitioning divides a large table into smaller physical pieces while presenting a single logical table to queries, enabling partition pruning and fast data lifecycle management.
 tags: [sql, layer-9, partitioning, performance, scaling]
 status: draft

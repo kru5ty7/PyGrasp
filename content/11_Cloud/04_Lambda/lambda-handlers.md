@@ -1,5 +1,5 @@
----
-title: Lambda Handlers
+﻿---
+title: 35 - Lambda Handlers
 description: The Lambda handler is the entry point for every invocation — its structure, initialisation patterns, and event-specific shapes determine correctness and performance.
 tags: [aws, cloud, layer-11, lambda, handlers, events]
 status: draft

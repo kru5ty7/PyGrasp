@@ -1,5 +1,5 @@
----
-title: S3 Presigned URLs
+﻿---
+title: 18 - S3 Presigned URLs
 description: A presigned URL is a time-limited, credential-embedded URL that grants temporary access to a private S3 object — enabling secure file downloads and direct browser-to-S3 uploads without exposing AWS credentials.
 tags: [aws, cloud, layer-11, s3, presigned-urls, security]
 status: draft

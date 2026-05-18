@@ -1,5 +1,5 @@
----
-title: Lambda with Python
+﻿---
+title: 34 - Lambda with Python
 description: Writing, configuring, and deploying Python Lambda functions — the handler contract, the runtime environment, and deployment mechanics.
 tags: [aws, cloud, layer-11, lambda, python, serverless]
 status: draft

@@ -1,5 +1,5 @@
----
-title: Sorting Algorithm Comparison
+﻿---
+title: 25 - Sorting Algorithm Comparison
 description: A head-to-head analysis of all major sorting algorithms across time complexity, space complexity, stability, adaptivity, and practical use cases.
 tags: [dsa, layer-10, sorting, comparison]
 status: draft

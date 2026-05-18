@@ -1,5 +1,5 @@
----
-title: Deploying Python Apps on EC2
+﻿---
+title: 32 - Deploying Python Apps on EC2
 description: The production-grade pattern for running a Python web application on EC2 uses gunicorn as the WSGI server behind nginx as a reverse proxy, managed by systemd — understanding why each layer exists prevents common deployment failures.
 tags: [aws, cloud, layer-11, ec2, deployment, python, gunicorn]
 status: draft

@@ -1,5 +1,5 @@
----
-title: Principle of Least Privilege
+﻿---
+title: 12 - Principle of Least Privilege
 description: Least privilege means giving every identity only the minimum permissions required for its specific function — it is the foundational security design principle for IAM and the primary defence against credential compromise.
 tags: [aws, cloud, layer-11, iam, security, least-privilege]
 status: draft

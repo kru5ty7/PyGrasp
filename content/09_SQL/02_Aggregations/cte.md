@@ -1,5 +1,5 @@
----
-title: Common Table Expressions (CTEs)
+﻿---
+title: 23 - Common Table Expressions (CTEs)
 description: A CTE is a named temporary result set defined with the WITH clause that makes complex queries readable by breaking them into clearly labeled steps.
 tags: [sql, layer-9, cte, readability]
 status: draft

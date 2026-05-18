@@ -1,5 +1,5 @@
----
-title: Arrays
+﻿---
+title: 02 - Arrays
 description: Arrays store elements in contiguous memory blocks, enabling O(1) random access by index.
 tags: [dsa, layer-10, arrays, contiguous-memory]
 status: draft

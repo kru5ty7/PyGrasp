@@ -1,5 +1,5 @@
----
-title: Divide and Conquer
+﻿---
+title: 34 - Divide and Conquer
 description: A problem-solving paradigm that recursively splits a problem into independent subproblems, solves each, then combines results into the final answer.
 tags: [dsa, layer-10, divide-and-conquer, recursion]
 status: draft

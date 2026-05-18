@@ -1,5 +1,5 @@
----
-title: Bellman-Ford Algorithm
+﻿---
+title: 44 - Bellman-Ford Algorithm
 description: A shortest-path algorithm that handles negative edge weights and detects negative cycles by relaxing all edges V-1 times.
 tags: [dsa, layer-10, bellman-ford, shortest-path, negative-weights]
 status: draft

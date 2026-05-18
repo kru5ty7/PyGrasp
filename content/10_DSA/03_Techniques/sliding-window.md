@@ -1,5 +1,5 @@
----
-title: Sliding Window Technique
+﻿---
+title: 40 - Sliding Window Technique
 description: A technique that maintains a contiguous subarray (the window) and slides it through the array by expanding or shrinking based on a constraint, converting O(n²) subarray problems to O(n).
 tags: [dsa, layer-10, sliding-window, arrays, subarray]
 status: draft

@@ -1,5 +1,5 @@
----
-title: Lambda Concurrency and Scaling
+﻿---
+title: 41 - Lambda Concurrency and Scaling
 description: Lambda scales by adding concurrent execution environments — understanding the concurrency model, account limits, reserved and provisioned concurrency, and throttling is critical for production reliability.
 tags: [aws, cloud, layer-11, lambda, concurrency, scaling]
 status: draft

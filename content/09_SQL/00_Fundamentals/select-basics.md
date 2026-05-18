@@ -1,5 +1,5 @@
----
-title: SELECT Basics
+﻿---
+title: 05 - SELECT Basics
 description: The SELECT statement is the primary tool for reading data from a database, and understanding its logical execution order — which differs from its written order — is the key to writing correct queries.
 tags: [sql, layer-9, select, querying]
 status: draft

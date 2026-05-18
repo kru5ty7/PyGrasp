@@ -1,5 +1,5 @@
----
-title: boto3 Basics
+﻿---
+title: 04 - boto3 Basics
 description: boto3 is the official AWS SDK for Python — it exposes every AWS service API through two interfaces (client and resource) and handles credential resolution, request signing, and error handling.
 tags: [aws, cloud, layer-11, boto3, python]
 status: draft

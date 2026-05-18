@@ -1,5 +1,5 @@
----
-title: SQS (Simple Queue Service)
+﻿---
+title: 43 - SQS (Simple Queue Service)
 description: SQS is AWS's managed message queue — it decouples producers from consumers and provides durable, at-least-once message delivery with configurable retention and dead-letter queue support.
 tags: [aws, cloud, layer-11, sqs, messaging, queues]
 status: draft

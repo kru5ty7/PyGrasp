@@ -1,5 +1,5 @@
----
-title: Lambda Triggers (S3, API Gateway, SQS)
+﻿---
+title: 39 - Lambda Triggers (S3, API Gateway, SQS)
 description: Lambda triggers connect event sources to your function — understanding the invocation model, event shape, and failure semantics of each trigger type is essential for correct integration design.
 tags: [aws, cloud, layer-11, lambda, triggers, events]
 status: draft

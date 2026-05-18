@@ -1,5 +1,5 @@
----
-title: Lambda IAM Execution Role
+﻿---
+title: 38 - Lambda IAM Execution Role
 description: Every Lambda function assumes an IAM execution role at runtime — this role is the sole source of permissions for all AWS API calls the function makes.
 tags: [aws, cloud, layer-11, lambda, iam, execution-role]
 status: draft

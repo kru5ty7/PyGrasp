@@ -1,5 +1,5 @@
----
-title: EXPLAIN and EXPLAIN ANALYZE
+﻿---
+title: 29 - EXPLAIN and EXPLAIN ANALYZE
 description: EXPLAIN shows the query execution plan the planner chose; EXPLAIN ANALYZE runs the query and reveals both estimated and actual costs, making it the essential tool for diagnosing slow queries.
 tags: [sql, layer-9, performance, query-planning, explain]
 status: draft

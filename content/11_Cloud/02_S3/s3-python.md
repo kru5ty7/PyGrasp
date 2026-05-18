@@ -1,5 +1,5 @@
----
-title: S3 with Python (boto3)
+﻿---
+title: 16 - S3 with Python (boto3)
 description: The core boto3 patterns every Python developer needs for uploading, downloading, listing, deleting, and streaming S3 objects reliably and efficiently.
 tags: [aws, cloud, layer-11, s3, boto3, python]
 status: draft

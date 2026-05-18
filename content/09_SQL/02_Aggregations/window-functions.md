@@ -1,5 +1,5 @@
----
-title: Window Functions
+﻿---
+title: 21 - Window Functions
 description: Window functions compute aggregate-like values across a defined set of rows relative to the current row without collapsing the result set, enabling running totals, rankings, and moving averages in a single query.
 tags: [sql, layer-9, window-functions, analytics]
 status: draft

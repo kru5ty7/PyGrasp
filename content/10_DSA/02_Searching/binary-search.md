@@ -1,5 +1,5 @@
----
-title: Binary Search
+﻿---
+title: 28 - Binary Search
 description: Binary search finds a target in a sorted array by repeatedly halving the search space, achieving O(log n) time by eliminating half the remaining candidates with each comparison.
 tags: [dsa, layer-10, searching, binary-search]
 status: draft

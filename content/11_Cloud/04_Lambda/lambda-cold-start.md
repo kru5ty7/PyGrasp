@@ -1,5 +1,5 @@
----
-title: Lambda Cold Starts
+﻿---
+title: 40 - Lambda Cold Starts
 description: A cold start is the latency penalty Lambda pays when initialising a new execution environment — understanding its causes and mitigations is essential for latency-sensitive applications.
 tags: [aws, cloud, layer-11, lambda, cold-start, performance]
 status: draft

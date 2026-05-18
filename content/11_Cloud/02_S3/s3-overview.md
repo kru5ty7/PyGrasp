@@ -1,5 +1,5 @@
----
-title: S3 Overview
+﻿---
+title: 14 - S3 Overview
 description: S3 (Simple Storage Service) is AWS's infinitely scalable object storage — store any file as an object in a bucket, retrieve it by key, and never worry about provisioning disk space.
 tags: [aws, cloud, layer-11, s3, object-storage]
 status: draft

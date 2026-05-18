@@ -1,5 +1,5 @@
----
-title: Dynamic Programming
+﻿---
+title: 35 - Dynamic Programming
 description: A technique for solving problems with overlapping subproblems and optimal substructure by storing intermediate results to avoid recomputation.
 tags: [dsa, layer-10, dynamic-programming, memoization, tabulation]
 status: draft

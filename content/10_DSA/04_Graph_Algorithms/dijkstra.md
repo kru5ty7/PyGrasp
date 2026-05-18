@@ -1,5 +1,5 @@
----
-title: Dijkstra's Algorithm
+﻿---
+title: 43 - Dijkstra's Algorithm
 description: A greedy shortest-path algorithm that finds the minimum-weight path from a source to all other vertices in a graph with non-negative edge weights.
 tags: [dsa, layer-10, dijkstra, shortest-path, weighted-graph]
 status: draft

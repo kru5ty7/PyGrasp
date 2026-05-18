@@ -1,5 +1,5 @@
----
-title: Correlated Subqueries
+﻿---
+title: 17 - Correlated Subqueries
 description: A correlated subquery references a column from the outer query and must re-execute for every row the outer query processes, making it O(n×m) and a common source of severe performance problems on large tables.
 tags: [sql, layer-9, subqueries, performance]
 status: draft

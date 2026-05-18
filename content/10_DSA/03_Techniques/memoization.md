@@ -1,5 +1,5 @@
----
-title: Memoization
+﻿---
+title: 36 - Memoization
 description: The top-down dynamic programming technique that caches the result of each recursive call so the same subproblem is never computed more than once.
 tags: [dsa, layer-10, memoization, dynamic-programming, caching]
 status: draft

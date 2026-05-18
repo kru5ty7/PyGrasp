@@ -1,5 +1,5 @@
----
-title: Stored Procedures
+﻿---
+title: 40 - Stored Procedures
 description: A stored procedure is a named, reusable block of SQL and procedural logic saved inside the database and callable by name.
 tags: [sql, layer-9, stored-procedures, plpgsql]
 status: draft

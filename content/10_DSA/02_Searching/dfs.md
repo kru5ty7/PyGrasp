@@ -1,5 +1,5 @@
----
-title: Depth-First Search
+﻿---
+title: 31 - Depth-First Search
 description: DFS explores a graph by going as deep as possible along each branch before backtracking, using a stack (implicitly via recursion) to track the exploration path.
 tags: [dsa, layer-10, dfs, graph-traversal, recursion]
 status: draft

@@ -1,5 +1,5 @@
----
-title: EC2 Auto Scaling Groups
+﻿---
+title: 30 - EC2 Auto Scaling Groups
 description: An Auto Scaling Group automatically maintains a desired number of EC2 instances, replaces unhealthy ones, and scales capacity up or down in response to demand — making it the foundation of resilient, cost-efficient production deployments.
 tags: [aws, cloud, layer-11, ec2, auto-scaling, scaling]
 status: draft

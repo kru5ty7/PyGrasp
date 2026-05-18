@@ -1,5 +1,5 @@
----
-title: AWS API Gateway
+﻿---
+title: 47 - AWS API Gateway
 description: API Gateway is AWS's managed HTTP API service — it handles routing, authentication, throttling, and the Lambda proxy integration that turns an HTTP request into a Lambda invocation and back.
 tags: [aws, cloud, layer-11, api-gateway, rest, lambda]
 status: draft

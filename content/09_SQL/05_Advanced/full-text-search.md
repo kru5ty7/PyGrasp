@@ -1,5 +1,5 @@
----
-title: Full Text Search
+﻿---
+title: 43 - Full Text Search
 description: PostgreSQL's built-in full-text search uses tsvector and tsquery types with GIN indexes to provide efficient, linguistically-aware document search without an external search engine.
 tags: [sql, layer-9, full-text-search, search, postgresql]
 status: draft

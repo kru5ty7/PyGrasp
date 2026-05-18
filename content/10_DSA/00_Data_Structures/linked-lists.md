@@ -1,5 +1,5 @@
----
-title: Linked Lists
+﻿---
+title: 03 - Linked Lists
 description: A linked list is a chain of nodes where each node holds a value and a pointer to the next node, enabling O(1) insertion without shifting.
 tags: [dsa, layer-10, linked-list, pointers]
 status: draft

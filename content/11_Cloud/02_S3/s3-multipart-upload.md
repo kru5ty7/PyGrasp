@@ -1,5 +1,5 @@
----
-title: S3 Multipart Upload
+﻿---
+title: 22 - S3 Multipart Upload
 description: S3 multipart upload splits large objects into parallel parts for faster, resumable uploads — required for objects over 5GB and strongly recommended for anything over 100MB.
 tags: [aws, cloud, layer-11, s3, multipart, large-files]
 status: draft

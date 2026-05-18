@@ -1,5 +1,5 @@
----
-title: Topological Sort
+﻿---
+title: 45 - Topological Sort
 description: A linear ordering of vertices in a DAG such that every directed edge u→v places u before v, enabling dependency resolution for tasks, builds, and imports.
 tags: [dsa, layer-10, topological-sort, dag, dfs]
 status: draft

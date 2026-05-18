@@ -1,5 +1,5 @@
----
-title: N+1 Problem
+﻿---
+title: 31 - N+1 Problem
 description: The N+1 problem occurs when code fetches N rows and then issues one additional database query per row, producing N+1 round-trips instead of one — a pattern that is invisible in development and catastrophic at production scale.
 tags: [sql, layer-9, performance, orm, queries]
 status: draft

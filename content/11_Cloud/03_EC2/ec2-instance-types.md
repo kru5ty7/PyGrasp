@@ -1,5 +1,5 @@
----
-title: EC2 Instance Types
+﻿---
+title: 24 - EC2 Instance Types
 description: EC2 instance types encode the CPU, memory, network, and storage characteristics of a virtual machine — choosing the right type is the primary cost and performance decision when deploying Python applications on EC2.
 tags: [aws, cloud, layer-11, ec2, instance-types]
 status: draft

@@ -1,5 +1,5 @@
----
-title: SQL Deadlocks
+﻿---
+title: 36 - SQL Deadlocks
 description: A deadlock occurs when two transactions each hold a lock the other needs, creating a cycle that neither can break without external intervention.
 tags: [sql, layer-9, deadlocks, locks, transactions]
 status: draft

@@ -1,5 +1,5 @@
----
-title: INNER JOIN
+﻿---
+title: 11 - INNER JOIN
 description: INNER JOIN returns only the rows where the join condition matches in both tables, excluding any row that lacks a counterpart on either side.
 tags: [sql, layer-9, joins, inner-join]
 status: draft

@@ -1,5 +1,5 @@
----
-title: Lambda with Container Images
+﻿---
+title: 42 - Lambda with Container Images
 description: Lambda container image deployment removes the 250MB package size limit, enabling ML models and large dependency trees to run serverlessly — at the cost of larger cold starts and additional ECR infrastructure.
 tags: [aws, cloud, layer-11, lambda, containers, docker]
 status: draft

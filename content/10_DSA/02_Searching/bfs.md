@@ -1,5 +1,5 @@
----
-title: Breadth-First Search
+﻿---
+title: 30 - Breadth-First Search
 description: BFS explores a graph or tree level by level using a queue, guaranteeing the shortest path (by edge count) in an unweighted graph and visiting all nodes reachable from the source.
 tags: [dsa, layer-10, bfs, graph-traversal, shortest-path]
 status: draft

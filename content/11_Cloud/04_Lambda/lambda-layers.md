@@ -1,5 +1,5 @@
----
-title: Lambda Layers
+﻿---
+title: 36 - Lambda Layers
 description: Lambda layers are versioned ZIP archives of shared code or dependencies mounted at /opt, allowing multiple functions to share libraries without duplicating deployment packages.
 tags: [aws, cloud, layer-11, lambda, layers, dependencies]
 status: draft

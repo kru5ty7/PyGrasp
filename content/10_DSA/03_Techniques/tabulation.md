@@ -1,5 +1,5 @@
----
-title: Tabulation
+﻿---
+title: 37 - Tabulation
 description: The bottom-up dynamic programming approach that fills a table iteratively from base cases to the answer, eliminating recursion entirely.
 tags: [dsa, layer-10, tabulation, dynamic-programming]
 status: draft

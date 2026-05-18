@@ -1,5 +1,5 @@
----
-title: JSON in PostgreSQL
+﻿---
+title: 44 - JSON in PostgreSQL
 description: PostgreSQL's JSONB type stores semi-structured data in an indexed binary format, enabling flexible schemas and powerful JSON queries within a relational database.
 tags: [sql, layer-9, json, jsonb, postgresql]
 status: draft

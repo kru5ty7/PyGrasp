@@ -1,5 +1,5 @@
----
-title: What is SQL
+﻿---
+title: 01 - What is SQL
 description: SQL is a declarative language for querying and manipulating relational databases, and understanding what "declarative" means unlocks how to think about every query you write.
 tags: [sql, layer-9, fundamentals]
 status: draft

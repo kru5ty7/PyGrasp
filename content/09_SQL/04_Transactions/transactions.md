@@ -1,5 +1,5 @@
----
-title: Transactions
+﻿---
+title: 32 - Transactions
 description: A transaction groups multiple SQL operations into a single all-or-nothing unit of work, guaranteeing that partial failures leave no trace.
 tags: [sql, layer-9, transactions, acid]
 status: draft
