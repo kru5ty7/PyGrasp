@@ -1,16 +1,16 @@
-﻿---
-title: Learning Path  -  System Design
-description: Scalability, caching, databases at scale, messaging, API design, microservices, and system design case studies.
-tags: [moc, learning-path, system-design, layer-7]
+---
+title: Learning Path — High Level Design (HLD)
+description: Distributed systems architecture — scalability, caching, databases at scale, messaging, microservices patterns, and HLD case studies.
+tags: [moc, learning-path, hld, system-design, layer-8]
 ---
 
-# Learning Path  -  System Design
+# Learning Path — High Level Design (HLD)
 
-> Designing systems that scale. Mostly independent of earlier layers  -  can be read after Layer 3.
+> Designing systems that scale across machines. Can be read after Layer 3. Every note includes an architecture diagram.
 
 ---
 
-## Layer 7a  -  Fundamentals
+## Layer 8a — Fundamentals
 
 1. [[scalability-basics|Scalability Basics]]
 2. [[horizontal-vs-vertical-scaling|Horizontal vs Vertical Scaling]]
@@ -19,10 +19,11 @@ tags: [moc, learning-path, system-design, layer-7]
 5. [[consistency-models|Consistency Models]]
 6. [[latency-vs-throughput|Latency vs Throughput]]
 7. [[back-of-the-envelope|Back of the Envelope Estimation]]
+8. [[sla-slo-sli|SLA, SLO, SLI]]
 
 ---
 
-## Layer 7b  -  Networking and Load Balancing
+## Layer 8b — Networking and Load Balancing
 
 1. [[dns|DNS]]
 2. [[load-balancing|Load Balancing]]
@@ -31,10 +32,11 @@ tags: [moc, learning-path, system-design, layer-7]
 5. [[reverse-proxy|Reverse Proxy]]
 6. [[cdn|CDN]]
 7. [[consistent-hashing|Consistent Hashing]]
+8. [[api-gateway-hld|API Gateway]]
 
 ---
 
-## Layer 7c  -  Caching
+## Layer 8c — Caching
 
 1. [[caching-basics|Caching Basics]]
 2. [[caching-strategies|Caching Strategies]]
@@ -47,7 +49,7 @@ tags: [moc, learning-path, system-design, layer-7]
 
 ---
 
-## Layer 7d  -  Databases at Scale
+## Layer 8d — Databases at Scale
 
 1. [[database-replication|Database Replication]]
 2. [[database-sharding|Database Sharding]]
@@ -59,7 +61,7 @@ tags: [moc, learning-path, system-design, layer-7]
 
 ---
 
-## Layer 7e  -  Messaging and Queues
+## Layer 8e — Messaging and Queues
 
 1. [[message-queues|Message Queues]]
 2. [[pub-sub-pattern|Pub/Sub Pattern]]
@@ -70,19 +72,7 @@ tags: [moc, learning-path, system-design, layer-7]
 
 ---
 
-## Layer 7f  -  API Design
-
-1. [[api-design-principles|API Design Principles]]
-2. [[api-versioning|API Versioning]]
-3. [[api-gateway|API Gateway]]
-4. [[graphql-design|GraphQL Design]]
-5. [[grpc-design|gRPC Design]]
-6. [[idempotency|Idempotency]]
-7. [[pagination|Pagination Patterns]]
-
----
-
-## Layer 7g  -  Microservices and Patterns
+## Layer 8f — Microservices Patterns
 
 1. [[microservices-basics|Microservices Basics]]
 2. [[service-discovery|Service Discovery]]
@@ -91,10 +81,11 @@ tags: [moc, learning-path, system-design, layer-7]
 5. [[cqrs|CQRS]]
 6. [[event-sourcing|Event Sourcing]]
 7. [[strangler-fig|Strangler Fig Pattern]]
+8. [[sidecar-pattern|Sidecar Pattern]]
 
 ---
 
-## Layer 7h  -  Case Studies
+## Layer 8g — HLD Case Studies
 
 1. [[design-url-shortener|Design a URL Shortener]]
 2. [[design-rate-limiter|Design a Rate Limiter]]
@@ -102,3 +93,5 @@ tags: [moc, learning-path, system-design, layer-7]
 4. [[design-chat-system|Design a Chat System]]
 5. [[design-search-system|Design a Search System]]
 6. [[design-ml-pipeline|Design an ML Pipeline]]
+7. [[design-twitter-feed|Design a Twitter-style Feed]]
+8. [[design-video-streaming|Design a Video Streaming Platform]]
