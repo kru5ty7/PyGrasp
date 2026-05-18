@@ -145,6 +145,10 @@ def has_cycle(head: Optional[ListNode]) -> bool:
     return False  # fast reached end: no cycle
 ```
 
+## Visualizer
+
+<iframe src="/visualizers/two-pointers.html" style="width:100%;height:400px;border:none;border-radius:8px;" title="Two Pointers Visualizer"></iframe>
+
 ---
 
 ## How It Connects

@@ -158,6 +158,12 @@ print(ll.to_list())   # [3, 1, 0]
 
 ---
 
+## Visualizer
+
+<iframe src="/visualizers/linked-list.html" style="width:100%;height:380px;border:none;border-radius:8px;" title="Linked List Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Arrays and linked lists are the two foundational sequential data structures, and their contrasting trade-offs explain why every other sequential structure exists. Understanding where arrays excel (random access, cache locality) and where linked lists excel (insertion at known positions) is the foundation for choosing the right structure.

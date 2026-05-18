@@ -127,6 +127,12 @@ print(contains(sorted_list, 4))   # False
 
 ---
 
+## Visualizer
+
+<iframe src="/visualizers/binary-search.html" style="width:100%;height:400px;border:none;border-radius:8px;" title="Binary Search Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Binary search is one of the most important applications of the divide-and-conquer pattern: each step reduces the problem size by half, leading directly to O(log n) complexity. The binary search tree data structure extends this idea by building the sorted structure into a tree rather than a flat array, allowing O(log n) search along with O(log n) insertion and deletion. Understanding the loop invariant of binary search — that the target is in `[lo, hi]` if it exists — is the foundation for understanding the variations that handle duplicate elements and finding boundary positions.

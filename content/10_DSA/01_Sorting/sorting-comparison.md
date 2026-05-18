@@ -98,6 +98,12 @@ large = [random.randint(0, 100) for _ in range(1_000_000)]
 
 ---
 
+## Visualizer
+
+<iframe src="/visualizers/sorting-comparison.html" style="width:100%;height:460px;border:none;border-radius:8px;" title="Sorting Comparison Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Every sorting algorithm in this comparison has its own detailed note explaining its mechanics, complexity analysis, and Python implementation. The decision between them ultimately comes back to the foundational concepts of time-space tradeoffs and algorithmic invariants. Understanding the O(n log n) lower bound requires the mathematical tools introduced in big-O notation.

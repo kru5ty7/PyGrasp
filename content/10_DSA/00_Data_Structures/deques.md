@@ -139,6 +139,12 @@ print(d)
 
 ---
 
+## Visualizer
+
+<iframe src="/visualizers/deque.html" style="width:100%;height:380px;border:none;border-radius:8px;" title="Deque Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Queues are the direct conceptual ancestor of deques — a deque is a generalised queue where both ends are equally accessible. Understanding why `list.pop(0)` is wrong for a queue and why `deque.popleft()` is right requires understanding the deque's internal structure.

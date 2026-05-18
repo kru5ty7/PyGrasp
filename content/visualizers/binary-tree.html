@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Binary Tree — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 620px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #input-row {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: .75rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  #input-row label { font-size: .78rem; color: #646464; white-space: nowrap; }
+  #arr-input {
+    flex: 1;
+    min-width: 120px;
+    background: #222224;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    color: #d4d4d4;
+    font-size: .85rem;
+    padding: .3rem .6rem;
+    outline: none;
+  }
+  #arr-input:focus { border-color: #7b97aa; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+    white-space: nowrap;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-bfs, #btn-dfs { background: #284b63; color: #fff; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #tree-svg {
+    width: 100%;
+    height: 280px;
+    background: #1e1e20;
+    border-radius: 6px;
+    border: 1px solid #2a2a2e;
+    margin-bottom: .5rem;
+    display: block;
+  }
+  #order-display {
+    font-size: .75rem;
+    color: #646464;
+    min-height: 1.2rem;
+    margin-bottom: .5rem;
+    word-break: break-all;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  #counter { font-size: .72rem; color: #646464; margin-left: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Binary Tree — BFS &amp; DFS Step-Through</h4>
+  <div id="input-row">
+    <label for="arr-input">Level-order:</label>
+    <input id="arr-input" type="text" value="1,2,3,4,5,6,7" placeholder="e.g. 1,2,3,4,5" spellcheck="false">
+    <button id="btn-build">Build</button>
+  </div>
+  <div id="stat">Enter level-order array and press Build.</div>
+  <svg id="tree-svg"></svg>
+  <div id="order-display"></div>
+  <div id="ctrl">
+    <button id="btn-bfs" disabled>BFS Step</button>
+    <button id="btn-dfs" disabled>DFS Inorder Step</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var nodes = [];      // [{val, x, y, parent}]
+var nodeColors = []; // 'normal'|'current'|'visited'
+var bfsOrder = [];
+var dfsOrder = [];
+var bfsIdx = 0;
+var dfsIdx = 0;
+var SVG_W = 600, SVG_H = 280;
+var R = 18;
+
+function buildTree(arr) {
+  nodes = [];
+  nodeColors = [];
+  bfsOrder = [];
+  dfsOrder = [];
+  bfsIdx = 0; dfsIdx = 0;
+
+  var n = Math.min(arr.length, 15);
+  // Compute positions
+  var levels = Math.floor(Math.log2(n)) + 1;
+  var levelY = [];
+  for (var lv = 0; lv < levels; lv++) levelY[lv] = 30 + lv * (SVG_H - 40) / Math.max(levels - 1, 1);
+
+  for (var i = 0; i < n; i++) {
+    var lv2 = Math.floor(Math.log2(i + 1));
+    var posInLevel = i - (Math.pow(2, lv2) - 1);
+    var totalInLevel = Math.pow(2, lv2);
+    var x = SVG_W * (posInLevel + 0.5) / totalInLevel;
+    var y = levelY[lv2];
+    var parent = i > 0 ? Math.floor((i - 1) / 2) : -1;
+    nodes.push({ val: arr[i], x: x, y: y, parent: parent });
+    nodeColors.push('normal');
+  }
+
+  // BFS order
+  bfsOrder = nodes.map(function(_, i) { return i; });
+
+  // DFS inorder (iterative simulation)
+  dfsOrder = [];
+  function inorder(idx) {
+    if (idx >= n) return;
+    inorder(2 * idx + 1);
+    dfsOrder.push(idx);
+    inorder(2 * idx + 2);
+  }
+  inorder(0);
+}
+
+function getColor(state) {
+  if (state === 'current') return '#f0a500';
+  if (state === 'visited') return '#28a745';
+  return '#2a2a2e';
+}
+
+function renderTree() {
+  var svg = document.getElementById('tree-svg');
+  var html = '';
+  // edges
+  for (var i = 1; i < nodes.length; i++) {
+    var p = nodes[nodes[i].parent];
+    html += '<line x1="' + nodes[i].x + '" y1="' + nodes[i].y + '" x2="' + p.x + '" y2="' + p.y + '" stroke="#646464" stroke-width="1.5"/>';
+  }
+  // nodes
+  for (var j = 0; j < nodes.length; j++) {
+    var nd = nodes[j];
+    var col = getColor(nodeColors[j]);
+    var textCol = nodeColors[j] === 'current' ? '#000' : '#d4d4d4';
+    var stroke = nodeColors[j] === 'normal' ? '#393639' : col;
+    html += '<circle cx="' + nd.x + '" cy="' + nd.y + '" r="' + R + '" fill="' + col + '" stroke="' + stroke + '" stroke-width="1.5"/>';
+    html += '<text x="' + nd.x + '" y="' + (nd.y + 5) + '" text-anchor="middle" font-size="13" fill="' + textCol + '" font-family="sans-serif">' + nd.val + '</text>';
+  }
+  svg.innerHTML = html;
+}
+
+function setStatus(msg) { document.getElementById('stat').textContent = msg; }
+
+function doBuild() {
+  var raw = document.getElementById('arr-input').value;
+  var parts = raw.split(',').map(function(x) { return x.trim(); }).filter(function(x) { return x !== ''; });
+  if (parts.length < 1 || parts.length > 15) {
+    setStatus('Enter 1–15 comma-separated values.');
+    return;
+  }
+  buildTree(parts);
+  renderTree();
+  setStatus('Tree built with ' + nodes.length + ' nodes. Press BFS Step or DFS Inorder Step.');
+  document.getElementById('order-display').textContent = '';
+  document.getElementById('counter').textContent = '';
+  document.getElementById('btn-bfs').disabled = false;
+  document.getElementById('btn-dfs').disabled = false;
+}
+
+document.getElementById('btn-build').onclick = doBuild;
+document.getElementById('arr-input').onkeydown = function(e) { if (e.key === 'Enter') doBuild(); };
+
+document.getElementById('btn-bfs').onclick = function() {
+  if (bfsIdx >= bfsOrder.length) {
+    setStatus('BFS complete! All nodes visited.');
+    return;
+  }
+  // Mark previous current as visited
+  if (bfsIdx > 0) nodeColors[bfsOrder[bfsIdx - 1]] = 'visited';
+  nodeColors[bfsOrder[bfsIdx]] = 'current';
+  var visited = bfsOrder.slice(0, bfsIdx + 1).map(function(i) { return nodes[i].val; });
+  setStatus('BFS step ' + (bfsIdx + 1) + '/' + bfsOrder.length + ': visiting node ' + nodes[bfsOrder[bfsIdx]].val);
+  document.getElementById('order-display').textContent = 'BFS order so far: ' + visited.join(' → ');
+  document.getElementById('counter').textContent = 'BFS step ' + (bfsIdx + 1) + '/' + bfsOrder.length;
+  renderTree();
+  bfsIdx++;
+  if (bfsIdx === bfsOrder.length) {
+    nodeColors[bfsOrder[bfsIdx - 1]] = 'visited';
+    renderTree();
+    setStatus('BFS complete! Order: ' + bfsOrder.map(function(i) { return nodes[i].val; }).join(' → '));
+  }
+};
+
+document.getElementById('btn-dfs').onclick = function() {
+  if (dfsIdx >= dfsOrder.length) {
+    setStatus('DFS Inorder complete! This is sorted order for a BST.');
+    return;
+  }
+  // Reset all to visited, mark current
+  nodeColors = nodeColors.map(function(c) { return c === 'current' ? 'visited' : c; });
+  nodeColors[dfsOrder[dfsIdx]] = 'current';
+  var visited = dfsOrder.slice(0, dfsIdx + 1).map(function(i) { return nodes[i].val; });
+  setStatus('Inorder step ' + (dfsIdx + 1) + '/' + dfsOrder.length + ': visiting node ' + nodes[dfsOrder[dfsIdx]].val);
+  document.getElementById('order-display').textContent = 'Inorder so far: ' + visited.join(' → ');
+  document.getElementById('counter').textContent = 'DFS step ' + (dfsIdx + 1) + '/' + dfsOrder.length;
+  renderTree();
+  dfsIdx++;
+  if (dfsIdx === dfsOrder.length) {
+    nodeColors[dfsOrder[dfsIdx - 1]] = 'visited';
+    renderTree();
+    setStatus('Inorder complete! Order: ' + dfsOrder.map(function(i) { return nodes[i].val; }).join(' → '));
+  }
+};
+
+document.getElementById('btn-reset').onclick = function() {
+  if (nodes.length > 0) {
+    nodeColors = nodes.map(function() { return 'normal'; });
+    bfsIdx = 0; dfsIdx = 0;
+    renderTree();
+    setStatus('Reset traversal. Press BFS Step or DFS Inorder Step.');
+    document.getElementById('order-display').textContent = '';
+    document.getElementById('counter').textContent = '';
+  }
+};
+
+// Init with default
+doBuild();
+</script>
+</body>
+</html>

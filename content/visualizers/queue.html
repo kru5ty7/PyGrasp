@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Queue — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 640px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #input-row {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: .75rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  #input-row label { font-size: .78rem; color: #646464; white-space: nowrap; }
+  #val-input {
+    width: 80px;
+    background: #222224;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    color: #d4d4d4;
+    font-size: .85rem;
+    padding: .3rem .6rem;
+    outline: none;
+  }
+  #val-input:focus { border-color: #7b97aa; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+    white-space: nowrap;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-enqueue { background: #2e4a30; color: #fff; }
+  #btn-dequeue { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+
+  /* Queue visualizer */
+  #vis-wrapper {
+    margin-bottom: .75rem;
+    overflow-x: auto;
+  }
+  #label-row {
+    display: flex;
+    align-items: flex-end;
+    gap: 0;
+    margin-bottom: 2px;
+    min-height: 18px;
+  }
+  #vis-area {
+    display: flex;
+    align-items: center;
+    gap: 0;
+    min-height: 48px;
+    padding: 2px 0;
+  }
+  .q-label {
+    font-size: .72rem;
+    color: #7b97aa;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+    padding: 0 6px;
+  }
+  .q-arrow {
+    color: #7b97aa;
+    font-size: .95rem;
+    margin: 0 3px;
+    user-select: none;
+    flex-shrink: 0;
+  }
+  .q-node {
+    min-width: 52px;
+    height: 40px;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    background: #2a2a2e;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: .9rem;
+    color: #d4d4d4;
+    padding: 0 8px;
+    transition: background .3s;
+    flex-shrink: 0;
+  }
+  .q-node.highlight { background: #f0a500 !important; color: #161618; }
+  .empty-msg {
+    font-size: .82rem;
+    color: #646464;
+    font-style: italic;
+    padding: 0 8px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    border: 1px dashed #393639;
+    border-radius: 4px;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  .dir-hint {
+    font-size: .7rem;
+    color: #646464;
+    margin-bottom: .5rem;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Queue (FIFO) — Interactive</h4>
+  <div class="dir-hint">← Dequeue (front)&nbsp;&nbsp;&nbsp;Enqueue (back) →</div>
+  <div id="input-row">
+    <label for="val-input">Value:</label>
+    <input id="val-input" type="text" placeholder="e.g. 42" spellcheck="false" maxlength="6">
+    <button id="btn-enqueue">Enqueue</button>
+  </div>
+  <div id="vis-wrapper">
+    <div id="vis-area"></div>
+  </div>
+  <div id="stat">Enqueue values into the queue using the controls below.</div>
+  <div id="ctrl">
+    <button id="btn-dequeue">Dequeue</button>
+    <button id="btn-peek">Peek</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var queue = [];
+var MAX = 7;
+
+function status(msg) {
+  document.getElementById('stat').textContent = msg;
+}
+
+function render(hlIdx) {
+  // hlIdx: -1 = none, 0 = front (dequeue), last = back (enqueue)
+  var area = document.getElementById('vis-area');
+  var counter = document.getElementById('counter');
+  counter.textContent = 'Size: ' + queue.length + ' / ' + MAX;
+
+  if (queue.length === 0) {
+    area.innerHTML =
+      '<span class="q-label">HEAD</span>' +
+      '<span class="q-arrow">→</span>' +
+      '<div class="empty-msg">Queue empty</div>' +
+      '<span class="q-arrow">→</span>' +
+      '<span class="q-label">TAIL</span>';
+    return;
+  }
+
+  var html = '<span class="q-label">HEAD</span><span class="q-arrow">→</span>';
+  for (var i = 0; i < queue.length; i++) {
+    var hlClass = (hlIdx === i) ? ' highlight' : '';
+    html += '<div class="q-node' + hlClass + '" id="qnode-' + i + '">' + queue[i] + '</div>';
+    if (i < queue.length - 1) {
+      html += '<span class="q-arrow">→</span>';
+    }
+  }
+  html += '<span class="q-arrow">→</span><span class="q-label">TAIL</span>';
+  area.innerHTML = html;
+
+  if (hlIdx >= 0) {
+    var targetId = hlIdx;
+    setTimeout(function() {
+      var el = document.getElementById('qnode-' + targetId);
+      if (el) el.classList.remove('highlight');
+    }, 1000);
+  }
+}
+
+function getVal() {
+  var raw = document.getElementById('val-input').value.trim();
+  if (raw === '') { status('Enter a value first.'); return null; }
+  return raw;
+}
+
+document.getElementById('btn-enqueue').onclick = function() {
+  if (queue.length >= MAX) { status('Queue full (max ' + MAX + ').'); return; }
+  var v = getVal(); if (v === null) return;
+  queue.push(v);
+  render(queue.length - 1);
+  status('Enqueued "' + v + '" at TAIL. Queue size: ' + queue.length + '.');
+};
+
+document.getElementById('btn-dequeue').onclick = function() {
+  if (queue.length === 0) { status('Queue is empty — nothing to dequeue.'); return; }
+  var v = queue.shift();
+  render(-1);
+  status('Dequeued "' + v + '" from HEAD. New HEAD = ' + (queue.length > 0 ? '"' + queue[0] + '"' : '(queue empty)') + '.');
+};
+
+document.getElementById('btn-peek').onclick = function() {
+  if (queue.length === 0) { status('Queue is empty — nothing to peek.'); return; }
+  render(0);
+  status('Peek: HEAD = "' + queue[0] + '" (not removed).');
+};
+
+document.getElementById('btn-reset').onclick = function() {
+  queue = [];
+  render(-1);
+  status('Queue reset.');
+};
+
+document.getElementById('val-input').onkeydown = function(e) {
+  if (e.key === 'Enter') document.getElementById('btn-enqueue').click();
+};
+
+render(-1);
+</script>
+</body>
+</html>

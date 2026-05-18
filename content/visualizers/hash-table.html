@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hash Table — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 600px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #input-row {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: .75rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  #input-row label { font-size: .78rem; color: #646464; white-space: nowrap; }
+  #key-input {
+    flex: 1;
+    min-width: 80px;
+    background: #222224;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    color: #d4d4d4;
+    font-size: .85rem;
+    padding: .3rem .6rem;
+    outline: none;
+  }
+  #key-input:focus { border-color: #7b97aa; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+    white-space: nowrap;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-insert { background: #284b63; color: #fff; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #pipeline {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    min-height: 2rem;
+  }
+  .pipe-box {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .3rem .6rem;
+    font-size: .82rem;
+    color: #646464;
+    transition: all .2s;
+  }
+  .pipe-box.active { border-color: #f0a500; color: #f0a500; }
+  .pipe-box.done { border-color: #28a745; color: #28a745; }
+  .pipe-arrow { color: #646464; font-size: .9rem; }
+  #buckets {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .bucket-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .bucket-label {
+    width: 22px;
+    text-align: right;
+    font-size: .72rem;
+    color: #646464;
+    flex-shrink: 0;
+  }
+  .bucket-cell {
+    width: 46px;
+    height: 32px;
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .75rem;
+    color: #646464;
+    flex-shrink: 0;
+    transition: border-color .25s, background .25s;
+  }
+  .bucket-cell.highlight { border-color: #f0a500; background: #2e2800; }
+  .bucket-cell.found { border-color: #28a745; background: #1a2e1a; }
+  .chain-nodes {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    flex-wrap: wrap;
+  }
+  .chain-node {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .15rem .45rem;
+    font-size: .78rem;
+    color: #d4d4d4;
+    position: relative;
+    transition: border-color .25s, background .25s;
+  }
+  .chain-node.highlight { border-color: #f0a500; background: #2e2800; color: #f0a500; }
+  .chain-node.found { border-color: #28a745; background: #1a2e1a; color: #28a745; }
+  .chain-node.notfound { border-color: #c0392b; background: #2e1a1a; }
+  .chain-arrow { color: #646464; font-size: .75rem; }
+  #counter { font-size: .72rem; color: #646464; margin-left: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Hash Table — Chaining (mod 7)</h4>
+  <div id="input-row">
+    <label for="key-input">Key:</label>
+    <input id="key-input" type="text" placeholder="e.g. cat" maxlength="10" spellcheck="false">
+    <button id="btn-insert">Insert</button>
+    <button id="btn-lookup">Lookup</button>
+    <button id="btn-delete">Delete</button>
+    <button id="btn-reset">↺ Reset</button>
+  </div>
+  <div id="pipeline">
+    <div class="pipe-box" id="p-key">key: —</div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-box" id="p-hash">hash: —</div>
+    <div class="pipe-arrow">→</div>
+    <div class="pipe-box" id="p-bucket">bucket: —</div>
+  </div>
+  <div id="stat">Enter a key and press Insert, Lookup, or Delete.</div>
+  <div id="buckets"></div>
+</div>
+<script>
+var BUCKETS = 7;
+var table = Array.from({length: BUCKETS}, function() { return []; });
+var steps = [];
+var stepIdx = 0;
+var animTimer = null;
+
+function hashFn(key) {
+  var s = 0;
+  for (var i = 0; i < key.length; i++) s += key.charCodeAt(i);
+  return s % BUCKETS;
+}
+
+function renderBuckets(highlights, foundNodes, notFoundNodes) {
+  highlights = highlights || {};
+  foundNodes = foundNodes || {};
+  notFoundNodes = notFoundNodes || {};
+  var html = '';
+  for (var i = 0; i < BUCKETS; i++) {
+    var cellCls = 'bucket-cell';
+    if (highlights[i] === 'highlight') cellCls += ' highlight';
+    else if (highlights[i] === 'found') cellCls += ' found';
+    var chainHtml = '';
+    for (var j = 0; j < table[i].length; j++) {
+      var k = table[i][j];
+      var nodeCls = 'chain-node';
+      if (foundNodes[i + ',' + j]) nodeCls += ' found';
+      else if (notFoundNodes[i + ',' + j]) nodeCls += ' notfound';
+      else if (highlights[i] === 'highlight') nodeCls += ' highlight';
+      if (j > 0) chainHtml += '<span class="chain-arrow">→</span>';
+      chainHtml += '<span class="' + nodeCls + '">' + k + '</span>';
+    }
+    html += '<div class="bucket-row">' +
+      '<div class="bucket-label">' + i + '</div>' +
+      '<div class="' + cellCls + '">' + (table[i].length > 0 ? table[i].length : '') + '</div>' +
+      '<div class="chain-nodes">' + chainHtml + '</div>' +
+      '</div>';
+  }
+  document.getElementById('buckets').innerHTML = html;
+}
+
+function setPipeline(key, hash, bucket, stage) {
+  var pk = document.getElementById('p-key');
+  var ph = document.getElementById('p-hash');
+  var pb = document.getElementById('p-bucket');
+  pk.textContent = key !== null ? 'key: "' + key + '"' : 'key: —';
+  ph.textContent = hash !== null ? 'hash: ' + hash : 'hash: —';
+  pb.textContent = bucket !== null ? 'hash % 7 = ' + bucket : 'bucket: —';
+  pk.className = 'pipe-box' + (stage >= 1 ? (stage === 1 ? ' active' : ' done') : '');
+  ph.className = 'pipe-box' + (stage >= 2 ? (stage === 2 ? ' active' : ' done') : '');
+  pb.className = 'pipe-box' + (stage >= 3 ? ' active' : '');
+}
+
+function setStatus(msg) { document.getElementById('stat').textContent = msg; }
+
+function countKeys() {
+  var n = 0;
+  for (var i = 0; i < BUCKETS; i++) n += table[i].length;
+  return n;
+}
+
+function runSteps(stepsArr) {
+  if (animTimer) clearTimeout(animTimer);
+  steps = stepsArr;
+  stepIdx = 0;
+  runNext();
+}
+
+function runNext() {
+  if (stepIdx >= steps.length) return;
+  steps[stepIdx]();
+  stepIdx++;
+  if (stepIdx < steps.length) {
+    animTimer = setTimeout(runNext, 500);
+  }
+}
+
+function doInsert() {
+  var key = document.getElementById('key-input').value.trim();
+  if (!key) { setStatus('Please enter a key.'); return; }
+  if (countKeys() >= 10) { setStatus('Limit: 10 keys max. Reset to start fresh.'); return; }
+  var h = hashFn(key);
+  var stepsArr = [
+    function() {
+      setPipeline(key, null, null, 1);
+      setStatus('Step 1: key = "' + key + '"');
+      renderBuckets({}, {}, {});
+    },
+    function() {
+      setPipeline(key, h, null, 2);
+      var raw = 0;
+      for (var i = 0; i < key.length; i++) raw += key.charCodeAt(i);
+      setStatus('Step 2: charCodeSum("' + key + '") = ' + raw);
+      renderBuckets({}, {}, {});
+    },
+    function() {
+      setPipeline(key, h, h, 3);
+      setStatus('Step 3: ' + h * BUCKETS + ' mod 7... bucket = ' + h);
+      renderBuckets({[h]: 'highlight'}, {}, {});
+    },
+    function() {
+      // check for duplicate
+      var idx = table[h].indexOf(key);
+      if (idx !== -1) {
+        setStatus('"' + key + '" already in bucket ' + h + ' — no duplicate inserted.');
+      } else {
+        table[h].push(key);
+        setStatus('Inserted "' + key + '" into bucket ' + h + '.');
+      }
+      renderBuckets({[h]: 'found'}, {}, {});
+    }
+  ];
+  runSteps(stepsArr);
+}
+
+function doLookup() {
+  var key = document.getElementById('key-input').value.trim();
+  if (!key) { setStatus('Please enter a key.'); return; }
+  var h = hashFn(key);
+  var stepsArr = [
+    function() {
+      setPipeline(key, null, null, 1);
+      setStatus('Step 1: key = "' + key + '"');
+      renderBuckets({}, {}, {});
+    },
+    function() {
+      setPipeline(key, h, h, 3);
+      setStatus('Step 2: bucket = ' + h + '. Scanning chain...');
+      renderBuckets({[h]: 'highlight'}, {}, {});
+    }
+  ];
+  var chain = table[h];
+  if (chain.length === 0) {
+    stepsArr.push(function() {
+      setStatus('Bucket ' + h + ' is empty — "' + key + '" not found.');
+      renderBuckets({}, {}, {});
+    });
+  } else {
+    for (var j = 0; j < chain.length; j++) {
+      (function(jj) {
+        stepsArr.push(function() {
+          var found = chain[jj] === key;
+          var fNodes = {}, nfNodes = {};
+          if (found) fNodes[h + ',' + jj] = true;
+          else nfNodes[h + ',' + jj] = true;
+          setStatus('Checking chain[' + jj + '] = "' + chain[jj] + '" ... ' + (found ? 'FOUND!' : 'no match'));
+          renderBuckets({[h]: found ? 'found' : 'highlight'}, fNodes, nfNodes);
+          if (found) {
+            setPipeline(key, h, h, 3);
+            document.getElementById('p-bucket').className = 'pipe-box done';
+          }
+        });
+      })(j);
+    }
+    var finalFound = chain.indexOf(key) !== -1;
+    if (!finalFound) {
+      stepsArr.push(function() {
+        setStatus('"' + key + '" not found in bucket ' + h + '.');
+        renderBuckets({}, {}, {});
+      });
+    }
+  }
+  runSteps(stepsArr);
+}
+
+function doDelete() {
+  var key = document.getElementById('key-input').value.trim();
+  if (!key) { setStatus('Please enter a key.'); return; }
+  var h = hashFn(key);
+  var idx = table[h].indexOf(key);
+  var stepsArr = [
+    function() {
+      setPipeline(key, h, h, 3);
+      setStatus('Delete "' + key + '": checking bucket ' + h + '...');
+      renderBuckets({[h]: 'highlight'}, {}, {});
+    },
+    function() {
+      if (idx === -1) {
+        setStatus('"' + key + '" not found in bucket ' + h + ' — nothing to delete.');
+        renderBuckets({}, {}, {});
+      } else {
+        var fNodes = {};
+        fNodes[h + ',' + idx] = true;
+        setStatus('Found "' + key + '" at chain position ' + idx + '.');
+        renderBuckets({[h]: 'found'}, fNodes, {});
+      }
+    },
+    function() {
+      if (idx !== -1) {
+        table[h].splice(idx, 1);
+        setStatus('"' + key + '" removed from bucket ' + h + '.');
+        renderBuckets({[h]: 'found'}, {}, {});
+      }
+    }
+  ];
+  runSteps(stepsArr);
+}
+
+document.getElementById('btn-insert').onclick = doInsert;
+document.getElementById('btn-lookup').onclick = doLookup;
+document.getElementById('btn-delete').onclick = doDelete;
+document.getElementById('key-input').onkeydown = function(e) { if (e.key === 'Enter') doInsert(); };
+document.getElementById('btn-reset').onclick = function() {
+  if (animTimer) clearTimeout(animTimer);
+  table = Array.from({length: BUCKETS}, function() { return []; });
+  setPipeline(null, null, null, 0);
+  setStatus('Reset. Enter a key and press Insert, Lookup, or Delete.');
+  renderBuckets({}, {}, {});
+};
+
+renderBuckets({}, {}, {});
+setPipeline(null, null, null, 0);
+</script>
+</body>
+</html>

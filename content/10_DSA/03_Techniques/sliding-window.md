@@ -159,6 +159,10 @@ print(min_window("ADOBECODEBANC", "ABC"))              # "BANC"
 print(sliding_window_max([1, 3, -1, -3, 5, 3, 6, 7], 3))  # [3,3,5,5,6,7]
 ```
 
+## Visualizer
+
+<iframe src="/visualizers/sliding-window.html" style="width:100%;height:400px;border:none;border-radius:8px;" title="Sliding Window Visualizer"></iframe>
+
 ---
 
 ## How It Connects

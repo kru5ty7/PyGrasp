@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hash Collisions — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 620px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #toggle-row {
+    display: flex;
+    gap: 0;
+    margin-bottom: .75rem;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    overflow: hidden;
+    width: fit-content;
+  }
+  .toggle-btn {
+    padding: .3rem .8rem;
+    border: none;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #2a2a2e;
+    color: #646464;
+    transition: all .15s;
+  }
+  .toggle-btn.active { background: #284b63; color: #fff; }
+  #input-row {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: .75rem;
+    align-items: center;
+  }
+  #input-row label { font-size: .78rem; color: #646464; white-space: nowrap; }
+  #key-input {
+    flex: 1;
+    background: #222224;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    color: #d4d4d4;
+    font-size: .85rem;
+    padding: .3rem .6rem;
+    outline: none;
+  }
+  #key-input:focus { border-color: #7b97aa; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+    white-space: nowrap;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-insert { background: #284b63; color: #fff; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  /* Chaining view */
+  #chaining-view { display: block; }
+  .chain-bucket-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 4px;
+  }
+  .cb-label { width: 22px; text-align: right; font-size: .72rem; color: #646464; flex-shrink: 0; }
+  .cb-cell {
+    width: 46px;
+    height: 32px;
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .75rem;
+    flex-shrink: 0;
+    transition: border-color .25s, background .25s;
+  }
+  .cb-cell.hl { border-color: #f0a500; background: #2e2800; }
+  .cb-cell.done { border-color: #28a745; background: #1a2e1a; }
+  .chain-nodes { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+  .chain-node {
+    background: #2a2a2e; border: 1px solid #393639; border-radius: 4px;
+    padding: .15rem .45rem; font-size: .78rem; color: #d4d4d4;
+    transition: border-color .25s, background .25s;
+  }
+  .chain-node.hl { border-color: #f0a500; background: #2e2800; color: #f0a500; }
+  .chain-arrow { color: #646464; font-size: .75rem; }
+
+  /* Linear probing view */
+  #lp-view { display: none; }
+  #lp-cells {
+    display: flex;
+    gap: 5px;
+    margin-bottom: .5rem;
+    flex-wrap: wrap;
+  }
+  .lp-cell {
+    width: 64px;
+    min-height: 50px;
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: .75rem;
+    transition: border-color .25s, background .25s;
+  }
+  .lp-cell .lp-idx { font-size: .65rem; color: #646464; margin-bottom: 2px; }
+  .lp-cell .lp-val { color: #d4d4d4; font-size: .8rem; }
+  .lp-cell.empty .lp-val { color: #393639; }
+  .lp-cell.probe { border-color: #f0a500; background: #2e2800; }
+  .lp-cell.probe .lp-val { color: #f0a500; }
+  .lp-cell.inserted { border-color: #28a745; background: #1a2e1a; }
+  .lp-cell.inserted .lp-val { color: #28a745; }
+  #probe-log {
+    font-size: .75rem;
+    color: #646464;
+    min-height: 1.2rem;
+    margin-bottom: .5rem;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Hash Collisions — mod 7</h4>
+  <div id="toggle-row">
+    <button class="toggle-btn active" id="btn-chain">Chaining</button>
+    <button class="toggle-btn" id="btn-lp">Linear Probing</button>
+  </div>
+  <div id="input-row">
+    <label for="key-input">Key:</label>
+    <input id="key-input" type="text" placeholder="e.g. dog" maxlength="10" spellcheck="false">
+    <button id="btn-insert">Insert</button>
+    <button id="btn-reset">↺ Reset</button>
+  </div>
+  <div id="stat">Enter a key and press Insert.</div>
+
+  <div id="chaining-view">
+    <div id="chain-buckets"></div>
+  </div>
+
+  <div id="lp-view">
+    <div id="lp-cells"></div>
+    <div id="probe-log"></div>
+  </div>
+</div>
+<script>
+var BUCKETS = 7;
+var mode = 'chain';
+var chainTable = Array.from({length: BUCKETS}, function() { return []; });
+var lpTable = Array(BUCKETS).fill(null);
+var animTimer = null;
+
+function hashFn(key) {
+  var s = 0;
+  for (var i = 0; i < key.length; i++) s += key.charCodeAt(i);
+  return s % BUCKETS;
+}
+
+function setStatus(msg) { document.getElementById('stat').textContent = msg; }
+
+// ---- Chaining ----
+function renderChain(highlights) {
+  highlights = highlights || {};
+  var html = '';
+  for (var i = 0; i < BUCKETS; i++) {
+    var cls = 'cb-cell';
+    if (highlights[i] === 'hl') cls += ' hl';
+    else if (highlights[i] === 'done') cls += ' done';
+    var chainHtml = '';
+    for (var j = 0; j < chainTable[i].length; j++) {
+      var nodeHl = highlights['node_' + i] === j;
+      if (j > 0) chainHtml += '<span class="chain-arrow">→</span>';
+      chainHtml += '<span class="chain-node' + (nodeHl ? ' hl' : '') + '">' + chainTable[i][j] + '</span>';
+    }
+    html += '<div class="chain-bucket-row">' +
+      '<div class="cb-label">' + i + '</div>' +
+      '<div class="' + cls + '">' + (chainTable[i].length || '') + '</div>' +
+      '<div class="chain-nodes">' + chainHtml + '</div>' +
+      '</div>';
+  }
+  document.getElementById('chain-buckets').innerHTML = html;
+}
+
+function insertChain(key) {
+  var h = hashFn(key);
+  var steps = [
+    function() {
+      setStatus('key "' + key + '" → hash % 7 = ' + h + '. Checking bucket ' + h + '...');
+      renderChain({[h]: 'hl'});
+    },
+    function() {
+      if (chainTable[h].includes(key)) {
+        setStatus('"' + key + '" already in bucket ' + h + ' — skip.');
+        renderChain({[h]: 'done'});
+      } else {
+        chainTable[h].push(key);
+        var collision = chainTable[h].length > 1;
+        setStatus(collision
+          ? 'Collision! Bucket ' + h + ' already had ' + (chainTable[h].length - 1) + ' key(s). Appended "' + key + '" to chain.'
+          : 'Inserted "' + key + '" into bucket ' + h + ' (no collision).');
+        renderChain({[h]: 'done'});
+      }
+    }
+  ];
+  runSteps(steps);
+}
+
+// ---- Linear Probing ----
+function renderLP(probes, inserted) {
+  probes = probes || [];
+  inserted = inserted !== undefined ? inserted : -1;
+  var html = '';
+  for (var i = 0; i < BUCKETS; i++) {
+    var val = lpTable[i];
+    var isProbe = probes.indexOf(i) !== -1;
+    var isInserted = inserted === i;
+    var cls = 'lp-cell' + (val === null ? ' empty' : '') + (isProbe && !isInserted ? ' probe' : '') + (isInserted ? ' inserted' : '');
+    html += '<div class="' + cls + '"><div class="lp-idx">' + i + '</div><div class="lp-val">' + (val || '—') + '</div></div>';
+  }
+  document.getElementById('lp-cells').innerHTML = html;
+}
+
+function insertLP(key) {
+  var h = hashFn(key);
+  var probeSeq = [];
+  var target = -1;
+  var tmp = h;
+  for (var k = 0; k < BUCKETS; k++) {
+    probeSeq.push(tmp);
+    if (lpTable[tmp] === null) { target = tmp; break; }
+    if (lpTable[tmp] === key) { target = -2; break; } // duplicate
+    tmp = (tmp + 1) % BUCKETS;
+  }
+
+  if (target === -2) {
+    setStatus('"' + key + '" already in table.');
+    renderLP([], -1);
+    return;
+  }
+  if (target === -1) {
+    setStatus('Table is full — cannot insert "' + key + '".');
+    return;
+  }
+
+  var steps = [];
+  var shownProbes = [];
+  for (var i = 0; i < probeSeq.length; i++) {
+    (function(ii, pSeq) {
+      steps.push(function() {
+        shownProbes.push(pSeq[ii]);
+        var isLast = ii === pSeq.length - 1;
+        var msg = 'key "' + key + '" → hash = ' + h + '. Probe bucket ' + pSeq[ii];
+        if (!isLast) msg += ' — occupied by "' + lpTable[pSeq[ii]] + '", step right.';
+        else msg += ' — empty, inserting here.';
+        document.getElementById('probe-log').textContent = 'Probe sequence: [' + shownProbes.join(' → ') + ']';
+        setStatus(msg);
+        renderLP(shownProbes.slice(0, isLast ? -1 : shownProbes.length), isLast ? pSeq[ii] : -1);
+      });
+    })(i, probeSeq);
+  }
+  steps.push(function() {
+    lpTable[target] = key;
+    setStatus('Inserted "' + key + '" at bucket ' + target + '.');
+    renderLP([], target);
+  });
+  runSteps(steps);
+}
+
+function runSteps(stepsArr) {
+  if (animTimer) clearTimeout(animTimer);
+  var idx = 0;
+  function next() {
+    if (idx >= stepsArr.length) return;
+    stepsArr[idx]();
+    idx++;
+    if (idx < stepsArr.length) animTimer = setTimeout(next, 550);
+  }
+  next();
+}
+
+function countTotal() {
+  if (mode === 'chain') {
+    var n = 0; for (var i = 0; i < BUCKETS; i++) n += chainTable[i].length; return n;
+  } else {
+    return lpTable.filter(function(x) { return x !== null; }).length;
+  }
+}
+
+document.getElementById('btn-insert').onclick = function() {
+  var key = document.getElementById('key-input').value.trim();
+  if (!key) { setStatus('Please enter a key.'); return; }
+  if (countTotal() >= 7 && mode === 'lp') { setStatus('Table full (7 buckets). Reset to continue.'); return; }
+  if (mode === 'chain') insertChain(key);
+  else insertLP(key);
+};
+document.getElementById('key-input').onkeydown = function(e) { if (e.key === 'Enter') document.getElementById('btn-insert').click(); };
+
+document.getElementById('btn-chain').onclick = function() {
+  mode = 'chain';
+  document.getElementById('btn-chain').className = 'toggle-btn active';
+  document.getElementById('btn-lp').className = 'toggle-btn';
+  document.getElementById('chaining-view').style.display = 'block';
+  document.getElementById('lp-view').style.display = 'none';
+  reset();
+};
+document.getElementById('btn-lp').onclick = function() {
+  mode = 'lp';
+  document.getElementById('btn-lp').className = 'toggle-btn active';
+  document.getElementById('btn-chain').className = 'toggle-btn';
+  document.getElementById('lp-view').style.display = 'block';
+  document.getElementById('chaining-view').style.display = 'none';
+  reset();
+};
+
+function reset() {
+  if (animTimer) clearTimeout(animTimer);
+  chainTable = Array.from({length: BUCKETS}, function() { return []; });
+  lpTable = Array(BUCKETS).fill(null);
+  setStatus('Reset. Enter a key and press Insert.');
+  document.getElementById('probe-log').textContent = '';
+  if (mode === 'chain') renderChain({});
+  else renderLP([], -1);
+}
+
+document.getElementById('btn-reset').onclick = reset;
+
+renderChain({});
+renderLP([], -1);
+</script>
+</body>
+</html>

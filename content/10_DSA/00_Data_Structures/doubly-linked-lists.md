@@ -173,6 +173,12 @@ print(cache.dll.to_list())    # [(4, 'four'), (1, 'one'), (3, 'three')]
 
 ---
 
+## Visualizer
+
+<iframe src="/visualizers/doubly-linked-list.html" style="width:100%;height:380px;border:none;border-radius:8px;" title="Doubly Linked List Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 The singly linked list is the direct predecessor. Understanding why singly linked lists require O(n) deletion (must find the predecessor) makes the purpose of the `prev` pointer immediately clear — it is the specific, minimal addition that resolves that one weakness.

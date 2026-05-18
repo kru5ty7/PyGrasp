@@ -159,6 +159,12 @@ print(dfs_iterative(graph, 0))  # [0, 2, 3, 1] (order depends on neighbour order
 
 ---
 
+## Visualizer
+
+<iframe src="/visualizers/stack.html" style="width:100%;height:380px;border:none;border-radius:8px;" title="Stack Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 The call stack is the most pervasive stack in computing, and it is precisely what makes recursion possible. Every recursive function call pushes a new frame; every return pops one. Understanding the call stack explains both how recursion works and why stack overflow errors occur at deep recursion depths.

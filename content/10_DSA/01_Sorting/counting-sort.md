@@ -113,6 +113,12 @@ def counting_sort_simple(arr: list) -> list:
 
 ---
 
+## Visualizer
+
+<iframe src="/visualizers/counting-sort.html" style="width:100%;height:420px;border:none;border-radius:8px;" title="Counting Sort Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Counting sort is the foundational subroutine for radix sort, which sorts large integers by applying counting sort one digit at a time from least significant to most significant. Because counting sort is stable, each digit-level pass preserves the ordering established by previous passes, and the combination of passes correctly sorts the full integers. Understanding why stability is essential to radix sort is a key insight that flows directly from understanding counting sort's prefix-sum placement step.

@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dynamic Programming — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 620px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #ctrl-row {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: .75rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  #ctrl-row label { font-size: .78rem; color: #646464; white-space: nowrap; }
+  select, input[type=number] {
+    background: #222224;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    color: #d4d4d4;
+    font-size: .85rem;
+    padding: .3rem .6rem;
+    outline: none;
+  }
+  select:focus, input[type=number]:focus { border-color: #7b97aa; }
+  input[type=number] { width: 64px; }
+  #viz-area {
+    background: #1e1e20;
+    border: 1px solid #393639;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: .75rem;
+    min-height: 120px;
+    overflow-x: auto;
+  }
+  /* 1D table */
+  .dp-table-1d { display: flex; gap: 4px; flex-wrap: nowrap; align-items: flex-start; }
+  .dp-col { display: flex; flex-direction: column; align-items: center; gap: 3px; }
+  .dp-label { font-size: .65rem; color: #646464; }
+  .dp-cell {
+    min-width: 44px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #393639;
+    border-radius: 3px;
+    font-size: .82rem;
+    background: #2a2a2e;
+    transition: background .2s;
+  }
+  .dp-cell.active   { background: #a06000; border-color: #f0a500; color: #fff; }
+  .dp-cell.reading  { background: #7a4d00; border-color: #f0a500; color: #ffd; }
+  .dp-cell.filled   { background: #1e6b34; border-color: #28a745; color: #fff; }
+  /* 2D table */
+  .dp-table-2d { border-collapse: collapse; font-size: .78rem; }
+  .dp-table-2d th {
+    padding: 4px 6px;
+    color: #646464;
+    font-weight: 500;
+    text-align: center;
+    min-width: 38px;
+  }
+  .dp-table-2d td {
+    border: 1px solid #393639;
+    min-width: 38px;
+    height: 32px;
+    text-align: center;
+    background: #2a2a2e;
+    transition: background .15s;
+    font-size: .78rem;
+  }
+  .dp-table-2d td.active   { background: #a06000; border-color: #f0a500; color: #fff; }
+  .dp-table-2d td.reading  { background: #7a4d00; border-color: #f0a500; color: #ffd; }
+  .dp-table-2d td.filled   { background: #1e6b34; border-color: #28a745; color: #fff; }
+  .dp-table-2d td.rh       { color: #646464; background: #1e1e20; border: none; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #buttons { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Dynamic Programming — Step-Through</h4>
+  <div id="ctrl-row">
+    <label for="prob-sel">Problem:</label>
+    <select id="prob-sel">
+      <option value="fib">Fibonacci</option>
+      <option value="stairs">Climbing Stairs</option>
+      <option value="coin">Coin Change</option>
+    </select>
+    <label for="n-input" id="n-label">n:</label>
+    <input type="number" id="n-input" value="7" min="1" max="12">
+    <button id="btn-apply">Apply</button>
+  </div>
+  <div id="viz-area"></div>
+  <div id="stat">Press Step to begin.</div>
+  <div id="buttons">
+    <button id="btn-back" disabled>◀ Back</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var steps = [], idx = 0;
+var currentProb = 'fib', currentN = 7;
+
+/* -------- FIBONACCI -------- */
+function buildFib(n) {
+  var s = [];
+  var dp = new Array(n + 1).fill(null);
+  // initial
+  s.push({ type: '1d', dp: dp.slice(), active: -1, reading: [], msg: 'Fibonacci table for n=' + n + '. Press Step to start filling.' });
+  // base cases
+  dp[0] = 0;
+  s.push({ type: '1d', dp: dp.slice(), active: 0, reading: [], msg: 'Base case: F(0) = 0.' });
+  if (n >= 1) {
+    dp[1] = 1;
+    s.push({ type: '1d', dp: dp.slice(), active: 1, reading: [], msg: 'Base case: F(1) = 1.' });
+  }
+  for (var i = 2; i <= n; i++) {
+    s.push({ type: '1d', dp: dp.slice(), active: -1, reading: [i - 1, i - 2], msg: 'Reading F(' + (i-1) + ')=' + dp[i-1] + ' and F(' + (i-2) + ')=' + dp[i-2] + ' to compute F(' + i + ').' });
+    dp[i] = dp[i - 1] + dp[i - 2];
+    s.push({ type: '1d', dp: dp.slice(), active: i, reading: [], msg: 'F(' + i + ') = F(' + (i-1) + ') + F(' + (i-2) + ') = ' + dp[i-1] + ' + ' + dp[i-2] + ' = ' + dp[i] + '.' });
+  }
+  s.push({ type: '1d', dp: dp.slice(), active: -1, reading: [], msg: 'Done! F(' + n + ') = ' + dp[n] + '.' });
+  return s;
+}
+
+/* -------- CLIMBING STAIRS -------- */
+function buildStairs(n) {
+  var s = [];
+  var dp = new Array(n + 1).fill(null);
+  s.push({ type: '1d', dp: dp.slice(), active: -1, reading: [], msg: 'Climbing Stairs: ways to reach step n. Press Step to start.' });
+  dp[0] = 1;
+  s.push({ type: '1d', dp: dp.slice(), active: 0, reading: [], msg: 'Base case: stairs[0] = 1 (one way to stand at ground).' });
+  if (n >= 1) {
+    dp[1] = 1;
+    s.push({ type: '1d', dp: dp.slice(), active: 1, reading: [], msg: 'Base case: stairs[1] = 1 (one way to reach step 1).' });
+  }
+  for (var i = 2; i <= n; i++) {
+    s.push({ type: '1d', dp: dp.slice(), active: -1, reading: [i - 1, i - 2], msg: 'Reading stairs[' + (i-1) + ']=' + dp[i-1] + ' and stairs[' + (i-2) + ']=' + dp[i-2] + '.' });
+    dp[i] = dp[i - 1] + dp[i - 2];
+    s.push({ type: '1d', dp: dp.slice(), active: i, reading: [], msg: 'stairs[' + i + '] = stairs[' + (i-1) + '] + stairs[' + (i-2) + '] = ' + dp[i-1] + ' + ' + dp[i-2] + ' = ' + dp[i] + ' ways.' });
+  }
+  s.push({ type: '1d', dp: dp.slice(), active: -1, reading: [], msg: 'Done! ' + dp[n] + ' ways to climb ' + n + ' stairs.' });
+  return s;
+}
+
+/* -------- COIN CHANGE -------- */
+function buildCoin(amount) {
+  var coins = [1, 2, 5];
+  var INF = 99999;
+  var s = [];
+  // rows = coins (0 = header/base), cols = 0..amount
+  // We'll do 1D DP visually as a row-per-coin 2D table
+  // dp[c][a] means: using coins[0..c], min coins for amount a
+  var rows = coins.length + 1; // row 0 = base (no coins), rows 1..3 = adding coin
+  var cols = amount + 1;
+  function makeGrid(arr) {
+    var g = [];
+    for (var r = 0; r < rows; r++) { g.push(arr[r] ? arr[r].slice() : new Array(cols).fill(null)); }
+    return g;
+  }
+  var grid = [];
+  for (var r = 0; r < rows; r++) grid.push(new Array(cols).fill(null));
+  // base row: no coins, only amount=0 possible
+  grid[0][0] = 0;
+  for (var a = 1; a < cols; a++) grid[0][a] = INF;
+  s.push({ type: '2d', grid: makeGrid(grid), coins: coins, amount: amount, ar: -1, ac: -1, reading: [], msg: 'Coin Change: coins=[1,2,5], target=' + amount + '. Row 0 = no coins (INF except amount 0).' });
+  s.push({ type: '2d', grid: makeGrid(grid), coins: coins, amount: amount, ar: -1, ac: -1, reading: [], msg: 'Base row filled. INF means unreachable. Now adding coins one by one.' });
+  for (var ci = 0; ci < coins.length; ci++) {
+    var coin = coins[ci];
+    var row = ci + 1;
+    for (var aa = 0; aa < cols; aa++) {
+      var prev = grid[row - 1][aa];
+      var withCoin = (aa - coin >= 0 && grid[row][aa - coin] !== null && grid[row][aa - coin] !== INF) ? grid[row][aa - coin] + 1 : INF;
+      // reading: [row-1][aa] and optionally [row][aa-coin]
+      var rdg = [[row - 1, aa]];
+      if (aa - coin >= 0) rdg.push([row, aa - coin]);
+      s.push({ type: '2d', grid: makeGrid(grid), coins: coins, amount: amount, ar: row, ac: aa, reading: rdg, msg: 'Coin ' + coin + ', amount=' + aa + ': without=' + (prev === INF ? '∞' : prev) + (aa >= coin ? ', with=' + (withCoin === INF ? '∞' : withCoin) : ' (coin too large)') + '.' });
+      grid[row][aa] = Math.min(prev === INF ? 99999 : prev, withCoin);
+      var val = grid[row][aa] === INF ? '∞' : grid[row][aa];
+      s.push({ type: '2d', grid: makeGrid(grid), coins: coins, amount: amount, ar: row, ac: aa, reading: [], msg: 'dp[' + row + '][' + aa + '] = min(' + (prev === INF ? '∞' : prev) + (aa >= coin ? ', ' + (withCoin === INF ? '∞' : withCoin) : '') + ') = ' + val + '.' });
+    }
+  }
+  var ans = grid[coins.length][amount];
+  s.push({ type: '2d', grid: makeGrid(grid), coins: coins, amount: amount, ar: -1, ac: -1, reading: [], msg: 'Done! Minimum coins to make ' + amount + ' = ' + (ans === INF ? 'impossible' : ans) + '.' });
+  return s;
+}
+
+/* -------- RENDER -------- */
+function render1D(s) {
+  var dp = s.dp;
+  var html = '<div class="dp-table-1d">';
+  for (var i = 0; i < dp.length; i++) {
+    var cls = 'dp-cell';
+    if (i === s.active) cls += ' active';
+    else if (s.reading.indexOf(i) >= 0) cls += ' reading';
+    else if (dp[i] !== null) cls += ' filled';
+    var label = currentProb === 'stairs' ? 'stairs[' + i + ']' : 'F(' + i + ')';
+    html += '<div class="dp-col">';
+    html += '<div class="dp-label">' + label + '</div>';
+    html += '<div class="' + cls + '">' + (dp[i] === null ? '' : dp[i]) + '</div>';
+    html += '</div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function render2D(s) {
+  var grid = s.grid, coins = s.coins, amount = s.amount;
+  var cols = amount + 1;
+  var rows = coins.length + 1;
+  var INF = 99999;
+  var html = '<div style="overflow-x:auto"><table class="dp-table-2d"><thead><tr><th>Coin→Amt</th>';
+  for (var a = 0; a < cols; a++) html += '<th>' + a + '</th>';
+  html += '</tr></thead><tbody>';
+  for (var r = 0; r < rows; r++) {
+    html += '<tr>';
+    var rLabel = r === 0 ? '(none)' : 'c=' + coins[r - 1];
+    html += '<td class="rh">' + rLabel + '</td>';
+    for (var c2 = 0; c2 < cols; c2++) {
+      var cls = '';
+      if (r === s.ar && c2 === s.ac) cls = 'active';
+      else {
+        var isReading = false;
+        for (var ri = 0; ri < s.reading.length; ri++) {
+          if (s.reading[ri][0] === r && s.reading[ri][1] === c2) { isReading = true; break; }
+        }
+        if (isReading) cls = 'reading';
+        else if (grid[r][c2] !== null) cls = 'filled';
+      }
+      var v = grid[r][c2];
+      var disp = v === null ? '' : (v === INF ? '∞' : v);
+      html += '<td' + (cls ? ' class="' + cls + '"' : '') + '>' + disp + '</td>';
+    }
+    html += '</tr>';
+  }
+  html += '</tbody></table></div>';
+  return html;
+}
+
+function draw() {
+  var s = steps[idx];
+  var html = '';
+  if (s.type === '1d') html = render1D(s);
+  else html = render2D(s);
+  document.getElementById('viz-area').innerHTML = html;
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
+  document.getElementById('btn-step').disabled = idx === steps.length - 1;
+  document.getElementById('btn-back').disabled = idx === 0;
+}
+
+function rebuild() {
+  currentProb = document.getElementById('prob-sel').value;
+  currentN = parseInt(document.getElementById('n-input').value) || 7;
+  var nLabel = document.getElementById('n-label');
+  var nInput = document.getElementById('n-input');
+  if (currentProb === 'fib') {
+    nLabel.textContent = 'n:';
+    nInput.max = 12; nInput.min = 1;
+    if (currentN > 12) { currentN = 12; nInput.value = 12; }
+    steps = buildFib(currentN);
+  } else if (currentProb === 'stairs') {
+    nLabel.textContent = 'n:';
+    nInput.max = 12; nInput.min = 1;
+    if (currentN > 12) { currentN = 12; nInput.value = 12; }
+    steps = buildStairs(currentN);
+  } else {
+    nLabel.textContent = 'amount:';
+    nInput.max = 15; nInput.min = 1;
+    if (currentN > 15) { currentN = 15; nInput.value = 15; }
+    steps = buildCoin(currentN);
+  }
+  idx = 0;
+}
+
+document.getElementById('btn-apply').onclick = function() { rebuild(); draw(); };
+document.getElementById('prob-sel').onchange = function() { rebuild(); draw(); };
+document.getElementById('btn-step').onclick = function() { if (idx < steps.length - 1) { idx++; draw(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+rebuild(); draw();
+</script>
+</body>
+</html>

@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Topological Sort — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 580px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #main { display: flex; gap: .75rem; }
+  #graph-col { flex: 1; min-width: 0; }
+  #side-col { width: 155px; flex-shrink: 0; }
+  svg { display: block; width: 100%; }
+  #legend {
+    display: flex; gap: .65rem; flex-wrap: wrap;
+    margin: .4rem 0; font-size: .72rem; color: #d4d4d4;
+  }
+  .leg { display: flex; align-items: center; gap: .3rem; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .side-panel {
+    padding: .4rem .5rem; background: #393639; border-radius: 4px;
+    font-size: .78rem; color: #d4d4d4; margin-bottom: .5rem;
+  }
+  .side-panel strong {
+    display: block; font-size: .65rem; text-transform: uppercase;
+    letter-spacing: .06em; color: #646464; margin-bottom: 4px;
+  }
+  .deg-row { padding: 2px 0; }
+  .deg-row.zero { color: #28a745; font-weight: bold; }
+  #result-panel {
+    padding: .4rem .6rem; background: #393639; border-radius: 4px;
+    font-size: .83rem; color: #d4d4d4;
+  }
+  #result-panel strong {
+    display: block; font-size: .68rem; text-transform: uppercase;
+    letter-spacing: .06em; color: #646464; margin-bottom: 3px;
+  }
+  #stat {
+    padding: .45rem .75rem; background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .82rem; line-height: 1.5;
+    min-height: 2.4rem; margin: .5rem 0;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem; border: none; border-radius: 4px;
+    cursor: pointer; font-size: .82rem;
+    background: #393639; color: #d4d4d4; transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Topological Sort — Kahn's Algorithm (BFS)</h4>
+  <!-- DAG: A→B, A→C, B→D, C→D, D→E, B→E -->
+  <!-- Nodes: A(70,120) B(200,60) C(200,180) D(330,120) E(420,120) — but fit in 440x240 -->
+  <div id="main">
+    <div id="graph-col">
+      <svg id="graph-svg" viewBox="0 0 440 240" height="215">
+        <defs>
+          <marker id="arr" viewBox="0 0 10 10" refX="10" refY="5"
+            markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#646464"/>
+          </marker>
+          <marker id="arr-amber" viewBox="0 0 10 10" refX="10" refY="5"
+            markerWidth="6" markerHeight="6" orient="auto">
+            <path d="M 0 0 L 10 5 L 0 10 z" fill="#f0a500"/>
+          </marker>
+        </defs>
+        <!-- edges: directed, shorten so arrowhead doesn't overlap node (r=18 + ~6px marker) -->
+        <!-- A→B -->
+        <line id="de-AB" x1="87" y1="113" x2="183" y2="68" stroke="#646464" stroke-width="2" marker-end="url(#arr)"/>
+        <!-- A→C -->
+        <line id="de-AC" x1="87" y1="127" x2="183" y2="172" stroke="#646464" stroke-width="2" marker-end="url(#arr)"/>
+        <!-- B→D -->
+        <line id="de-BD" x1="218" y1="68" x2="313" y2="113" stroke="#646464" stroke-width="2" marker-end="url(#arr)"/>
+        <!-- C→D -->
+        <line id="de-CD" x1="218" y1="172" x2="313" y2="127" stroke="#646464" stroke-width="2" marker-end="url(#arr)"/>
+        <!-- D→E -->
+        <line id="de-DE" x1="349" y1="120" x2="403" y2="120" stroke="#646464" stroke-width="2" marker-end="url(#arr)"/>
+        <!-- B→E -->
+        <line id="de-BE" x1="218" y1="57" x2="403" y2="113" stroke="#646464" stroke-width="2" marker-end="url(#arr)"/>
+        <!-- nodes -->
+        <circle id="n-A" cx="70" cy="120" r="18" fill="#4a4a4c" stroke="#393639" stroke-width="2"/>
+        <text id="t-A" x="70" y="125" text-anchor="middle" font-size="13" font-weight="bold" fill="#d4d4d4">A</text>
+        <circle id="n-B" cx="200" cy="65" r="18" fill="#4a4a4c" stroke="#393639" stroke-width="2"/>
+        <text id="t-B" x="200" y="70" text-anchor="middle" font-size="13" font-weight="bold" fill="#d4d4d4">B</text>
+        <circle id="n-C" cx="200" cy="175" r="18" fill="#4a4a4c" stroke="#393639" stroke-width="2"/>
+        <text id="t-C" x="200" y="180" text-anchor="middle" font-size="13" font-weight="bold" fill="#d4d4d4">C</text>
+        <circle id="n-D" cx="330" cy="120" r="18" fill="#4a4a4c" stroke="#393639" stroke-width="2"/>
+        <text id="t-D" x="330" y="125" text-anchor="middle" font-size="13" font-weight="bold" fill="#d4d4d4">D</text>
+        <circle id="n-E" cx="420" cy="120" r="18" fill="#4a4a4c" stroke="#393639" stroke-width="2"/>
+        <text id="t-E" x="420" y="125" text-anchor="middle" font-size="13" font-weight="bold" fill="#d4d4d4">E</text>
+      </svg>
+    </div>
+    <div id="side-col">
+      <div class="side-panel">
+        <strong>In-Degree</strong>
+        <div id="indeg-rows"></div>
+      </div>
+      <div class="side-panel">
+        <strong>Queue</strong>
+        <span id="p-queue">—</span>
+      </div>
+      <div id="result-panel">
+        <strong>Topo Order</strong>
+        <span id="p-result">—</span>
+      </div>
+    </div>
+  </div>
+  <div id="legend">
+    <span class="leg"><span class="dot" style="background:#4a4a4c"></span>Unvisited</span>
+    <span class="leg"><span class="dot" style="background:#f0a500"></span>In queue</span>
+    <span class="leg"><span class="dot" style="background:#007bff"></span>Processing</span>
+    <span class="leg"><span class="dot" style="background:#28a745"></span>Done</span>
+  </div>
+  <div id="stat">Press Step to begin.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>◀ Back</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var NODES = ['A','B','C','D','E'];
+// DAG edges: A→B, A→C, B→D, C→D, D→E, B→E
+var EDGES = [['A','B'],['A','C'],['B','D'],['C','D'],['D','E'],['B','E']];
+var ADJ = { A:['B','C'], B:['D','E'], C:['D'], D:['E'], E:[] };
+var NC = { u:'#4a4a4c', q:'#f0a500', c:'#007bff', p:'#28a745' };
+var TC = { u:'#d4d4d4', q:'#000',    c:'#fff',    p:'#fff'    };
+
+var steps, idx;
+
+function buildSteps() {
+  var s = [];
+  var indeg = {}; var st = {};
+  NODES.forEach(function(n){ indeg[n]=0; st[n]='u'; });
+  EDGES.forEach(function(e){ indeg[e[1]]++; });
+
+  function snap(msg, queue, result, done) {
+    s.push({
+      st: Object.assign({},st),
+      indeg: Object.assign({},indeg),
+      queue: queue.slice(),
+      result: result.slice(),
+      msg: msg,
+      done: done||false
+    });
+  }
+
+  var queue = []; var result = [];
+  var initMsg = 'Compute in-degrees: '+NODES.map(function(n){return n+'='+indeg[n];}).join(', ')+'.';
+  snap(initMsg, queue, result, false);
+
+  // seed queue
+  NODES.forEach(function(n){ if(indeg[n]===0){ st[n]='q'; queue.push(n); } });
+  snap('Add zero in-degree nodes to queue: ['+queue.join(', ')+'].', queue, result, false);
+
+  while (queue.length) {
+    var node = queue.shift();
+    st[node]='c';
+    snap('Process '+node+': remove outgoing edges.', queue, result, false);
+    result.push(node);
+    st[node]='p';
+    var newQ = [];
+    ADJ[node].forEach(function(nb){
+      indeg[nb]--;
+      if(indeg[nb]===0){ st[nb]='q'; queue.push(nb); newQ.push(nb); }
+    });
+    var dMsg;
+    if (newQ.length)
+      dMsg = 'Remove '+node+'. Decrement neighbours. '+newQ.join(', ')+' now have in-degree 0, enqueue.';
+    else
+      dMsg = 'Remove '+node+'. Decrement neighbours. No new zero in-degree nodes.';
+    snap(dMsg, queue, result, false);
+  }
+
+  snap('Topological sort complete. Order: ['+result.join(', ')+'].', [], result, true);
+  return s;
+}
+
+function draw() {
+  var s = steps[idx];
+  NODES.forEach(function(n){
+    var state = s.st[n]||'u';
+    document.getElementById('n-'+n).setAttribute('fill', NC[state]);
+    document.getElementById('t-'+n).setAttribute('fill', TC[state]);
+  });
+  // update in-degree rows
+  var rows = document.getElementById('indeg-rows');
+  NODES.forEach(function(n, i){
+    var row = rows.children[i];
+    if (!row) return;
+    row.textContent = n + ': ' + s.indeg[n];
+    row.className = 'deg-row' + (s.indeg[n]===0 && s.st[n]!=='p' ? ' zero':'');
+  });
+  document.getElementById('p-queue').textContent = s.queue.length ? '['+s.queue.join(', ')+']' : '(empty)';
+  document.getElementById('p-result').textContent = s.result.length ? s.result.join(' → ') : '—';
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step '+idx+' / '+(steps.length-1);
+  document.getElementById('btn-step').disabled = s.done;
+  document.getElementById('btn-back').disabled = idx===0;
+}
+
+function load() {
+  steps = buildSteps();
+  idx = 0;
+  // build in-degree rows
+  var rows = document.getElementById('indeg-rows');
+  rows.innerHTML = '';
+  NODES.forEach(function(n){
+    var div = document.createElement('div');
+    div.className = 'deg-row';
+    rows.appendChild(div);
+  });
+  draw();
+}
+
+document.getElementById('btn-step').onclick = function(){ if(idx<steps.length-1){idx++;draw();} };
+document.getElementById('btn-back').onclick = function(){ if(idx>0){idx--;draw();} };
+document.getElementById('btn-reset').onclick = function(){ idx=0; draw(); };
+
+load();
+</script>
+</body>
+</html>

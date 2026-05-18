@@ -169,6 +169,10 @@ print(bisect.bisect_left(arr, 2))  # 1 — first occurrence
 print(bisect.bisect_right(arr, 2)) # 4 — one past last occurrence
 ```
 
+## Visualizer
+
+<iframe src="/visualizers/binary-search-variations.html" style="width:100%;height:400px;border:none;border-radius:8px;" title="Binary Search Variations Visualizer"></iframe>
+
 ---
 
 ## How It Connects

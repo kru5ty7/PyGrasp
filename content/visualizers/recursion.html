@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Recursion — Call Stack Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #ctrl-row {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: .75rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  #ctrl-row label { font-size: .78rem; color: #646464; white-space: nowrap; }
+  select, input[type=number] {
+    background: #222224;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    color: #d4d4d4;
+    font-size: .85rem;
+    padding: .3rem .6rem;
+    outline: none;
+  }
+  select:focus, input[type=number]:focus { border-color: #7b97aa; }
+  input[type=number] { width: 64px; }
+  #stack-area {
+    background: #1e1e20;
+    border: 1px solid #393639;
+    border-radius: 6px;
+    padding: .75rem;
+    margin-bottom: .75rem;
+    min-height: 130px;
+  }
+  .stack-label { font-size: .65rem; color: #646464; text-transform: uppercase; letter-spacing: .06em; margin-bottom: .5rem; }
+  .stack-frames { display: flex; flex-direction: column; gap: 4px; }
+  .frame {
+    border: 2px solid #393639;
+    border-radius: 4px;
+    padding: .38rem .75rem;
+    font-size: .85rem;
+    background: #2a2a2e;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background .2s, border-color .2s;
+  }
+  .frame.current  { border-color: #f0a500; background: #2e2200; }
+  .frame.resolved { border-color: #28a745; background: #1a3a22; }
+  .frame.popped   { opacity: .3; }
+  .frame-fn { font-family: monospace; }
+  .frame-val { font-size: .78rem; color: #646464; }
+  .frame.resolved .frame-val { color: #28a745; font-weight: 600; }
+  .frame.current .frame-val  { color: #f0a500; }
+  #trace-area {
+    background: #1e1e20;
+    border: 1px solid #393639;
+    border-radius: 6px;
+    padding: .6rem .75rem;
+    margin-bottom: .75rem;
+    min-height: 2rem;
+    font-size: .82rem;
+    line-height: 1.7;
+  }
+  #trace-area .trace-label { font-size: .65rem; color: #646464; text-transform: uppercase; letter-spacing: .06em; margin-bottom: .3rem; }
+  #trace-line { color: #c5a028; word-break: break-all; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #buttons { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Recursion — Call Stack Visualizer</h4>
+  <div id="ctrl-row">
+    <label for="prob-sel">Problem:</label>
+    <select id="prob-sel">
+      <option value="factorial">Factorial</option>
+      <option value="fib">Fibonacci (naive)</option>
+    </select>
+    <label for="n-input">n:</label>
+    <input type="number" id="n-input" value="5" min="1" max="8">
+    <button id="btn-apply">Apply</button>
+  </div>
+  <div id="stack-area">
+    <div class="stack-label">Call Stack (top = most recent)</div>
+    <div class="stack-frames" id="stack-frames"></div>
+  </div>
+  <div id="trace-area">
+    <div class="trace-label">Return Value Trace</div>
+    <div id="trace-line">—</div>
+  </div>
+  <div id="stat">Press Step to begin.</div>
+  <div id="buttons">
+    <button id="btn-back" disabled>◀ Back</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var steps = [], idx = 0;
+var currentProb = 'factorial', currentN = 5;
+
+/* Each step has:
+   frames: [{fn, arg, state:'pending'|'current'|'resolved'|'popped', value}]
+   trace: string
+   msg: string
+*/
+
+/* -------- FACTORIAL -------- */
+function buildFactorial(n) {
+  var s = [];
+  // push frames going down
+  var frames = [];
+  s.push({ frames: [], trace: '', msg: 'Call factorial(' + n + '). Stack is empty.' });
+  for (var i = n; i >= 0; i--) {
+    frames = frames.map(function(f) {
+      return { fn: f.fn, arg: f.arg, state: f.state === 'current' ? 'pending' : f.state, value: f.value };
+    });
+    frames.unshift({ fn: 'factorial', arg: i, state: 'current', value: null });
+    var msg;
+    if (i > 0) {
+      msg = 'Calling factorial(' + i + '). Stack depth: ' + frames.length + '. Recursing into factorial(' + (i-1) + ').';
+    } else {
+      msg = 'Base case! factorial(0) = 1. Starting to unwind.';
+    }
+    s.push({ frames: frames.map(function(f){return Object.assign({},f);}), trace: '', msg: msg });
+  }
+  // resolve from bottom up
+  var vals = new Array(n + 1);
+  vals[0] = 1;
+  var trace = '';
+  // resolve base case
+  frames[0].state = 'resolved';
+  frames[0].value = 1;
+  trace = '0! = 1';
+  s.push({ frames: frames.map(function(f){return Object.assign({},f);}), trace: trace, msg: 'factorial(0) returns 1. Popping frame.' });
+  for (var j = 1; j <= n; j++) {
+    // pop top
+    frames.shift();
+    vals[j] = j * vals[j-1];
+    frames[0].state = 'resolved';
+    frames[0].value = vals[j];
+    if (j === 1) trace = '1! = 1 × 0! = 1 × 1 = 1';
+    else trace = j + '! = ' + j + ' × ' + (j-1) + '! = ' + j + ' × ' + vals[j-1] + ' = ' + vals[j];
+    s.push({ frames: frames.map(function(f){return Object.assign({},f);}), trace: trace, msg: 'factorial(' + j + ') = ' + j + ' × factorial(' + (j-1) + ') = ' + j + ' × ' + vals[j-1] + ' = ' + vals[j] + '.' });
+  }
+  // pop last
+  frames.shift();
+  s.push({ frames: [], trace: n + '! = ' + vals[n], msg: 'All frames popped. factorial(' + n + ') = ' + vals[n] + '.' });
+  return s;
+}
+
+/* -------- FIBONACCI (naive, show exponential calls) -------- */
+function buildFibNaive(n) {
+  var s = [];
+  // We'll simulate a DFS with explicit stack events, but limit display to show concept
+  s.push({ frames: [], trace: '', msg: 'Naive recursive fib(' + n + '). Every call spawns TWO new calls — exponential!' });
+  var eventFrames = [];
+  var callCount = 0;
+  var maxShow = Math.min(n + 4, 10); // limit depth shown
+
+  function dfs(k, depth) {
+    callCount++;
+    eventFrames = eventFrames.map(function(f){return Object.assign({},f);});
+    // make previous current -> pending
+    for (var x = 0; x < eventFrames.length; x++) {
+      if (eventFrames[x].state === 'current') eventFrames[x].state = 'pending';
+    }
+    eventFrames.unshift({ fn: 'fib', arg: k, state: 'current', value: null });
+    if (s.length < 35) {
+      var note = callCount > 1 ? ' (call #' + callCount + ')' : '';
+      s.push({ frames: eventFrames.map(function(f){return Object.assign({},f);}), trace: '', msg: 'Calling fib(' + k + ')' + note + '. Stack depth: ' + eventFrames.length + '.' + (callCount > 6 ? ' Calls multiplying fast!' : '') });
+    }
+    if (k <= 1) {
+      var bv = k;
+      eventFrames[0].state = 'resolved';
+      eventFrames[0].value = bv;
+      if (s.length < 35) s.push({ frames: eventFrames.map(function(f){return Object.assign({},f);}), trace: 'fib(' + k + ')=' + bv, msg: 'Base case: fib(' + k + ')=' + bv + '.' });
+      eventFrames.shift();
+      return bv;
+    }
+    var lv = dfs(k - 1, depth + 1);
+    var rv = dfs(k - 2, depth + 1);
+    var res = lv + rv;
+    eventFrames = eventFrames.map(function(f){return Object.assign({},f);});
+    // re-add current frame at top (simplified)
+    for (var x = 0; x < eventFrames.length; x++) {
+      if (eventFrames[x].fn === 'fib' && eventFrames[x].arg === k && eventFrames[x].state === 'pending') {
+        eventFrames[x].state = 'resolved';
+        eventFrames[x].value = res;
+        break;
+      }
+    }
+    if (s.length < 35) s.push({ frames: eventFrames.map(function(f){return Object.assign({},f);}), trace: 'fib(' + k + ')=fib(' + (k-1) + ')+fib(' + (k-2) + ')=' + lv + '+' + rv + '=' + res, msg: 'fib(' + k + ') = ' + lv + ' + ' + rv + ' = ' + res + '.' });
+    return res;
+  }
+
+  var result = dfs(n, 0);
+  s.push({ frames: [], trace: 'fib(' + n + ')=' + result, msg: 'Done. fib(' + n + ')=' + result + '. Total calls made: ' + callCount + '. With memoization: only ' + (n + 1) + ' calls needed!' });
+  return s;
+}
+
+function draw() {
+  var s = steps[idx];
+  // render stack (top = first)
+  var fhtml = '';
+  for (var i = 0; i < s.frames.length; i++) {
+    var f = s.frames[i];
+    var stateClass = f.state === 'current' ? ' current' : f.state === 'resolved' ? ' resolved' : '';
+    var valStr = f.value !== null ? ' = ' + f.value : ' → ?';
+    fhtml += '<div class="frame' + stateClass + '">' +
+      '<span class="frame-fn">' + f.fn + '(' + f.arg + ')</span>' +
+      '<span class="frame-val">' + (f.value !== null ? '= ' + f.value : '→ ?') + '</span>' +
+      '</div>';
+  }
+  if (!fhtml) fhtml = '<div style="font-size:.75rem;color:#646464;padding:.4rem 0">Stack empty</div>';
+  document.getElementById('stack-frames').innerHTML = fhtml;
+  document.getElementById('trace-line').textContent = s.trace || '—';
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
+  document.getElementById('btn-step').disabled = idx === steps.length - 1;
+  document.getElementById('btn-back').disabled = idx === 0;
+}
+
+function rebuild() {
+  currentProb = document.getElementById('prob-sel').value;
+  currentN = parseInt(document.getElementById('n-input').value) || 5;
+  if (currentN < 1) currentN = 1;
+  if (currentN > 8) currentN = 8;
+  if (currentProb === 'factorial') {
+    steps = buildFactorial(currentN);
+  } else {
+    steps = buildFibNaive(currentN);
+  }
+  idx = 0;
+}
+
+document.getElementById('prob-sel').onchange = function() { rebuild(); draw(); };
+document.getElementById('btn-apply').onclick = function() { rebuild(); draw(); };
+document.getElementById('btn-step').onclick = function() { if (idx < steps.length - 1) { idx++; draw(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+rebuild(); draw();
+</script>
+</body>
+</html>

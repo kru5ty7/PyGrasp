@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Two Pointers — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 620px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  .input-row {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: .5rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .input-row label { font-size: .78rem; color: #646464; white-space: nowrap; }
+  .input-row input {
+    background: #222224;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    color: #d4d4d4;
+    font-size: .85rem;
+    padding: .3rem .6rem;
+    outline: none;
+  }
+  .input-row input:focus { border-color: #7b97aa; }
+  .input-row input.error { border-color: #c0392b; }
+  #arr-input { flex: 1; min-width: 80px; }
+  #target-input { width: 72px; }
+  #btn-apply {
+    padding: .3rem .7rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #2e4a30;
+    color: #d4d4d4;
+    white-space: nowrap;
+  }
+  #btn-apply:hover { opacity: .8; }
+  #err-msg { font-size: .75rem; color: #c0392b; margin-bottom: .5rem; min-height: 1rem; }
+
+  /* Array display */
+  #cells-wrap {
+    overflow-x: auto;
+    padding-bottom: .25rem;
+    margin-bottom: .25rem;
+  }
+  #cells { display: flex; gap: 5px; padding-bottom: 2px; }
+  .cell-col { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+  .cell-v {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: .9rem;
+    background: #2a2a2e;
+    color: #d4d4d4;
+    transition: background .2s, color .2s, border-color .2s;
+  }
+  .cell-v.ptr-l { background: #2a2a2e; border-color: #f0a500; color: #f0a500; }
+  .cell-v.ptr-r { background: #2a2a2e; border-color: #007bff; color: #7bbfff; }
+  .cell-v.ptr-both { background: #2a2a2e; border-color: #7b97aa; color: #7b97aa; }
+  .cell-v.found { background: #28a745; color: #fff; border-color: #28a745; }
+  .cell-idx { font-size: .62rem; color: #646464; margin-top: 3px; }
+
+  /* Pointer arrows row */
+  #arrows-wrap {
+    overflow-x: auto;
+    margin-bottom: .75rem;
+  }
+  #arrows { display: flex; gap: 5px; padding-bottom: 2px; }
+  .arrow-col {
+    width: 44px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 2rem;
+    justify-content: flex-start;
+  }
+  .arrow-tri {
+    font-size: 1rem;
+    line-height: 1;
+    margin-top: 2px;
+  }
+  .arrow-lbl {
+    font-size: .65rem;
+    font-weight: 700;
+    line-height: 1;
+  }
+  .arrow-l .arrow-tri { color: #f0a500; }
+  .arrow-l .arrow-lbl { color: #f0a500; }
+  .arrow-r .arrow-tri { color: #007bff; }
+  .arrow-r .arrow-lbl { color: #7bbfff; }
+  .arrow-both .arrow-tri { color: #7b97aa; }
+  .arrow-both .arrow-lbl { color: #7b97aa; }
+
+  /* Sum panel */
+  #sum-panel {
+    display: flex;
+    gap: .75rem;
+    margin-bottom: .75rem;
+    font-size: .82rem;
+    flex-wrap: wrap;
+  }
+  .sum-box {
+    padding: .3rem .65rem;
+    background: #222224;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    color: #646464;
+  }
+  .sum-box span { color: #d4d4d4; font-weight: 700; }
+
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Two Pointers — Pair Sum in Sorted Array</h4>
+  <div class="input-row">
+    <label for="arr-input">Array:</label>
+    <input id="arr-input" type="text" value="1, 3, 5, 7, 9, 11, 14" placeholder="integers (auto-sorted)" spellcheck="false">
+  </div>
+  <div class="input-row">
+    <label for="target-input">Target sum:</label>
+    <input id="target-input" type="number" value="16">
+    <button id="btn-apply">Apply</button>
+  </div>
+  <div id="err-msg"></div>
+  <div id="cells-wrap"><div id="cells"></div></div>
+  <div id="arrows-wrap"><div id="arrows"></div></div>
+  <div id="sum-panel">
+    <div class="sum-box">arr[L] + arr[R] = <span id="sp-sum">—</span></div>
+    <div class="sum-box">Target = <span id="sp-target">—</span></div>
+  </div>
+  <div id="stat">Press Step to begin.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var DEFAULT_ARR = [1, 3, 5, 7, 9, 11, 14];
+var DEFAULT_TARGET = 16;
+var currentArr, currentTarget, steps, idx;
+
+function buildSteps(arr, t) {
+  var s = [], L = 0, R = arr.length - 1;
+  s.push({ L: L, R: R, sum: null, found: false, done: false,
+    msg: 'Array loaded. L=0 (arr[L]=' + arr[0] + '), R=' + R + ' (arr[R]=' + arr[R] + '). Target=' + t + '. Press Step.' });
+  while (L < R) {
+    var sum = arr[L] + arr[R];
+    if (sum === t) {
+      s.push({ L: L, R: R, sum: sum, found: true, done: true,
+        msg: 'arr[' + L + '] + arr[' + R + '] = ' + arr[L] + ' + ' + arr[R] + ' = ' + sum + ' equals target ' + t + ' — pair found at indices ' + L + ' and ' + R + '!' });
+      break;
+    } else if (sum < t) {
+      s.push({ L: L, R: R, sum: sum, found: false, done: false,
+        msg: 'arr[' + L + '] + arr[' + R + '] = ' + arr[L] + ' + ' + arr[R] + ' = ' + sum + ' < ' + t + ' — sum too small, move L right. L = ' + (L + 1) + '.' });
+      L++;
+    } else {
+      s.push({ L: L, R: R, sum: sum, found: false, done: false,
+        msg: 'arr[' + L + '] + arr[' + R + '] = ' + arr[L] + ' + ' + arr[R] + ' = ' + sum + ' > ' + t + ' — sum too large, move R left. R = ' + (R - 1) + '.' });
+      R--;
+    }
+  }
+  if (!s[s.length - 1].done) {
+    s.push({ L: L, R: R, sum: null, found: false, done: true,
+      msg: 'L (' + L + ') >= R (' + R + ') — pointers crossed. No pair with sum ' + t + ' exists in this array.' });
+  }
+  return s;
+}
+
+function parseArr(raw) {
+  var parts = raw.split(',').map(function(x) { return x.trim(); }).filter(function(x) { return x !== ''; });
+  if (parts.length < 2 || parts.length > 20) return null;
+  var nums = parts.map(Number);
+  if (nums.some(isNaN)) return null;
+  if (nums.some(function(n) { return Math.floor(n) !== n; })) return null;
+  return nums;
+}
+
+function load(arr, target) {
+  currentArr = arr;
+  currentTarget = target;
+  steps = buildSteps(arr, target);
+  idx = 0;
+}
+
+function draw() {
+  var s = steps[idx];
+  var arr = currentArr;
+  var n = arr.length;
+
+  // Cells
+  var cellHtml = arr.map(function(v, i) {
+    var cls = 'cell-v';
+    if (s.found && (i === s.L || i === s.R)) cls += ' found';
+    else if (i === s.L && i === s.R) cls += ' ptr-both';
+    else if (i === s.L) cls += ' ptr-l';
+    else if (i === s.R) cls += ' ptr-r';
+    return '<div class="cell-col"><div class="' + cls + '">' + v + '</div>'
+      + '<div class="cell-idx">' + i + '</div></div>';
+  }).join('');
+  document.getElementById('cells').innerHTML = cellHtml;
+
+  // Arrows
+  var arrowHtml = arr.map(function(v, i) {
+    var acls = '', label = '';
+    if (i === s.L && i === s.R) { acls = 'arrow-both'; label = 'L/R'; }
+    else if (i === s.L) { acls = 'arrow-l'; label = 'L'; }
+    else if (i === s.R) { acls = 'arrow-r'; label = 'R'; }
+    if (!acls) return '<div class="arrow-col"></div>';
+    return '<div class="arrow-col ' + acls + '"><div class="arrow-tri">&#9650;</div><div class="arrow-lbl">' + label + '</div></div>';
+  }).join('');
+  document.getElementById('arrows').innerHTML = arrowHtml;
+
+  // Sum panel
+  var sumDisplay = s.sum !== null ? String(s.sum) : '—';
+  document.getElementById('sp-sum').textContent = sumDisplay;
+  document.getElementById('sp-target').textContent = String(currentTarget);
+
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
+  document.getElementById('btn-step').disabled = s.done;
+  document.getElementById('btn-back').disabled = (idx === 0);
+}
+
+function applyInput() {
+  var rawArr = document.getElementById('arr-input').value;
+  var rawTarget = document.getElementById('target-input').value;
+  var errEl = document.getElementById('err-msg');
+  var arrEl = document.getElementById('arr-input');
+
+  var arr = parseArr(rawArr);
+  if (!arr) {
+    errEl.textContent = 'Enter 2–20 integers, comma-separated.';
+    arrEl.classList.add('error');
+    return;
+  }
+  var target = parseInt(rawTarget, 10);
+  if (isNaN(target)) {
+    errEl.textContent = 'Target must be an integer.';
+    return;
+  }
+  // Auto-sort
+  arr.sort(function(a, b) { return a - b; });
+  document.getElementById('arr-input').value = arr.join(', ');
+  errEl.textContent = '';
+  arrEl.classList.remove('error');
+  load(arr, target);
+  draw();
+}
+
+document.getElementById('btn-apply').onclick = applyInput;
+document.getElementById('arr-input').onkeydown = function(e) { if (e.key === 'Enter') applyInput(); };
+document.getElementById('target-input').onkeydown = function(e) { if (e.key === 'Enter') applyInput(); };
+document.getElementById('btn-step').onclick = function() { if (idx < steps.length - 1) { idx++; draw(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() { load(currentArr.slice(), currentTarget); draw(); };
+
+load(DEFAULT_ARR.slice(), DEFAULT_TARGET);
+draw();
+</script>
+</body>
+</html>

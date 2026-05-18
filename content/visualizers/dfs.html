@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DFS — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #input-row {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: .75rem;
+    align-items: center;
+  }
+  #input-row label { font-size: .78rem; color: #646464; white-space: nowrap; }
+  #start-sel {
+    background: #222224;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    color: #d4d4d4;
+    font-size: .85rem;
+    padding: .3rem .6rem;
+    outline: none;
+    cursor: pointer;
+  }
+  #start-sel:focus { border-color: #7b97aa; }
+  svg { display: block; width: 100%; }
+  #legend {
+    display: flex; gap: .75rem; flex-wrap: wrap;
+    margin: .4rem 0; font-size: .75rem; color: #d4d4d4;
+  }
+  .leg { display: flex; align-items: center; gap: .3rem; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+  #panels { display: flex; gap: .75rem; margin: .4rem 0; flex-wrap: wrap; }
+  .panel {
+    flex: 1; min-width: 130px; padding: .4rem .6rem;
+    background: #393639; border-radius: 4px;
+    font-size: .83rem; color: #d4d4d4;
+  }
+  .panel strong {
+    display: block; font-size: .68rem; text-transform: uppercase;
+    letter-spacing: .06em; color: #646464; margin-bottom: 3px;
+  }
+  #stat {
+    padding: .45rem .75rem; background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem; line-height: 1.5;
+    min-height: 2.2rem; margin: .5rem 0;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem; border: none; border-radius: 4px;
+    cursor: pointer; font-size: .82rem;
+    background: #393639; color: #d4d4d4; transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>DFS — Depth-First Search</h4>
+  <div id="input-row">
+    <label for="start-sel">Start node:</label>
+    <select id="start-sel">
+      <option value="A">A</option><option value="B">B</option>
+      <option value="C">C</option><option value="D">D</option>
+      <option value="E">E</option><option value="F">F</option>
+    </select>
+  </div>
+  <svg id="graph-svg" viewBox="0 0 440 240" height="210">
+    <line x1="80" y1="110" x2="220" y2="50" stroke="#646464" stroke-width="2"/>
+    <line x1="80" y1="110" x2="220" y2="170" stroke="#646464" stroke-width="2"/>
+    <line x1="220" y1="50" x2="350" y2="20" stroke="#646464" stroke-width="2"/>
+    <line x1="220" y1="50" x2="350" y2="110" stroke="#646464" stroke-width="2"/>
+    <line x1="220" y1="170" x2="350" y2="200" stroke="#646464" stroke-width="2"/>
+    <line x1="350" y1="110" x2="350" y2="200" stroke="#646464" stroke-width="2"/>
+    <circle id="n-A" cx="80" cy="110" r="18" fill="#4a4a4c" stroke="#393639" stroke-width="2"/>
+    <text id="t-A" x="80" y="115" text-anchor="middle" font-size="13" font-weight="bold" fill="#d4d4d4">A</text>
+    <circle id="n-B" cx="220" cy="50" r="18" fill="#4a4a4c" stroke="#393639" stroke-width="2"/>
+    <text id="t-B" x="220" y="55" text-anchor="middle" font-size="13" font-weight="bold" fill="#d4d4d4">B</text>
+    <circle id="n-C" cx="220" cy="170" r="18" fill="#4a4a4c" stroke="#393639" stroke-width="2"/>
+    <text id="t-C" x="220" y="175" text-anchor="middle" font-size="13" font-weight="bold" fill="#d4d4d4">C</text>
+    <circle id="n-D" cx="350" cy="20" r="18" fill="#4a4a4c" stroke="#393639" stroke-width="2"/>
+    <text id="t-D" x="350" y="25" text-anchor="middle" font-size="13" font-weight="bold" fill="#d4d4d4">D</text>
+    <circle id="n-E" cx="350" cy="110" r="18" fill="#4a4a4c" stroke="#393639" stroke-width="2"/>
+    <text id="t-E" x="350" y="115" text-anchor="middle" font-size="13" font-weight="bold" fill="#d4d4d4">E</text>
+    <circle id="n-F" cx="350" cy="200" r="18" fill="#4a4a4c" stroke="#393639" stroke-width="2"/>
+    <text id="t-F" x="350" y="205" text-anchor="middle" font-size="13" font-weight="bold" fill="#d4d4d4">F</text>
+  </svg>
+  <div id="legend">
+    <span class="leg"><span class="dot" style="background:#4a4a4c"></span>Unvisited</span>
+    <span class="leg"><span class="dot" style="background:#f0a500"></span>On stack</span>
+    <span class="leg"><span class="dot" style="background:#007bff"></span>Processing</span>
+    <span class="leg"><span class="dot" style="background:#28a745"></span>Done</span>
+  </div>
+  <div id="panels">
+    <div class="panel"><strong>Stack (LIFO)</strong><span id="p-stack">—</span></div>
+    <div class="panel"><strong>Visited order</strong><span id="p-visited">—</span></div>
+  </div>
+  <div id="stat">Press Step to begin.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>◀ Back</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var NODES = ['A','B','C','D','E','F'];
+var ADJ = { A:['B','C'], B:['A','D','E'], C:['A','F'], D:['B'], E:['B','F'], F:['C','E'] };
+var NC = { u:'#4a4a4c', s:'#f0a500', c:'#007bff', p:'#28a745' };
+var TC = { u:'#d4d4d4', s:'#000',    c:'#fff',    p:'#fff'    };
+
+var steps, idx;
+
+function buildSteps(src) {
+  var s = [];
+  var st = {}; NODES.forEach(function(n){ st[n]='u'; });
+  var visited = [];
+  // iterative DFS — neighbours pushed in reverse so leftmost is processed first
+  var stack = [src];
+  st[src] = 's';
+  s.push({ st: Object.assign({},st), stk: stack.slice(), v: visited.slice(),
+    msg: 'Init: Push ' + src + ' onto stack.', done: false });
+
+  var visitedSet = {};
+
+  while (stack.length) {
+    var node = stack.pop();
+    if (visitedSet[node]) {
+      // skip already visited — rebuild state and continue without a new step
+      continue;
+    }
+    visitedSet[node] = true;
+    visited.push(node);
+    st[node] = 'c';
+    s.push({ st: Object.assign({},st), stk: stack.slice(), v: visited.slice(),
+      msg: 'Pop ' + node + ' — processing.', done: false });
+    st[node] = 'p';
+
+    // push unvisited neighbours in reverse order
+    var newPushed = [];
+    var revNeigh = ADJ[node].slice().reverse();
+    revNeigh.forEach(function(nb){
+      if (!visitedSet[nb]) { st[nb] = 's'; stack.push(nb); newPushed.push(nb); }
+    });
+
+    var msg2;
+    if (newPushed.length)
+      msg2 = node + ' done. Pushed ' + newPushed.slice().reverse().join(', ') + ' onto stack.';
+    else
+      msg2 = node + ' done. No unvisited neighbours to push.';
+    s.push({ st: Object.assign({},st), stk: stack.slice(), v: visited.slice(),
+      msg: msg2, done: false });
+  }
+
+  // mark any remaining 's' as done
+  NODES.forEach(function(n){ if(st[n]==='s') st[n]='u'; });
+  s.push({ st: Object.assign({},st), stk: [], v: visited.slice(),
+    msg: 'DFS complete. Visited order: ' + visited.join(' → ') + '.', done: true });
+  return s;
+}
+
+function draw() {
+  var s = steps[idx];
+  NODES.forEach(function(n){
+    var state = s.st[n] || 'u';
+    document.getElementById('n-'+n).setAttribute('fill', NC[state]);
+    document.getElementById('t-'+n).setAttribute('fill', TC[state]);
+  });
+  var stk = s.stk;
+  document.getElementById('p-stack').textContent = stk.length ? '[ '+stk.slice().reverse().join(', ')+' ] (top→)' : '(empty)';
+  document.getElementById('p-visited').textContent = s.v.length ? s.v.join(' → ') : '—';
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length-1);
+  document.getElementById('btn-step').disabled = s.done;
+  document.getElementById('btn-back').disabled = idx === 0;
+}
+
+function load(src) {
+  steps = buildSteps(src);
+  idx = 0;
+  draw();
+}
+
+document.getElementById('btn-step').onclick = function(){ if(idx<steps.length-1){idx++;draw();} };
+document.getElementById('btn-back').onclick = function(){ if(idx>0){idx--;draw();} };
+document.getElementById('btn-reset').onclick = function(){ idx=0; draw(); };
+document.getElementById('start-sel').onchange = function(){ load(this.value); };
+
+load('A');
+</script>
+</body>
+</html>

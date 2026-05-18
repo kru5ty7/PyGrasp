@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sorting Algorithms — Comparison</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    padding: 1.25rem 1rem;
+  }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .85rem;
+  }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .82rem;
+    margin-bottom: 1rem;
+  }
+  thead th {
+    background: #222224;
+    color: #7b97aa;
+    padding: .45rem .6rem;
+    text-align: left;
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    border-bottom: 1px solid #393639;
+    white-space: nowrap;
+  }
+  tbody tr {
+    cursor: pointer;
+    border-bottom: 1px solid #2a2a2c;
+    transition: background .12s;
+  }
+  tbody tr:hover { background: rgba(240,165,0,.12); }
+  tbody tr.selected { background: rgba(40,75,99,.35); }
+  tbody td {
+    padding: .42rem .6rem;
+    vertical-align: middle;
+    white-space: nowrap;
+  }
+  .algo-name { font-weight: 600; color: #d4d4d4; }
+  .badge {
+    display: inline-block;
+    padding: .1rem .38rem;
+    border-radius: 3px;
+    font-size: .7rem;
+    font-weight: 700;
+  }
+  .badge-yes  { background: rgba(40,167,69,.2);  color: #5cb85c; }
+  .badge-no   { background: rgba(220,53,69,.2);  color: #dc3545; }
+  .o-on       { color: #f0a500; }
+  .o-onlogn   { color: #7b97aa; }
+  .o-on2      { color: #dc3545; }
+  .o-onk      { color: #28a745; }
+  #detail-card {
+    display: none;
+    background: #222224;
+    border: 1px solid #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 6px 6px 0;
+    padding: .75rem 1rem;
+    margin-bottom: .5rem;
+    font-size: .85rem;
+    line-height: 1.6;
+  }
+  #detail-card h5 {
+    font-size: .85rem;
+    color: #7b97aa;
+    margin-bottom: .4rem;
+  }
+  #detail-card .detail-prop { color: #d4d4d4; margin-bottom: .25rem; }
+  #detail-card .detail-use  { color: #aaa; font-size: .8rem; }
+  #hint {
+    font-size: .72rem;
+    color: #646464;
+    margin-bottom: .6rem;
+  }
+</style>
+</head>
+<body>
+<h4>Sorting Algorithms — Reference Comparison</h4>
+<p id="hint">Click a row to expand details.</p>
+<table id="tbl">
+  <thead>
+    <tr>
+      <th>Algorithm</th>
+      <th>Best</th>
+      <th>Average</th>
+      <th>Worst</th>
+      <th>Space</th>
+      <th>Stable?</th>
+      <th>Notes</th>
+    </tr>
+  </thead>
+  <tbody id="tbody"></tbody>
+</table>
+<div id="detail-card">
+  <h5 id="dc-title"></h5>
+  <div class="detail-prop" id="dc-prop"></div>
+  <div class="detail-use" id="dc-use"></div>
+</div>
+<script>
+var DATA = [
+  {
+    name: 'Bubble Sort',
+    best: 'O(n)', avg: 'O(n²)', worst: 'O(n²)', space: 'O(1)',
+    stable: true,
+    notes: 'Adaptive with swapped flag; simplest sort',
+    prop: 'Repeatedly swaps adjacent out-of-order pairs; can exit early if no swaps occur in a pass.',
+    use: 'Use for: tiny arrays or nearly-sorted data where simplicity beats everything. Avoid for production.'
+  },
+  {
+    name: 'Selection Sort',
+    best: 'O(n²)', avg: 'O(n²)', worst: 'O(n²)', space: 'O(1)',
+    stable: false,
+    notes: 'Exactly n-1 swaps regardless of input',
+    prop: 'Scans the unsorted portion to find the minimum, then swaps it into the sorted boundary — always n-1 swaps total.',
+    use: 'Use for: scenarios where writes are expensive (flash/EEPROM) and minimising swaps matters. Never for general sorting.'
+  },
+  {
+    name: 'Insertion Sort',
+    best: 'O(n)', avg: 'O(n²)', worst: 'O(n²)', space: 'O(1)',
+    stable: true,
+    notes: 'O(n + inversions); Timsort base case',
+    prop: 'Inserts each element into its correct position in the sorted prefix by shifting larger elements right.',
+    use: 'Use for: small arrays (n < ~64), nearly-sorted data, or as a base case inside Timsort/merge sort.'
+  },
+  {
+    name: 'Merge Sort',
+    best: 'O(n log n)', avg: 'O(n log n)', worst: 'O(n log n)', space: 'O(n)',
+    stable: true,
+    notes: 'Guaranteed O(n log n); preferred for linked lists',
+    prop: 'Divides array in half recursively, then merges sorted halves; merge step does all the real work.',
+    use: 'Use for: stable sorting, linked list sorting, external sorting (disk), or when O(n log n) worst case is required.'
+  },
+  {
+    name: 'Quick Sort',
+    best: 'O(n log n)', avg: 'O(n log n)', worst: 'O(n²)', space: 'O(log n)',
+    stable: false,
+    notes: 'Fastest in practice; worst case avoidable with random pivot',
+    prop: 'Partitions array around a pivot (pivot reaches its final position); recursively sorts both sides.',
+    use: 'Use for: large in-memory arrays where average speed matters and stability is not required. Use random/median-of-3 pivot.'
+  },
+  {
+    name: 'Heap Sort',
+    best: 'O(n log n)', avg: 'O(n log n)', worst: 'O(n log n)', space: 'O(1)',
+    stable: false,
+    notes: 'O(1) space; poor cache performance limits real use',
+    prop: 'Builds a max-heap in O(n), then repeatedly extracts the maximum to build the sorted array in-place.',
+    use: 'Use for: O(1) space constraint with O(n log n) worst-case guarantee. In practice, introsort uses it as a fallback.'
+  },
+  {
+    name: 'Counting Sort',
+    best: 'O(n+k)', avg: 'O(n+k)', worst: 'O(n+k)', space: 'O(n+k)',
+    stable: true,
+    notes: 'Non-comparison; only valid for bounded integers',
+    prop: 'Counts occurrences of each value, computes prefix sums, then places each element at its correct output index.',
+    use: 'Use for: large volumes of small integers (ages, scores, bytes). Only when k (value range) is O(n).'
+  },
+  {
+    name: 'Timsort',
+    best: 'O(n)', avg: 'O(n log n)', worst: 'O(n log n)', space: 'O(n)',
+    stable: true,
+    notes: 'Python/Java default; exploits natural runs in data',
+    prop: 'Finds naturally sorted runs, extends short runs with insertion sort, then merges runs using a merge sort with galloping.',
+    use: 'Use for: everything in Python (it is list.sort()/sorted()). Outperforms pure merge sort and quick sort on real-world data.'
+  }
+];
+
+var selectedRow = -1;
+
+function cls(val) {
+  if (val === 'O(1)') return '';
+  if (val.indexOf('n²') !== -1) return 'o-on2';
+  if (val.indexOf('log') !== -1) return 'o-onlogn';
+  if (val === 'O(n)') return 'o-on';
+  if (val.indexOf('k') !== -1) return 'o-onk';
+  return '';
+}
+
+var tbody = document.getElementById('tbody');
+DATA.forEach(function(d, i) {
+  var tr = document.createElement('tr');
+  tr.innerHTML =
+    '<td class="algo-name">' + d.name + '</td>' +
+    '<td class="' + cls(d.best) + '">' + d.best + '</td>' +
+    '<td class="' + cls(d.avg) + '">' + d.avg + '</td>' +
+    '<td class="' + cls(d.worst) + '">' + d.worst + '</td>' +
+    '<td>' + d.space + '</td>' +
+    '<td><span class="badge ' + (d.stable ? 'badge-yes' : 'badge-no') + '">' + (d.stable ? 'Yes' : 'No') + '</span></td>' +
+    '<td style="white-space:normal;font-size:.75rem;color:#888">' + d.notes + '</td>';
+  tr.onclick = function() {
+    if (selectedRow === i) {
+      selectedRow = -1;
+      tr.classList.remove('selected');
+      document.getElementById('detail-card').style.display = 'none';
+      return;
+    }
+    document.querySelectorAll('#tbody tr').forEach(function(r) { r.classList.remove('selected'); });
+    tr.classList.add('selected');
+    selectedRow = i;
+    document.getElementById('dc-title').textContent = d.name;
+    document.getElementById('dc-prop').textContent = d.prop;
+    document.getElementById('dc-use').textContent = d.use;
+    var card = document.getElementById('detail-card');
+    card.style.display = 'block';
+    card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  };
+  tbody.appendChild(tr);
+});
+</script>
+</body>
+</html>

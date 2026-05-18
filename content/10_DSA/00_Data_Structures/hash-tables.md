@@ -179,6 +179,12 @@ print(dict(groups))  # {'a': ['apple', 'apple', 'apple'], 'b': [...], 'c': [...]
 
 ---
 
+## Visualizer
+
+<iframe src="/visualizers/hash-table.html" style="width:100%;height:400px;border:none;border-radius:8px;" title="Hash Table Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Hash collisions are the failure mode of hash tables. Understanding what causes them, how Python resolves them with open addressing, and what the worst-case implications are is the essential second chapter after learning what a hash table is.

@@ -110,6 +110,12 @@ print(quick_sort(sorted_data)[:5])  # [0, 1, 2, 3, 4]
 
 ---
 
+## Visualizer
+
+<iframe src="/visualizers/quick-sort.html" style="width:100%;height:420px;border:none;border-radius:8px;" title="Quick Sort Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Quick sort is the most prominent application of the divide-and-conquer paradigm alongside merge sort. The difference between them reveals the two sides of the strategy: quick sort's work happens during the divide (partition) step; merge sort's work happens during the combine (merge) step. The partition operation also appears independently as "find the k-th smallest element" — Quickselect uses a single partition step without full recursion to solve this in O(n) average time.

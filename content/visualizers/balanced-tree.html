@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AVL Tree — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 620px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #input-row {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: .75rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  #input-row label { font-size: .78rem; color: #646464; white-space: nowrap; }
+  #val-input {
+    width: 70px;
+    background: #222224;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    color: #d4d4d4;
+    font-size: .85rem;
+    padding: .3rem .6rem;
+    outline: none;
+  }
+  #val-input:focus { border-color: #7b97aa; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+    white-space: nowrap;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-insert { background: #284b63; color: #fff; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #tree-svg {
+    width: 100%;
+    height: 280px;
+    background: #1e1e20;
+    border-radius: 6px;
+    border: 1px solid #2a2a2e;
+    margin-bottom: .5rem;
+    display: block;
+  }
+  #rotation-label {
+    font-size: .8rem;
+    color: #f0a500;
+    min-height: 1.2rem;
+    margin-bottom: .4rem;
+    font-weight: 600;
+  }
+  #counter { font-size: .72rem; color: #646464; }
+  .ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>AVL Tree — Self-Balancing BST</h4>
+  <div id="input-row">
+    <label for="val-input">Value:</label>
+    <input id="val-input" type="number" placeholder="e.g. 3" min="0" max="999">
+    <button id="btn-insert">Insert</button>
+    <button id="btn-step" disabled>Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+  </div>
+  <div id="stat">Start empty. Insert values one by one (try 1, 2, 3 to trigger LL imbalance).</div>
+  <svg id="tree-svg"></svg>
+  <div id="rotation-label" id="rot-label"></div>
+  <div class="ctrl">
+    <div id="counter"></div>
+  </div>
+</div>
+<script>
+var SVG_W = 600, SVG_H = 280, R = 18;
+
+// AVL node
+function mkNode(v) { return {val: v, left: null, right: null, h: 0, id: v + '_' + Math.random().toFixed(6)}; }
+function height(n) { return n ? n.h : -1; }
+function updH(n) { n.h = 1 + Math.max(height(n.left), height(n.right)); }
+function bf(n) { return n ? height(n.left) - height(n.right) : 0; }
+
+function rotR(y) {
+  var x = y.left, t2 = x.right;
+  x.right = y; y.left = t2;
+  updH(y); updH(x);
+  return x;
+}
+function rotL(x) {
+  var y = x.right, t2 = y.left;
+  y.left = x; x.right = t2;
+  updH(x); updH(y);
+  return y;
+}
+function rebalance(n) {
+  updH(n);
+  var b = bf(n);
+  if (b > 1) {
+    if (bf(n.left) < 0) n.left = rotL(n.left);
+    return rotR(n);
+  }
+  if (b < -1) {
+    if (bf(n.right) > 0) n.right = rotR(n.right);
+    return rotL(n);
+  }
+  return n;
+}
+
+var avlRoot = null;
+var nodeStates = {};
+var steps = [];
+var stepIdx = 0;
+
+function avlInsert(node, val) {
+  if (!node) return mkNode(val);
+  if (val < node.val) node.left = avlInsert(node.left, val);
+  else if (val > node.val) node.right = avlInsert(node.right, val);
+  else return node;
+  return rebalance(node);
+}
+
+function computePositions(root) {
+  if (!root) return [];
+  var all = [];
+  var rank = 0;
+  function inorder(nd, d) {
+    if (!nd) return;
+    inorder(nd.left, d + 1);
+    nd._depth = d; nd._rank = rank++;
+    all.push(nd);
+    inorder(nd.right, d + 1);
+  }
+  inorder(root, 0);
+  var total = all.length;
+  var maxD = Math.max.apply(null, all.map(function(n) { return n._depth; }));
+  all.forEach(function(nd) {
+    nd.x = SVG_W * (nd._rank + 0.5) / total;
+    nd.y = 28 + nd._depth * Math.min(52, (SVG_H - 50) / Math.max(maxD, 1));
+  });
+  return all;
+}
+
+function flatTree(nd) {
+  if (!nd) return [];
+  return [nd].concat(flatTree(nd.left)).concat(flatTree(nd.right));
+}
+
+function renderTree(root, highlights, rotLabel) {
+  var all = computePositions(root);
+  var svg = document.getElementById('tree-svg');
+  var html = '';
+  // edges
+  function edges(nd) {
+    if (!nd) return;
+    if (nd.left) { html += '<line x1="'+nd.x+'" y1="'+nd.y+'" x2="'+nd.left.x+'" y2="'+nd.left.y+'" stroke="#646464" stroke-width="1.5"/>'; edges(nd.left); }
+    if (nd.right) { html += '<line x1="'+nd.x+'" y1="'+nd.y+'" x2="'+nd.right.x+'" y2="'+nd.right.y+'" stroke="#646464" stroke-width="1.5"/>'; edges(nd.right); }
+  }
+  edges(root);
+  all.forEach(function(nd) {
+    var state = (highlights && highlights[nd.id]) || 'normal';
+    var fill = state === 'current' ? '#f0a500' : state === 'visited' ? '#28a745' : state === 'unbalanced' ? '#c0392b' : '#2a2a2e';
+    var textFill = state === 'current' ? '#000' : '#d4d4d4';
+    var stroke = state === 'normal' ? '#393639' : fill;
+    html += '<circle cx="'+nd.x+'" cy="'+nd.y+'" r="'+R+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="1.5"/>';
+    html += '<text x="'+nd.x+'" y="'+(nd.y+4)+'" text-anchor="middle" font-size="12" fill="'+textFill+'" font-family="sans-serif">'+nd.val+'</text>';
+    // balance factor label
+    var bfVal = bf(nd);
+    var bfColor = Math.abs(bfVal) > 1 ? '#c0392b' : '#646464';
+    html += '<text x="'+(nd.x+R+3)+'" y="'+(nd.y-R+6)+'" font-size="10" fill="'+bfColor+'" font-family="sans-serif">'+bfVal+'</text>';
+  });
+  svg.innerHTML = html;
+  var rotEl = document.getElementById('rotation-label');
+  if (rotEl) rotEl.textContent = rotLabel || '';
+}
+
+function setStatus(msg) { document.getElementById('stat').textContent = msg; }
+
+function computeSteps(val) {
+  steps = [];
+  stepIdx = 0;
+  var insertPath = [];
+
+  // Determine path before insertion
+  var cur = avlRoot;
+  while (cur) {
+    insertPath.push(cur);
+    if (val < cur.val) cur = cur.left;
+    else if (val > cur.val) cur = cur.right;
+    else break;
+  }
+
+  // Step 1: walk comparison path
+  insertPath.forEach(function(nd, i) {
+    (function(n, ii) {
+      steps.push(function() {
+        var hl = {};
+        for (var k = 0; k < ii; k++) hl[insertPath[k].id] = 'visited';
+        hl[n.id] = 'current';
+        var dir = val < n.val ? 'go left' : val > n.val ? 'go right' : 'duplicate';
+        setStatus('Compare ' + val + ' with ' + n.val + ': ' + dir);
+        renderTree(avlRoot, hl, '');
+        document.getElementById('counter').textContent = 'Step '+(ii+1)+' / '+steps.length;
+      });
+    })(nd, i);
+  });
+
+  // Detect rotation type before inserting
+  function detectRotation(root, v) {
+    if (!root) return '';
+    var testRoot = avlInsert(deepClone(avlRoot), v);
+    // find imbalanced node
+    var type = '';
+    function check(nd) {
+      if (!nd) return;
+      var b = bf(nd);
+      if (Math.abs(b) > 1) {
+        if (b > 1 && bf(nd.left) >= 0) type = 'Left-Left → Single Right Rotation';
+        else if (b > 1 && bf(nd.left) < 0) type = 'Left-Right → Double Rotation (LR)';
+        else if (b < -1 && bf(nd.right) <= 0) type = 'Right-Right → Single Left Rotation';
+        else if (b < -1 && bf(nd.right) > 0) type = 'Right-Left → Double Rotation (RL)';
+      }
+      check(nd.left); check(nd.right);
+    }
+    check(testRoot);
+    return type;
+  }
+
+  function deepClone(nd) {
+    if (!nd) return null;
+    var c = mkNode(nd.val);
+    c.h = nd.h; c.id = nd.id;
+    c.left = deepClone(nd.left); c.right = deepClone(nd.right);
+    return c;
+  }
+
+  var rotType = detectRotation(avlRoot, val);
+
+  // Step 2: insert + show imbalance if any
+  steps.push(function() {
+    avlRoot = avlInsert(avlRoot, val);
+    computePositions(avlRoot);
+    // Find unbalanced nodes
+    var hl = {};
+    function markImbalanced(nd) {
+      if (!nd) return;
+      if (Math.abs(bf(nd)) > 1) hl[nd.id] = 'unbalanced';
+      markImbalanced(nd.left); markImbalanced(nd.right);
+    }
+    markImbalanced(avlRoot);
+    var hasImbalance = Object.keys(hl).length > 0;
+    if (hasImbalance && rotType) {
+      setStatus('Imbalance detected (red nodes). Rotation needed: ' + rotType);
+    } else {
+      setStatus('Inserted ' + val + '. Tree is balanced (all balance factors −1, 0, or 1).');
+    }
+    renderTree(avlRoot, hl, hasImbalance ? rotType : '');
+    document.getElementById('counter').textContent = 'Step '+(insertPath.length+1)+' / '+steps.length;
+  });
+
+  // Step 3: after rotation — show final balanced state
+  if (rotType) {
+    steps.push(function() {
+      var hl = {};
+      flatTree(avlRoot).forEach(function(nd) { hl[nd.id] = 'visited'; });
+      setStatus('Rotation complete. Tree is balanced. Rotation: ' + rotType);
+      renderTree(avlRoot, hl, rotType);
+      document.getElementById('counter').textContent = 'Step '+(insertPath.length+2)+' / '+steps.length;
+    });
+  }
+}
+
+document.getElementById('btn-insert').onclick = function() {
+  var v = parseInt(document.getElementById('val-input').value);
+  if (isNaN(v)) { setStatus('Enter a numeric value.'); return; }
+  if (flatTree(avlRoot).length >= 10) { setStatus('Max 10 nodes. Reset to continue.'); return; }
+  computeSteps(v);
+  document.getElementById('btn-step').disabled = steps.length === 0;
+  setStatus('Insert ' + v + ': press Step to walk through.');
+  renderTree(avlRoot, {}, '');
+};
+document.getElementById('val-input').onkeydown = function(e) { if (e.key === 'Enter') document.getElementById('btn-insert').click(); };
+
+document.getElementById('btn-step').onclick = function() {
+  if (stepIdx < steps.length) {
+    steps[stepIdx]();
+    stepIdx++;
+    if (stepIdx >= steps.length) document.getElementById('btn-step').disabled = true;
+  }
+};
+
+document.getElementById('btn-reset').onclick = function() {
+  avlRoot = null;
+  steps = []; stepIdx = 0;
+  nodeStates = {};
+  renderTree(null, {}, '');
+  setStatus('Reset. Insert values (try 1, 2, 3 to trigger LL rotation).');
+  document.getElementById('counter').textContent = '';
+  document.getElementById('btn-step').disabled = true;
+};
+
+renderTree(null, {}, '');
+</script>
+</body>
+</html>

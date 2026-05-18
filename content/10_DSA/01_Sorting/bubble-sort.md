@@ -88,6 +88,12 @@ print(bubble_sort(already_sorted))  # exits after 1 pass
 
 ---
 
+## Visualizer
+
+<iframe src="/visualizers/bubble-sort.html" style="width:100%;height:400px;border:none;border-radius:8px;" title="Bubble Sort Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Bubble sort operates on contiguous elements in an array, so understanding how arrays store data in memory is the right foundation before studying any sorting algorithm. The early-exit optimisation that makes bubble sort O(n) on sorted input is the same concept that makes insertion sort fast on nearly-sorted data.

@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tabulation — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 660px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #ctrl-row {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: .75rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  #ctrl-row label { font-size: .78rem; color: #646464; white-space: nowrap; }
+  select, input[type=number] {
+    background: #222224;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    color: #d4d4d4;
+    font-size: .85rem;
+    padding: .3rem .6rem;
+    outline: none;
+  }
+  select:focus, input[type=number]:focus { border-color: #7b97aa; }
+  input[type=number] { width: 64px; }
+  #viz-area {
+    background: #1e1e20;
+    border: 1px solid #393639;
+    border-radius: 6px;
+    padding: 1rem;
+    margin-bottom: .75rem;
+    min-height: 120px;
+    overflow-x: auto;
+  }
+  /* 1D table */
+  .dp-table-1d { display: flex; flex-direction: column; gap: 6px; }
+  .dp-row { display: flex; gap: 4px; align-items: center; }
+  .dp-cell {
+    min-width: 44px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #393639;
+    border-radius: 3px;
+    font-size: .82rem;
+    background: #2a2a2e;
+    transition: background .2s;
+    position: relative;
+  }
+  .dp-cell.active   { background: #a06000; border-color: #f0a500; color: #fff; }
+  .dp-cell.reading  { background: #7a4d00; border-color: #f0a500; color: #ffd; }
+  .dp-cell.filled   { background: #1e6b34; border-color: #28a745; color: #fff; }
+  .dp-cell.base     { background: #2e3a4a; border-color: #7b97aa; color: #aac; }
+  .dp-label { font-size: .65rem; color: #646464; min-width: 44px; text-align: center; }
+  /* arrows SVG */
+  #arrow-area { position: relative; height: 28px; overflow: visible; }
+  /* 2D table */
+  .dp-table-2d { border-collapse: collapse; font-size: .78rem; }
+  .dp-table-2d th { padding: 4px 6px; color: #646464; font-weight: 500; text-align: center; min-width: 38px; }
+  .dp-table-2d td {
+    border: 1px solid #393639;
+    min-width: 38px;
+    height: 32px;
+    text-align: center;
+    background: #2a2a2e;
+    transition: background .15s;
+    font-size: .78rem;
+  }
+  .dp-table-2d td.active  { background: #a06000; border-color: #f0a500; color: #fff; }
+  .dp-table-2d td.reading { background: #7a4d00; border-color: #f0a500; color: #ffd; }
+  .dp-table-2d td.filled  { background: #1e6b34; border-color: #28a745; color: #fff; }
+  .dp-table-2d td.rh      { color: #646464; background: #1e1e20; border: none; font-size: .72rem; }
+  /* result panel */
+  #result-panel {
+    background: #1e1e20;
+    border: 1px solid #393639;
+    border-radius: 6px;
+    padding: .6rem .75rem;
+    margin-bottom: .75rem;
+    font-size: .82rem;
+    min-height: 2rem;
+  }
+  #result-panel span { color: #28a745; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #buttons { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Tabulation (Bottom-Up DP) — Step-Through</h4>
+  <div id="ctrl-row">
+    <label for="prob-sel">Problem:</label>
+    <select id="prob-sel">
+      <option value="fib">Fibonacci</option>
+      <option value="knapsack">0/1 Knapsack</option>
+    </select>
+    <span id="n-wrap">
+      <label for="n-input" style="margin-left:.4rem">n:</label>
+      <input type="number" id="n-input" value="8" min="2" max="12">
+    </span>
+    <button id="btn-apply">Apply</button>
+  </div>
+  <div id="viz-area"></div>
+  <div id="result-panel" style="display:none"></div>
+  <div id="stat">Press Step to begin.</div>
+  <div id="buttons">
+    <button id="btn-back" disabled>◀ Back</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var steps = [], idx = 0;
+var currentProb = 'fib', currentN = 8;
+
+/* -------- FIBONACCI bottom-up with arrows -------- */
+function buildFib(n) {
+  var s = [];
+  var dp = new Array(n + 1).fill(null);
+  s.push({ type: 'fib', dp: dp.slice(), active: -1, reading: [], msg: 'Bottom-up Fibonacci. We fill dp[0], dp[1] first, then each dp[i] = dp[i-1] + dp[i-2].', result: '' });
+  dp[0] = 0;
+  s.push({ type: 'fib', dp: dp.slice(), active: 0, reading: [], msg: 'Base case: dp[0] = 0.', result: '' });
+  if (n >= 1) {
+    dp[1] = 1;
+    s.push({ type: 'fib', dp: dp.slice(), active: 1, reading: [], msg: 'Base case: dp[1] = 1.', result: '' });
+  }
+  for (var i = 2; i <= n; i++) {
+    s.push({ type: 'fib', dp: dp.slice(), active: -1, reading: [i-1, i-2], msg: 'Reading dp[' + (i-1) + ']=' + dp[i-1] + ' and dp[' + (i-2) + ']=' + dp[i-2] + '. Dependency arrows shown.', result: '' });
+    dp[i] = dp[i-1] + dp[i-2];
+    s.push({ type: 'fib', dp: dp.slice(), active: i, reading: [], msg: 'dp[' + i + '] = dp[' + (i-1) + '] + dp[' + (i-2) + '] = ' + dp[i-1] + ' + ' + dp[i-2] + ' = ' + dp[i] + '.', result: '' });
+  }
+  s.push({ type: 'fib', dp: dp.slice(), active: -1, reading: [], msg: 'Done! Fibonacci(' + n + ') = ' + dp[n] + '. All cells filled bottom-up.', result: 'fib(' + n + ') = ' + dp[n] });
+  return s;
+}
+
+/* -------- 0/1 KNAPSACK -------- */
+function buildKnapsack() {
+  var items = [{w:1,v:1},{w:3,v:4},{w:4,v:5},{w:2,v:3}];
+  var W = 7;
+  var n = items.length;
+  var s = [];
+  // dp[i][w] = max value using items 0..i-1 with capacity w
+  function mkGrid(g) { return g.map(function(r){return r.slice();}); }
+  var dp = [];
+  for (var r = 0; r <= n; r++) dp.push(new Array(W+1).fill(0));
+  s.push({ type: 'ks', dp: mkGrid(dp), items: items, W: W, ar:-1, ac:-1, reading:[], result:'', msg:'0/1 Knapsack: 4 items, capacity W=7. dp[i][w] = best value using first i items with cap w.' });
+  for (var i = 1; i <= n; i++) {
+    var item = items[i-1];
+    for (var w = 0; w <= W; w++) {
+      var skipVal = dp[i-1][w];
+      var takeVal = -1;
+      var rdg = [[i-1, w]];
+      if (item.w <= w) {
+        takeVal = dp[i-1][w - item.w] + item.v;
+        rdg.push([i-1, w - item.w]);
+      }
+      s.push({ type:'ks', dp:mkGrid(dp), items:items, W:W, ar:i, ac:w, reading:rdg, result:'',
+        msg:'Item '+ i +' (w='+ item.w +',v='+ item.v +'), cap='+ w +': skip=' + skipVal + (item.w<=w ? ', take=dp['+(i-1)+']['+(w-item.w)+']+'+item.v+'='+(dp[i-1][w-item.w]+item.v) : ' (too heavy)') + '.' });
+      dp[i][w] = item.w <= w ? Math.max(skipVal, takeVal) : skipVal;
+      s.push({ type:'ks', dp:mkGrid(dp), items:items, W:W, ar:i, ac:w, reading:[], result:'',
+        msg:'dp['+i+']['+w+'] = '+dp[i][w]+'.' });
+    }
+  }
+  // backtrack
+  var sel = [], rw = W;
+  for (var bi = n; bi >= 1; bi--) {
+    if (dp[bi][rw] !== dp[bi-1][rw]) { sel.push(bi-1); rw -= items[bi-1].w; }
+  }
+  var totalV = dp[n][W];
+  var selStr = sel.map(function(si){ return 'Item'+(si+1)+'(w='+items[si].w+',v='+items[si].v+')'; }).join(', ');
+  s.push({ type:'ks', dp:mkGrid(dp), items:items, W:W, ar:-1, ac:-1, reading:[], selected:sel,
+    result:'Max value=' + totalV + ' with: ' + selStr,
+    msg:'Done! Max value for W=7 is ' + totalV + '. Backtracking to find selected items.' });
+  return s;
+}
+
+function renderFib(s) {
+  var dp = s.dp, n = dp.length - 1;
+  var CELL_W = 48, GAP = 4;
+  // labels row
+  var lblHtml = '<div class="dp-row">';
+  for (var i = 0; i <= n; i++) lblHtml += '<div class="dp-label">dp[' + i + ']</div>';
+  lblHtml += '</div>';
+  // cells row
+  var rowHtml = '<div class="dp-row">';
+  for (var i = 0; i <= n; i++) {
+    var cls = 'dp-cell';
+    if (i === s.active) cls += ' active';
+    else if (s.reading.indexOf(i) >= 0) cls += ' reading';
+    else if (i <= 1 && dp[i] !== null) cls += ' base';
+    else if (dp[i] !== null) cls += ' filled';
+    rowHtml += '<div class="' + cls + '" id="dc' + i + '">' + (dp[i] === null ? '' : dp[i]) + '</div>';
+  }
+  rowHtml += '</div>';
+  // arrows SVG between reading cells and active
+  var arrowSvg = '';
+  if (s.reading.length === 2 && s.reading[0] !== undefined) {
+    var r0 = s.reading[0], r1 = s.reading[1];
+    // arrows from r0, r1 pointing right toward next cell
+    var totalW = (n+1) * (CELL_W + GAP);
+    arrowSvg = '<svg width="' + totalW + '" height="28" style="overflow:visible;display:block">';
+    [r0, r1].forEach(function(ri) {
+      var x1 = ri * (CELL_W + GAP) + CELL_W / 2;
+      var x2 = (ri + (ri === r0 ? 2 : 3)) * (CELL_W + GAP) - CELL_W / 2;
+      // simple dashed line arrow
+      arrowSvg += '<line x1="' + x1 + '" y1="14" x2="' + x1 + '" y2="28" stroke="#7b97aa" stroke-width="1.5" stroke-dasharray="3,2"/>';
+    });
+    arrowSvg += '</svg>';
+  }
+  return '<div class="dp-table-1d">' + lblHtml + rowHtml + (arrowSvg ? '<div>' + arrowSvg + '</div>' : '') + '</div>';
+}
+
+function renderKnapsack(s) {
+  var dp = s.dp, items = s.items, W = s.W;
+  var n = items.length;
+  var selected = s.selected || [];
+  var html = '<div style="overflow-x:auto"><table class="dp-table-2d"><thead><tr><th>Item\\ Cap</th>';
+  for (var w = 0; w <= W; w++) html += '<th>' + w + '</th>';
+  html += '</tr></thead><tbody>';
+  for (var i = 0; i <= n; i++) {
+    html += '<tr>';
+    var rLabel = i === 0 ? '(none)' : 'Item'+i+'<br><small style="font-size:.65rem;color:#888">w='+items[i-1].w+' v='+items[i-1].v+'</small>';
+    html += '<td class="rh">' + rLabel + '</td>';
+    for (var w2 = 0; w2 <= W; w2++) {
+      var isSel = selected.indexOf(i-1) >= 0 && dp[i][w2] !== dp[i-1] && w2 === W;
+      var cls = '';
+      if (i === s.ar && w2 === s.ac) cls = 'active';
+      else {
+        var isR = false;
+        for (var ri = 0; ri < s.reading.length; ri++) {
+          if (s.reading[ri][0] === i && s.reading[ri][1] === w2) { isR = true; break; }
+        }
+        if (isR) cls = 'reading';
+        else if (dp[i][w2] !== null) cls = 'filled';
+      }
+      html += '<td' + (cls ? ' class="'+cls+'"' : '') + '>' + dp[i][w2] + '</td>';
+    }
+    html += '</tr>';
+  }
+  html += '</tbody></table></div>';
+  return html;
+}
+
+function draw() {
+  var s = steps[idx];
+  var html = '';
+  if (s.type === 'fib') html = renderFib(s);
+  else html = renderKnapsack(s);
+  document.getElementById('viz-area').innerHTML = html;
+  var rp = document.getElementById('result-panel');
+  if (s.result) {
+    rp.style.display = 'block';
+    rp.innerHTML = '<span>' + s.result + '</span>';
+  } else {
+    rp.style.display = 'none';
+  }
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
+  document.getElementById('btn-step').disabled = idx === steps.length - 1;
+  document.getElementById('btn-back').disabled = idx === 0;
+}
+
+function rebuild() {
+  currentProb = document.getElementById('prob-sel').value;
+  var nw = document.getElementById('n-wrap');
+  if (currentProb === 'fib') {
+    nw.style.display = '';
+    currentN = parseInt(document.getElementById('n-input').value) || 8;
+    if (currentN < 2) currentN = 2;
+    if (currentN > 12) currentN = 12;
+    steps = buildFib(currentN);
+  } else {
+    nw.style.display = 'none';
+    steps = buildKnapsack();
+  }
+  idx = 0;
+}
+
+document.getElementById('prob-sel').onchange = function() { rebuild(); draw(); };
+document.getElementById('btn-apply').onclick = function() { rebuild(); draw(); };
+document.getElementById('btn-step').onclick = function() { if (idx < steps.length - 1) { idx++; draw(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+rebuild(); draw();
+</script>
+</body>
+</html>

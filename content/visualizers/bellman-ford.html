@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bellman-Ford — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 580px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #input-row {
+    display: flex; gap: .4rem; margin-bottom: .75rem; align-items: center;
+  }
+  #input-row label { font-size: .78rem; color: #646464; white-space: nowrap; }
+  #start-sel {
+    background: #222224; border: 1px solid #393639; border-radius: 4px;
+    color: #d4d4d4; font-size: .85rem; padding: .3rem .6rem;
+    outline: none; cursor: pointer;
+  }
+  #start-sel:focus { border-color: #7b97aa; }
+  #main { display: flex; gap: .75rem; }
+  #graph-col { flex: 1; min-width: 0; }
+  #edge-col { width: 160px; flex-shrink: 0; }
+  svg { display: block; width: 100%; }
+  #legend {
+    display: flex; gap: .6rem; flex-wrap: wrap;
+    margin: .4rem 0; font-size: .72rem; color: #d4d4d4;
+  }
+  .leg { display: flex; align-items: center; gap: .3rem; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  #stat {
+    padding: .45rem .75rem; background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .82rem; line-height: 1.5;
+    min-height: 2.4rem; margin: .5rem 0;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem; border: none; border-radius: 4px;
+    cursor: pointer; font-size: .82rem;
+    background: #393639; color: #d4d4d4; transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+  #edge-list {
+    padding: .4rem .5rem;
+    background: #393639; border-radius: 4px; font-size: .78rem;
+  }
+  #edge-list strong {
+    display: block; font-size: .65rem; text-transform: uppercase;
+    letter-spacing: .06em; color: #646464; margin-bottom: 4px;
+  }
+  .edge-item { padding: 2px 0; border-radius: 2px; transition: background .2s; }
+  .edge-item.active { background: rgba(240,165,0,.15); color: #f0a500; }
+  .edge-item.relaxed { color: #28a745; }
+  #pass-badge {
+    display: inline-block; padding: .2rem .5rem;
+    background: #222224; border-radius: 4px;
+    font-size: .75rem; color: #7b97aa; margin-bottom: .4rem;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Bellman-Ford Algorithm</h4>
+  <div id="input-row">
+    <label for="start-sel">Start node:</label>
+    <select id="start-sel">
+      <option value="A">A</option><option value="B">B</option>
+      <option value="C">C</option><option value="D">D</option>
+      <option value="E">E</option><option value="F">F</option>
+    </select>
+  </div>
+  <div id="main">
+    <div id="graph-col">
+      <svg id="graph-svg" viewBox="0 0 300 240" height="210">
+        <line id="e-AB" x1="50" y1="120" x2="150" y2="55" stroke="#646464" stroke-width="2"/>
+        <line id="e-AC" x1="50" y1="120" x2="150" y2="185" stroke="#646464" stroke-width="2"/>
+        <line id="e-BD" x1="150" y1="55" x2="250" y2="25" stroke="#646464" stroke-width="2"/>
+        <line id="e-BE" x1="150" y1="55" x2="250" y2="120" stroke="#646464" stroke-width="2"/>
+        <line id="e-CF" x1="150" y1="185" x2="250" y2="210" stroke="#646464" stroke-width="2"/>
+        <line id="e-EF" x1="250" y1="120" x2="250" y2="210" stroke="#646464" stroke-width="2"/>
+        <!-- weight labels -->
+        <text x="96" y="81" text-anchor="middle" font-size="10" fill="#7b97aa">4</text>
+        <text x="96" y="162" text-anchor="middle" font-size="10" fill="#7b97aa">2</text>
+        <text x="198" y="33" text-anchor="middle" font-size="10" fill="#7b97aa">5</text>
+        <text x="206" y="95" text-anchor="middle" font-size="10" fill="#7b97aa">10</text>
+        <text x="206" y="206" text-anchor="middle" font-size="10" fill="#7b97aa">3</text>
+        <text x="260" y="168" text-anchor="middle" font-size="10" fill="#7b97aa">4</text>
+        <!-- nodes -->
+        <circle id="n-A" cx="50" cy="120" r="18" fill="#4a4a4c" stroke="#393639" stroke-width="2"/>
+        <text id="lbl-A" x="50" y="116" text-anchor="middle" font-size="9" fill="#646464">A</text>
+        <text id="dist-A" x="50" y="128" text-anchor="middle" font-size="10" font-weight="bold" fill="#d4d4d4">∞</text>
+        <circle id="n-B" cx="150" cy="55" r="18" fill="#4a4a4c" stroke="#393639" stroke-width="2"/>
+        <text id="lbl-B" x="150" y="51" text-anchor="middle" font-size="9" fill="#646464">B</text>
+        <text id="dist-B" x="150" y="63" text-anchor="middle" font-size="10" font-weight="bold" fill="#d4d4d4">∞</text>
+        <circle id="n-C" cx="150" cy="185" r="18" fill="#4a4a4c" stroke="#393639" stroke-width="2"/>
+        <text id="lbl-C" x="150" y="181" text-anchor="middle" font-size="9" fill="#646464">C</text>
+        <text id="dist-C" x="150" y="193" text-anchor="middle" font-size="10" font-weight="bold" fill="#d4d4d4">∞</text>
+        <circle id="n-D" cx="250" cy="25" r="18" fill="#4a4a4c" stroke="#393639" stroke-width="2"/>
+        <text id="lbl-D" x="250" y="21" text-anchor="middle" font-size="9" fill="#646464">D</text>
+        <text id="dist-D" x="250" y="33" text-anchor="middle" font-size="10" font-weight="bold" fill="#d4d4d4">∞</text>
+        <circle id="n-E" cx="250" cy="120" r="18" fill="#4a4a4c" stroke="#393639" stroke-width="2"/>
+        <text id="lbl-E" x="250" y="116" text-anchor="middle" font-size="9" fill="#646464">E</text>
+        <text id="dist-E" x="250" y="128" text-anchor="middle" font-size="10" font-weight="bold" fill="#d4d4d4">∞</text>
+        <circle id="n-F" cx="250" cy="210" r="18" fill="#4a4a4c" stroke="#393639" stroke-width="2"/>
+        <text id="lbl-F" x="250" y="206" text-anchor="middle" font-size="9" fill="#646464">F</text>
+        <text id="dist-F" x="250" y="218" text-anchor="middle" font-size="10" font-weight="bold" fill="#d4d4d4">∞</text>
+      </svg>
+    </div>
+    <div id="edge-col">
+      <div id="pass-badge">Pass — / —</div>
+      <div id="edge-list">
+        <strong>Edges (sorted)</strong>
+        <div id="e-rows"></div>
+      </div>
+    </div>
+  </div>
+  <div id="legend">
+    <span class="leg"><span class="dot" style="background:#4a4a4c"></span>Unvisited</span>
+    <span class="leg"><span class="dot" style="background:#f0a500"></span>Checking edge</span>
+    <span class="leg"><span class="dot" style="background:#28a745"></span>Relaxed</span>
+    <span class="leg"><span class="dot" style="background:#007bff"></span>Source</span>
+  </div>
+  <div id="stat">Press Step to begin.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>◀ Back</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var NODES = ['A','B','C','D','E','F'];
+// All edges as [u, v, w] — undirected so we add both directions
+var EDGES_BASE = [
+  ['A','B',4],['A','C',2],['B','D',5],['B','E',10],['C','F',3],['E','F',4]
+];
+// For Bellman-Ford we relax all directed edges both ways
+var ALL_EDGES = [];
+EDGES_BASE.forEach(function(e){ ALL_EDGES.push([e[0],e[1],e[2]]); ALL_EDGES.push([e[1],e[0],e[2]]); });
+
+var NC = { u:'#4a4a4c', s:'#007bff', c:'#f0a500', r:'#28a745' };
+var INF = Infinity;
+
+var steps, idx;
+
+function fmtDist(d){ return d===INF?'∞':String(d); }
+
+function edgeId(u, v) {
+  var pair = [u,v].sort();
+  return 'e-'+pair[0]+pair[1];
+}
+
+function buildSteps(src) {
+  var s = [];
+  var dist = {}; var st = {};
+  NODES.forEach(function(n){ dist[n]=INF; st[n]='u'; });
+  dist[src]=0; st[src]='s';
+
+  function snap(msg, pass, activeEdge, relaxedNode, done) {
+    s.push({
+      dist: Object.assign({},dist),
+      st: Object.assign({},st),
+      msg: msg,
+      pass: pass,
+      activeEdge: activeEdge||null,
+      relaxedNode: relaxedNode||null,
+      done: done||false
+    });
+  }
+
+  snap('Init: dist['+src+']=0, all others ∞.', 0, null, null, false);
+
+  var V = NODES.length;
+  for (var pass=1; pass<=V-1; pass++) {
+    var improved = false;
+    snap('Starting pass '+pass+' of '+(V-1)+'. Will check '+ALL_EDGES.length+' directed edges.', pass, null, null, false);
+    for (var i=0; i<ALL_EDGES.length; i++) {
+      var u=ALL_EDGES[i][0]; var v=ALL_EDGES[i][1]; var w=ALL_EDGES[i][2];
+      if (dist[u]===INF) {
+        snap('Pass '+pass+': edge '+u+'→'+v+'(w='+w+'): dist['+u+']=∞, skip.', pass, edgeId(u,v), null, false);
+        continue;
+      }
+      var newDist = dist[u]+w;
+      if (newDist < dist[v]) {
+        var old = fmtDist(dist[v]);
+        dist[v] = newDist;
+        if (st[v]==='u') st[v]='r';
+        improved = true;
+        snap('Pass '+pass+': edge '+u+'→'+v+'(w='+w+'): '+fmtDist(dist[u])+'+'+w+'='+newDist+'<'+old+', relax dist['+v+']='+newDist+'.', pass, edgeId(u,v), v, false);
+      } else {
+        snap('Pass '+pass+': edge '+u+'→'+v+'(w='+w+'): '+fmtDist(dist[u])+'+'+w+'='+newDist+'≥'+fmtDist(dist[v])+', no relax.', pass, edgeId(u,v), null, false);
+      }
+    }
+    if (!improved) {
+      snap('Pass '+pass+': no relaxations — converged early!', pass, null, null, false);
+      break;
+    }
+  }
+
+  // negative cycle check
+  var negCycle = false;
+  for (var j=0; j<ALL_EDGES.length; j++) {
+    var eu=ALL_EDGES[j][0]; var ev=ALL_EDGES[j][1]; var ew=ALL_EDGES[j][2];
+    if (dist[eu]!==INF && dist[eu]+ew < dist[ev]) { negCycle=true; break; }
+  }
+
+  var summary = NODES.map(function(n){ return n+'='+fmtDist(dist[n]); }).join(', ');
+  if (negCycle)
+    snap('Negative cycle detected! (V-th pass still relaxes edges).', V-1, null, null, true);
+  else
+    snap('Bellman-Ford complete. No negative cycle. Distances: '+summary, V-1, null, null, true);
+  return s;
+}
+
+function draw() {
+  var s = steps[idx];
+  // update node colours and distance labels
+  NODES.forEach(function(n){
+    var state = s.st[n]||'u';
+    var fill = NC[state]||NC.u;
+    document.getElementById('n-'+n).setAttribute('fill', fill);
+    var dfill = (state==='u')?'#d4d4d4':'#fff';
+    document.getElementById('dist-'+n).textContent = fmtDist(s.dist[n]);
+    document.getElementById('dist-'+n).setAttribute('fill', dfill);
+    document.getElementById('lbl-'+n).setAttribute('fill', state==='u'?'#646464':'rgba(255,255,255,0.55)');
+  });
+  // highlight active edge
+  var edgeIds = ['e-AB','e-AC','e-BD','e-BE','e-CF','e-EF'];
+  edgeIds.forEach(function(eid){
+    var el = document.getElementById(eid);
+    if (el) {
+      if (s.activeEdge === eid) {
+        el.setAttribute('stroke', '#f0a500');
+        el.setAttribute('stroke-width','3');
+      } else {
+        el.setAttribute('stroke','#646464');
+        el.setAttribute('stroke-width','2');
+      }
+    }
+  });
+  // update edge rows
+  var rows = document.getElementById('e-rows');
+  EDGES_BASE.forEach(function(e, i){
+    var row = rows.children[i];
+    if (!row) return;
+    row.className = 'edge-item';
+    var eid = edgeId(e[0],e[1]);
+    if (s.activeEdge === eid) row.className = 'edge-item active';
+  });
+  // pass badge
+  var passEl = document.getElementById('pass-badge');
+  if (s.pass>0) passEl.textContent = 'Pass '+s.pass+' / '+(NODES.length-1);
+  else passEl.textContent = 'Pass — / —';
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step '+idx+' / '+(steps.length-1);
+  document.getElementById('btn-step').disabled = s.done;
+  document.getElementById('btn-back').disabled = idx===0;
+}
+
+function load(src) {
+  steps = buildSteps(src);
+  idx = 0;
+  // build edge rows
+  var rows = document.getElementById('e-rows');
+  rows.innerHTML = '';
+  EDGES_BASE.forEach(function(e){
+    var div = document.createElement('div');
+    div.className = 'edge-item';
+    div.textContent = e[0]+'-'+e[1]+' (w='+e[2]+')';
+    rows.appendChild(div);
+  });
+  draw();
+}
+
+document.getElementById('btn-step').onclick = function(){ if(idx<steps.length-1){idx++;draw();} };
+document.getElementById('btn-back').onclick = function(){ if(idx>0){idx--;draw();} };
+document.getElementById('btn-reset').onclick = function(){ idx=0; draw(); };
+document.getElementById('start-sel').onchange = function(){ load(this.value); };
+
+load('A');
+</script>
+</body>
+</html>

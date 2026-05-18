@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Binary Search — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 620px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  .input-row {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: .5rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .input-row label { font-size: .78rem; color: #646464; white-space: nowrap; }
+  .input-row input {
+    flex: 1;
+    background: #222224;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    color: #d4d4d4;
+    font-size: .85rem;
+    padding: .3rem .6rem;
+    outline: none;
+    min-width: 60px;
+  }
+  .input-row input:focus { border-color: #7b97aa; }
+  .input-row input.error { border-color: #c0392b; }
+  #target-input { width: 72px; flex: 0 0 72px; }
+  #btn-apply {
+    padding: .3rem .7rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #2e4a30;
+    color: #d4d4d4;
+    white-space: nowrap;
+  }
+  #btn-apply:hover { opacity: .8; }
+  #err-msg { font-size: .75rem; color: #c0392b; margin-bottom: .5rem; min-height: 1rem; }
+  #cells-wrap {
+    overflow-x: auto;
+    padding-bottom: .25rem;
+    margin-bottom: .75rem;
+  }
+  #cells {
+    display: flex;
+    gap: 5px;
+    padding-bottom: 2px;
+  }
+  .cell-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex-shrink: 0;
+  }
+  .cell-v {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: .9rem;
+    background: #2a2a2e;
+    color: #d4d4d4;
+    transition: background .2s, color .2s, opacity .2s;
+  }
+  .cell-v.elim { opacity: 0.3; }
+  .cell-v.mid { background: #f0a500; color: #000; border-color: #f0a500; }
+  .cell-v.found { background: #28a745; color: #fff; border-color: #28a745; }
+  .cell-idx { font-size: .62rem; color: #646464; margin-top: 3px; }
+  .cell-lbl {
+    font-size: .65rem;
+    font-weight: 700;
+    color: #7b97aa;
+    height: 1.1rem;
+    text-align: center;
+    white-space: nowrap;
+    margin-top: 2px;
+  }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Binary Search — Step-Through</h4>
+  <div class="input-row">
+    <label for="arr-input">Array:</label>
+    <input id="arr-input" type="text" value="1, 3, 5, 7, 9, 11, 13, 15, 17, 19" placeholder="sorted integers, comma-separated" spellcheck="false">
+  </div>
+  <div class="input-row">
+    <label for="target-input">Target:</label>
+    <input id="target-input" type="number" value="13">
+    <button id="btn-apply">Apply</button>
+  </div>
+  <div id="err-msg"></div>
+  <div id="cells-wrap"><div id="cells"></div></div>
+  <div id="stat">Press Step to begin the search.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var DEFAULT_ARR = [1, 3, 5, 7, 9, 11, 13, 15, 17, 19];
+var DEFAULT_TARGET = 13;
+var currentArr, currentTarget, steps, idx;
+
+function buildSteps(arr, t) {
+  var s = [], lo = 0, hi = arr.length - 1;
+  s.push({ lo: lo, hi: hi, mid: null, found: false, done: false,
+    msg: 'Array loaded. Search window: lo=0, hi=' + (arr.length - 1) + '. Target = ' + t + '. Press Step.' });
+  while (lo <= hi) {
+    var m = lo + Math.floor((hi - lo) / 2);
+    if (arr[m] === t) {
+      s.push({ lo: lo, hi: hi, mid: m, found: true, done: true,
+        msg: 'arr[' + m + '] = ' + arr[m] + ' equals target ' + t + ' — found at index ' + m + '!' });
+      break;
+    } else if (arr[m] < t) {
+      s.push({ lo: lo, hi: hi, mid: m, found: false, done: false,
+        msg: 'arr[' + m + '] = ' + arr[m] + ' < ' + t + ' → eliminate left half. New lo = ' + (m + 1) + '.' });
+      lo = m + 1;
+    } else {
+      s.push({ lo: lo, hi: hi, mid: m, found: false, done: false,
+        msg: 'arr[' + m + '] = ' + arr[m] + ' > ' + t + ' → eliminate right half. New hi = ' + (m - 1) + '.' });
+      hi = m - 1;
+    }
+  }
+  if (lo > hi) {
+    s.push({ lo: lo, hi: hi, mid: null, found: false, done: true,
+      msg: 'lo (' + lo + ') > hi (' + hi + ') — search window empty. ' + t + ' is not in the array.' });
+  }
+  return s;
+}
+
+function parseArr(raw) {
+  var parts = raw.split(',').map(function(x) { return x.trim(); }).filter(function(x) { return x !== ''; });
+  if (parts.length < 2 || parts.length > 24) return null;
+  var nums = parts.map(Number);
+  if (nums.some(isNaN)) return null;
+  if (nums.some(function(n) { return Math.floor(n) !== n; })) return null;
+  return nums;
+}
+
+function load(arr, target) {
+  currentArr = arr;
+  currentTarget = target;
+  steps = buildSteps(arr, target);
+  idx = 0;
+}
+
+function draw() {
+  var s = steps[idx];
+  var html = currentArr.map(function(v, i) {
+    var cls = 'cell-v';
+    if (s.found && i === s.mid) cls += ' found';
+    else if (i === s.mid) cls += ' mid';
+    else if (i < s.lo || i > s.hi) cls += ' elim';
+    var lbl = [];
+    if (i === s.lo && s.mid !== null) lbl.push('lo');
+    else if (i === s.lo) lbl.push('lo');
+    if (s.mid !== null && i === s.mid) lbl.push('mid');
+    if (i === s.hi && s.mid !== null) lbl.push('hi');
+    else if (i === s.hi) lbl.push('hi');
+    // deduplicate
+    lbl = lbl.filter(function(x, j, a) { return a.indexOf(x) === j; });
+    return '<div class="cell-col"><div class="' + cls + '">' + v + '</div>'
+      + '<div class="cell-idx">' + i + '</div>'
+      + '<div class="cell-lbl">' + lbl.join(' ') + '</div></div>';
+  }).join('');
+  document.getElementById('cells').innerHTML = html;
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
+  document.getElementById('btn-step').disabled = s.done;
+  document.getElementById('btn-back').disabled = (idx === 0);
+}
+
+function applyInput() {
+  var rawArr = document.getElementById('arr-input').value;
+  var rawTarget = document.getElementById('target-input').value;
+  var errEl = document.getElementById('err-msg');
+  var arrEl = document.getElementById('arr-input');
+  var arr = parseArr(rawArr);
+  if (!arr) {
+    errEl.textContent = 'Enter 2–24 integers, comma-separated.';
+    arrEl.classList.add('error');
+    return;
+  }
+  var target = parseInt(rawTarget, 10);
+  if (isNaN(target)) {
+    errEl.textContent = 'Target must be an integer.';
+    return;
+  }
+  // Sort the array silently (binary search requires sorted input)
+  arr.sort(function(a, b) { return a - b; });
+  errEl.textContent = '';
+  arrEl.classList.remove('error');
+  document.getElementById('arr-input').value = arr.join(', ');
+  load(arr, target);
+  draw();
+}
+
+document.getElementById('btn-apply').onclick = applyInput;
+document.getElementById('arr-input').onkeydown = function(e) { if (e.key === 'Enter') applyInput(); };
+document.getElementById('target-input').onkeydown = function(e) { if (e.key === 'Enter') applyInput(); };
+document.getElementById('btn-step').onclick = function() { if (idx < steps.length - 1) { idx++; draw(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() { load(currentArr.slice(), currentTarget); draw(); };
+
+load(DEFAULT_ARR.slice(), DEFAULT_TARGET);
+draw();
+</script>
+</body>
+</html>

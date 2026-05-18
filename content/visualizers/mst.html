@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MST — Kruskal's Algorithm</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 580px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #main { display: flex; gap: .75rem; }
+  #graph-col { flex: 1; min-width: 0; }
+  #edge-col { width: 165px; flex-shrink: 0; }
+  svg { display: block; width: 100%; }
+  #legend {
+    display: flex; gap: .6rem; flex-wrap: wrap;
+    margin: .4rem 0; font-size: .72rem; color: #d4d4d4;
+  }
+  .leg { display: flex; align-items: center; gap: .3rem; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  .ledge { width: 18px; height: 3px; border-radius: 2px; display: inline-block; }
+  #edge-list {
+    padding: .4rem .5rem; background: #393639; border-radius: 4px; font-size: .78rem;
+  }
+  #edge-list strong {
+    display: block; font-size: .65rem; text-transform: uppercase;
+    letter-spacing: .06em; color: #646464; margin-bottom: 4px;
+  }
+  .edge-item { padding: 2px 0; border-radius: 2px; transition: background .2s; }
+  .edge-item.active { background: rgba(240,165,0,.15); color: #f0a500; }
+  .edge-item.added { color: #28a745; }
+  .edge-item.skipped { color: #dc3545; text-decoration: line-through; }
+  #mst-weight {
+    margin-top: .5rem; padding: .35rem .5rem; background: #393639; border-radius: 4px;
+    font-size: .78rem; color: #d4d4d4;
+  }
+  #mst-weight strong { color: #646464; font-size: .65rem; text-transform: uppercase; letter-spacing: .06em; display: block; margin-bottom: 2px; }
+  #stat {
+    padding: .45rem .75rem; background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .82rem; line-height: 1.5;
+    min-height: 2.4rem; margin: .5rem 0;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem; border: none; border-radius: 4px;
+    cursor: pointer; font-size: .82rem;
+    background: #393639; color: #d4d4d4; transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Minimum Spanning Tree — Kruskal's Algorithm</h4>
+  <div id="main">
+    <div id="graph-col">
+      <svg id="graph-svg" viewBox="0 0 300 240" height="210">
+        <!-- edges -->
+        <line id="e-AB" x1="50" y1="120" x2="150" y2="55" stroke="#646464" stroke-width="2"/>
+        <line id="e-AC" x1="50" y1="120" x2="150" y2="185" stroke="#646464" stroke-width="2"/>
+        <line id="e-BD" x1="150" y1="55" x2="250" y2="25" stroke="#646464" stroke-width="2"/>
+        <line id="e-BE" x1="150" y1="55" x2="250" y2="120" stroke="#646464" stroke-width="2"/>
+        <line id="e-CF" x1="150" y1="185" x2="250" y2="210" stroke="#646464" stroke-width="2"/>
+        <line id="e-EF" x1="250" y1="120" x2="250" y2="210" stroke="#646464" stroke-width="2"/>
+        <!-- weight labels -->
+        <text x="96" y="81" text-anchor="middle" font-size="10" fill="#7b97aa">4</text>
+        <text x="96" y="162" text-anchor="middle" font-size="10" fill="#7b97aa">2</text>
+        <text x="198" y="33" text-anchor="middle" font-size="10" fill="#7b97aa">5</text>
+        <text x="206" y="95" text-anchor="middle" font-size="10" fill="#7b97aa">10</text>
+        <text x="206" y="206" text-anchor="middle" font-size="10" fill="#7b97aa">3</text>
+        <text x="260" y="168" text-anchor="middle" font-size="10" fill="#7b97aa">4</text>
+        <!-- nodes -->
+        <circle id="n-A" cx="50" cy="120" r="18" fill="#4a4a4c" stroke="#393639" stroke-width="2"/>
+        <text id="t-A" x="50" y="125" text-anchor="middle" font-size="13" font-weight="bold" fill="#d4d4d4">A</text>
+        <circle id="n-B" cx="150" cy="55" r="18" fill="#4a4a4c" stroke="#393639" stroke-width="2"/>
+        <text id="t-B" x="150" y="60" text-anchor="middle" font-size="13" font-weight="bold" fill="#d4d4d4">B</text>
+        <circle id="n-C" cx="150" cy="185" r="18" fill="#4a4a4c" stroke="#393639" stroke-width="2"/>
+        <text id="t-C" x="150" y="190" text-anchor="middle" font-size="13" font-weight="bold" fill="#d4d4d4">C</text>
+        <circle id="n-D" cx="250" cy="25" r="18" fill="#4a4a4c" stroke="#393639" stroke-width="2"/>
+        <text id="t-D" x="250" y="30" text-anchor="middle" font-size="13" font-weight="bold" fill="#d4d4d4">D</text>
+        <circle id="n-E" cx="250" cy="120" r="18" fill="#4a4a4c" stroke="#393639" stroke-width="2"/>
+        <text id="t-E" x="250" y="125" text-anchor="middle" font-size="13" font-weight="bold" fill="#d4d4d4">E</text>
+        <circle id="n-F" cx="250" cy="210" r="18" fill="#4a4a4c" stroke="#393639" stroke-width="2"/>
+        <text id="t-F" x="250" y="215" text-anchor="middle" font-size="13" font-weight="bold" fill="#d4d4d4">F</text>
+      </svg>
+    </div>
+    <div id="edge-col">
+      <div id="edge-list">
+        <strong>Edges (by weight)</strong>
+        <div id="e-rows"></div>
+      </div>
+      <div id="mst-weight">
+        <strong>MST weight</strong>
+        <span id="mst-total">0</span>
+      </div>
+    </div>
+  </div>
+  <div id="legend">
+    <span class="leg"><span class="dot" style="background:#4a4a4c"></span>Unvisited</span>
+    <span class="leg"><span class="dot" style="background:#28a745"></span>In MST</span>
+    <span class="leg"><span class="ledge" style="background:#28a745"></span>MST edge</span>
+    <span class="leg"><span class="ledge" style="background:#dc3545"></span>Skipped (cycle)</span>
+  </div>
+  <div id="stat">Press Step to begin.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>◀ Back</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var NODES = ['A','B','C','D','E','F'];
+// Edges sorted by weight: [u, v, w, id]
+var EDGES = [
+  ['A','C',2,'e-AC'],
+  ['C','F',3,'e-CF'],
+  ['A','B',4,'e-AB'],
+  ['E','F',4,'e-EF'],
+  ['B','D',5,'e-BD'],
+  ['B','E',10,'e-BE']
+];
+
+var NC = { u:'#4a4a4c', mst:'#28a745' };
+var TC = { u:'#d4d4d4', mst:'#fff' };
+
+var steps, idx;
+
+// Union-Find
+function makeUF(nodes) {
+  var parent = {}; var rank = {};
+  nodes.forEach(function(n){ parent[n]=n; rank[n]=0; });
+  function find(x){ if(parent[x]!==x) parent[x]=find(parent[x]); return parent[x]; }
+  function union(x,y){ var px=find(x); var py=find(y); if(px===py) return false; if(rank[px]<rank[py]){var t=px;px=py;py=t;} parent[py]=px; if(rank[px]===rank[py]) rank[px]++; return true; }
+  return { find:find, union:union, parent:parent };
+}
+
+function buildSteps() {
+  var s = [];
+  var uf = makeUF(NODES);
+  var st = {}; NODES.forEach(function(n){ st[n]='u'; });
+  // edge states: 'pending', 'active', 'added', 'skipped'
+  var est = {}; EDGES.forEach(function(e){ est[e[3]]='pending'; });
+  var mstWeight = 0;
+  var mstEdges = 0;
+
+  function snap(msg, active, done) {
+    s.push({
+      st: Object.assign({},st),
+      est: Object.assign({},est),
+      mstWeight: mstWeight,
+      msg: msg,
+      done: done||false
+    });
+  }
+
+  snap('Sort edges by weight: '+EDGES.map(function(e){return e[0]+'-'+e[1]+'('+e[2]+')';}).join(', ')+'.', null, false);
+
+  for (var i=0; i<EDGES.length; i++) {
+    var u=EDGES[i][0]; var v=EDGES[i][1]; var w=EDGES[i][2]; var eid=EDGES[i][3];
+    est[eid]='active';
+    snap('Consider edge '+u+'-'+v+' (w='+w+'). Check if adding creates a cycle...', eid, false);
+
+    var added = uf.union(u, v);
+    if (added) {
+      est[eid]='added';
+      mstWeight += w;
+      st[u]='mst'; st[v]='mst';
+      mstEdges++;
+      snap('Add '+u+'-'+v+' to MST (no cycle). MST weight = '+mstWeight+'.', null, false);
+    } else {
+      est[eid]='skipped';
+      snap('Skip '+u+'-'+v+' (would create a cycle — '+u+' and '+v+' already connected).', null, false);
+    }
+
+    if (mstEdges === NODES.length-1) {
+      snap('MST complete! '+mstEdges+' edges, total weight = '+mstWeight+'.', null, true);
+      return s;
+    }
+  }
+  snap('Kruskal\'s complete. MST weight = '+mstWeight+'.', null, true);
+  return s;
+}
+
+var EDGE_COLORS = { pending:'#646464', active:'#f0a500', added:'#28a745', skipped:'#dc3545' };
+
+function draw() {
+  var s = steps[idx];
+  NODES.forEach(function(n){
+    var state = s.st[n]||'u';
+    document.getElementById('n-'+n).setAttribute('fill', NC[state]);
+    document.getElementById('t-'+n).setAttribute('fill', TC[state]);
+  });
+  // update edge colours
+  EDGES.forEach(function(e){
+    var eid = e[3];
+    var el = document.getElementById(eid);
+    if (!el) return;
+    var estat = s.est[eid]||'pending';
+    el.setAttribute('stroke', EDGE_COLORS[estat]);
+    el.setAttribute('stroke-width', estat==='added'?'3':'2');
+  });
+  // update edge list rows
+  var rows = document.getElementById('e-rows');
+  EDGES.forEach(function(e, i){
+    var row = rows.children[i];
+    if (!row) return;
+    var estat = s.est[e[3]]||'pending';
+    row.className = 'edge-item ' + (estat==='active'?'active':estat==='added'?'added':estat==='skipped'?'skipped':'');
+  });
+  document.getElementById('mst-total').textContent = s.mstWeight;
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step '+idx+' / '+(steps.length-1);
+  document.getElementById('btn-step').disabled = s.done;
+  document.getElementById('btn-back').disabled = idx===0;
+}
+
+function load() {
+  steps = buildSteps();
+  idx = 0;
+  var rows = document.getElementById('e-rows');
+  rows.innerHTML = '';
+  EDGES.forEach(function(e){
+    var div = document.createElement('div');
+    div.className = 'edge-item';
+    div.textContent = e[0]+'-'+e[1]+' (w='+e[2]+')';
+    rows.appendChild(div);
+  });
+  draw();
+}
+
+document.getElementById('btn-step').onclick = function(){ if(idx<steps.length-1){idx++;draw();} };
+document.getElementById('btn-back').onclick = function(){ if(idx>0){idx--;draw();} };
+document.getElementById('btn-reset').onclick = function(){ idx=0; draw(); };
+
+load();
+</script>
+</body>
+</html>

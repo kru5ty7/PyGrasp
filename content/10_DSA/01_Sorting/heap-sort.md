@@ -111,6 +111,12 @@ print([heapq.heappop(min_heap) for _ in range(len(min_heap))])  # sorted ascendi
 
 ---
 
+## Visualizer
+
+<iframe src="/visualizers/heap-sort.html" style="width:100%;height:420px;border:none;border-radius:8px;" title="Heap Sort Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Heap sort is the direct algorithmic evolution of selection sort: both repeatedly select the extremum from the unsorted portion and place it in its final position, but heap sort uses the heap data structure to make each selection O(log n) instead of O(n). Understanding heaps — how they are stored in arrays, the sift-down operation, and the O(n) build time — is a prerequisite for making sense of heap sort's analysis.

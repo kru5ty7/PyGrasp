@@ -184,6 +184,12 @@ print("Is complete:", is_complete(root)) # False (right child of 3 is missing le
 
 ---
 
+## Visualizer
+
+<iframe src="/visualizers/binary-tree.html" style="width:100%;height:480px;border:none;border-radius:8px;" title="Binary Tree Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Binary search trees impose an ordering constraint on top of the binary tree structure. The BST is the most important binary tree variant for search operations, and all its analysis — O(log n) average vs O(n) worst case — is built directly on the height analysis of binary trees.

@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trie — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 640px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #input-row {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: .75rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  #input-row label { font-size: .78rem; color: #646464; white-space: nowrap; }
+  #word-input {
+    flex: 1;
+    min-width: 80px;
+    background: #222224;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    color: #d4d4d4;
+    font-size: .85rem;
+    padding: .3rem .6rem;
+    outline: none;
+  }
+  #word-input:focus { border-color: #7b97aa; }
+  select#op-select {
+    background: #222224;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    color: #d4d4d4;
+    font-size: .82rem;
+    padding: .3rem .5rem;
+    outline: none;
+    cursor: pointer;
+  }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+    white-space: nowrap;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-go { background: #284b63; color: #fff; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #trie-svg {
+    width: 100%;
+    height: 300px;
+    background: #1e1e20;
+    border-radius: 6px;
+    border: 1px solid #2a2a2e;
+    margin-bottom: .5rem;
+    display: block;
+  }
+  #words-display {
+    font-size: .75rem;
+    color: #646464;
+    min-height: 1.2rem;
+    margin-bottom: .5rem;
+  }
+  #ctrl { display: flex; gap: .4rem; flex-wrap: wrap; }
+  #counter { font-size: .72rem; color: #646464; margin-left: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Trie (Prefix Tree) — Visualizer</h4>
+  <div id="input-row">
+    <label for="word-input">Word/Prefix:</label>
+    <input id="word-input" type="text" placeholder="e.g. car" maxlength="8" spellcheck="false">
+    <select id="op-select">
+      <option value="insert">Insert</option>
+      <option value="search">Search</option>
+      <option value="prefix">Prefix Search</option>
+    </select>
+    <button id="btn-go">Go</button>
+    <button id="btn-step" disabled>Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+  </div>
+  <div id="stat">Pre-built trie: cat, car, card, care, bat. Enter a word and choose an operation.</div>
+  <svg id="trie-svg"></svg>
+  <div id="words-display"></div>
+  <div id="ctrl"><span id="counter"></span></div>
+</div>
+<script>
+var SVG_W = 640, SVG_H = 300, R = 15;
+
+// Trie node: {char, children:{char->node}, isEnd, id, x, y, parent}
+var nodeIdCounter = 0;
+function mkTrieNode(ch, parentNode) {
+  return { char: ch, children: {}, isEnd: false, id: nodeIdCounter++, x: 0, y: 0, parent: parentNode };
+}
+var trieRoot;
+var nodeMap = {}; // id -> node
+var nodeStates = {}; // id -> 'normal'|'existing'|'new'|'found'|'notfound'|'prefix'
+
+function initTrie() {
+  nodeIdCounter = 0;
+  trieRoot = mkTrieNode('', null);
+  nodeMap = {}; nodeMap[trieRoot.id] = trieRoot;
+  nodeStates = {}; nodeStates[trieRoot.id] = 'normal';
+}
+
+function insertWord(word) {
+  var nd = trieRoot;
+  for (var i = 0; i < word.length; i++) {
+    var ch = word[i];
+    if (!nd.children[ch]) {
+      var newNd = mkTrieNode(ch, nd);
+      nd.children[ch] = newNd;
+      nodeMap[newNd.id] = newNd;
+      nodeStates[newNd.id] = 'normal';
+    }
+    nd = nd.children[ch];
+  }
+  nd.isEnd = true;
+}
+
+function computeLayout() {
+  // BFS layout: assign x by horizontal position, y by depth
+  var queue = [{node: trieRoot, depth: 0}];
+  var byDepth = {};
+  var depthOrder = {};
+  while (queue.length) {
+    var item = queue.shift();
+    var nd = item.node, d = item.depth;
+    if (!byDepth[d]) { byDepth[d] = []; depthOrder[d] = 0; }
+    byDepth[d].push(nd);
+    nd._depth = d;
+    var keys = Object.keys(nd.children).sort();
+    keys.forEach(function(k) { queue.push({node: nd.children[k], depth: d+1}); });
+  }
+  var maxDepth = Math.max.apply(null, Object.keys(byDepth).map(Number));
+  Object.keys(byDepth).forEach(function(d) {
+    var dd = parseInt(d);
+    var nodes = byDepth[d];
+    nodes.forEach(function(nd, i) {
+      nd.x = SVG_W * (i + 0.5) / nodes.length;
+      nd.y = 20 + dd * Math.min(52, (SVG_H - 40) / Math.max(maxDepth, 1));
+    });
+  });
+}
+
+function getAllNodes() {
+  var result = [];
+  function dfs(nd) { result.push(nd); Object.keys(nd.children).sort().forEach(function(k) { dfs(nd.children[k]); }); }
+  dfs(trieRoot);
+  return result;
+}
+
+function nodeColor(state) {
+  if (state === 'existing') return '#f0a500';
+  if (state === 'new') return '#28a745';
+  if (state === 'found') return '#28a745';
+  if (state === 'notfound') return '#c0392b';
+  if (state === 'prefix') return '#007bff';
+  return '#2a2a2e';
+}
+
+function renderTrie() {
+  computeLayout();
+  var all = getAllNodes();
+  var svg = document.getElementById('trie-svg');
+  var html = '';
+  all.forEach(function(nd) {
+    if (nd.parent) {
+      var p = nd.parent;
+      html += '<line x1="'+nd.x+'" y1="'+nd.y+'" x2="'+p.x+'" y2="'+p.y+'" stroke="#646464" stroke-width="1.2"/>';
+      // Edge label midpoint
+      var mx = (nd.x + p.x) / 2, my = (nd.y + p.y) / 2;
+      html += '<text x="'+mx+'" y="'+(my-3)+'" text-anchor="middle" font-size="11" fill="#646464" font-family="sans-serif">'+nd.char+'</text>';
+    }
+  });
+  all.forEach(function(nd) {
+    var state = nodeStates[nd.id] || 'normal';
+    var fill = nodeColor(state);
+    var stroke = state === 'normal' ? '#393639' : fill;
+    var textFill = state === 'existing' ? '#000' : '#d4d4d4';
+    // Root shows '*'
+    var label = nd.char || '*';
+    html += '<circle cx="'+nd.x+'" cy="'+nd.y+'" r="'+R+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="1.5"/>';
+    if (nd.isEnd) html += '<circle cx="'+nd.x+'" cy="'+nd.y+'" r="'+(R-4)+'" fill="none" stroke="'+stroke+'" stroke-width="1.2" stroke-dasharray="2,2"/>';
+    html += '<text x="'+nd.x+'" y="'+(nd.y+4)+'" text-anchor="middle" font-size="11" fill="'+textFill+'" font-family="sans-serif">'+label+'</text>';
+  });
+  svg.innerHTML = html;
+}
+
+function setStatus(msg) { document.getElementById('stat').textContent = msg; }
+function resetStates() { getAllNodes().forEach(function(nd) { nodeStates[nd.id] = 'normal'; }); }
+
+var steps = [], stepIdx = 0;
+
+function computeInsertSteps(word) {
+  steps = []; stepIdx = 0;
+  var pathNodes = [trieRoot]; // existing nodes along path
+  var existingPath = [];
+  var newNodes = [];
+  var cur = trieRoot;
+  for (var i = 0; i < word.length; i++) {
+    var ch = word[i];
+    if (cur.children[ch]) {
+      existingPath.push(cur.children[ch]);
+      cur = cur.children[ch];
+    } else {
+      // Will be new
+      break;
+    }
+  }
+  var existingLen = existingPath.length;
+  var remaining = word.slice(existingLen);
+
+  // Step 1: highlight existing prefix
+  if (existingPath.length > 0) {
+    steps.push(function() {
+      resetStates();
+      existingPath.forEach(function(nd) { nodeStates[nd.id] = 'existing'; });
+      setStatus('Following existing prefix "' + word.slice(0, existingLen) + '" (amber nodes)...');
+      renderTrie();
+      document.getElementById('counter').textContent = 'Step 1 / '+(steps.length);
+    });
+  }
+
+  // Create new nodes
+  var createdNodes = [];
+  var tempCur = existingLen > 0 ? existingPath[existingPath.length-1] : trieRoot;
+  for (var j = 0; j < remaining.length; j++) {
+    var ch2 = remaining[j];
+    if (!tempCur.children[ch2]) {
+      var nn = mkTrieNode(ch2, tempCur);
+      tempCur.children[ch2] = nn;
+      nodeMap[nn.id] = nn;
+      nodeStates[nn.id] = 'normal';
+      createdNodes.push(nn);
+    }
+    tempCur = tempCur.children[ch2];
+  }
+  if (tempCur !== trieRoot) tempCur.isEnd = true;
+
+  // Steps for new nodes
+  createdNodes.forEach(function(nd, i) {
+    (function(n, ii) {
+      steps.push(function() {
+        resetStates();
+        existingPath.forEach(function(en) { nodeStates[en.id] = 'existing'; });
+        for (var k = 0; k <= ii; k++) nodeStates[createdNodes[k].id] = 'new';
+        setStatus('Created new node "' + n.char + '" (green).');
+        renderTrie();
+        document.getElementById('counter').textContent = 'Step '+(existingPath.length > 0 ? ii+2 : ii+1)+' / '+(steps.length);
+      });
+    })(nd, i);
+  });
+
+  steps.push(function() {
+    resetStates();
+    existingPath.forEach(function(en) { nodeStates[en.id] = 'existing'; });
+    createdNodes.forEach(function(cn) { nodeStates[cn.id] = 'new'; });
+    setStatus('Inserted "' + word + '". End-of-word marked (inner circle on last node).');
+    renderTrie();
+    document.getElementById('counter').textContent = 'Done';
+  });
+}
+
+function computeSearchSteps(word) {
+  steps = []; stepIdx = 0;
+  var path = [];
+  var cur = trieRoot;
+  var found = true;
+  for (var i = 0; i < word.length; i++) {
+    var ch = word[i];
+    if (!cur.children[ch]) { found = false; break; }
+    cur = cur.children[ch];
+    path.push({node: cur, char: ch, idx: i});
+  }
+  var endNode = cur;
+  var isWordEnd = found && endNode.isEnd;
+
+  path.forEach(function(step, i) {
+    (function(s, ii) {
+      steps.push(function() {
+        resetStates();
+        for (var k = 0; k < ii; k++) nodeStates[path[k].node.id] = 'found';
+        nodeStates[s.node.id] = 'existing';
+        setStatus('Matched char "' + s.char + '" (step '+(ii+1)+'/'+word.length+').');
+        renderTrie();
+        document.getElementById('counter').textContent = 'Step '+(ii+1)+' / '+(steps.length);
+      });
+    })(step, i);
+  });
+
+  steps.push(function() {
+    resetStates();
+    if (isWordEnd) {
+      path.forEach(function(s) { nodeStates[s.node.id] = 'found'; });
+      setStatus('FOUND: "' + word + '" is in the trie (end-of-word marker present).');
+    } else if (found) {
+      path.forEach(function(s) { nodeStates[s.node.id] = 'existing'; });
+      nodeStates[endNode.id] = 'notfound';
+      setStatus('NOT FOUND: "' + word + '" is only a prefix — no end-of-word marker.');
+    } else {
+      path.forEach(function(s) { nodeStates[s.node.id] = 'found'; });
+      setStatus('NOT FOUND: path breaks at character ' + (path.length+1) + '.');
+    }
+    renderTrie();
+    document.getElementById('counter').textContent = 'Done';
+  });
+}
+
+function computePrefixSteps(prefix) {
+  steps = []; stepIdx = 0;
+  var path = [];
+  var cur = trieRoot;
+  var valid = true;
+  for (var i = 0; i < prefix.length; i++) {
+    var ch = prefix[i];
+    if (!cur.children[ch]) { valid = false; break; }
+    cur = cur.children[ch];
+    path.push({node: cur, char: ch});
+  }
+
+  path.forEach(function(step, i) {
+    (function(s, ii) {
+      steps.push(function() {
+        resetStates();
+        for (var k = 0; k <= ii; k++) nodeStates[path[k].node.id] = 'prefix';
+        setStatus('Following prefix path: "' + prefix.slice(0, ii+1) + '"...');
+        renderTrie();
+        document.getElementById('counter').textContent = 'Step '+(ii+1)+' / '+(steps.length);
+      });
+    })(step, i);
+  });
+
+  steps.push(function() {
+    resetStates();
+    if (!valid) {
+      setStatus('No words with prefix "' + prefix + '" found.');
+      renderTrie();
+      return;
+    }
+    // Collect all words from this node
+    var prefixNode = cur;
+    function markAll(nd) {
+      nodeStates[nd.id] = 'prefix';
+      Object.keys(nd.children).forEach(function(k) { markAll(nd.children[k]); });
+    }
+    path.forEach(function(s) { nodeStates[s.node.id] = 'prefix'; });
+    markAll(prefixNode);
+    var words = [];
+    function collect(nd, acc) {
+      if (nd.isEnd) words.push(acc);
+      Object.keys(nd.children).sort().forEach(function(k) { collect(nd.children[k], acc+k); });
+    }
+    collect(prefixNode, prefix);
+    setStatus('Prefix "' + prefix + '" found. Matching words: ' + words.join(', '));
+    document.getElementById('words-display').textContent = 'Words: ' + words.join(', ');
+    renderTrie();
+    document.getElementById('counter').textContent = 'Done';
+  });
+}
+
+document.getElementById('btn-go').onclick = function() {
+  var word = document.getElementById('word-input').value.trim().toLowerCase();
+  if (!word) { setStatus('Enter a word or prefix.'); return; }
+  var op = document.getElementById('op-select').value;
+  document.getElementById('words-display').textContent = '';
+  if (op === 'insert') computeInsertSteps(word);
+  else if (op === 'search') computeSearchSteps(word);
+  else computePrefixSteps(word);
+  document.getElementById('btn-step').disabled = steps.length === 0;
+  if (steps.length > 0) setStatus('Press Step to begin.');
+  else { setStatus('Nothing to step through.'); }
+};
+document.getElementById('word-input').onkeydown = function(e) { if (e.key === 'Enter') document.getElementById('btn-go').click(); };
+
+document.getElementById('btn-step').onclick = function() {
+  if (stepIdx < steps.length) {
+    steps[stepIdx](); stepIdx++;
+    if (stepIdx >= steps.length) document.getElementById('btn-step').disabled = true;
+  }
+};
+
+document.getElementById('btn-reset').onclick = function() {
+  initTrie();
+  ['cat','car','card','care','bat'].forEach(insertWord);
+  steps = []; stepIdx = 0;
+  resetStates();
+  renderTrie();
+  document.getElementById('words-display').textContent = '';
+  document.getElementById('counter').textContent = '';
+  document.getElementById('btn-step').disabled = true;
+  setStatus('Reset. Pre-built trie: cat, car, card, care, bat.');
+};
+
+// Init
+initTrie();
+['cat','car','card','care','bat'].forEach(insertWord);
+resetStates();
+renderTrie();
+</script>
+</body>
+</html>

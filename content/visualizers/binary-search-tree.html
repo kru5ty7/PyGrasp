@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Binary Search Tree — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 620px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #input-row {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: .75rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  #input-row label { font-size: .78rem; color: #646464; white-space: nowrap; }
+  #val-input {
+    width: 70px;
+    background: #222224;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    color: #d4d4d4;
+    font-size: .85rem;
+    padding: .3rem .6rem;
+    outline: none;
+  }
+  #val-input:focus { border-color: #7b97aa; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+    white-space: nowrap;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-insert { background: #284b63; color: #fff; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #tree-svg {
+    width: 100%;
+    height: 270px;
+    background: #1e1e20;
+    border-radius: 6px;
+    border: 1px solid #2a2a2e;
+    margin-bottom: .5rem;
+    display: block;
+  }
+  #order-display {
+    font-size: .75rem;
+    color: #646464;
+    min-height: 1.2rem;
+    margin-bottom: .5rem;
+  }
+  #counter { font-size: .72rem; color: #646464; margin-left: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Binary Search Tree — Insert &amp; Search</h4>
+  <div id="input-row">
+    <label for="val-input">Value:</label>
+    <input id="val-input" type="number" placeholder="e.g. 6" min="0" max="999">
+    <button id="btn-insert">Insert</button>
+    <button id="btn-search">Search</button>
+    <button id="btn-inorder">Inorder</button>
+    <button id="btn-step" disabled>Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+  </div>
+  <div id="stat">Pre-built BST: [5,3,8,1,4,7,9]. Enter a value and choose Insert or Search.</div>
+  <svg id="tree-svg"></svg>
+  <div id="order-display"></div>
+  <div id="counter"></div>
+</div>
+<script>
+var SVG_W = 600, SVG_H = 270, R = 18;
+
+// BST node: {val, left, right, x, y}
+var root = null;
+var nodeList = [];  // flat list for rendering
+var steps = [];
+var stepIdx = 0;
+var nodeStates = {}; // id -> 'normal'|'current'|'visited'|'new'|'notfound'
+var inorderAcc = [];
+
+function newNode(val) { return {val: val, left: null, right: null, id: Math.random(), x: 0, y: 0}; }
+
+function bstInsert(node, val) {
+  if (!node) return newNode(val);
+  if (val < node.val) node.left = bstInsert(node.left, val);
+  else if (val > node.val) node.right = bstInsert(node.right, val);
+  return node;
+}
+
+function computePositions() {
+  nodeList = [];
+  if (!root) return;
+  // Assign x by inorder rank, y by depth
+  var rank = 0;
+  var allNodes = [];
+  function inorderCollect(nd, depth) {
+    if (!nd) return;
+    inorderCollect(nd.left, depth + 1);
+    nd._depth = depth;
+    nd._rank = rank++;
+    allNodes.push(nd);
+    inorderCollect(nd.right, depth + 1);
+  }
+  inorderCollect(root, 0);
+  var total = allNodes.length;
+  var maxDepth = Math.max.apply(null, allNodes.map(function(n) { return n._depth; }));
+  allNodes.forEach(function(nd) {
+    nd.x = SVG_W * (nd._rank + 0.5) / total;
+    nd.y = 28 + nd._depth * Math.min(50, (SVG_H - 50) / Math.max(maxDepth, 1));
+  });
+  nodeList = allNodes;
+}
+
+function getColor(state) {
+  if (state === 'current') return '#f0a500';
+  if (state === 'visited') return '#28a745';
+  if (state === 'new') return '#28a745';
+  if (state === 'notfound') return '#c0392b';
+  return '#2a2a2e';
+}
+function getTextColor(state) {
+  if (state === 'current') return '#000';
+  return '#d4d4d4';
+}
+
+function renderTree() {
+  var svg = document.getElementById('tree-svg');
+  var html = '';
+  function drawEdges(nd) {
+    if (!nd) return;
+    if (nd.left) {
+      html += '<line x1="' + nd.x + '" y1="' + nd.y + '" x2="' + nd.left.x + '" y2="' + nd.left.y + '" stroke="#646464" stroke-width="1.5"/>';
+      drawEdges(nd.left);
+    }
+    if (nd.right) {
+      html += '<line x1="' + nd.x + '" y1="' + nd.y + '" x2="' + nd.right.x + '" y2="' + nd.right.y + '" stroke="#646464" stroke-width="1.5"/>';
+      drawEdges(nd.right);
+    }
+  }
+  drawEdges(root);
+  nodeList.forEach(function(nd) {
+    var state = nodeStates[nd.id] || 'normal';
+    var fill = getColor(state);
+    var textFill = getTextColor(state);
+    var stroke = (state === 'normal') ? '#393639' : fill;
+    html += '<circle cx="' + nd.x + '" cy="' + nd.y + '" r="' + R + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="1.5"/>';
+    html += '<text x="' + nd.x + '" y="' + (nd.y + 5) + '" text-anchor="middle" font-size="13" fill="' + textFill + '" font-family="sans-serif">' + nd.val + '</text>';
+  });
+  svg.innerHTML = html;
+}
+
+function setStatus(msg) { document.getElementById('stat').textContent = msg; }
+function resetStates() {
+  nodeStates = {};
+  nodeList.forEach(function(nd) { nodeStates[nd.id] = 'normal'; });
+}
+
+function computeInsertSteps(val) {
+  steps = [];
+  stepIdx = 0;
+  resetStates();
+  // Pre-compute path
+  var path = [];
+  var cur = root;
+  while (cur) {
+    path.push({node: cur, compare: val < cur.val ? 'left' : val > cur.val ? 'right' : 'equal'});
+    if (val === cur.val) break;
+    cur = val < cur.val ? cur.left : cur.right;
+  }
+  if (path.length > 0 && path[path.length-1].compare === 'equal') {
+    steps.push(function() {
+      setStatus('Value ' + val + ' already in BST — no duplicate inserted.');
+    });
+    return;
+  }
+  path.forEach(function(step, i) {
+    (function(s, ii) {
+      steps.push(function() {
+        resetStates();
+        for (var k = 0; k < ii; k++) nodeStates[path[k].node.id] = 'visited';
+        nodeStates[s.node.id] = 'current';
+        var dir = s.compare === 'left' ? '< go left' : '> go right';
+        setStatus('Compare ' + val + ' with ' + s.node.val + ': ' + val + ' ' + dir);
+        document.getElementById('counter').textContent = 'Step ' + (ii + 1) + ' / ' + (path.length + 1);
+        renderTree();
+      });
+    })(step, i);
+  });
+  // Insert step
+  steps.push(function() {
+    root = bstInsert(root, val);
+    computePositions();
+    resetStates();
+    path.forEach(function(s) { nodeStates[s.node.id] = 'visited'; });
+    // Find new node
+    function findNode(nd, v) { if (!nd) return null; if (nd.val === v) return nd; return findNode(nd.left, v) || findNode(nd.right, v); }
+    // Actually we need the new node — search
+    var newNd = null;
+    function dfsFind(nd) {
+      if (!nd) return;
+      if (nd.val === val && !path.some(function(s) { return s.node === nd; })) newNd = nd;
+      dfsFind(nd.left); dfsFind(nd.right);
+    }
+    // Find newly created by checking ids not in path
+    nodeList.forEach(function(nd) {
+      if (nd.val === val && !path.some(function(s) { return s.node.id === nd.id; })) newNd = nd;
+    });
+    if (newNd) nodeStates[newNd.id] = 'new';
+    setStatus('Inserted ' + val + ' as leaf node (green).');
+    document.getElementById('counter').textContent = 'Step ' + (path.length + 1) + ' / ' + (path.length + 1);
+    renderTree();
+  });
+}
+
+function computeSearchSteps(val) {
+  steps = [];
+  stepIdx = 0;
+  resetStates();
+  var path = [];
+  var cur = root;
+  var found = false;
+  while (cur) {
+    if (val === cur.val) { path.push({node: cur, result: 'found'}); found = true; break; }
+    path.push({node: cur, dir: val < cur.val ? 'left' : 'right'});
+    cur = val < cur.val ? cur.left : cur.right;
+  }
+  path.forEach(function(step, i) {
+    (function(s, ii) {
+      steps.push(function() {
+        resetStates();
+        for (var k = 0; k < ii; k++) nodeStates[path[k].node.id] = 'visited';
+        nodeStates[s.node.id] = 'current';
+        var msg;
+        if (s.result === 'found') msg = 'Found ' + val + ' at this node!';
+        else msg = 'Compare ' + val + ' with ' + s.node.val + ': ' + val + ' ' + (s.dir === 'left' ? '< go left' : '> go right');
+        setStatus(msg);
+        document.getElementById('counter').textContent = 'Step ' + (ii + 1) + ' / ' + steps.length;
+        if (s.result === 'found') nodeStates[s.node.id] = 'new';
+        renderTree();
+      });
+    })(step, i);
+  });
+  if (!found) {
+    steps.push(function() {
+      setStatus('Reached null — ' + val + ' not found in BST.');
+      document.getElementById('counter').textContent = 'Step ' + steps.length + ' / ' + steps.length;
+      renderTree();
+    });
+  }
+}
+
+function computeInorderSteps() {
+  steps = [];
+  stepIdx = 0;
+  resetStates();
+  inorderAcc = [];
+  var order = [];
+  function collect(nd) { if (!nd) return; collect(nd.left); order.push(nd); collect(nd.right); }
+  collect(root);
+  order.forEach(function(nd, i) {
+    (function(n, ii) {
+      steps.push(function() {
+        resetStates();
+        for (var k = 0; k < ii; k++) nodeStates[order[k].id] = 'visited';
+        nodeStates[n.id] = 'current';
+        inorderAcc.push(n.val);
+        setStatus('Inorder visit: ' + n.val);
+        document.getElementById('order-display').textContent = 'Sorted so far: ' + inorderAcc.join(' → ');
+        document.getElementById('counter').textContent = 'Step ' + (ii + 1) + ' / ' + order.length;
+        renderTree();
+      });
+    })(nd, i);
+  });
+  steps.push(function() {
+    resetStates();
+    order.forEach(function(nd) { nodeStates[nd.id] = 'visited'; });
+    setStatus('Inorder complete! Sorted output: [' + order.map(function(n) { return n.val; }).join(', ') + ']');
+    renderTree();
+  });
+}
+
+document.getElementById('btn-insert').onclick = function() {
+  var v = parseInt(document.getElementById('val-input').value);
+  if (isNaN(v)) { setStatus('Enter a numeric value.'); return; }
+  if (nodeList.length >= 15) { setStatus('Max 15 nodes. Reset to continue.'); return; }
+  computeInsertSteps(v);
+  document.getElementById('btn-step').disabled = steps.length === 0;
+  if (steps.length > 0) {
+    setStatus('Insert ' + v + ': press Step to walk through.');
+    document.getElementById('order-display').textContent = '';
+  }
+};
+document.getElementById('btn-search').onclick = function() {
+  var v = parseInt(document.getElementById('val-input').value);
+  if (isNaN(v)) { setStatus('Enter a numeric value.'); return; }
+  computeSearchSteps(v);
+  document.getElementById('btn-step').disabled = steps.length === 0;
+  if (steps.length > 0) {
+    setStatus('Search ' + v + ': press Step to walk through.');
+    document.getElementById('order-display').textContent = '';
+  }
+};
+document.getElementById('btn-inorder').onclick = function() {
+  if (!root) { setStatus('Build a tree first.'); return; }
+  computeInorderSteps();
+  document.getElementById('btn-step').disabled = false;
+  document.getElementById('order-display').textContent = '';
+  setStatus('Inorder traversal: press Step to walk through.');
+};
+document.getElementById('btn-step').onclick = function() {
+  if (stepIdx < steps.length) {
+    steps[stepIdx]();
+    stepIdx++;
+    if (stepIdx >= steps.length) document.getElementById('btn-step').disabled = true;
+  }
+};
+document.getElementById('btn-reset').onclick = function() {
+  root = null;
+  nodeList = [];
+  steps = []; stepIdx = 0;
+  nodeStates = {};
+  inorderAcc = [];
+  var defaults = [5,3,8,1,4,7,9];
+  defaults.forEach(function(v) { root = bstInsert(root, v); });
+  computePositions();
+  resetStates();
+  renderTree();
+  setStatus('Reset to default BST: [5,3,8,1,4,7,9]. Enter a value and choose an operation.');
+  document.getElementById('order-display').textContent = '';
+  document.getElementById('counter').textContent = '';
+  document.getElementById('btn-step').disabled = true;
+};
+
+// Init
+var defaults2 = [5,3,8,1,4,7,9];
+defaults2.forEach(function(v) { root = bstInsert(root, v); });
+computePositions();
+resetStates();
+renderTree();
+</script>
+</body>
+</html>

@@ -212,6 +212,12 @@ print(oht.get("z"))   # 30
 
 ---
 
+## Visualizer
+
+<iframe src="/visualizers/hash-collisions.html" style="width:100%;height:400px;border:none;border-radius:8px;" title="Hash Collisions Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Hash collisions are the internal complication that the hash table note abstracts away. Understanding the O(n) worst case, the tombstone deletion requirement, and the role of load factor requires understanding how collisions are resolved — this note is the detailed internals behind the O(1) averages claimed in the hash tables overview.

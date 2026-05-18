@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dijkstra — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #input-row {
+    display: flex; gap: .4rem; margin-bottom: .75rem; align-items: center;
+  }
+  #input-row label { font-size: .78rem; color: #646464; white-space: nowrap; }
+  #start-sel {
+    background: #222224; border: 1px solid #393639; border-radius: 4px;
+    color: #d4d4d4; font-size: .85rem; padding: .3rem .6rem;
+    outline: none; cursor: pointer;
+  }
+  #start-sel:focus { border-color: #7b97aa; }
+  svg { display: block; width: 100%; }
+  #legend {
+    display: flex; gap: .75rem; flex-wrap: wrap;
+    margin: .4rem 0; font-size: .75rem; color: #d4d4d4;
+  }
+  .leg { display: flex; align-items: center; gap: .3rem; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+  #panels { display: flex; gap: .75rem; margin: .4rem 0; flex-wrap: wrap; }
+  .panel {
+    flex: 1; min-width: 130px; padding: .4rem .6rem;
+    background: #393639; border-radius: 4px;
+    font-size: .83rem; color: #d4d4d4;
+  }
+  .panel strong {
+    display: block; font-size: .68rem; text-transform: uppercase;
+    letter-spacing: .06em; color: #646464; margin-bottom: 3px;
+  }
+  #stat {
+    padding: .45rem .75rem; background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .82rem; line-height: 1.5;
+    min-height: 2.2rem; margin: .5rem 0;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem; border: none; border-radius: 4px;
+    cursor: pointer; font-size: .82rem;
+    background: #393639; color: #d4d4d4; transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Dijkstra's Algorithm — Shortest Paths</h4>
+  <div id="input-row">
+    <label for="start-sel">Start node:</label>
+    <select id="start-sel">
+      <option value="A">A</option><option value="B">B</option>
+      <option value="C">C</option><option value="D">D</option>
+      <option value="E">E</option><option value="F">F</option>
+    </select>
+  </div>
+  <!-- SVG with weight labels; node labels show distance -->
+  <svg id="graph-svg" viewBox="0 0 440 240" height="215">
+    <!-- edges -->
+    <line id="e-AB" x1="80" y1="110" x2="220" y2="50" stroke="#646464" stroke-width="2"/>
+    <line id="e-AC" x1="80" y1="110" x2="220" y2="170" stroke="#646464" stroke-width="2"/>
+    <line id="e-BD" x1="220" y1="50" x2="350" y2="20" stroke="#646464" stroke-width="2"/>
+    <line id="e-BE" x1="220" y1="50" x2="350" y2="110" stroke="#646464" stroke-width="2"/>
+    <line id="e-CF" x1="220" y1="170" x2="350" y2="200" stroke="#646464" stroke-width="2"/>
+    <line id="e-EF" x1="350" y1="110" x2="350" y2="200" stroke="#646464" stroke-width="2"/>
+    <!-- weight labels -->
+    <text x="143" y="73" text-anchor="middle" font-size="11" fill="#7b97aa">4</text>
+    <text x="143" y="148" text-anchor="middle" font-size="11" fill="#7b97aa">2</text>
+    <text x="279" y="26" text-anchor="middle" font-size="11" fill="#7b97aa">5</text>
+    <text x="292" y="87" text-anchor="middle" font-size="11" fill="#7b97aa">10</text>
+    <text x="292" y="192" text-anchor="middle" font-size="11" fill="#7b97aa">3</text>
+    <text x="360" y="158" text-anchor="middle" font-size="11" fill="#7b97aa">4</text>
+    <!-- nodes -->
+    <circle id="n-A" cx="80" cy="110" r="18" fill="#4a4a4c" stroke="#393639" stroke-width="2"/>
+    <text id="lbl-A" x="80" y="106" text-anchor="middle" font-size="9" fill="#646464">A</text>
+    <text id="dist-A" x="80" y="118" text-anchor="middle" font-size="10" font-weight="bold" fill="#d4d4d4">∞</text>
+    <circle id="n-B" cx="220" cy="50" r="18" fill="#4a4a4c" stroke="#393639" stroke-width="2"/>
+    <text id="lbl-B" x="220" y="46" text-anchor="middle" font-size="9" fill="#646464">B</text>
+    <text id="dist-B" x="220" y="58" text-anchor="middle" font-size="10" font-weight="bold" fill="#d4d4d4">∞</text>
+    <circle id="n-C" cx="220" cy="170" r="18" fill="#4a4a4c" stroke="#393639" stroke-width="2"/>
+    <text id="lbl-C" x="220" y="166" text-anchor="middle" font-size="9" fill="#646464">C</text>
+    <text id="dist-C" x="220" y="178" text-anchor="middle" font-size="10" font-weight="bold" fill="#d4d4d4">∞</text>
+    <circle id="n-D" cx="350" cy="20" r="18" fill="#4a4a4c" stroke="#393639" stroke-width="2"/>
+    <text id="lbl-D" x="350" y="16" text-anchor="middle" font-size="9" fill="#646464">D</text>
+    <text id="dist-D" x="350" y="28" text-anchor="middle" font-size="10" font-weight="bold" fill="#d4d4d4">∞</text>
+    <circle id="n-E" cx="350" cy="110" r="18" fill="#4a4a4c" stroke="#393639" stroke-width="2"/>
+    <text id="lbl-E" x="350" y="106" text-anchor="middle" font-size="9" fill="#646464">E</text>
+    <text id="dist-E" x="350" y="118" text-anchor="middle" font-size="10" font-weight="bold" fill="#d4d4d4">∞</text>
+    <circle id="n-F" cx="350" cy="200" r="18" fill="#4a4a4c" stroke="#393639" stroke-width="2"/>
+    <text id="lbl-F" x="350" y="196" text-anchor="middle" font-size="9" fill="#646464">F</text>
+    <text id="dist-F" x="350" y="208" text-anchor="middle" font-size="10" font-weight="bold" fill="#d4d4d4">∞</text>
+  </svg>
+  <div id="legend">
+    <span class="leg"><span class="dot" style="background:#4a4a4c"></span>Unvisited</span>
+    <span class="leg"><span class="dot" style="background:#f0a500"></span>In pqueue</span>
+    <span class="leg"><span class="dot" style="background:#007bff"></span>Processing</span>
+    <span class="leg"><span class="dot" style="background:#28a745"></span>Finalised</span>
+  </div>
+  <div id="panels">
+    <div class="panel"><strong>Priority Queue</strong><span id="p-pq">—</span></div>
+    <div class="panel"><strong>Finalised</strong><span id="p-done">—</span></div>
+  </div>
+  <div id="stat">Press Step to begin.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>◀ Back</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var NODES = ['A','B','C','D','E','F'];
+// Weighted adjacency: {node: [[neighbour, weight], ...]}
+var WADJ = {
+  A:[['B',4],['C',2]],
+  B:[['A',4],['D',5],['E',10]],
+  C:[['A',2],['F',3]],
+  D:[['B',5]],
+  E:[['B',10],['F',4]],
+  F:[['C',3],['E',4]]
+};
+var NC = { u:'#4a4a4c', q:'#f0a500', c:'#007bff', p:'#28a745' };
+var TC_dist = { u:'#d4d4d4', q:'#000', c:'#fff', p:'#fff' };
+
+var steps, idx;
+var INF = Infinity;
+
+function fmtDist(d) { return d === INF ? '∞' : String(d); }
+
+function buildSteps(src) {
+  var s = [];
+  var dist = {}; var st = {}; var finalised = [];
+  NODES.forEach(function(n){ dist[n]=INF; st[n]='u'; });
+  dist[src]=0;
+
+  // Simple min-heap via sorted array for small graph
+  var pq = [[0, src]]; // [dist, node]
+  st[src]='q';
+
+  function pqStr(pq) {
+    return pq.map(function(x){ return x[1]+'='+fmtDist(x[0]); }).join(', ');
+  }
+  function snap(msg, done) {
+    s.push({
+      st: Object.assign({},st),
+      dist: Object.assign({},dist),
+      pq: pq.slice(),
+      fin: finalised.slice(),
+      msg: msg,
+      done: done||false
+    });
+  }
+
+  snap('Init: dist['+src+']=0, all others ∞. Push '+src+' to priority queue.', false);
+
+  while (pq.length) {
+    // pop min
+    pq.sort(function(a,b){ return a[0]-b[0]; });
+    var entry = pq.shift();
+    var d = entry[0]; var node = entry[1];
+    if (d > dist[node]) { continue; } // stale
+    if (st[node]==='p') { continue; } // already finalised
+
+    st[node]='c';
+    snap('Processing '+node+' (dist='+fmtDist(dist[node])+').', false);
+    finalised.push(node);
+    st[node]='p';
+
+    var relaxed = [];
+    WADJ[node].forEach(function(pair){
+      var nb=pair[0]; var w=pair[1];
+      if (st[nb]==='p') return;
+      var newDist = dist[node]+w;
+      if (newDist < dist[nb]) {
+        var old = fmtDist(dist[nb]);
+        dist[nb]=newDist;
+        if (st[nb]==='u') { st[nb]='q'; }
+        pq.push([newDist, nb]);
+        relaxed.push(node+'→'+nb+': '+fmtDist(dist[node])+'+'+w+'='+newDist+'<'+old);
+      }
+    });
+
+    var msg;
+    if (relaxed.length)
+      msg = 'Finalised '+node+'. Relaxed: '+relaxed.join('; ')+'.';
+    else
+      msg = 'Finalised '+node+'. No relaxations.';
+    snap(msg, false);
+  }
+
+  var summary = NODES.map(function(n){ return n+'='+fmtDist(dist[n]); }).join(', ');
+  snap('Dijkstra complete. Distances from '+src+': '+summary, true);
+  return s;
+}
+
+function draw() {
+  var s = steps[idx];
+  NODES.forEach(function(n){
+    var state = s.st[n]||'u';
+    document.getElementById('n-'+n).setAttribute('fill', NC[state]);
+    var tc = TC_dist[state];
+    document.getElementById('lbl-'+n).setAttribute('fill', state==='u'?'#646464':'rgba(255,255,255,0.6)');
+    document.getElementById('dist-'+n).textContent = fmtDist(s.dist[n]);
+    document.getElementById('dist-'+n).setAttribute('fill', tc);
+  });
+  var pqStr = s.pq.length ? s.pq.map(function(x){return x[1]+'='+fmtDist(x[0]);}).join(', ') : '(empty)';
+  document.getElementById('p-pq').textContent = pqStr;
+  document.getElementById('p-done').textContent = s.fin.length ? s.fin.join(' → ') : '—';
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step '+idx+' / '+(steps.length-1);
+  document.getElementById('btn-step').disabled = s.done;
+  document.getElementById('btn-back').disabled = idx===0;
+}
+
+function load(src) {
+  steps = buildSteps(src);
+  idx = 0;
+  draw();
+}
+
+document.getElementById('btn-step').onclick = function(){ if(idx<steps.length-1){idx++;draw();} };
+document.getElementById('btn-back').onclick = function(){ if(idx>0){idx--;draw();} };
+document.getElementById('btn-reset').onclick = function(){ idx=0; draw(); };
+document.getElementById('start-sel').onchange = function(){ load(this.value); };
+
+load('A');
+</script>
+</body>
+</html>

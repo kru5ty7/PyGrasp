@@ -91,6 +91,12 @@ print(insertion_sort([1, 2, 3, 4, 5]))  # [1, 2, 3, 4, 5]
 
 ---
 
+## Visualizer
+
+<iframe src="/visualizers/insertion-sort.html" style="width:100%;height:420px;border:none;border-radius:8px;" title="Insertion Sort Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Insertion sort's efficiency on nearly-sorted data is directly exploited by Timsort, which first identifies naturally sorted runs in the input and then uses insertion sort to extend short runs to the minimum run length. Understanding insertion sort is therefore a prerequisite for understanding why Timsort performs so well on real-world data. The concept of inversions — pairs of elements in the wrong order — is a recurring idea in algorithm analysis and connects directly to how merge sort counts inversions as a classic interview problem.

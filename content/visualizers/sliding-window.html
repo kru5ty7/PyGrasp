@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sliding Window — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 620px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  .input-row {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: .5rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .input-row label { font-size: .78rem; color: #646464; white-space: nowrap; }
+  .input-row input {
+    background: #222224;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    color: #d4d4d4;
+    font-size: .85rem;
+    padding: .3rem .6rem;
+    outline: none;
+  }
+  .input-row input:focus { border-color: #7b97aa; }
+  .input-row input.error { border-color: #c0392b; }
+  #arr-input { flex: 1; min-width: 80px; }
+  #k-input { width: 56px; }
+  #btn-apply {
+    padding: .3rem .7rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #2e4a30;
+    color: #d4d4d4;
+    white-space: nowrap;
+  }
+  #btn-apply:hover { opacity: .8; }
+  #err-msg { font-size: .75rem; color: #c0392b; margin-bottom: .5rem; min-height: 1rem; }
+
+  /* Array display */
+  #cells-wrap {
+    overflow-x: auto;
+    padding-bottom: .25rem;
+    margin-bottom: .25rem;
+  }
+  #cells { display: flex; gap: 5px; padding-bottom: 2px; }
+  .cell-col { display: flex; flex-direction: column; align-items: center; flex-shrink: 0; }
+  .cell-v {
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    font-weight: 700;
+    font-size: .9rem;
+    background: #2a2a2e;
+    color: #d4d4d4;
+    transition: background .2s, color .2s, opacity .2s, border-color .2s;
+  }
+  /* States */
+  .cell-v.window    { background: #1a2d4a; border-color: #284b63; color: #7bbfff; }
+  .cell-v.entering  { background: #f0a500; color: #000; border-color: #f0a500; }
+  .cell-v.leaving   { opacity: 0.3; }
+  .cell-v.best-win  { background: #1a4a30; border-color: #28a745; color: #6fcf97; }
+  .cell-idx { font-size: .62rem; color: #646464; margin-top: 3px; }
+  .cell-lbl {
+    font-size: .65rem;
+    font-weight: 700;
+    color: #7b97aa;
+    height: 1.1rem;
+    text-align: center;
+    white-space: nowrap;
+    margin-top: 2px;
+  }
+
+  /* Stats panel */
+  #sum-panel {
+    display: flex;
+    gap: .75rem;
+    margin-bottom: .75rem;
+    font-size: .82rem;
+    flex-wrap: wrap;
+  }
+  .sum-box {
+    padding: .3rem .65rem;
+    background: #222224;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    color: #646464;
+  }
+  .sum-box span { color: #d4d4d4; font-weight: 700; }
+  .sum-box.highlight span { color: #28a745; }
+
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Sliding Window — Maximum Sum of k Consecutive Elements</h4>
+  <div class="input-row">
+    <label for="arr-input">Array:</label>
+    <input id="arr-input" type="text" value="2, 1, 5, 1, 3, 2, 6, 4" placeholder="integers, comma-separated" spellcheck="false">
+  </div>
+  <div class="input-row">
+    <label for="k-input">k:</label>
+    <input id="k-input" type="number" value="3" min="1">
+    <button id="btn-apply">Apply</button>
+  </div>
+  <div id="err-msg"></div>
+  <div id="cells-wrap"><div id="cells"></div></div>
+  <div id="sum-panel">
+    <div class="sum-box" id="box-cur">Current window sum: <span id="sp-cur">—</span></div>
+    <div class="sum-box" id="box-max">Max sum so far: <span id="sp-max">—</span></div>
+    <div class="sum-box">Best window: <span id="sp-win">—</span></div>
+  </div>
+  <div id="stat">Press Step to begin.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var DEFAULT_ARR = [2, 1, 5, 1, 3, 2, 6, 4];
+var DEFAULT_K = 3;
+var currentArr, currentK, steps, idx;
+
+/*
+  Step shape:
+  {
+    L, R          : current window bounds
+    entering      : index just added (-1 if none)
+    leaving       : index just removed (-1 if none)
+    curSum        : current window sum
+    maxSum        : best seen so far
+    bestL, bestR  : window where max was seen
+    newMax        : boolean — is this step when max updated?
+    done          : boolean
+    msg           : string
+  }
+*/
+function buildSteps(arr, k) {
+  var s = [];
+  var n = arr.length;
+  var curSum = 0, maxSum = -Infinity, bestL = 0, bestR = k - 1;
+
+  // Step 0: initial state
+  s.push({ L: 0, R: k - 1, entering: -1, leaving: -1,
+    curSum: 0, maxSum: 0, bestL: 0, bestR: k - 1,
+    newMax: false, done: false,
+    msg: 'Array loaded. Window size k=' + k + '. Will scan windows of ' + k + ' elements. Press Step.' });
+
+  // Initialize first window
+  for (var i = 0; i < k; i++) curSum += arr[i];
+  maxSum = curSum; bestL = 0; bestR = k - 1;
+  s.push({ L: 0, R: k - 1, entering: -1, leaving: -1,
+    curSum: curSum, maxSum: maxSum, bestL: bestL, bestR: bestR,
+    newMax: true, done: false,
+    msg: 'Initialize window [0..' + (k - 1) + ']: sum of [' + arr.slice(0, k).join(', ') + '] = ' + curSum + '. First window — max so far = ' + maxSum + '.' });
+
+  // Slide
+  for (var r = k; r < n; r++) {
+    var leaving = r - k;
+    var prevSum = curSum;
+    curSum = curSum - arr[leaving] + arr[r];
+    var isNewMax = curSum > maxSum;
+    if (isNewMax) { maxSum = curSum; bestL = leaving + 1; bestR = r; }
+    var msg = 'Slide right: remove arr[' + leaving + ']=' + arr[leaving] + ', add arr[' + r + ']=' + arr[r] + '. '
+      + prevSum + ' - ' + arr[leaving] + ' + ' + arr[r] + ' = ' + curSum + '.';
+    if (isNewMax) msg += ' New max: ' + maxSum + ' at window [' + bestL + '..' + bestR + '].';
+    s.push({ L: leaving + 1, R: r, entering: r, leaving: leaving,
+      curSum: curSum, maxSum: maxSum, bestL: bestL, bestR: bestR,
+      newMax: isNewMax, done: false, msg: msg });
+  }
+
+  // Final
+  s.push({ L: bestL, R: bestR, entering: -1, leaving: -1,
+    curSum: arr.slice(bestL, bestR + 1).reduce(function(a, b) { return a + b; }, 0),
+    maxSum: maxSum, bestL: bestL, bestR: bestR,
+    newMax: false, done: true,
+    msg: 'Done. Maximum sum is ' + maxSum + ' in window [' + bestL + '..' + bestR + '] = [' + arr.slice(bestL, bestR + 1).join(', ') + '].' });
+
+  return s;
+}
+
+function parseArr(raw) {
+  var parts = raw.split(',').map(function(x) { return x.trim(); }).filter(function(x) { return x !== ''; });
+  if (parts.length < 1 || parts.length > 24) return null;
+  var nums = parts.map(Number);
+  if (nums.some(isNaN)) return null;
+  if (nums.some(function(n) { return Math.floor(n) !== n; })) return null;
+  return nums;
+}
+
+function load(arr, k) {
+  currentArr = arr;
+  currentK = k;
+  steps = buildSteps(arr, k);
+  idx = 0;
+}
+
+function draw() {
+  var s = steps[idx];
+  var arr = currentArr;
+
+  // Cells
+  var cellHtml = arr.map(function(v, i) {
+    var cls = 'cell-v';
+    var lbl = [];
+    if (s.done) {
+      // Show best window in green
+      if (i >= s.bestL && i <= s.bestR) cls += ' best-win';
+    } else {
+      if (i === s.entering) cls += ' entering';
+      else if (i === s.leaving) cls += ' leaving';
+      else if (i >= s.L && i <= s.R) cls += ' window';
+    }
+    if (i === s.L) lbl.push('L');
+    if (i === s.R) lbl.push('R');
+    lbl = lbl.filter(function(x, j, a) { return a.indexOf(x) === j; });
+    return '<div class="cell-col"><div class="' + cls + '">' + v + '</div>'
+      + '<div class="cell-idx">' + i + '</div>'
+      + '<div class="cell-lbl">' + lbl.join('/') + '</div></div>';
+  }).join('');
+  document.getElementById('cells').innerHTML = cellHtml;
+
+  // Panels
+  document.getElementById('sp-cur').textContent = s.curSum !== 0 || idx > 0 ? String(s.curSum) : '—';
+  document.getElementById('sp-max').textContent = s.maxSum > 0 || idx > 1 ? String(s.maxSum) : '—';
+  document.getElementById('sp-win').textContent = idx > 0
+    ? '[' + s.bestL + '..' + s.bestR + ']' : '—';
+
+  var maxBox = document.getElementById('box-max');
+  if (s.newMax) maxBox.classList.add('highlight');
+  else maxBox.classList.remove('highlight');
+
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
+  document.getElementById('btn-step').disabled = s.done;
+  document.getElementById('btn-back').disabled = (idx === 0);
+}
+
+function applyInput() {
+  var rawArr = document.getElementById('arr-input').value;
+  var rawK = document.getElementById('k-input').value;
+  var errEl = document.getElementById('err-msg');
+  var arrEl = document.getElementById('arr-input');
+
+  var arr = parseArr(rawArr);
+  if (!arr) {
+    errEl.textContent = 'Enter 1–24 integers, comma-separated.';
+    arrEl.classList.add('error');
+    return;
+  }
+  var k = parseInt(rawK, 10);
+  if (isNaN(k) || k < 1 || k > arr.length) {
+    errEl.textContent = 'k must be between 1 and ' + arr.length + '.';
+    return;
+  }
+  errEl.textContent = '';
+  arrEl.classList.remove('error');
+  load(arr, k);
+  draw();
+}
+
+document.getElementById('btn-apply').onclick = applyInput;
+document.getElementById('arr-input').onkeydown = function(e) { if (e.key === 'Enter') applyInput(); };
+document.getElementById('k-input').onkeydown = function(e) { if (e.key === 'Enter') applyInput(); };
+document.getElementById('btn-step').onclick = function() { if (idx < steps.length - 1) { idx++; draw(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() { load(currentArr.slice(), currentK); draw(); };
+
+load(DEFAULT_ARR.slice(), DEFAULT_K);
+draw();
+</script>
+</body>
+</html>

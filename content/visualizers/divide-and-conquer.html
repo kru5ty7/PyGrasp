@@ -1,0 +1,346 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Divide and Conquer — Merge Sort Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 680px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #ctrl-row {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: .75rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  #ctrl-row label { font-size: .78rem; color: #646464; white-space: nowrap; }
+  input[type=text] {
+    flex: 1;
+    min-width: 140px;
+    background: #222224;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    color: #d4d4d4;
+    font-size: .85rem;
+    padding: .3rem .6rem;
+    outline: none;
+  }
+  input[type=text]:focus { border-color: #7b97aa; }
+  input[type=text].error { border-color: #c0392b; }
+  #err-msg { font-size: .75rem; color: #c0392b; margin-bottom: .5rem; min-height: 1rem; }
+  #phase-badge {
+    display: inline-block;
+    padding: .2rem .6rem;
+    border-radius: 3px;
+    font-size: .72rem;
+    font-weight: 600;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    margin-bottom: .5rem;
+    background: #2e3a4a;
+    color: #7b97aa;
+  }
+  #phase-badge.divide  { background: #3a2e0a; color: #f0a500; }
+  #phase-badge.conquer { background: #1a3a22; color: #28a745; }
+  #viz-area {
+    background: #1e1e20;
+    border: 1px solid #393639;
+    border-radius: 6px;
+    padding: .5rem;
+    margin-bottom: .75rem;
+    overflow: auto;
+  }
+  svg { display: block; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #buttons { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Divide &amp; Conquer — Merge Sort</h4>
+  <div id="ctrl-row">
+    <label for="arr-input">Array:</label>
+    <input type="text" id="arr-input" value="5,3,8,1,4,2" placeholder="e.g. 5,3,8,1,4,2" spellcheck="false">
+    <button id="btn-apply">Apply</button>
+  </div>
+  <div id="err-msg"></div>
+  <div id="phase-badge">Ready</div>
+  <div id="viz-area">
+    <svg id="tree-svg" width="640" height="300"></svg>
+  </div>
+  <div id="stat">Press Step to begin.</div>
+  <div id="buttons">
+    <button id="btn-back" disabled>◀ Back</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var steps = [], idx = 0;
+var currentArr = [5,3,8,1,4,2];
+
+/* Tree node: {id, arr, left, right, parent, depth, pos, state, sorted} */
+/* state: 'hidden'|'dividing'|'leaf'|'merging'|'merged' */
+
+function buildSteps(arr) {
+  var nodes = {}, edges = [], uid = 0;
+  var seq = [];
+
+  function snapshot() {
+    var ns = {};
+    Object.keys(nodes).forEach(function(k) {
+      var nd = nodes[k];
+      ns[k] = { id:nd.id, arr:nd.arr.slice(), left:nd.left, right:nd.right, parent:nd.parent, depth:nd.depth, state:nd.state, sorted:nd.sorted ? nd.sorted.slice() : null };
+    });
+    return { nodes: ns, edges: edges.slice() };
+  }
+
+  // Phase 1: build full tree structure first (hidden), then reveal top-down
+  function buildTree(subArr, parentId, depth) {
+    var myId = uid++;
+    nodes[myId] = { id:myId, arr:subArr.slice(), left:null, right:null, parent:parentId, depth:depth, state:'hidden', sorted:null };
+    if (parentId !== null) edges.push({ from:parentId, to:myId });
+    if (subArr.length <= 1) return myId;
+    var mid = Math.floor(subArr.length / 2);
+    var lc = buildTree(subArr.slice(0, mid), myId, depth + 1);
+    var rc = buildTree(subArr.slice(mid), myId, depth + 1);
+    nodes[myId].left = lc;
+    nodes[myId].right = rc;
+    return myId;
+  }
+  buildTree(arr, null, 0);
+
+  // Reveal divide phase top-down BFS
+  seq.push(Object.assign(snapshot(), { msg: 'Merge Sort: divide phase. Array will be split recursively until single elements.', phase:'ready' }));
+
+  function revealDivide(id) {
+    nodes[id].state = 'dividing';
+    var nd = nodes[id];
+    if (nd.arr.length <= 1) {
+      nodes[id].state = 'leaf';
+      seq.push(Object.assign(snapshot(), { msg: 'Leaf: [' + nd.arr.join(',') + '] — single element, already sorted.', phase:'divide' }));
+      return;
+    }
+    var mid = Math.floor(nd.arr.length / 2);
+    seq.push(Object.assign(snapshot(), {
+      msg: 'Divide: splitting [' + nd.arr.join(',') + '] → [' + nd.arr.slice(0,mid).join(',') + '] and [' + nd.arr.slice(mid).join(',') + '].',
+      phase:'divide'
+    }));
+    revealDivide(nd.left);
+    revealDivide(nd.right);
+  }
+  revealDivide(0);
+
+  // Conquer phase: merge bottom-up (post-order)
+  function doMerge(id) {
+    var nd = nodes[id];
+    if (nd.arr.length <= 1) {
+      nd.sorted = nd.arr.slice();
+      return nd.sorted;
+    }
+    var lSorted = doMerge(nd.left);
+    var rSorted = doMerge(nd.right);
+    // merge
+    var merged = [], i = 0, j = 0;
+    while (i < lSorted.length && j < rSorted.length) {
+      if (lSorted[i] <= rSorted[j]) merged.push(lSorted[i++]);
+      else merged.push(rSorted[j++]);
+    }
+    while (i < lSorted.length) merged.push(lSorted[i++]);
+    while (j < rSorted.length) merged.push(rSorted[j++]);
+    nodes[id].state = 'merging';
+    seq.push(Object.assign(snapshot(), {
+      msg: 'Merge: [' + lSorted.join(',') + '] + [' + rSorted.join(',') + '] → [' + merged.join(',') + '].',
+      phase:'conquer'
+    }));
+    nodes[id].state = 'merged';
+    nodes[id].sorted = merged;
+    seq.push(Object.assign(snapshot(), {
+      msg: 'Merged: [' + merged.join(',') + '] — sorted subarray complete.',
+      phase:'conquer'
+    }));
+    return merged;
+  }
+  doMerge(0);
+  seq.push(Object.assign(snapshot(), {
+    msg: 'Done! Array fully sorted: [' + nodes[0].sorted.join(',') + '].',
+    phase:'done'
+  }));
+  return seq;
+}
+
+/* Layout */
+function computeLayout(nodesSnap) {
+  // BFS to collect by depth, but only visible nodes
+  var byDepth = {};
+  Object.keys(nodesSnap).forEach(function(k) {
+    var nd = nodesSnap[k];
+    if (nd.state === 'hidden') return;
+    var d = nd.depth;
+    if (!byDepth[d]) byDepth[d] = [];
+    byDepth[d].push(+k);
+  });
+  var maxDepth = 0;
+  Object.keys(byDepth).forEach(function(d) { if (+d > maxDepth) maxDepth = +d; });
+  var pos = {};
+  Object.keys(byDepth).forEach(function(d) {
+    var arr = byDepth[d];
+    arr.sort(function(a,b){return a-b;});
+    arr.forEach(function(id, i) {
+      pos[id] = { x: (i + 1) / (arr.length + 1), y: +d / Math.max(maxDepth, 1) };
+    });
+  });
+  return { pos:pos, maxDepth:maxDepth };
+}
+
+function nodeColor(state) {
+  if (state === 'dividing') return '#a06000';
+  if (state === 'leaf')     return '#4a4a4c';
+  if (state === 'merging')  return '#3a5a3a';
+  if (state === 'merged')   return '#1e6b34';
+  return '#2a2a2e';
+}
+function nodeBorderColor(state) {
+  if (state === 'dividing') return '#f0a500';
+  if (state === 'leaf')     return '#646464';
+  if (state === 'merging')  return '#28a745';
+  if (state === 'merged')   return '#28a745';
+  return '#555';
+}
+
+function draw() {
+  var s = steps[idx];
+  var nodesSnap = s.nodes;
+  var edgesSnap = s.edges;
+  var layout = computeLayout(nodesSnap);
+  var pos = layout.pos;
+  var maxD = layout.maxDepth;
+  var svgW = 640;
+  var svgH = Math.max(240, (maxD + 1) * 90 + 50);
+  var svg = document.getElementById('tree-svg');
+  svg.setAttribute('width', svgW);
+  svg.setAttribute('height', svgH);
+  var padX = 30, padY = 30;
+  var nodeW = 68, nodeH = 28, nodeR = 5;
+
+  function cx(id) { return padX + pos[id].x * (svgW - 2 * padX); }
+  function cy(id) { return padY + pos[id].y * (svgH - 2 * padY); }
+
+  var html = '';
+  // edges (only between visible nodes)
+  edgesSnap.forEach(function(e) {
+    if (!pos[e.from] || !pos[e.to]) return;
+    var x1 = cx(e.from).toFixed(1), y1 = (cy(e.from) + nodeH/2).toFixed(1);
+    var x2 = cx(e.to).toFixed(1),   y2 = (cy(e.to)  - nodeH/2).toFixed(1);
+    html += '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="#555" stroke-width="1.5"/>';
+  });
+  // nodes
+  Object.keys(nodesSnap).forEach(function(k) {
+    var nd = nodesSnap[k];
+    if (!pos[k]) return;
+    var x = (cx(k) - nodeW/2).toFixed(1);
+    var y = (cy(k) - nodeH/2).toFixed(1);
+    var fill   = nodeColor(nd.state);
+    var stroke = nodeBorderColor(nd.state);
+    html += '<rect x="'+x+'" y="'+y+'" width="'+nodeW+'" height="'+nodeH+'" rx="'+nodeR+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="2"/>';
+    var label = nd.sorted ? '['+nd.sorted.join(',')+']' : '['+nd.arr.join(',')+']';
+    // truncate if too long
+    if (label.length > 10) label = label.substring(0, 9) + '…]';
+    html += '<text x="'+cx(k).toFixed(1)+'" y="'+cy(k).toFixed(1)+'" text-anchor="middle" dominant-baseline="central" font-size="11" fill="#d4d4d4" font-family="monospace">'+label+'</text>';
+  });
+  svg.innerHTML = html;
+
+  // phase badge
+  var badge = document.getElementById('phase-badge');
+  if (s.phase === 'divide') { badge.className = 'phase-badge divide'; badge.textContent = 'Phase 1 — Divide'; }
+  else if (s.phase === 'conquer' || s.phase === 'done') { badge.className = 'phase-badge conquer'; badge.textContent = s.phase === 'done' ? 'Complete' : 'Phase 2 — Conquer'; }
+  else { badge.className = 'phase-badge'; badge.textContent = 'Ready'; }
+  badge.id = 'phase-badge';
+
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
+  document.getElementById('btn-step').disabled = idx === steps.length - 1;
+  document.getElementById('btn-back').disabled = idx === 0;
+}
+
+function parseInput(raw) {
+  var parts = raw.split(',').map(function(x){return x.trim();}).filter(function(x){return x!=='';});
+  if (parts.length < 2 || parts.length > 8) return null;
+  var nums = parts.map(Number);
+  if (nums.some(isNaN)) return null;
+  if (nums.some(function(n){return !isFinite(n)||Math.floor(n)!==n;})) return null;
+  return nums;
+}
+
+function applyInput() {
+  var raw = document.getElementById('arr-input').value;
+  var nums = parseInput(raw);
+  var errEl = document.getElementById('err-msg');
+  var inputEl = document.getElementById('arr-input');
+  if (!nums) {
+    errEl.textContent = 'Enter 2–8 integers, comma-separated.';
+    inputEl.classList.add('error');
+    return;
+  }
+  errEl.textContent = '';
+  inputEl.classList.remove('error');
+  currentArr = nums;
+  steps = buildSteps(currentArr.slice());
+  idx = 0;
+  draw();
+}
+
+document.getElementById('btn-apply').onclick = applyInput;
+document.getElementById('arr-input').onkeydown = function(e) { if (e.key === 'Enter') applyInput(); };
+document.getElementById('btn-step').onclick = function() { if (idx < steps.length - 1) { idx++; draw(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() {
+  steps = buildSteps(currentArr.slice()); idx = 0; draw();
+};
+
+steps = buildSteps(currentArr.slice()); draw();
+</script>
+</body>
+</html>

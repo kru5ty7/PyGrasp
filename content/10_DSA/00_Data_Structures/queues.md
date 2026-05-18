@@ -162,6 +162,12 @@ task_queue.join()
 
 ---
 
+## Visualizer
+
+<iframe src="/visualizers/queue.html" style="width:100%;height:380px;border:none;border-radius:8px;" title="Queue Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 BFS (breadth-first search) is the algorithm most directly tied to the queue data structure — its correctness depends on visiting nodes in the order they are discovered, which is exactly the FIFO guarantee. Without a queue, BFS becomes DFS or an incorrect mixed traversal.

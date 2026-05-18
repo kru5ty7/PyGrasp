@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Counting Sort — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 600px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #input-row {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: 1rem;
+    align-items: center;
+  }
+  #input-row label { font-size: .78rem; color: #646464; white-space: nowrap; }
+  #arr-input {
+    flex: 1;
+    background: #222224;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    color: #d4d4d4;
+    font-size: .85rem;
+    padding: .3rem .6rem;
+    outline: none;
+  }
+  #arr-input:focus { border-color: #7b97aa; }
+  #arr-input.error { border-color: #c0392b; }
+  #btn-apply {
+    padding: .3rem .7rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #2e4a30;
+    color: #d4d4d4;
+    white-space: nowrap;
+  }
+  #btn-apply:hover { opacity: .8; }
+  #err-msg { font-size: .75rem; color: #c0392b; margin-bottom: .5rem; min-height: 1rem; }
+  .row-label {
+    font-size: .7rem;
+    color: #888;
+    margin-bottom: .3rem;
+    letter-spacing: .04em;
+  }
+  .box-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: .9rem;
+  }
+  .box {
+    min-width: 36px;
+    height: 36px;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: .78rem;
+    font-weight: 700;
+    border: 1px solid #555;
+    position: relative;
+  }
+  .box .val { font-size: .82rem; }
+  .box .sub { font-size: .58rem; color: #888; margin-top: 1px; }
+  .box.normal  { background: #4a4a4c; color: #d4d4d4; border-color: #555; }
+  .box.active  { background: #f0a500; color: #000; border-color: #f0a500; }
+  .box.active .sub { color: #5a3a00; }
+  .box.filled  { background: #28a745; color: #fff; border-color: #28a745; }
+  .box.empty   { background: #222224; color: #555; border-color: #393639; }
+  .box.prefix  { background: #007bff; color: #fff; border-color: #007bff; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+  #legend {
+    display: flex;
+    gap: .75rem;
+    flex-wrap: wrap;
+    margin-bottom: .75rem;
+    font-size: .72rem;
+    color: #888;
+  }
+  .leg { display: flex; align-items: center; gap: .3rem; }
+  .leg-dot { width: 10px; height: 10px; border-radius: 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Counting Sort — Step-Through</h4>
+  <div id="input-row">
+    <label for="arr-input">Array:</label>
+    <input id="arr-input" type="text" value="4, 2, 2, 8, 3, 3, 1" placeholder="e.g. 4,2,2,8,3,3,1 (small ints)" spellcheck="false">
+    <button id="btn-apply">Apply</button>
+  </div>
+  <div id="err-msg"></div>
+  <div id="legend">
+    <span class="leg"><span class="leg-dot" style="background:#f0a500"></span>active / counting</span>
+    <span class="leg"><span class="leg-dot" style="background:#007bff"></span>prefix sum</span>
+    <span class="leg"><span class="leg-dot" style="background:#28a745"></span>placed / done</span>
+  </div>
+  <div class="row-label" id="lbl-input">ROW 1 — INPUT ARRAY</div>
+  <div class="box-row" id="row-input"></div>
+  <div class="row-label" id="lbl-count">ROW 2 — COUNT ARRAY (index = value)</div>
+  <div class="box-row" id="row-count"></div>
+  <div class="row-label" id="lbl-output">ROW 3 — OUTPUT ARRAY</div>
+  <div class="box-row" id="row-output"></div>
+  <div id="stat">Press Step to begin.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var DEFAULT = [4, 2, 2, 8, 3, 3, 1];
+var currentArr = DEFAULT.slice();
+var steps, idx;
+
+function buildSteps(arr) {
+  var s = [];
+  var n = arr.length;
+  var minVal = Math.min.apply(null, arr);
+  var maxVal = Math.max.apply(null, arr);
+  var k = maxVal - minVal + 1;
+  var count = new Array(k).fill(0);
+  var output = new Array(n).fill(null);
+
+  function snap(inputActive, countActive, outputActive, phase, msg) {
+    s.push({
+      input: arr.slice(),
+      inputActive: inputActive,
+      count: count.slice(),
+      countActive: countActive,
+      output: output.slice(),
+      outputActive: outputActive,
+      minVal: minVal,
+      phase: phase,
+      msg: msg
+    });
+  }
+
+  snap(-1, -1, -1, 'count', 'Input array has ' + n + ' elements, values ' + minVal + '..' + maxVal + '. Press Step to start counting phase.');
+
+  for (var i = 0; i < n; i++) {
+    var v = arr[i] - minVal;
+    snap(i, -1, -1, 'count', 'Count phase: arr[' + i + ']=' + arr[i] + ', incrementing count[' + arr[i] + '] to ' + (count[v] + 1) + '.');
+    count[v]++;
+    snap(i, v, -1, 'count', 'count[' + arr[i] + '] is now ' + count[v] + '.');
+  }
+  snap(-1, -1, -1, 'prefix', 'Count phase complete. Now computing prefix sums: count[i] += count[i-1].');
+
+  for (var i = 1; i < k; i++) {
+    var before = count[i];
+    snap(-1, i, -1, 'prefix', 'Prefix sum: count[' + (i + minVal) + '] = ' + before + ' + count[' + (i - 1 + minVal) + ']=' + count[i - 1] + ' = ' + (before + count[i - 1]) + '.');
+    count[i] += count[i - 1];
+    snap(-1, i, -1, 'prefix', 'count[' + (i + minVal) + '] is now ' + count[i] + ' (positions 0..' + (count[i] - 1) + ' hold values <= ' + (i + minVal) + ').');
+  }
+  snap(-1, -1, -1, 'build', 'Prefix sums done. Building output: walk input in reverse, place each element at count[val]-1.');
+
+  var arrCopy = arr.slice();
+  for (var i = n - 1; i >= 0; i--) {
+    var vi = arrCopy[i] - minVal;
+    snap(i, vi, -1, 'build', 'Build: arr[' + i + ']=' + arrCopy[i] + '. count[' + arrCopy[i] + ']=' + count[vi] + ', so output position = ' + (count[vi] - 1) + '.');
+    count[vi]--;
+    output[count[vi]] = arrCopy[i];
+    snap(i, vi, count[vi], 'build', 'Placed ' + arrCopy[i] + ' at output[' + count[vi] + ']. count[' + arrCopy[i] + '] decremented to ' + count[vi] + '.');
+  }
+  snap(-1, -1, -1, 'done', 'Sorted! Output: [' + output.join(', ') + '].');
+  s[s.length - 1].done = true;
+  return s;
+}
+
+function parseInput(raw) {
+  var parts = raw.split(',').map(function(x) { return x.trim(); }).filter(function(x) { return x !== ''; });
+  if (parts.length < 2 || parts.length > 16) return null;
+  var nums = parts.map(Number);
+  if (nums.some(isNaN)) return null;
+  if (nums.some(function(n) { return n < 0 || n > 99 || Math.floor(n) !== n; })) return null;
+  if (Math.max.apply(null, nums) - Math.min.apply(null, nums) > 30) return null;
+  return nums;
+}
+
+function load(arr) {
+  currentArr = arr;
+  steps = buildSteps(arr.slice());
+  idx = 0;
+}
+
+function makeBox(val, cls, sub) {
+  var d = document.createElement('div');
+  d.className = 'box ' + cls;
+  var v = document.createElement('span');
+  v.className = 'val';
+  v.textContent = val === null ? '' : val;
+  d.appendChild(v);
+  if (sub !== undefined) {
+    var s2 = document.createElement('span');
+    s2.className = 'sub';
+    s2.textContent = sub;
+    d.appendChild(s2);
+  }
+  return d;
+}
+
+function draw() {
+  var s = steps[idx];
+  var n = s.input.length;
+  var k = s.count.length;
+
+  var ri = document.getElementById('row-input');
+  ri.innerHTML = '';
+  for (var i = 0; i < n; i++) {
+    var cls = i === s.inputActive ? 'active' : 'normal';
+    ri.appendChild(makeBox(s.input[i], cls, '[' + i + ']'));
+  }
+
+  var rc = document.getElementById('row-count');
+  rc.innerHTML = '';
+  for (var i = 0; i < k; i++) {
+    var label = i + s.minVal;
+    var cls2 = 'normal';
+    if (i === s.countActive) {
+      cls2 = s.phase === 'prefix' ? 'prefix' : 'active';
+    }
+    rc.appendChild(makeBox(s.count[i], cls2, 'v=' + label));
+  }
+
+  var ro = document.getElementById('row-output');
+  ro.innerHTML = '';
+  for (var i = 0; i < n; i++) {
+    var cls3 = s.output[i] !== null ? (i === s.outputActive ? 'active' : 'filled') : 'empty';
+    ro.appendChild(makeBox(s.output[i] !== null ? s.output[i] : '·', cls3, '[' + i + ']'));
+  }
+
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
+  document.getElementById('btn-step').disabled = !!s.done;
+  document.getElementById('btn-back').disabled = idx === 0;
+}
+
+function applyInput() {
+  var raw = document.getElementById('arr-input').value;
+  var nums = parseInput(raw);
+  var errEl = document.getElementById('err-msg');
+  var inputEl = document.getElementById('arr-input');
+  if (!nums) {
+    errEl.textContent = 'Enter 2–16 whole numbers (0–99), comma-separated. Value range must be <= 30.';
+    inputEl.classList.add('error');
+    return;
+  }
+  errEl.textContent = '';
+  inputEl.classList.remove('error');
+  load(nums);
+  draw();
+}
+
+document.getElementById('btn-apply').onclick = applyInput;
+document.getElementById('arr-input').onkeydown = function(e) { if (e.key === 'Enter') applyInput(); };
+document.getElementById('btn-step').onclick = function() { if (idx < steps.length - 1) { idx++; draw(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() { load(currentArr.slice()); draw(); };
+
+load(DEFAULT);
+draw();
+</script>
+</body>
+</html>

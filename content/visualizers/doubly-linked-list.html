@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Doubly Linked List — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 660px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #input-row {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: .75rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  #input-row label { font-size: .78rem; color: #646464; white-space: nowrap; }
+  #val-input {
+    width: 72px;
+    background: #222224;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    color: #d4d4d4;
+    font-size: .85rem;
+    padding: .3rem .6rem;
+    outline: none;
+  }
+  #val-input:focus { border-color: #7b97aa; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+    white-space: nowrap;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-push-front { background: #284b63; color: #fff; }
+  #btn-push-back  { background: #2e4a30; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+
+  /* Visualizer area */
+  #vis-outer {
+    margin-bottom: .75rem;
+    padding: .5rem 0;
+    overflow-x: auto;
+  }
+  #vis-area {
+    min-height: 72px;
+    display: flex;
+    align-items: center;
+    flex-wrap: nowrap;
+    gap: 0;
+  }
+  .dll-label {
+    font-size: .72rem;
+    color: #7b97aa;
+    font-weight: 600;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .dll-label.head-lbl { margin-right: 4px; }
+  .dll-label.tail-lbl { margin-left: 4px; }
+  .dll-arrow {
+    color: #7b97aa;
+    font-size: .82rem;
+    margin: 0 2px;
+    font-weight: 400;
+    user-select: none;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .dll-node {
+    min-width: 48px;
+    height: 40px;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    background: #2a2a2e;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: .9rem;
+    color: #d4d4d4;
+    padding: 0 8px;
+    transition: background .3s;
+    flex-shrink: 0;
+  }
+  .dll-node.highlight { background: #f0a500 !important; color: #161618; }
+  .dll-null {
+    font-size: .78rem;
+    color: #646464;
+    font-style: italic;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Doubly Linked List — Interactive</h4>
+  <div id="input-row">
+    <label for="val-input">Value:</label>
+    <input id="val-input" type="text" placeholder="e.g. 42" spellcheck="false" maxlength="6">
+    <button id="btn-push-front">Push Front</button>
+    <button id="btn-push-back">Push Back</button>
+    <button id="btn-pop-front">Pop Front</button>
+    <button id="btn-pop-back">Pop Back</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+  <div id="vis-outer"><div id="vis-area"></div></div>
+  <div id="stat">Push values onto the list using the controls above.</div>
+</div>
+<script>
+var list = [];
+var MAX = 8;
+
+function status(msg) {
+  document.getElementById('stat').textContent = msg;
+}
+
+function render(hl) {
+  var area = document.getElementById('vis-area');
+  var counter = document.getElementById('counter');
+  counter.textContent = 'Size: ' + list.length + ' / ' + MAX;
+
+  if (list.length === 0) {
+    area.innerHTML =
+      '<span class="dll-null">NULL</span>' +
+      '<span class="dll-arrow"> ⟵ </span>' +
+      '<span class="dll-label">HEAD / TAIL</span>' +
+      '<span class="dll-arrow"> → </span>' +
+      '<span class="dll-null">NULL</span>';
+    return;
+  }
+
+  var html = '<span class="dll-label head-lbl">HEAD</span>';
+  html += '<span class="dll-arrow">→</span>';
+
+  for (var i = 0; i < list.length; i++) {
+    var hlClass = (hl === i) ? ' highlight' : '';
+    html += '<div class="dll-node' + hlClass + '" id="node-' + i + '">' + list[i] + '</div>';
+    if (i < list.length - 1) {
+      html += '<span class="dll-arrow">⟵→</span>';
+    }
+  }
+
+  html += '<span class="dll-arrow">→</span>';
+  html += '<span class="dll-label tail-lbl">TAIL</span>';
+  area.innerHTML = html;
+
+  if (hl >= 0) {
+    setTimeout(function() {
+      var el = document.getElementById('node-' + hl);
+      if (el) el.classList.remove('highlight');
+    }, 1000);
+  }
+}
+
+function getVal() {
+  var raw = document.getElementById('val-input').value.trim();
+  if (raw === '') { status('Enter a value first.'); return null; }
+  return raw;
+}
+
+document.getElementById('btn-push-front').onclick = function() {
+  if (list.length >= MAX) { status('List full (max ' + MAX + ').'); return; }
+  var v = getVal(); if (v === null) return;
+  list.unshift(v);
+  render(0);
+  status('Pushed "' + v + '" to front. HEAD → "' + v + '" ⟵→ ' + (list.length > 1 ? '"' + list[1] + '"' : 'TAIL') + '.');
+};
+
+document.getElementById('btn-push-back').onclick = function() {
+  if (list.length >= MAX) { status('List full (max ' + MAX + ').'); return; }
+  var v = getVal(); if (v === null) return;
+  list.push(v);
+  render(list.length - 1);
+  status('Pushed "' + v + '" to back. ' + (list.length > 1 ? '"' + list[list.length - 2] + '" ⟵→ ' : '') + '"' + v + '" ← TAIL.');
+};
+
+document.getElementById('btn-pop-front').onclick = function() {
+  if (list.length === 0) { status('List is empty — nothing to pop.'); return; }
+  var v = list.shift();
+  render(-1);
+  status('Popped "' + v + '" from front. HEAD now → ' + (list.length > 0 ? '"' + list[0] + '"' : 'NULL (list empty)') + '.');
+};
+
+document.getElementById('btn-pop-back').onclick = function() {
+  if (list.length === 0) { status('List is empty — nothing to pop.'); return; }
+  var v = list.pop();
+  render(-1);
+  status('Popped "' + v + '" from back. TAIL now ← ' + (list.length > 0 ? '"' + list[list.length - 1] + '"' : 'NULL (list empty)') + '.');
+};
+
+document.getElementById('btn-reset').onclick = function() {
+  list = [];
+  render(-1);
+  status('List reset.');
+};
+
+document.getElementById('val-input').onkeydown = function(e) {
+  if (e.key === 'Enter') document.getElementById('btn-push-back').click();
+};
+
+render(-1);
+</script>
+</body>
+</html>

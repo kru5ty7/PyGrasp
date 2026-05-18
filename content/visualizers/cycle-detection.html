@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cycle Detection — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .5rem;
+  }
+  #mode-row { display: flex; gap: .5rem; margin-bottom: .75rem; }
+  .mode-btn {
+    padding: .28rem .65rem; border: 1px solid #393639; border-radius: 4px;
+    cursor: pointer; font-size: .78rem; background: #222224; color: #646464;
+    transition: all .15s;
+  }
+  .mode-btn.active { background: #284b63; color: #fff; border-color: #284b63; }
+  svg { display: block; width: 100%; }
+  #legend {
+    display: flex; gap: .65rem; flex-wrap: wrap;
+    margin: .4rem 0; font-size: .72rem; color: #d4d4d4;
+  }
+  .leg { display: flex; align-items: center; gap: .3rem; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+  #panels { display: flex; gap: .75rem; margin: .4rem 0; }
+  .panel {
+    flex: 1; padding: .4rem .6rem; background: #393639; border-radius: 4px;
+    font-size: .83rem; color: #d4d4d4;
+  }
+  .panel strong {
+    display: block; font-size: .68rem; text-transform: uppercase;
+    letter-spacing: .06em; color: #646464; margin-bottom: 3px;
+  }
+  #stat {
+    padding: .45rem .75rem; background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .82rem; line-height: 1.5;
+    min-height: 2.4rem; margin: .5rem 0;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem; border: none; border-radius: 4px;
+    cursor: pointer; font-size: .82rem;
+    background: #393639; color: #d4d4d4; transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Cycle Detection — DFS</h4>
+  <div id="mode-row">
+    <button class="mode-btn active" id="btn-undirected">Undirected</button>
+    <button class="mode-btn" id="btn-directed">Directed</button>
+  </div>
+  <!-- Undirected graph: A-B, B-C, C-D, D-B (cycle B-C-D), D-E -->
+  <!-- Nodes: A(60,120) B(180,60) C(300,60) D(300,180) E(420,180) -->
+  <svg id="graph-svg" viewBox="0 0 440 240" height="210">
+    <defs>
+      <marker id="darr" viewBox="0 0 10 10" refX="10" refY="5"
+        markerWidth="6" markerHeight="6" orient="auto">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#646464" id="darr-path"/>
+      </marker>
+    </defs>
+    <!-- edges — undirected by default, reused for directed -->
+    <line id="e-AB" x1="60" y1="120" x2="180" y2="60" stroke="#646464" stroke-width="2"/>
+    <line id="e-BC" x1="180" y1="60" x2="300" y2="60" stroke="#646464" stroke-width="2"/>
+    <line id="e-CD" x1="300" y1="60" x2="300" y2="180" stroke="#646464" stroke-width="2"/>
+    <line id="e-DB" x1="300" y1="180" x2="180" y2="60" stroke="#646464" stroke-width="2"/>
+    <line id="e-DE" x1="300" y1="180" x2="420" y2="180" stroke="#646464" stroke-width="2"/>
+    <!-- nodes -->
+    <circle id="n-A" cx="60" cy="120" r="18" fill="#4a4a4c" stroke="#393639" stroke-width="2"/>
+    <text id="t-A" x="60" y="125" text-anchor="middle" font-size="13" font-weight="bold" fill="#d4d4d4">A</text>
+    <circle id="n-B" cx="180" cy="60" r="18" fill="#4a4a4c" stroke="#393639" stroke-width="2"/>
+    <text id="t-B" x="180" y="65" text-anchor="middle" font-size="13" font-weight="bold" fill="#d4d4d4">B</text>
+    <circle id="n-C" cx="300" cy="60" r="18" fill="#4a4a4c" stroke="#393639" stroke-width="2"/>
+    <text id="t-C" x="300" y="65" text-anchor="middle" font-size="13" font-weight="bold" fill="#d4d4d4">C</text>
+    <circle id="n-D" cx="300" cy="180" r="18" fill="#4a4a4c" stroke="#393639" stroke-width="2"/>
+    <text id="t-D" x="300" y="185" text-anchor="middle" font-size="13" font-weight="bold" fill="#d4d4d4">D</text>
+    <circle id="n-E" cx="420" cy="180" r="18" fill="#4a4a4c" stroke="#393639" stroke-width="2"/>
+    <text id="t-E" x="420" y="185" text-anchor="middle" font-size="13" font-weight="bold" fill="#d4d4d4">E</text>
+  </svg>
+  <div id="legend">
+    <span class="leg"><span class="dot" style="background:#4a4a4c"></span>Unvisited</span>
+    <span class="leg"><span class="dot" style="background:#f0a500"></span>In progress</span>
+    <span class="leg"><span class="dot" style="background:#28a745"></span>Done</span>
+    <span class="leg"><span class="dot" style="background:#dc3545"></span>Cycle node</span>
+  </div>
+  <div id="panels">
+    <div class="panel"><strong>DFS Stack</strong><span id="p-stack">—</span></div>
+    <div class="panel"><strong>Visited</strong><span id="p-visited">—</span></div>
+  </div>
+  <div id="stat">Press Step to begin.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>◀ Back</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var NODES = ['A','B','C','D','E'];
+// undirected adjacency
+var U_ADJ = { A:['B'], B:['A','C','D'], C:['B','D'], D:['B','C','E'], E:['D'] };
+// directed adjacency: A→B, B→C, C→D, D→B (back edge creates cycle), D→E
+var D_ADJ = { A:['B'], B:['C'], C:['D'], D:['B','E'], E:[] };
+
+var NC = { u:'#4a4a4c', ip:'#f0a500', done:'#28a745', cy:'#dc3545' };
+var TC = { u:'#d4d4d4', ip:'#000',    done:'#fff',    cy:'#fff'    };
+
+var steps, idx, mode;
+
+// Undirected DFS cycle detection (parent tracking)
+function buildUndirected() {
+  var s = [];
+  var st = {}; NODES.forEach(function(n){ st[n]='u'; });
+  var visited = {};
+  var stk = []; // for display
+
+  function snap(msg, stk_, done) {
+    s.push({ st: Object.assign({},st), stk: stk_.slice(), msg: msg, done: done||false });
+  }
+
+  snap('Undirected DFS from A. Looking for back edges (non-parent visited neighbours).', stk, false);
+
+  var cycleFound = false;
+  // Recursive DFS via explicit stack with parent tracking
+  function dfs(node, parent) {
+    if (cycleFound) return;
+    visited[node] = true; st[node]='ip'; stk.push(node);
+    snap('Visit '+node+(parent?' (parent: '+parent+')':'')+'.', stk, false);
+    var adj = U_ADJ[node];
+    for (var i=0; i<adj.length; i++) {
+      var nb = adj[i];
+      if (!visited[nb]) {
+        dfs(nb, node);
+        if (cycleFound) return;
+      } else if (nb !== parent) {
+        // back edge found
+        st[node]='cy'; st[nb]='cy';
+        cycleFound = true;
+        snap('Back edge found: '+node+' → '+nb+'. Cycle detected! ('+nb+'-...-'+node+'-'+nb+')', stk, false);
+        return;
+      }
+    }
+    stk.pop();
+    st[node]='done';
+    snap('Backtrack from '+node+'.', stk, false);
+  }
+
+  dfs('A', null);
+  if (!cycleFound) {
+    snap('DFS complete. No cycle detected.', [], true);
+  } else {
+    snap('Cycle confirmed. Nodes on cycle highlighted red.', [], true);
+  }
+  return s;
+}
+
+// Directed DFS cycle detection (3 states: unvisited / in-stack / done)
+function buildDirected() {
+  var s = [];
+  var st = {}; NODES.forEach(function(n){ st[n]='u'; });
+  var inStack = {};
+  var stk = [];
+
+  function snap(msg, done) {
+    s.push({ st: Object.assign({},st), stk: stk.slice(), msg: msg, done: done||false });
+  }
+
+  snap('Directed DFS from A. Cycle exists if we reach an in-stack (amber) node.', stk, false);
+
+  var cycleFound = false;
+
+  function dfs(node) {
+    if (cycleFound) return;
+    st[node]='ip'; inStack[node]=true; stk.push(node);
+    snap('Enter '+node+' (mark in-stack).', false);
+    var adj = D_ADJ[node];
+    for (var i=0; i<adj.length; i++) {
+      var nb = adj[i];
+      if (!inStack[nb] && st[nb]!=='done') {
+        dfs(nb);
+        if (cycleFound) return;
+      } else if (inStack[nb]) {
+        st[node]='cy'; st[nb]='cy';
+        cycleFound = true;
+        snap('Back edge '+node+' → '+nb+' (in-stack). Cycle detected!', false);
+        return;
+      }
+    }
+    stk.pop();
+    inStack[node]=false;
+    st[node]='done';
+    snap('Finish '+node+' (mark done, remove from stack).', false);
+  }
+
+  NODES.forEach(function(n){ if(st[n]==='u') dfs(n); });
+  if (!cycleFound)
+    snap('DFS complete. No cycle detected.', [], true);
+  else
+    snap('Cycle confirmed.', [], true);
+  return s;
+}
+
+function updateEdgeMarkers(directed) {
+  var edgeIds = ['e-AB','e-BC','e-CD','e-DB','e-DE'];
+  edgeIds.forEach(function(eid){
+    var el = document.getElementById(eid);
+    if (!el) return;
+    if (directed) {
+      el.setAttribute('marker-end','url(#darr)');
+    } else {
+      el.removeAttribute('marker-end');
+    }
+  });
+}
+
+function draw() {
+  var s = steps[idx];
+  NODES.forEach(function(n){
+    var state = s.st[n]||'u';
+    document.getElementById('n-'+n).setAttribute('fill', NC[state]);
+    document.getElementById('t-'+n).setAttribute('fill', TC[state]);
+  });
+  document.getElementById('p-stack').textContent = s.stk.length ? s.stk.join(' → ') : '(empty)';
+  var vis = Object.keys(s.st).filter(function(n){ return s.st[n]!=='u'; });
+  document.getElementById('p-visited').textContent = vis.length ? vis.join(', ') : '—';
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step '+idx+' / '+(steps.length-1);
+  document.getElementById('btn-step').disabled = s.done;
+  document.getElementById('btn-back').disabled = idx===0;
+}
+
+function load(m) {
+  mode = m;
+  steps = (mode==='undirected') ? buildUndirected() : buildDirected();
+  updateEdgeMarkers(mode==='directed');
+  idx = 0;
+  draw();
+}
+
+document.getElementById('btn-step').onclick = function(){ if(idx<steps.length-1){idx++;draw();} };
+document.getElementById('btn-back').onclick = function(){ if(idx>0){idx--;draw();} };
+document.getElementById('btn-reset').onclick = function(){ idx=0; draw(); };
+document.getElementById('btn-undirected').onclick = function(){
+  document.getElementById('btn-undirected').classList.add('active');
+  document.getElementById('btn-directed').classList.remove('active');
+  load('undirected');
+};
+document.getElementById('btn-directed').onclick = function(){
+  document.getElementById('btn-directed').classList.add('active');
+  document.getElementById('btn-undirected').classList.remove('active');
+  load('directed');
+};
+
+load('undirected');
+</script>
+</body>
+</html>

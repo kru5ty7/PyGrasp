@@ -1,0 +1,231 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stack — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 400px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #input-row {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: .75rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  #input-row label { font-size: .78rem; color: #646464; white-space: nowrap; }
+  #val-input {
+    width: 80px;
+    background: #222224;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    color: #d4d4d4;
+    font-size: .85rem;
+    padding: .3rem .6rem;
+    outline: none;
+  }
+  #val-input:focus { border-color: #7b97aa; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+    white-space: nowrap;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-push { background: #284b63; color: #fff; }
+  #btn-pop  { background: #2e4a30; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+
+  /* Stack visualizer */
+  #vis-area {
+    min-height: 220px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 4px;
+    margin-bottom: .75rem;
+    padding: .25rem 0;
+  }
+  .stack-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .top-indicator {
+    font-size: .72rem;
+    color: #7b97aa;
+    font-weight: 600;
+    width: 36px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .stack-node {
+    flex: 1;
+    height: 40px;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    background: #2a2a2e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: .9rem;
+    color: #d4d4d4;
+    transition: background .3s;
+  }
+  .stack-node.highlight { background: #f0a500 !important; color: #161618; }
+  .spacer { width: 36px; flex-shrink: 0; }
+  .empty-msg {
+    flex: 1;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .82rem;
+    color: #646464;
+    font-style: italic;
+    border: 1px dashed #393639;
+    border-radius: 4px;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Stack (LIFO) — Interactive</h4>
+  <div id="input-row">
+    <label for="val-input">Value:</label>
+    <input id="val-input" type="text" placeholder="e.g. 42" spellcheck="false" maxlength="6">
+    <button id="btn-push">Push</button>
+  </div>
+  <div id="vis-area"></div>
+  <div id="stat">Push values onto the stack using the controls below.</div>
+  <div id="ctrl">
+    <button id="btn-pop">Pop</button>
+    <button id="btn-peek">Peek</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var stack = [];
+var MAX = 6;
+
+function status(msg) {
+  document.getElementById('stat').textContent = msg;
+}
+
+function render(hlTop) {
+  var area = document.getElementById('vis-area');
+  var counter = document.getElementById('counter');
+  counter.textContent = 'Size: ' + stack.length + ' / ' + MAX;
+
+  if (stack.length === 0) {
+    area.innerHTML =
+      '<div class="stack-row">' +
+        '<div class="top-indicator">TOP →</div>' +
+        '<div class="empty-msg">Stack empty</div>' +
+      '</div>';
+    return;
+  }
+
+  var html = '';
+  // Render top to bottom (stack[stack.length-1] is top)
+  for (var i = stack.length - 1; i >= 0; i--) {
+    var isTop = (i === stack.length - 1);
+    var hlClass = (hlTop && isTop) ? ' highlight' : '';
+    var nodeId = 'snode-' + i;
+    html += '<div class="stack-row">';
+    if (isTop) {
+      html += '<div class="top-indicator">TOP →</div>';
+    } else {
+      html += '<div class="spacer"></div>';
+    }
+    html += '<div class="stack-node' + hlClass + '" id="' + nodeId + '">' + stack[i] + '</div>';
+    html += '</div>';
+  }
+  area.innerHTML = html;
+
+  if (hlTop && stack.length > 0) {
+    setTimeout(function() {
+      var el = document.getElementById('snode-' + (stack.length - 1));
+      if (el) el.classList.remove('highlight');
+    }, 1000);
+  }
+}
+
+function getVal() {
+  var raw = document.getElementById('val-input').value.trim();
+  if (raw === '') { status('Enter a value first.'); return null; }
+  return raw;
+}
+
+document.getElementById('btn-push').onclick = function() {
+  if (stack.length >= MAX) { status('Stack full (max ' + MAX + ').'); return; }
+  var v = getVal(); if (v === null) return;
+  stack.push(v);
+  render(true);
+  status('Pushed "' + v + '" onto the stack. New TOP = "' + v + '".');
+};
+
+document.getElementById('btn-pop').onclick = function() {
+  if (stack.length === 0) { status('Stack is empty — nothing to pop.'); return; }
+  var v = stack.pop();
+  render(false);
+  status('Popped "' + v + '" from TOP. New TOP = ' + (stack.length > 0 ? '"' + stack[stack.length - 1] + '"' : '(stack empty)') + '.');
+};
+
+document.getElementById('btn-peek').onclick = function() {
+  if (stack.length === 0) { status('Stack is empty — nothing to peek.'); return; }
+  render(true);
+  status('Peek: TOP = "' + stack[stack.length - 1] + '" (not removed).');
+};
+
+document.getElementById('btn-reset').onclick = function() {
+  stack = [];
+  render(false);
+  status('Stack reset.');
+};
+
+document.getElementById('val-input').onkeydown = function(e) {
+  if (e.key === 'Enter') document.getElementById('btn-push').click();
+};
+
+render(false);
+</script>
+</body>
+</html>

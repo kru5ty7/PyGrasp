@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Heap — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 620px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #input-row {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: .75rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  #val-input {
+    width: 65px;
+    background: #222224;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    color: #d4d4d4;
+    font-size: .85rem;
+    padding: .3rem .6rem;
+    outline: none;
+  }
+  #val-input:focus { border-color: #7b97aa; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+    white-space: nowrap;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-insert { background: #284b63; color: #fff; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #tree-svg {
+    width: 100%;
+    height: 200px;
+    background: #1e1e20;
+    border-radius: 6px;
+    border: 1px solid #2a2a2e;
+    margin-bottom: .75rem;
+    display: block;
+  }
+  #array-row {
+    display: flex;
+    gap: 4px;
+    margin-bottom: .5rem;
+    flex-wrap: wrap;
+  }
+  .arr-cell {
+    min-width: 38px;
+    height: 40px;
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    font-size: .82rem;
+    transition: border-color .2s, background .2s;
+  }
+  .arr-cell .cidx { font-size: .6rem; color: #646464; }
+  .arr-cell .cval { color: #d4d4d4; }
+  .arr-cell.highlight { border-color: #f0a500; background: #2e2800; }
+  .arr-cell.highlight .cval { color: #f0a500; }
+  .arr-cell.swapped { border-color: #007bff; background: #001a2e; }
+  .arr-cell.swapped .cval { color: #007bff; }
+  .arr-cell.removed { background: #222224; border-color: #2a2a2e; }
+  .arr-cell.removed .cval { color: #393639; }
+  .arr-cell.done { border-color: #28a745; background: #1a2e1a; }
+  .arr-cell.done .cval { color: #28a745; }
+  #arr-label { font-size: .72rem; color: #646464; margin-bottom: .3rem; }
+  #ctrl { display: flex; gap: .4rem; flex-wrap: wrap; align-items: center; }
+  #counter { font-size: .72rem; color: #646464; margin-left: auto; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Max-Heap — Tree + Array View</h4>
+  <div id="input-row">
+    <label style="font-size:.78rem;color:#646464;">Value:</label>
+    <input id="val-input" type="number" placeholder="e.g. 10" min="0" max="999">
+    <button id="btn-insert">Insert</button>
+    <button id="btn-extract">Extract Max</button>
+    <button id="btn-step" disabled>Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+  </div>
+  <div id="stat">Pre-built max-heap: [9,7,8,3,5,6,4]. Insert a value or Extract Max, then Step.</div>
+  <svg id="tree-svg"></svg>
+  <div id="arr-label">Array representation:</div>
+  <div id="array-row"></div>
+  <div id="ctrl">
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var DEFAULT = [9,7,8,3,5,6,4];
+var heap = DEFAULT.slice();
+var heapSize = heap.length; // logical size (for removed display)
+var fullSize = heap.length;
+var nodeStates = {}; // index -> 'normal'|'highlight'|'swapped'|'removed'|'done'
+var steps = [];
+var stepIdx = 0;
+var SVG_W = 600, SVG_H = 200, R = 18;
+
+function parent(i) { return Math.floor((i-1)/2); }
+function left(i) { return 2*i+1; }
+function right(i) { return 2*i+2; }
+
+function posForIndex(i, size) {
+  var lv = Math.floor(Math.log2(i+1));
+  var pos = i - (Math.pow(2,lv) - 1);
+  var total = Math.pow(2,lv);
+  var maxLv = Math.floor(Math.log2(size)) + (size > 0 ? 0 : 0);
+  var levels = Math.floor(Math.log2(Math.max(size-1,1))) + 1;
+  return {
+    x: SVG_W * (pos + 0.5) / total,
+    y: 24 + lv * Math.min(50, (SVG_H - 40) / Math.max(levels - 1, 1))
+  };
+}
+
+function nodeColor(state) {
+  if (state === 'highlight') return '#f0a500';
+  if (state === 'swapped') return '#007bff';
+  if (state === 'removed') return '#2a2a2e';
+  if (state === 'done') return '#28a745';
+  return '#2a2a2e';
+}
+
+function renderAll() {
+  // SVG
+  var svg = document.getElementById('tree-svg');
+  var html = '';
+  var n = fullSize;
+  // edges
+  for (var i = 1; i < n; i++) {
+    if (nodeStates[i] === 'removed') continue;
+    var p = posForIndex(parent(i), n);
+    var c = posForIndex(i, n);
+    html += '<line x1="'+c.x+'" y1="'+c.y+'" x2="'+p.x+'" y2="'+p.y+'" stroke="#646464" stroke-width="1.5"/>';
+  }
+  // nodes
+  for (var j = 0; j < n; j++) {
+    var pos = posForIndex(j, n);
+    var state = nodeStates[j] || 'normal';
+    var fill = nodeColor(state);
+    var stroke = state === 'normal' ? '#393639' : fill;
+    var textFill = (state === 'highlight') ? '#000' : '#d4d4d4';
+    if (state === 'removed') { stroke = '#2a2a2e'; textFill = '#393639'; }
+    html += '<circle cx="'+pos.x+'" cy="'+pos.y+'" r="'+R+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="1.5"/>';
+    html += '<text x="'+pos.x+'" y="'+(pos.y+5)+'" text-anchor="middle" font-size="13" fill="'+textFill+'" font-family="sans-serif">'+heap[j]+'</text>';
+  }
+  svg.innerHTML = html;
+
+  // Array
+  var arrHtml = '';
+  for (var k = 0; k < n; k++) {
+    var st = nodeStates[k] || 'normal';
+    var cls = 'arr-cell' + (st === 'highlight' ? ' highlight' : st === 'swapped' ? ' swapped' : st === 'removed' ? ' removed' : st === 'done' ? ' done' : '');
+    arrHtml += '<div class="'+cls+'"><div class="cidx">'+k+'</div><div class="cval">'+heap[k]+'</div></div>';
+  }
+  document.getElementById('array-row').innerHTML = arrHtml;
+}
+
+function resetStates() {
+  nodeStates = {};
+  for (var i = 0; i < fullSize; i++) nodeStates[i] = 'normal';
+}
+
+function setStatus(msg) { document.getElementById('stat').textContent = msg; }
+
+function computeInsertSteps(val) {
+  steps = []; stepIdx = 0;
+  var insertIdx = fullSize;
+  heap.push(val);
+  fullSize++;
+  heapSize++;
+
+  var siftSteps = [];
+  var i = insertIdx;
+  // Pre-compute sift-up path
+  while (i > 0 && heap[i] > heap[parent(i)]) {
+    siftSteps.push({child: i, par: parent(i)});
+    var tmp = heap[i]; heap[i] = heap[parent(i)]; heap[parent(i)] = tmp;
+    i = parent(i);
+  }
+  // Restore heap to before sift
+  // Rebuild from scratch
+  heap.pop(); heap.push(val); fullSize--; heapSize--;
+
+  steps.push(function() {
+    heap.push(val);
+    fullSize++; heapSize++;
+    resetStates();
+    nodeStates[insertIdx] = 'highlight';
+    setStatus('Added '+val+' at end (index '+insertIdx+'). Starting sift-up...');
+    renderAll();
+    document.getElementById('counter').textContent = 'Step 1 / '+(siftSteps.length+2);
+  });
+
+  var curI = insertIdx;
+  siftSteps.forEach(function(step, idx) {
+    (function(s, ii) {
+      steps.push(function() {
+        var tmp = heap[s.child]; heap[s.child] = heap[s.par]; heap[s.par] = tmp;
+        resetStates();
+        nodeStates[s.child] = 'swapped';
+        nodeStates[s.par] = 'swapped';
+        setStatus('Sift-up: comparing '+heap[s.par]+' (was at '+s.child+') with parent '+heap[s.child]+' at '+s.par+'. Swapping ('+heap[s.par]+' > '+heap[s.child]+').');
+        renderAll();
+        document.getElementById('counter').textContent = 'Step '+(ii+2)+' / '+(siftSteps.length+2);
+      });
+    })(step, idx);
+  });
+
+  steps.push(function() {
+    resetStates();
+    setStatus('Sift-up complete. Max-heap property restored. Root = '+heap[0]);
+    renderAll();
+    document.getElementById('counter').textContent = 'Step '+(siftSteps.length+2)+' / '+(siftSteps.length+2);
+  });
+}
+
+function computeExtractSteps() {
+  if (heapSize < 1) { setStatus('Heap is empty.'); return; }
+  steps = []; stepIdx = 0;
+  var maxVal = heap[0];
+  var last = heapSize - 1;
+
+  steps.push(function() {
+    resetStates();
+    nodeStates[0] = 'highlight';
+    nodeStates[last] = 'highlight';
+    setStatus('Extract Max: swap root ('+heap[0]+') with last element ('+heap[last]+').');
+    renderAll();
+    document.getElementById('counter').textContent = 'Step 1 / ?';
+  });
+  steps.push(function() {
+    var tmp = heap[0]; heap[0] = heap[last]; heap[last] = tmp;
+    heapSize--;
+    resetStates();
+    nodeStates[last] = 'removed';
+    nodeStates[0] = 'highlight';
+    setStatus('Removed '+maxVal+' (was root). Now sift-down '+heap[0]+' from root...');
+    renderAll();
+    document.getElementById('counter').textContent = 'Step 2 / ?';
+  });
+
+  // Pre-compute sift-down steps on a copy
+  var hCopy = heap.slice(0, heapSize);
+  var siftSteps = [];
+  var i = 0;
+  while (true) {
+    var largest = i, l = left(i), r = right(i);
+    if (l < heapSize && hCopy[l] > hCopy[largest]) largest = l;
+    if (r < heapSize && hCopy[r] > hCopy[largest]) largest = r;
+    if (largest === i) break;
+    siftSteps.push({from: i, to: largest, val: hCopy[i], parentVal: hCopy[largest]});
+    var t = hCopy[i]; hCopy[i] = hCopy[largest]; hCopy[largest] = t;
+    i = largest;
+  }
+  // restore heap to pre-siftdown (swap back)
+  var t2 = heap[0]; heap[0] = heap[last]; heap[last] = t2;
+  heapSize++;
+  // steps.push: do the swap again
+  steps[1] = function() {
+    var tmp = heap[0]; heap[0] = heap[last]; heap[last] = tmp;
+    heapSize--;
+    resetStates();
+    nodeStates[last] = 'removed';
+    nodeStates[0] = 'highlight';
+    setStatus('Removed '+maxVal+'. Now sift-down '+heap[0]+' from root...');
+    renderAll();
+    document.getElementById('counter').textContent = 'Step 2 / '+(siftSteps.length+3);
+  };
+
+  siftSteps.forEach(function(step, idx) {
+    (function(s, ii) {
+      steps.push(function() {
+        var tmp = heap[s.from]; heap[s.from] = heap[s.to]; heap[s.to] = tmp;
+        resetStates();
+        nodeStates[last] = 'removed';
+        nodeStates[s.from] = 'swapped';
+        nodeStates[s.to] = 'swapped';
+        setStatus('Sift-down: '+heap[s.to]+' at '+s.from+' < child '+heap[s.from]+' at '+s.to+'. Swapping.');
+        renderAll();
+        document.getElementById('counter').textContent = 'Step '+(ii+3)+' / '+(siftSteps.length+3);
+      });
+    })(step, idx);
+  });
+
+  steps.push(function() {
+    resetStates();
+    nodeStates[last] = 'removed';
+    setStatus('Extract complete. Removed '+maxVal+'. New root = '+heap[0]);
+    renderAll();
+    document.getElementById('counter').textContent = 'Step '+(siftSteps.length+3)+' / '+(siftSteps.length+3);
+  });
+}
+
+document.getElementById('btn-insert').onclick = function() {
+  var v = parseInt(document.getElementById('val-input').value);
+  if (isNaN(v)) { setStatus('Enter a numeric value.'); return; }
+  if (heapSize >= 12) { setStatus('Max 12 elements. Reset to continue.'); return; }
+  computeInsertSteps(v);
+  document.getElementById('btn-step').disabled = false;
+  setStatus('Inserting '+v+'. Press Step to animate.');
+};
+document.getElementById('btn-extract').onclick = function() {
+  if (heapSize < 1) { setStatus('Heap is empty.'); return; }
+  computeExtractSteps();
+  document.getElementById('btn-step').disabled = false;
+};
+document.getElementById('btn-step').onclick = function() {
+  if (stepIdx < steps.length) {
+    steps[stepIdx](); stepIdx++;
+    if (stepIdx >= steps.length) document.getElementById('btn-step').disabled = true;
+  }
+};
+document.getElementById('btn-reset').onclick = function() {
+  heap = DEFAULT.slice();
+  heapSize = heap.length;
+  fullSize = heap.length;
+  steps = []; stepIdx = 0;
+  resetStates();
+  renderAll();
+  setStatus('Reset to default heap: [9,7,8,3,5,6,4].');
+  document.getElementById('counter').textContent = '';
+  document.getElementById('btn-step').disabled = true;
+};
+document.getElementById('val-input').onkeydown = function(e) { if (e.key === 'Enter') document.getElementById('btn-insert').click(); };
+
+resetStates();
+renderAll();
+</script>
+</body>
+</html>

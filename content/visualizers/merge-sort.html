@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Merge Sort — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #input-row {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: 1rem;
+    align-items: center;
+  }
+  #input-row label { font-size: .78rem; color: #646464; white-space: nowrap; }
+  #arr-input {
+    flex: 1;
+    background: #222224;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    color: #d4d4d4;
+    font-size: .85rem;
+    padding: .3rem .6rem;
+    outline: none;
+  }
+  #arr-input:focus { border-color: #7b97aa; }
+  #arr-input.error { border-color: #c0392b; }
+  #btn-apply {
+    padding: .3rem .7rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #2e4a30;
+    color: #d4d4d4;
+    white-space: nowrap;
+  }
+  #btn-apply:hover { opacity: .8; }
+  #err-msg { font-size: .75rem; color: #c0392b; margin-bottom: .5rem; min-height: 1rem; }
+  #chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    height: 160px;
+    padding: 0 4px;
+    margin-bottom: 4px;
+  }
+  .bar {
+    flex: 1;
+    border-radius: 4px 4px 0 0;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+    padding-bottom: 6px;
+    font-weight: 700;
+    font-size: .85rem;
+    color: #fff;
+    transition: background .15s;
+    text-shadow: 0 1px 3px rgba(0,0,0,.6);
+    min-width: 0;
+  }
+  .bar.normal { background: #4a4a4c; }
+  .bar.left   { background: #f0a500; color: #000; text-shadow: none; }
+  .bar.right  { background: #007bff; }
+  .bar.merged { background: #28a745; }
+  #idxs {
+    display: flex;
+    gap: 6px;
+    padding: 0 4px;
+    margin-bottom: .75rem;
+  }
+  .idx { flex: 1; text-align: center; font-size: .62rem; color: #646464; min-width: 0; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+  #legend {
+    display: flex;
+    gap: .75rem;
+    flex-wrap: wrap;
+    margin-bottom: .75rem;
+    font-size: .72rem;
+    color: #888;
+  }
+  .leg { display: flex; align-items: center; gap: .3rem; }
+  .leg-dot { width: 10px; height: 10px; border-radius: 2px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Merge Sort — Step-Through (Bottom-Up)</h4>
+  <div id="input-row">
+    <label for="arr-input">Array:</label>
+    <input id="arr-input" type="text" value="5, 3, 8, 4, 2, 7, 1, 6" placeholder="e.g. 5, 3, 8, 4, 2" spellcheck="false">
+    <button id="btn-apply">Apply</button>
+  </div>
+  <div id="err-msg"></div>
+  <div id="legend">
+    <span class="leg"><span class="leg-dot" style="background:#f0a500"></span>left half</span>
+    <span class="leg"><span class="leg-dot" style="background:#007bff"></span>right half</span>
+    <span class="leg"><span class="leg-dot" style="background:#28a745"></span>merged</span>
+  </div>
+  <div id="chart"></div>
+  <div id="idxs"></div>
+  <div id="stat">Press Step to begin.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var DEFAULT = [5, 3, 8, 4, 2, 7, 1, 6];
+var currentArr = DEFAULT.slice();
+var steps, idx, MAX;
+
+function mergeSegment(a, lo, mid, hi) {
+  var left = a.slice(lo, mid + 1);
+  var right = a.slice(mid + 1, hi + 1);
+  var i = 0, j = 0, k = lo;
+  while (i < left.length && j < right.length) {
+    if (left[i] <= right[j]) { a[k++] = left[i++]; }
+    else { a[k++] = right[j++]; }
+  }
+  while (i < left.length) a[k++] = left[i++];
+  while (j < right.length) a[k++] = right[j++];
+}
+
+function buildSteps(arr) {
+  var s = [], a = arr.slice(), n = a.length;
+  s.push({ arr: a.slice(), left: [], right: [], merged: [], msg: 'Initial array — bottom-up merge sort. Press Step to begin pass 1 (merge size-1 pairs).' });
+  for (var size = 1; size < n; size *= 2) {
+    for (var lo = 0; lo < n - 1; lo += 2 * size) {
+      var mid = Math.min(lo + size - 1, n - 1);
+      var hi = Math.min(lo + 2 * size - 1, n - 1);
+      if (mid >= hi) continue;
+      var leftIdxs = [], rightIdxs = [];
+      for (var x = lo; x <= mid; x++) leftIdxs.push(x);
+      for (var x = mid + 1; x <= hi; x++) rightIdxs.push(x);
+      var leftVals = leftIdxs.map(function(i) { return a[i]; });
+      var rightVals = rightIdxs.map(function(i) { return a[i]; });
+      s.push({
+        arr: a.slice(), left: leftIdxs, right: rightIdxs, merged: [],
+        msg: 'Pass (size=' + size + '): merging [' + leftVals.join(',') + '] and [' + rightVals.join(',') + '] at indices [' + lo + '..' + hi + '].'
+      });
+      mergeSegment(a, lo, mid, hi);
+      var mergedIdxs = [];
+      for (var x = lo; x <= hi; x++) mergedIdxs.push(x);
+      var mergedVals = mergedIdxs.map(function(i) { return a[i]; });
+      s.push({
+        arr: a.slice(), left: [], right: [], merged: mergedIdxs,
+        msg: 'Merged [' + leftVals.join(',') + '] and [' + rightVals.join(',') + '] → [' + mergedVals.join(',') + '].'
+      });
+    }
+  }
+  s.push({ arr: a.slice(), left: [], right: [], merged: Array.from({length: n}, function(_, i) { return i; }), done: true, msg: 'Sorted! Final: [' + a.join(', ') + '].' });
+  return s;
+}
+
+function parseInput(raw) {
+  var parts = raw.split(',').map(function(x) { return x.trim(); }).filter(function(x) { return x !== ''; });
+  if (parts.length < 2 || parts.length > 20) return null;
+  var nums = parts.map(Number);
+  if (nums.some(isNaN)) return null;
+  if (nums.some(function(n) { return n < 0 || n > 999 || Math.floor(n) !== n; })) return null;
+  return nums;
+}
+
+function load(arr) {
+  currentArr = arr;
+  MAX = Math.max.apply(null, arr);
+  steps = buildSteps(arr.slice());
+  idx = 0;
+}
+
+function draw() {
+  var s = steps[idx];
+  document.getElementById('chart').innerHTML = s.arr.map(function(v, i) {
+    var h = Math.round((v / MAX) * 138) + 12;
+    var cls = 'bar ';
+    if (s.merged.indexOf(i) !== -1) cls += 'merged';
+    else if (s.left.indexOf(i) !== -1) cls += 'left';
+    else if (s.right.indexOf(i) !== -1) cls += 'right';
+    else cls += 'normal';
+    return '<div class="' + cls + '" style="height:' + h + 'px">' + v + '</div>';
+  }).join('');
+  document.getElementById('idxs').innerHTML = s.arr.map(function(_, i) {
+    return '<div class="idx">' + i + '</div>';
+  }).join('');
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
+  document.getElementById('btn-step').disabled = !!s.done;
+  document.getElementById('btn-back').disabled = idx === 0;
+}
+
+function applyInput() {
+  var raw = document.getElementById('arr-input').value;
+  var nums = parseInput(raw);
+  var errEl = document.getElementById('err-msg');
+  var inputEl = document.getElementById('arr-input');
+  if (!nums) {
+    errEl.textContent = 'Enter 2–20 whole numbers (0–999), comma-separated.';
+    inputEl.classList.add('error');
+    return;
+  }
+  errEl.textContent = '';
+  inputEl.classList.remove('error');
+  load(nums);
+  draw();
+}
+
+document.getElementById('btn-apply').onclick = applyInput;
+document.getElementById('arr-input').onkeydown = function(e) { if (e.key === 'Enter') applyInput(); };
+document.getElementById('btn-step').onclick = function() { if (idx < steps.length - 1) { idx++; draw(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() { load(currentArr.slice()); draw(); };
+
+load(DEFAULT);
+draw();
+</script>
+</body>
+</html>

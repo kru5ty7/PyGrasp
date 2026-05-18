@@ -88,6 +88,12 @@ print(selection_sort([1, 2, 3, 4, 5]))  # [1, 2, 3, 4, 5]
 
 ---
 
+## Visualizer
+
+<iframe src="/visualizers/selection-sort.html" style="width:100%;height:420px;border:none;border-radius:8px;" title="Selection Sort Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Selection sort's inner loop is a direct application of linear search: it scans a subarray to find the minimum element by examining each element once. Understanding linear search makes selection sort's mechanics immediate. Heap sort can be understood as selection sort with a more efficient data structure — instead of a linear scan to find the minimum, it maintains a heap that gives O(log n) extraction, turning O(n²) into O(n log n).

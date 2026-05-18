@@ -105,6 +105,12 @@ def merge_sort_linked(head):
 
 ---
 
+## Visualizer
+
+<iframe src="/visualizers/merge-sort.html" style="width:100%;height:420px;border:none;border-radius:8px;" title="Merge Sort Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Merge sort is the canonical example of the divide-and-conquer strategy. Understanding the recurrence T(n) = 2T(n/2) + O(n) and solving it to O(n log n) using the Master Theorem is a standard step in algorithm analysis. The merge operation itself appears as a building block in other algorithms: the classic interview problem of counting inversions in an array is solved by instrumenting the merge step to count how many left-half elements each right-half element skips over.

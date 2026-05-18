@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BFS vs DFS — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 600px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #input-row {
+    display: flex; gap: .4rem; margin-bottom: .75rem; align-items: center;
+  }
+  #input-row label { font-size: .78rem; color: #646464; white-space: nowrap; }
+  #start-sel {
+    background: #222224; border: 1px solid #393639; border-radius: 4px;
+    color: #d4d4d4; font-size: .85rem; padding: .3rem .6rem;
+    outline: none; cursor: pointer;
+  }
+  #start-sel:focus { border-color: #7b97aa; }
+  #graphs { display: flex; gap: .75rem; }
+  .gcol { flex: 1; min-width: 0; }
+  .gcol h5 {
+    font-size: .72rem; text-transform: uppercase; letter-spacing: .06em;
+    color: #7b97aa; margin-bottom: .3rem; text-align: center;
+  }
+  svg.gsvg { display: block; width: 100%; }
+  .order-panel {
+    padding: .35rem .5rem; background: #393639; border-radius: 4px;
+    font-size: .78rem; color: #d4d4d4; margin-top: .3rem; min-height: 2rem;
+  }
+  .order-panel strong {
+    display: block; font-size: .65rem; text-transform: uppercase;
+    letter-spacing: .06em; color: #646464; margin-bottom: 2px;
+  }
+  #legend {
+    display: flex; gap: .75rem; flex-wrap: wrap;
+    margin: .5rem 0; font-size: .75rem; color: #d4d4d4;
+  }
+  .leg { display: flex; align-items: center; gap: .3rem; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; display: inline-block; }
+  #stat {
+    padding: .45rem .75rem; background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .82rem; line-height: 1.5;
+    min-height: 2.2rem; margin: .5rem 0;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem; border: none; border-radius: 4px;
+    cursor: pointer; font-size: .82rem;
+    background: #393639; color: #d4d4d4; transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>BFS vs DFS — Side by Side</h4>
+  <div id="input-row">
+    <label for="start-sel">Start node:</label>
+    <select id="start-sel">
+      <option value="A">A</option><option value="B">B</option>
+      <option value="C">C</option><option value="D">D</option>
+      <option value="E">E</option><option value="F">F</option>
+    </select>
+  </div>
+  <div id="graphs">
+    <div class="gcol">
+      <h5>BFS (Queue)</h5>
+      <svg class="gsvg" viewBox="0 0 220 200" height="180">
+        <line x1="40" y1="100" x2="110" y2="45" stroke="#646464" stroke-width="1.5"/>
+        <line x1="40" y1="100" x2="110" y2="155" stroke="#646464" stroke-width="1.5"/>
+        <line x1="110" y1="45" x2="175" y2="18" stroke="#646464" stroke-width="1.5"/>
+        <line x1="110" y1="45" x2="175" y2="100" stroke="#646464" stroke-width="1.5"/>
+        <line x1="110" y1="155" x2="175" y2="182" stroke="#646464" stroke-width="1.5"/>
+        <line x1="175" y1="100" x2="175" y2="182" stroke="#646464" stroke-width="1.5"/>
+        <circle id="bA" cx="40" cy="100" r="14" fill="#4a4a4c" stroke="#393639" stroke-width="1.5"/>
+        <text id="btA" x="40" y="105" text-anchor="middle" font-size="11" font-weight="bold" fill="#d4d4d4">A</text>
+        <circle id="bB" cx="110" cy="45" r="14" fill="#4a4a4c" stroke="#393639" stroke-width="1.5"/>
+        <text id="btB" x="110" y="50" text-anchor="middle" font-size="11" font-weight="bold" fill="#d4d4d4">B</text>
+        <circle id="bC" cx="110" cy="155" r="14" fill="#4a4a4c" stroke="#393639" stroke-width="1.5"/>
+        <text id="btC" x="110" y="160" text-anchor="middle" font-size="11" font-weight="bold" fill="#d4d4d4">C</text>
+        <circle id="bD" cx="175" cy="18" r="14" fill="#4a4a4c" stroke="#393639" stroke-width="1.5"/>
+        <text id="btD" x="175" y="23" text-anchor="middle" font-size="11" font-weight="bold" fill="#d4d4d4">D</text>
+        <circle id="bE" cx="175" cy="100" r="14" fill="#4a4a4c" stroke="#393639" stroke-width="1.5"/>
+        <text id="btE" x="175" y="105" text-anchor="middle" font-size="11" font-weight="bold" fill="#d4d4d4">E</text>
+        <circle id="bF" cx="175" cy="182" r="14" fill="#4a4a4c" stroke="#393639" stroke-width="1.5"/>
+        <text id="btF" x="175" y="187" text-anchor="middle" font-size="11" font-weight="bold" fill="#d4d4d4">F</text>
+      </svg>
+      <div class="order-panel"><strong>BFS Order</strong><span id="bfs-order">—</span></div>
+    </div>
+    <div class="gcol">
+      <h5>DFS (Stack)</h5>
+      <svg class="gsvg" viewBox="0 0 220 200" height="180">
+        <line x1="40" y1="100" x2="110" y2="45" stroke="#646464" stroke-width="1.5"/>
+        <line x1="40" y1="100" x2="110" y2="155" stroke="#646464" stroke-width="1.5"/>
+        <line x1="110" y1="45" x2="175" y2="18" stroke="#646464" stroke-width="1.5"/>
+        <line x1="110" y1="45" x2="175" y2="100" stroke="#646464" stroke-width="1.5"/>
+        <line x1="110" y1="155" x2="175" y2="182" stroke="#646464" stroke-width="1.5"/>
+        <line x1="175" y1="100" x2="175" y2="182" stroke="#646464" stroke-width="1.5"/>
+        <circle id="dA" cx="40" cy="100" r="14" fill="#4a4a4c" stroke="#393639" stroke-width="1.5"/>
+        <text id="dtA" x="40" y="105" text-anchor="middle" font-size="11" font-weight="bold" fill="#d4d4d4">A</text>
+        <circle id="dB" cx="110" cy="45" r="14" fill="#4a4a4c" stroke="#393639" stroke-width="1.5"/>
+        <text id="dtB" x="110" y="50" text-anchor="middle" font-size="11" font-weight="bold" fill="#d4d4d4">B</text>
+        <circle id="dC" cx="110" cy="155" r="14" fill="#4a4a4c" stroke="#393639" stroke-width="1.5"/>
+        <text id="dtC" x="110" y="160" text-anchor="middle" font-size="11" font-weight="bold" fill="#d4d4d4">C</text>
+        <circle id="dD" cx="175" cy="18" r="14" fill="#4a4a4c" stroke="#393639" stroke-width="1.5"/>
+        <text id="dtD" x="175" y="23" text-anchor="middle" font-size="11" font-weight="bold" fill="#d4d4d4">D</text>
+        <circle id="dE" cx="175" cy="100" r="14" fill="#4a4a4c" stroke="#393639" stroke-width="1.5"/>
+        <text id="dtE" x="175" y="105" text-anchor="middle" font-size="11" font-weight="bold" fill="#d4d4d4">E</text>
+        <circle id="dF" cx="175" cy="182" r="14" fill="#4a4a4c" stroke="#393639" stroke-width="1.5"/>
+        <text id="dtF" x="175" y="187" text-anchor="middle" font-size="11" font-weight="bold" fill="#d4d4d4">F</text>
+      </svg>
+      <div class="order-panel"><strong>DFS Order</strong><span id="dfs-order">—</span></div>
+    </div>
+  </div>
+  <div id="legend">
+    <span class="leg"><span class="dot" style="background:#4a4a4c"></span>Unvisited</span>
+    <span class="leg"><span class="dot" style="background:#f0a500"></span>Queued/Stacked</span>
+    <span class="leg"><span class="dot" style="background:#007bff"></span>Processing</span>
+    <span class="leg"><span class="dot" style="background:#28a745"></span>Done</span>
+  </div>
+  <div id="stat">Press Step to begin.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>◀ Back</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var NODES = ['A','B','C','D','E','F'];
+var ADJ = { A:['B','C'], B:['A','D','E'], C:['A','F'], D:['B'], E:['B','F'], F:['C','E'] };
+var NC = { u:'#4a4a4c', q:'#f0a500', s:'#f0a500', c:'#007bff', p:'#28a745' };
+var TC = { u:'#d4d4d4', q:'#000',    s:'#000',    c:'#fff',    p:'#fff'    };
+
+var steps, idx;
+
+function buildBFS(src) {
+  var s = [];
+  var st = {}; NODES.forEach(function(n){ st[n]='u'; });
+  var visited = []; var queue = [];
+  st[src]='q'; queue=[src];
+  s.push({ st: Object.assign({},st), v: visited.slice(), msg:'BFS: enqueue '+src+'.' });
+  while (queue.length) {
+    var node = queue.shift();
+    st[node]='c'; visited.push(node);
+    var newN=[];
+    ADJ[node].forEach(function(nb){ if(st[nb]==='u'){st[nb]='q';queue.push(nb);newN.push(nb);} });
+    var m = newN.length ? 'BFS: process '+node+', enqueue '+newN.join(',')+'.':'BFS: process '+node+', nothing new.';
+    s.push({ st: Object.assign({},st), v: visited.slice(), msg: m });
+    st[node]='p';
+    s.push({ st: Object.assign({},st), v: visited.slice(), msg: m });
+  }
+  s.push({ st: Object.assign({},st), v: visited.slice(), msg:'BFS done: '+visited.join(' → ')+'.' });
+  return s;
+}
+
+function buildDFS(src) {
+  var s = [];
+  var st = {}; NODES.forEach(function(n){ st[n]='u'; });
+  var visited = []; var stack = [src]; var visitedSet = {};
+  st[src]='s';
+  s.push({ st: Object.assign({},st), v: visited.slice(), msg:'DFS: push '+src+'.' });
+  while (stack.length) {
+    var node = stack.pop();
+    if (visitedSet[node]) { s.push(null); continue; }
+    visitedSet[node]=true; visited.push(node);
+    st[node]='c';
+    s.push({ st: Object.assign({},st), v: visited.slice(), msg:'DFS: pop & process '+node+'.' });
+    st[node]='p';
+    var pushed=[];
+    ADJ[node].slice().reverse().forEach(function(nb){ if(!visitedSet[nb]){st[nb]='s';stack.push(nb);pushed.push(nb);} });
+    var m2=pushed.length?'DFS: '+node+' done, pushed '+pushed.slice().reverse().join(',')+'.':'DFS: '+node+' done, nothing pushed.';
+    s.push({ st: Object.assign({},st), v: visited.slice(), msg: m2 });
+  }
+  // clear any stacked-but-not-visited
+  NODES.forEach(function(n){ if(st[n]==='s') st[n]='u'; });
+  s.push({ st: Object.assign({},st), v: visited.slice(), msg:'DFS done: '+visited.join(' → ')+'.' });
+  return s;
+}
+
+var bfsSteps, dfsSteps;
+
+function buildAll(src) {
+  bfsSteps = buildBFS(src).filter(function(x){ return x!==null; });
+  dfsSteps = buildDFS(src).filter(function(x){ return x!==null; });
+  // pad shorter with no-ops
+  var maxLen = Math.max(bfsSteps.length, dfsSteps.length);
+  while (bfsSteps.length < maxLen) bfsSteps.push(bfsSteps[bfsSteps.length-1]);
+  while (dfsSteps.length < maxLen) dfsSteps.push(dfsSteps[dfsSteps.length-1]);
+  steps = { len: maxLen };
+}
+
+function setGraph(prefix, st) {
+  NODES.forEach(function(n){
+    var state = st[n]||'u';
+    var fill = NC[state];
+    var tfill = TC[state];
+    document.getElementById(prefix+n).setAttribute('fill', fill);
+    document.getElementById(prefix+'t'+n).setAttribute('fill', tfill);
+  });
+}
+
+function draw() {
+  var b = bfsSteps[idx];
+  var d = dfsSteps[idx];
+  setGraph('b', b.st);
+  setGraph('d', d.st);
+  document.getElementById('bfs-order').textContent = b.v.length ? b.v.join(' → ') : '—';
+  document.getElementById('dfs-order').textContent = d.v.length ? d.v.join(' → ') : '—';
+  document.getElementById('stat').textContent = b.msg + '  |  ' + d.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.len-1);
+  var done = (idx === steps.len-1);
+  document.getElementById('btn-step').disabled = done;
+  document.getElementById('btn-back').disabled = idx === 0;
+}
+
+function load(src) {
+  buildAll(src);
+  idx = 0;
+  draw();
+}
+
+document.getElementById('btn-step').onclick = function(){ if(idx<steps.len-1){idx++;draw();} };
+document.getElementById('btn-back').onclick = function(){ if(idx>0){idx--;draw();} };
+document.getElementById('btn-reset').onclick = function(){ idx=0; draw(); };
+document.getElementById('start-sel').onchange = function(){ load(this.value); };
+
+load('A');
+</script>
+</body>
+</html>
