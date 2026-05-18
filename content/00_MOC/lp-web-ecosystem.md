@@ -64,6 +64,7 @@ tags: [moc, learning-path, web-ecosystem, layer-4]
 8. [[hypothesis|Hypothesis]]
 9. [[coverage|Test Coverage]]
 10. [[tdd|Test-Driven Development]]
+11. [[testing-fastapi|Testing FastAPI]]
 
 ---
 
