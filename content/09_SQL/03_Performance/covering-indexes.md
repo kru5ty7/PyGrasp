@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Covering Indexes
 
-> A covering index eliminates the most expensive part of an indexed lookup — the trip back to the heap row — by storing all the columns a query needs directly in the index, enabling an "index-only scan" that can be orders of magnitude faster than a regular index scan.
+> A covering index eliminates the most expensive part of an indexed lookup - the trip back to the heap row - by storing all the columns a query needs directly in the index, enabling an "index-only scan" that can be orders of magnitude faster than a regular index scan.
 
 ---
 
@@ -19,26 +19,26 @@ created: 2026-05-18
 
 **Core idea:**
 - A covering index contains all columns referenced by a query (in WHERE, SELECT, JOIN, ORDER BY)
-- The database can satisfy the query from the index alone — no heap access required
+- The database can satisfy the query from the index alone - no heap access required
 - In PostgreSQL this is called an "index-only scan"; in MySQL it is called a "covering index scan"
 - PostgreSQL 11+ supports `INCLUDE` columns: extra columns stored in leaf nodes but not part of the sort key
-- An `INCLUDE` column cannot be used in WHERE, ORDER BY, or JOIN — it exists only to avoid a heap fetch
+- An `INCLUDE` column cannot be used in WHERE, ORDER BY, or JOIN - it exists only to avoid a heap fetch
 
 **Tricky points:**
 - Index-only scans in PostgreSQL still require checking the visibility map; if the table is not vacuumed regularly, the scan degrades to a regular index scan
-- Columns in the `INCLUDE` list do not affect the sort order of the index and cannot narrow the search — they are payload, not key
-- Including a wide column (e.g., TEXT) in an index bloats the index significantly — the savings from avoiding a heap fetch must outweigh the increased index size
+- Columns in the `INCLUDE` list do not affect the sort order of the index and cannot narrow the search - they are payload, not key
+- Including a wide column (e.g., TEXT) in an index bloats the index significantly - the savings from avoiding a heap fetch must outweigh the increased index size
 - EXPLAIN output shows "Index Only Scan" only if the visibility map confirms all pages are all-visible; otherwise it shows "Index Scan" even with a covering index
 
 ---
 
 ## What It Is
 
-Imagine a library catalogue that not only tells you which shelf a book is on but also prints the book's abstract right on the catalogue card. For most research questions — "what is this book about?" — you never need to leave the catalogue desk. You get your answer directly from the card. Only when you need the full text do you walk to the shelf. A covering index is that enriched catalogue card: it stores enough information to answer the query completely, sparing the database the trip to the actual data pages.
+Imagine a library catalogue that not only tells you which shelf a book is on but also prints the book's abstract right on the catalogue card. For most research questions - "what is this book about?" - you never need to leave the catalogue desk. You get your answer directly from the card. Only when you need the full text do you walk to the shelf. A covering index is that enriched catalogue card: it stores enough information to answer the query completely, sparing the database the trip to the actual data pages.
 
-In a standard indexed lookup, the database performs two reads. First it traverses the B-tree index to find the matching index entries. Then — for every matching entry — it follows the row pointer back to the heap (the actual table storage) to fetch the columns that are not in the index. That second read is a random I/O: the rows matching an index scan are scattered across the table, so each heap fetch may hit a different disk page. On a busy table with millions of rows, this random I/O is often the dominant cost of the query.
+In a standard indexed lookup, the database performs two reads. First it traverses the B-tree index to find the matching index entries. Then - for every matching entry - it follows the row pointer back to the heap (the actual table storage) to fetch the columns that are not in the index. That second read is a random I/O: the rows matching an index scan are scattered across the table, so each heap fetch may hit a different disk page. On a busy table with millions of rows, this random I/O is often the dominant cost of the query.
 
-A covering index collapses these two reads into one. Because every column the query needs is already in the index, the engine reads the index, collects the data, and returns — no heap visits at all. The I/O pattern changes from random (one page fetch per row) to sequential (scanning the index's sorted leaf pages from start to end of the matching range). This difference in I/O pattern is why covering indexes sometimes produce dramatic speedups even when the query already uses an index.
+A covering index collapses these two reads into one. Because every column the query needs is already in the index, the engine reads the index, collects the data, and returns - no heap visits at all. The I/O pattern changes from random (one page fetch per row) to sequential (scanning the index's sorted leaf pages from start to end of the matching range). This difference in I/O pattern is why covering indexes sometimes produce dramatic speedups even when the query already uses an index.
 
 ---
 
@@ -61,7 +61,7 @@ SELECT order_total FROM orders
 WHERE user_id = 42 AND created_at >= '2024-01-01';
 ```
 
-To verify that an index-only scan is happening, use EXPLAIN ANALYZE. The plan node must show "Index Only Scan" and the "Heap Fetches" line must be zero (or low). If "Heap Fetches" is high, the visibility map has unvacuumed pages — the engine falls back to heap access for those pages.
+To verify that an index-only scan is happening, use EXPLAIN ANALYZE. The plan node must show "Index Only Scan" and the "Heap Fetches" line must be zero (or low). If "Heap Fetches" is high, the visibility map has unvacuumed pages - the engine falls back to heap access for those pages.
 
 ```sql
 EXPLAIN (ANALYZE, BUFFERS)
@@ -98,7 +98,7 @@ VACUUM orders;
 
 ## How It Connects
 
-Understanding what a covering index is requires understanding what it avoids: the heap fetch that follows a normal index scan. The B-tree leaf structure stores TIDs (row pointers) precisely because the index cannot normally contain all table columns — covering indexes change this assumption for specific queries.
+Understanding what a covering index is requires understanding what it avoids: the heap fetch that follows a normal index scan. The B-tree leaf structure stores TIDs (row pointers) precisely because the index cannot normally contain all table columns - covering indexes change this assumption for specific queries.
 
 [[b-tree-index|B-Tree Index Internals]]
 
@@ -117,13 +117,13 @@ Misconception 2: "The INCLUDE columns in a covering index can be used in WHERE c
 Reality: INCLUDE columns are stored only in the leaf nodes and are not part of the B-tree's sort key. The planner cannot use them to narrow the search range during tree traversal. They exist solely as payload to avoid a heap fetch once the qualifying rows have already been identified by the key columns. Attempting to filter on an INCLUDE column will cause the planner to either ignore the index or apply the filter as a residual after the index scan.
 
 Misconception 3: "An index-only scan is always faster than a regular index scan."
-Reality: If the visibility map is stale (many unvacuumed pages), PostgreSQL falls back to heap access for those pages — potentially performing more work than a plain index scan because it checks the visibility map first and then fetches from the heap anyway. An index-only scan is a reliable optimization only on tables with active autovacuum or explicit VACUUM maintenance.
+Reality: If the visibility map is stale (many unvacuumed pages), PostgreSQL falls back to heap access for those pages - potentially performing more work than a plain index scan because it checks the visibility map first and then fetches from the heap anyway. An index-only scan is a reliable optimization only on tables with active autovacuum or explicit VACUUM maintenance.
 
 ---
 
 ## Why It Matters in Practice
 
-Covering indexes are the highest-efficiency index optimization available for read-heavy queries. A dashboard query that runs thousands of times per minute, fetching a handful of columns per user per time period, can transition from thousands of random I/O operations to a tight sequential index scan — the difference between saturating a disk and barely touching it.
+Covering indexes are the highest-efficiency index optimization available for read-heavy queries. A dashboard query that runs thousands of times per minute, fetching a handful of columns per user per time period, can transition from thousands of random I/O operations to a tight sequential index scan - the difference between saturating a disk and barely touching it.
 
 The `INCLUDE` clause in PostgreSQL 11+ made covering indexes practical to design without compromising the index's primary sort-key purpose. Before this feature, adding a wide column to the index key would change the sort order and potentially break other query plans that relied on the same index. With INCLUDE, the optimization is targeted: the index key remains what the planner needs for navigation, and the included columns are purely a performance optimization for specific queries.
 
@@ -157,7 +157,7 @@ CREATE INDEX idx_products_sku ON products(sku) INCLUDE (description);
 ```sql
 CREATE INDEX idx_orders_user ON orders(user_id) INCLUDE (status);
 
--- status is an INCLUDE column — the planner cannot use it to narrow the index scan
+-- status is an INCLUDE column - the planner cannot use it to narrow the index scan
 -- This query may still use the index for user_id but filters status from heap rows
 SELECT * FROM orders WHERE user_id = 42 AND status = 'pending';
 
@@ -175,7 +175,7 @@ Common question forms:
 - "What is an index-only scan and what can cause it to degrade?"
 
 Answer frame:
-Define the heap fetch problem: a regular index scan reads the index then makes a random I/O back to the heap for each matching row. A covering index stores all needed columns in the index, eliminating the heap fetch entirely — this is an index-only scan. Explain INCLUDE: key columns determine the B-tree sort order and support WHERE/ORDER BY filtering; INCLUDE columns are leaf-level payload that cannot be filtered on but prevent heap access for SELECT. Address degradation: the visibility map must mark pages as all-visible for index-only scans to skip the heap; stale vacuuming causes fallback heap fetches, visible in "Heap Fetches" in EXPLAIN ANALYZE output.
+Define the heap fetch problem: a regular index scan reads the index then makes a random I/O back to the heap for each matching row. A covering index stores all needed columns in the index, eliminating the heap fetch entirely - this is an index-only scan. Explain INCLUDE: key columns determine the B-tree sort order and support WHERE/ORDER BY filtering; INCLUDE columns are leaf-level payload that cannot be filtered on but prevent heap access for SELECT. Address degradation: the visibility map must mark pages as all-visible for index-only scans to skip the heap; stale vacuuming causes fallback heap fetches, visible in "Heap Fetches" in EXPLAIN ANALYZE output.
 
 ---
 

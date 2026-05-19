@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Bit Manipulation
 
-> Bit manipulation operates directly on the binary representation of integers to perform checks, masks, and transformations in O(1) time — developers at companies where performance-critical code matters must know the core tricks because they appear in systems programming, cryptography, competitive programming, and interview problems.
+> Bit manipulation operates directly on the binary representation of integers to perform checks, masks, and transformations in O(1) time - developers at companies where performance-critical code matters must know the core tricks because they appear in systems programming, cryptography, competitive programming, and interview problems.
 
 ---
 
@@ -24,14 +24,14 @@ created: 2026-05-18
 - Clear bit k: `n & ~(1 << k)`
 - Toggle bit k: `n ^ (1 << k)`
 - Check power of two: `n > 0 and (n & (n - 1)) == 0`
-- Clear lowest set bit: `n & (n - 1)` — removes the rightmost 1 bit
-- Isolate lowest set bit: `n & (-n)` — keeps only the rightmost 1 bit
+- Clear lowest set bit: `n & (n - 1)` - removes the rightmost 1 bit
+- Isolate lowest set bit: `n & (-n)` - keeps only the rightmost 1 bit
 - XOR trick: `x ^ x == 0`, so XOR of a paired array leaves the unique element
 
 **Tricky points:**
-- Python integers have arbitrary precision — no integer overflow, but no fixed bit-width either
+- Python integers have arbitrary precision - no integer overflow, but no fixed bit-width either
 - When emulating 32-bit unsigned arithmetic, mask results with `& 0xFFFFFFFF`
-- `~n` in Python is `-(n + 1)`, not the unsigned complement — a common source of confusion from C backgrounds
+- `~n` in Python is `-(n + 1)`, not the unsigned complement - a common source of confusion from C backgrounds
 - Left shift by k is equivalent to multiplying by 2^k; right shift by k is equivalent to floor-dividing by 2^k
 - XOR is its own inverse: `a ^ b ^ b == a`, useful for swapping without a temp variable
 
@@ -50,11 +50,11 @@ created: 2026-05-18
 
 ## What It Is
 
-Every integer in a computer is stored as a sequence of binary digits — bits that are either 0 or 1. Bit manipulation treats these individual digits as directly addressable switches rather than as an opaque numeric value. Think of a row of light switches on a panel: each switch is either on (1) or off (0). The AND operation (`&`) turns a switch off if either panel has it off; it models "both must be on." The OR operation (`|`) turns a switch on if either panel has it on; it models "at least one must be on." The XOR operation (`^`) turns a switch on if exactly one panel has it on; it models "they must differ." These are not abstract mathematical operations — they map directly to logic gates in hardware and execute in a single clock cycle.
+Every integer in a computer is stored as a sequence of binary digits - bits that are either 0 or 1. Bit manipulation treats these individual digits as directly addressable switches rather than as an opaque numeric value. Think of a row of light switches on a panel: each switch is either on (1) or off (0). The AND operation (`&`) turns a switch off if either panel has it off; it models "both must be on." The OR operation (`|`) turns a switch on if either panel has it on; it models "at least one must be on." The XOR operation (`^`) turns a switch on if exactly one panel has it on; it models "they must differ." These are not abstract mathematical operations - they map directly to logic gates in hardware and execute in a single clock cycle.
 
-The power of bit manipulation comes from the ability to encode and test multiple boolean conditions simultaneously in a single integer. Rather than maintaining an array of 32 boolean flags, you can pack them into a single 32-bit integer and test any flag with a single AND operation. This is how file permissions work in Unix: the permission bits `rwxr-xr--` are stored as a 9-bit integer, and checking whether the owner has write permission is a single `&` with the appropriate mask. It is also how many game AI engines represent board states — an entire chessboard can be encoded in a few 64-bit integers (bitboards), and all moves can be computed as bitwise operations rather than loops over arrays.
+The power of bit manipulation comes from the ability to encode and test multiple boolean conditions simultaneously in a single integer. Rather than maintaining an array of 32 boolean flags, you can pack them into a single 32-bit integer and test any flag with a single AND operation. This is how file permissions work in Unix: the permission bits `rwxr-xr--` are stored as a 9-bit integer, and checking whether the owner has write permission is a single `&` with the appropriate mask. It is also how many game AI engines represent board states - an entire chessboard can be encoded in a few 64-bit integers (bitboards), and all moves can be computed as bitwise operations rather than loops over arrays.
 
-XOR has a remarkable algebraic property that makes it disproportionately useful. Since `x ^ x == 0` for any value x, XOR-ing a value with itself cancels it out. And since `x ^ 0 == x`, XOR-ing with zero is a no-op. This means that if you XOR together all elements in an array where every element appears exactly twice except for one, all the paired elements cancel out and only the unique element remains. No extra memory, no counting, no sorting — just one linear pass with a running XOR accumulator. This is the kind of O(n) time, O(1) space insight that bit manipulation enables.
+XOR has a remarkable algebraic property that makes it disproportionately useful. Since `x ^ x == 0` for any value x, XOR-ing a value with itself cancels it out. And since `x ^ 0 == x`, XOR-ing with zero is a no-op. This means that if you XOR together all elements in an array where every element appears exactly twice except for one, all the paired elements cancel out and only the unique element remains. No extra memory, no counting, no sorting - just one linear pass with a running XOR accumulator. This is the kind of O(n) time, O(1) space insight that bit manipulation enables.
 
 ---
 
@@ -98,7 +98,7 @@ def isolate_lowest_set_bit(n: int) -> int:
     return n & (-n)
 
 def count_set_bits(n: int) -> int:
-    """Count 1 bits using Brian Kernighan's trick — O(number of set bits)."""
+    """Count 1 bits using Brian Kernighan's trick - O(number of set bits)."""
     count = 0
     while n:
         n = clear_lowest_set_bit(n)   # each iteration removes one set bit
@@ -119,7 +119,7 @@ def find_unique(nums: list[int]) -> int:
     return result
 
 def swap_without_temp(a: int, b: int) -> tuple[int, int]:
-    """Swap two integers using XOR — no temporary variable needed."""
+    """Swap two integers using XOR - no temporary variable needed."""
     a ^= b
     b ^= a   # b = original a
     a ^= b   # a = original b
@@ -163,7 +163,7 @@ print(get_subsets_bitmask([1, 2, 3]))  # 8 subsets
 
 ## How It Connects
 
-Bit manipulation connects most directly to problems involving sets, flags, and combinatorics. Generating all 2^n subsets via bitmask enumeration is a cleaner alternative to backtracking when n is small (typically n ≤ 20). Many dynamic programming problems on subsets use bitmask DP, where the state is a bitmask representing which elements have been used. This technique — encoding a subset as an integer — is a powerful bridge between bit manipulation and dynamic programming.
+Bit manipulation connects most directly to problems involving sets, flags, and combinatorics. Generating all 2^n subsets via bitmask enumeration is a cleaner alternative to backtracking when n is small (typically n ≤ 20). Many dynamic programming problems on subsets use bitmask DP, where the state is a bitmask representing which elements have been used. This technique - encoding a subset as an integer - is a powerful bridge between bit manipulation and dynamic programming.
 
 In graph algorithms, bitboards (integers encoding adjacency or reachability) are used in chess engines and game solvers to represent board states and compute moves in single operations. Understanding bits makes those techniques accessible.
 
@@ -185,7 +185,7 @@ Reality: Bit manipulation appears in real-world Python: `enum.Flag` uses bitmask
 
 ## Why It Matters in Practice
 
-Bit manipulation is a marker of low-level understanding. Developers who know it can implement compact set representations (a 64-bit integer replacing a set of 64 booleans), verify alignment and power-of-two conditions in O(1), and solve certain problems with O(1) space where other techniques require O(n). In systems programming — writing parsers, encoding formats, network protocol handlers — bit manipulation is not optional; it is the primary tool.
+Bit manipulation is a marker of low-level understanding. Developers who know it can implement compact set representations (a 64-bit integer replacing a set of 64 booleans), verify alignment and power-of-two conditions in O(1), and solve certain problems with O(1) space where other techniques require O(n). In systems programming - writing parsers, encoding formats, network protocol handlers - bit manipulation is not optional; it is the primary tool.
 
 In interviews at FAANG-level companies, bit manipulation problems appear regularly at medium and hard difficulty. The XOR-unique trick, the power-of-two check, and bitmask subset enumeration each appear as core techniques or as sub-steps in larger problems. Knowing the tricks fluently enough to apply them without derivation during an interview requires the kind of pattern memorisation that only comes from practice.
 

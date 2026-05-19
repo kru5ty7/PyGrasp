@@ -1,6 +1,6 @@
 ﻿---
 title: 43 - SQS (Simple Queue Service)
-description: SQS is AWS's managed message queue — it decouples producers from consumers and provides durable, at-least-once message delivery with configurable retention and dead-letter queue support.
+description: SQS is AWS's managed message queue - it decouples producers from consumers and provides durable, at-least-once message delivery with configurable retention and dead-letter queue support.
 tags: [aws, cloud, layer-11, sqs, messaging, queues]
 status: draft
 difficulty: intermediate
@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # SQS (Simple Queue Service)
 
-> SQS is a managed message queue that decouples the components of a distributed system — producers write messages, consumers poll and process them independently, and SQS durably buffers everything in between.
+> SQS is a managed message queue that decouples the components of a distributed system - producers write messages, consumers poll and process them independently, and SQS durably buffers everything in between.
 
 ---
 
@@ -19,34 +19,34 @@ created: 2026-05-18
 
 **Core idea:**
 - Two queue types: Standard (at-least-once, unordered, near-unlimited throughput) and FIFO (exactly-once, ordered, 3000 msg/s with batching)
-- Visibility timeout: how long a message is hidden after being received — if not deleted before expiry, it reappears
+- Visibility timeout: how long a message is hidden after being received - if not deleted before expiry, it reappears
 - Message retention: 1 minute to 14 days (default 4 days)
 - Dead-letter queue (DLQ): receives messages that fail processing N times (`maxReceiveCount`)
 - Long polling: `WaitTimeSeconds=20` reduces empty responses and API cost vs short polling
 - Max message size: 256KB; for larger payloads use SQS Extended Client or store in S3 and send the S3 key
 
 **Tricky points:**
-- Standard queues deliver at-least-once — design consumers to be idempotent
+- Standard queues deliver at-least-once - design consumers to be idempotent
 - FIFO deduplication ID prevents the same message from being processed twice within 5 minutes
-- Visibility timeout must exceed consumer processing time — messages reappear if the consumer does not delete them in time
-- SQS does not push messages — consumers must poll (Lambda's event source mapping handles this for you)
+- Visibility timeout must exceed consumer processing time - messages reappear if the consumer does not delete them in time
+- SQS does not push messages - consumers must poll (Lambda's event source mapping handles this for you)
 - Deleting a message requires the receipt handle from the receive call, not the message ID
 
 ---
 
 ## What It Is
 
-SQS is like a managed post office between two offices in a building. The first office (the producer) drops letters (messages) into a mailbox (the queue) whenever it has something to communicate. The second office (the consumer) visits the mailbox periodically, picks up letters, reads them, and discards them when done. The post office guarantees that every letter will be held safely until it is picked up — it does not matter if the second office is closed for an hour, on holiday, or overwhelmed with other work. The letters wait. The first office never needs to know whether the second office is available; it drops letters and moves on.
+SQS is like a managed post office between two offices in a building. The first office (the producer) drops letters (messages) into a mailbox (the queue) whenever it has something to communicate. The second office (the consumer) visits the mailbox periodically, picks up letters, reads them, and discards them when done. The post office guarantees that every letter will be held safely until it is picked up - it does not matter if the second office is closed for an hour, on holiday, or overwhelmed with other work. The letters wait. The first office never needs to know whether the second office is available; it drops letters and moves on.
 
 This decoupling is the architectural superpower of message queues. Without SQS, a producer calling a downstream service synchronously is coupled to that service's availability. If the downstream service is slow, the producer blocks. If it is down, the request fails. If the downstream service needs to be scaled or replaced, the producer must be modified. With SQS in between, the producer fires a message and is free. The downstream service processes at its own pace, scales independently, and can be taken down and restarted without the producer ever noticing.
 
-The distinction between Standard and FIFO queues maps to the distinction between "best effort with high throughput" and "guaranteed ordering with exactly-once delivery." Standard queues deliver messages in roughly the order they were sent, with occasional reordering, and guarantee at-least-once delivery — meaning the same message may appear more than once. FIFO queues preserve insertion order strictly and deduplicate messages within a five-minute deduplication window, but cap throughput at 3,000 messages per second with batching or 300 without. Most workloads tolerate Standard queue semantics if consumers are written to be idempotent; FIFO queues are necessary when ordering and deduplication are business requirements, not just nice-to-haves.
+The distinction between Standard and FIFO queues maps to the distinction between "best effort with high throughput" and "guaranteed ordering with exactly-once delivery." Standard queues deliver messages in roughly the order they were sent, with occasional reordering, and guarantee at-least-once delivery - meaning the same message may appear more than once. FIFO queues preserve insertion order strictly and deduplicate messages within a five-minute deduplication window, but cap throughput at 3,000 messages per second with batching or 300 without. Most workloads tolerate Standard queue semantics if consumers are written to be idempotent; FIFO queues are necessary when ordering and deduplication are business requirements, not just nice-to-haves.
 
 ---
 
 ## How It Actually Works
 
-The core operations are send, receive, and delete. Receiving a message sets the visibility timeout — the message disappears from the queue for other consumers for the timeout duration. The consumer must delete the message (using the receipt handle) before the timeout expires. If it does not, the message becomes visible again and another consumer (or the same one) will receive it. This mechanism provides durability: if a consumer crashes mid-processing, the message is not lost — it reappears after the visibility timeout and is retried.
+The core operations are send, receive, and delete. Receiving a message sets the visibility timeout - the message disappears from the queue for other consumers for the timeout duration. The consumer must delete the message (using the receipt handle) before the timeout expires. If it does not, the message becomes visible again and another consumer (or the same one) will receive it. This mechanism provides durability: if a consumer crashes mid-processing, the message is not lost - it reappears after the visibility timeout and is retried.
 
 ```python
 import boto3
@@ -88,7 +88,7 @@ def consume_messages():
         response = sqs.receive_message(
             QueueUrl=QUEUE_URL,
             MaxNumberOfMessages=10,      # 1–10 per receive call
-            WaitTimeSeconds=20,          # long polling — wait up to 20s for messages
+            WaitTimeSeconds=20,          # long polling - wait up to 20s for messages
             VisibilityTimeout=60,        # hide message for 60s while processing
             MessageAttributeNames=["All"],
         )
@@ -109,7 +109,7 @@ def consume_messages():
                 print(f"Processed and deleted: {message['MessageId']}")
             except Exception as exc:
                 print(f"Failed to process {message['MessageId']}: {exc}")
-                # Do NOT delete — message will reappear after VisibilityTimeout
+                # Do NOT delete - message will reappear after VisibilityTimeout
 
 
 def process_order(order: dict):
@@ -150,11 +150,11 @@ def setup_queues():
 
 SQS is the most common trigger source for Lambda functions in data processing pipelines. The Lambda event source mapping polls SQS on your behalf, and the SQS queue's visibility timeout must be configured in coordination with the Lambda function's timeout.
 
-[[lambda-triggers|Lambda Triggers (S3, API Gateway, SQS)]] — details the event source mapping configuration, partial batch failure handling, and how Lambda and SQS interact during failures and retries.
+[[lambda-triggers|Lambda Triggers (S3, API Gateway, SQS)]] - details the event source mapping configuration, partial batch failure handling, and how Lambda and SQS interact during failures and retries.
 
 SQS is frequently paired with SNS in the fan-out pattern: an SNS topic receives one message and fans it out to multiple SQS queues, each serving a different consumer. This pattern decouples producers from multiple downstream processing pipelines.
 
-[[sns|SNS (Simple Notification Service)]] — covers the SNS-to-SQS fan-out pattern, topic subscriptions, and message filtering.
+[[sns|SNS (Simple Notification Service)]] - covers the SNS-to-SQS fan-out pattern, topic subscriptions, and message filtering.
 
 ---
 
@@ -164,7 +164,7 @@ Misconception 1: Deleting a message from SQS means it was processed successfully
 Reality: Deleting a message only means the consumer called `delete_message`. Whether the processing logic inside the consumer actually succeeded is entirely up to your code. The responsibility for deleting a message only after confirming successful processing falls on the consumer. A consumer that deletes immediately on receive and then crashes will silently lose the message.
 
 Misconception 2: Standard queue messages are delivered in the order they were sent.
-Reality: Standard queues offer best-effort ordering, which means messages are generally delivered in order but with no guarantee. Under load, reordering can and does occur. If strict ordering matters — payment events, state machine transitions — use FIFO queues or implement sequence handling in your consumer logic.
+Reality: Standard queues offer best-effort ordering, which means messages are generally delivered in order but with no guarantee. Under load, reordering can and does occur. If strict ordering matters - payment events, state machine transitions - use FIFO queues or implement sequence handling in your consumer logic.
 
 ---
 
@@ -203,14 +203,14 @@ sqs.change_message_visibility(
 # Mistake: short polling loops generate many empty responses and API calls
 while True:
     response = sqs.receive_message(QueueUrl=QUEUE_URL, MaxNumberOfMessages=10)
-    # WaitTimeSeconds defaults to 0 — returns immediately even if queue is empty
+    # WaitTimeSeconds defaults to 0 - returns immediately even if queue is empty
     # 1000s of empty API calls per hour accumulate cost
 
 # Fix: use long polling
 response = sqs.receive_message(
     QueueUrl=QUEUE_URL,
     MaxNumberOfMessages=10,
-    WaitTimeSeconds=20,   # wait up to 20s — SQS returns when messages arrive or timeout
+    WaitTimeSeconds=20,   # wait up to 20s - SQS returns when messages arrive or timeout
 )
 ```
 

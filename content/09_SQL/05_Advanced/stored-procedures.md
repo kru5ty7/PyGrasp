@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Stored Procedures
 
-> A stored procedure is business logic living inside the database — powerful for reducing round-trips and enforcing rules, but notoriously hard to test and version-control.
+> A stored procedure is business logic living inside the database - powerful for reducing round-trips and enforcing rules, but notoriously hard to test and version-control.
 
 ---
 
@@ -38,17 +38,17 @@ created: 2026-05-18
 
 Think of a stored procedure as a recipe card kept in the kitchen rather than in the chef's notebook upstairs. When the waiter calls "fire table seven," the kitchen does not need to call upstairs to get instructions. The recipe is right there, already compiled, already trusted. The kitchen executes it locally without a back-and-forth relay. That is the original promise of stored procedures: move the logic to where the data lives and eliminate the communication overhead.
 
-A stored procedure is a named, persistent routine stored inside the database engine. It can contain plain SQL statements, conditional logic (IF / CASE), loops (WHILE, FOR, LOOP), exception handling, and transaction management. In PostgreSQL, the procedural language used inside stored procedures is called PL/pgSQL — a language that blends SQL with Pascal-style control flow. Other databases use T-SQL (SQL Server), PL/SQL (Oracle), or similar dialects.
+A stored procedure is a named, persistent routine stored inside the database engine. It can contain plain SQL statements, conditional logic (IF / CASE), loops (WHILE, FOR, LOOP), exception handling, and transaction management. In PostgreSQL, the procedural language used inside stored procedures is called PL/pgSQL - a language that blends SQL with Pascal-style control flow. Other databases use T-SQL (SQL Server), PL/SQL (Oracle), or similar dialects.
 
-The historical rationale for stored procedures was strong. In the client-server era, network round-trips were expensive. A business process that required ten sequential queries — validate input, lock a row, update a balance, insert a log record, send a notification queue entry — could be collapsed into a single CALL that runs entirely inside the database server. The application made one network call, the procedure did all ten steps, and returned a result. This pattern genuinely improved performance in environments where network latency dominated.
+The historical rationale for stored procedures was strong. In the client-server era, network round-trips were expensive. A business process that required ten sequential queries - validate input, lock a row, update a balance, insert a log record, send a notification queue entry - could be collapsed into a single CALL that runs entirely inside the database server. The application made one network call, the procedure did all ten steps, and returned a result. This pattern genuinely improved performance in environments where network latency dominated.
 
-The modern counterargument is equally strong. Application code has mature testing frameworks, continuous integration, code review, and version control. Stored procedure code lives in the database, managed separately from the application, often not under version control at all, and tested — if it is tested — only through integration tests that require a running database. When a stored procedure has a bug, the investigation crosses the application/database boundary in ways that are cognitively expensive. For this reason, most Python teams today use stored procedures sparingly or not at all, pushing all logic into the application layer and using the database as a pure data store.
+The modern counterargument is equally strong. Application code has mature testing frameworks, continuous integration, code review, and version control. Stored procedure code lives in the database, managed separately from the application, often not under version control at all, and tested - if it is tested - only through integration tests that require a running database. When a stored procedure has a bug, the investigation crosses the application/database boundary in ways that are cognitively expensive. For this reason, most Python teams today use stored procedures sparingly or not at all, pushing all logic into the application layer and using the database as a pure data store.
 
 ---
 
 ## How It Actually Works
 
-In PostgreSQL, you create a stored procedure with CREATE PROCEDURE. The body is written in PL/pgSQL (or plain SQL, or other supported languages). The crucial difference from CREATE FUNCTION is transaction control: a procedure can issue COMMIT and ROLLBACK, while a function cannot — it always runs inside the caller's transaction.
+In PostgreSQL, you create a stored procedure with CREATE PROCEDURE. The body is written in PL/pgSQL (or plain SQL, or other supported languages). The crucial difference from CREATE FUNCTION is transaction control: a procedure can issue COMMIT and ROLLBACK, while a function cannot - it always runs inside the caller's transaction.
 
 ```sql
 -- A stored procedure to transfer funds between accounts
@@ -86,12 +86,12 @@ $$;
 CALL transfer_funds(101, 202, 500.00);
 ```
 
-The DECLARE block defines local variables. The BEGIN...END block is the executable body. RAISE EXCEPTION acts like throwing an exception — it aborts the current block and rolls back uncommitted changes unless caught. The COMMIT inside the procedure makes the transfer permanent as a unit.
+The DECLARE block defines local variables. The BEGIN...END block is the executable body. RAISE EXCEPTION acts like throwing an exception - it aborts the current block and rolls back uncommitted changes unless caught. The COMMIT inside the procedure makes the transfer permanent as a unit.
 
 Functions, by contrast, are called inline as part of a SELECT or WHERE clause. They return a value, they cannot issue COMMIT, and they run inside the caller's transaction boundary. Functions are the right tool when you need to encapsulate a computation that returns a single value or a set of rows for use in a query.
 
 ```sql
--- A function (not a procedure) — called in a query
+-- A function (not a procedure) - called in a query
 CREATE OR REPLACE FUNCTION calculate_discount(price NUMERIC, tier TEXT)
 RETURNS NUMERIC
 LANGUAGE plpgsql
@@ -118,9 +118,9 @@ Managing stored procedures under version control requires explicit tooling. Comm
 
 ## How It Connects
 
-Stored procedures interact directly with transactions — a procedure can manage its own commit boundaries, which is the one thing a function cannot do. Understanding transaction control (BEGIN, COMMIT, ROLLBACK, SAVEPOINT) is a prerequisite for writing procedures that behave correctly under concurrency.
+Stored procedures interact directly with transactions - a procedure can manage its own commit boundaries, which is the one thing a function cannot do. Understanding transaction control (BEGIN, COMMIT, ROLLBACK, SAVEPOINT) is a prerequisite for writing procedures that behave correctly under concurrency.
 
-Triggers in PostgreSQL are implemented as functions (not procedures) that are called automatically by the database engine. The procedural language mechanics — DECLARE, IF, RAISE — are identical between trigger functions and standalone procedures, so understanding one helps immediately with the other.
+Triggers in PostgreSQL are implemented as functions (not procedures) that are called automatically by the database engine. The procedural language mechanics - DECLARE, IF, RAISE - are identical between trigger functions and standalone procedures, so understanding one helps immediately with the other.
 
 [[transactions|Transactions]]
 [[acid-properties|ACID Properties]]
@@ -132,7 +132,7 @@ Triggers in PostgreSQL are implemented as functions (not procedures) that are ca
 ## Common Misconceptions
 
 Misconception 1: "Stored procedures are always faster than running the same SQL from application code."
-Reality: The performance advantage of stored procedures comes from reducing network round-trips. If an operation requires a single query, a stored procedure adds overhead without benefit — the query must travel to the database either way. For single-query operations, application code calling a parameterized query is equally fast and far more maintainable.
+Reality: The performance advantage of stored procedures comes from reducing network round-trips. If an operation requires a single query, a stored procedure adds overhead without benefit - the query must travel to the database either way. For single-query operations, application code calling a parameterized query is equally fast and far more maintainable.
 
 Misconception 2: "Stored procedures and functions are the same thing in PostgreSQL."
 Reality: In PostgreSQL, procedures (CREATE PROCEDURE) and functions (CREATE FUNCTION) are distinct objects with different capabilities. The critical difference is transaction control: procedures can issue COMMIT and ROLLBACK, functions cannot. A function always executes within the caller's transaction. Confusing the two leads to bugs where transaction boundaries are not where the developer expects them.
@@ -144,7 +144,7 @@ Reality: Stored procedures are not inherently more secure. SQL injection is poss
 
 ## Why It Matters in Practice
 
-Stored procedures matter most in organizations with strict database-centric governance — financial institutions, ERPs, legacy enterprise systems — where the database is considered the authoritative enforcer of business rules. In these environments, every application that touches the database must go through procedures, ensuring that rules like "no transfer without an audit log entry" are enforced at the lowest level and cannot be bypassed by any client.
+Stored procedures matter most in organizations with strict database-centric governance - financial institutions, ERPs, legacy enterprise systems - where the database is considered the authoritative enforcer of business rules. In these environments, every application that touches the database must go through procedures, ensuring that rules like "no transfer without an audit log entry" are enforced at the lowest level and cannot be bypassed by any client.
 
 In Python-centric web application teams, stored procedures are rarely written from scratch. The more common encounter is maintaining existing procedures in a legacy codebase, or calling procedures provided by a vendor-supplied database schema. Understanding how to call a stored procedure from Python (cursor.callproc() in psycopg2, or CALL via SQLAlchemy text()) and how to handle output parameters and exceptions is the practical skill most Python developers actually need.
 
@@ -175,7 +175,7 @@ Common question forms:
 - "How do you call a stored procedure from Python?"
 
 Answer frame:
-Start with the definition and the key distinction from functions — transaction control. Explain the network round-trip benefit honestly, then immediately address the tradeoffs: testing difficulty, version control challenges, debugging complexity. Note that modern Python applications generally prefer application-layer logic. If asked about calling from Python, mention cursor.callproc() or CALL via text() in SQLAlchemy.
+Start with the definition and the key distinction from functions - transaction control. Explain the network round-trip benefit honestly, then immediately address the tradeoffs: testing difficulty, version control challenges, debugging complexity. Note that modern Python applications generally prefer application-layer logic. If asked about calling from Python, mention cursor.callproc() or CALL via text() in SQLAlchemy.
 
 ---
 

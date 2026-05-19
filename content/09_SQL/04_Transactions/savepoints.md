@@ -21,22 +21,22 @@ created: 2026-05-18
 - `SAVEPOINT name` marks a rollback point within an open transaction
 - `ROLLBACK TO SAVEPOINT name` undoes all work since the savepoint but keeps the transaction open
 - `RELEASE SAVEPOINT name` discards the savepoint without rolling back (similar to confirming the sub-operation)
-- After any error in PostgreSQL, the transaction is in an aborted state — `ROLLBACK TO SAVEPOINT` is the only way to recover without abandoning the whole transaction
+- After any error in PostgreSQL, the transaction is in an aborted state - `ROLLBACK TO SAVEPOINT` is the only way to recover without abandoning the whole transaction
 - SQLAlchemy uses savepoints internally to implement nested transactions via `session.begin_nested()`
-- Savepoints are not a substitute for proper error handling — overuse leads to complex, hard-to-reason-about transaction logic
+- Savepoints are not a substitute for proper error handling - overuse leads to complex, hard-to-reason-about transaction logic
 
 **Tricky points:**
-- Rolling back to a savepoint does not release the savepoint — you can roll back to it multiple times
+- Rolling back to a savepoint does not release the savepoint - you can roll back to it multiple times
 - `RELEASE SAVEPOINT` does not commit anything; it only removes the savepoint marker
-- PostgreSQL's aborted transaction state after an error cannot be escaped by issuing new SQL — only `ROLLBACK` or `ROLLBACK TO SAVEPOINT` resets the state
-- Multiple savepoints can exist simultaneously, and they are ordered — rolling back to an earlier savepoint discards all savepoints created after it
+- PostgreSQL's aborted transaction state after an error cannot be escaped by issuing new SQL - only `ROLLBACK` or `ROLLBACK TO SAVEPOINT` resets the state
+- Multiple savepoints can exist simultaneously, and they are ordered - rolling back to an earlier savepoint discards all savepoints created after it
 - Savepoints interact with sequences the same way transactions do: sequence advances within a rolled-back savepoint are not reversed
 
 ---
 
 ## What It Is
 
-Think of a savepoint as a quicksave in a video game. You are in the middle of a long dungeon run (a transaction). Before attempting a risky fight (an operation that might fail), you hit quicksave (create a savepoint). If you die (the operation fails), you reload from the quicksave (rollback to savepoint) rather than restarting from the beginning of the dungeon (aborting the whole transaction). Your progress up to the quicksave is preserved, and you continue from there. Unlike a video game, you can have multiple quicksaves at different points in the dungeon, and you can reload to any earlier one — though reloading to an earlier save discards the later ones.
+Think of a savepoint as a quicksave in a video game. You are in the middle of a long dungeon run (a transaction). Before attempting a risky fight (an operation that might fail), you hit quicksave (create a savepoint). If you die (the operation fails), you reload from the quicksave (rollback to savepoint) rather than restarting from the beginning of the dungeon (aborting the whole transaction). Your progress up to the quicksave is preserved, and you continue from there. Unlike a video game, you can have multiple quicksaves at different points in the dungeon, and you can reload to any earlier one - though reloading to an earlier save discards the later ones.
 
 The fundamental problem savepoints solve is PostgreSQL's strict error state behavior. Once any statement inside a transaction raises an error, PostgreSQL marks the entire transaction as aborted. It will reject every subsequent command with the message `current transaction is aborted, commands ignored until end of transaction block`. The only way out is `ROLLBACK` to abort the entire transaction, or `ROLLBACK TO SAVEPOINT` to reset to a named earlier point. Without savepoints, a single bad row in a batch insert means rolling back the entire batch.
 
@@ -177,7 +177,7 @@ Savepoints exist within transactions and depend entirely on the transaction life
 
 [[transactions|Transactions]]
 
-PostgreSQL's aborted transaction state — the reason savepoints are necessary for error recovery within a transaction — is a consequence of how PostgreSQL enforces the atomicity and consistency properties. Understanding why PostgreSQL enters this state requires understanding ACID.
+PostgreSQL's aborted transaction state - the reason savepoints are necessary for error recovery within a transaction - is a consequence of how PostgreSQL enforces the atomicity and consistency properties. Understanding why PostgreSQL enters this state requires understanding ACID.
 
 [[acid-properties|ACID Properties]]
 
@@ -190,12 +190,12 @@ SQLAlchemy uses savepoints as the implementation mechanism for nested transactio
 ## Common Misconceptions
 
 Misconception 1: "RELEASE SAVEPOINT commits the work done since the savepoint."
-Reality: `RELEASE SAVEPOINT` removes the savepoint marker and makes it impossible to roll back to that point, but it does not commit anything. All the work done since the savepoint (and before it) remains part of the outer transaction and is only committed when the outer `COMMIT` is issued. `RELEASE SAVEPOINT` is simply cleanup — it says "I no longer need the ability to roll back to here."
+Reality: `RELEASE SAVEPOINT` removes the savepoint marker and makes it impossible to roll back to that point, but it does not commit anything. All the work done since the savepoint (and before it) remains part of the outer transaction and is only committed when the outer `COMMIT` is issued. `RELEASE SAVEPOINT` is simply cleanup - it says "I no longer need the ability to roll back to here."
 
 Misconception 2: "After ROLLBACK TO SAVEPOINT, the savepoint no longer exists and I cannot use it again."
 Reality: `ROLLBACK TO SAVEPOINT` rewinds the transaction to the savepoint but keeps the savepoint itself intact. You can roll back to the same savepoint multiple times. If you want to remove it after rolling back to it, you must explicitly `RELEASE SAVEPOINT` it.
 
-Misconception 3: "Savepoints allow me to partially commit a transaction — some changes are visible while others are not."
+Misconception 3: "Savepoints allow me to partially commit a transaction - some changes are visible while others are not."
 Reality: No changes within a transaction are visible to other sessions until the outer `COMMIT` is issued. Savepoints only control the rollback scope within the transaction. From the outside, the transaction is invisible until it commits completely. There is no mechanism to make partial changes visible without committing the entire transaction.
 
 ---
@@ -223,7 +223,7 @@ COMMIT;  -- Rolls back everything, including the first insert
 
 **Savepoint name collisions in ORM-generated SQL.** An application uses a loop to process records, each in a `session.begin_nested()` block. SQLAlchemy generates savepoint names like `sa_savepoint_1`, `sa_savepoint_2`, etc. A manually placed `SAVEPOINT sa_savepoint_1` in raw SQL inside the loop collides with the ORM-generated name on the second iteration. The `ROLLBACK TO SAVEPOINT` issued by SQLAlchemy rolls back farther than intended. The fix is to never manually name savepoints with the same naming convention the ORM uses, or to avoid mixing raw savepoint SQL with ORM-managed nested transactions.
 
-**Using savepoints to mask errors that should abort the transaction.** An application wraps every statement in a savepoint and silently rolls back on any error, logging it and continuing. A critical INSERT fails due to a foreign key constraint — the referenced parent record does not exist. The application logs the error, continues, and commits the dependent child records that reference a non-existent parent. If the foreign key check is deferred or if the constraint was added later, the data corruption is silent. Savepoints should be used for expected, recoverable failures (duplicate rows in a bulk load), not as a blanket error suppressor that hides bugs.
+**Using savepoints to mask errors that should abort the transaction.** An application wraps every statement in a savepoint and silently rolls back on any error, logging it and continuing. A critical INSERT fails due to a foreign key constraint - the referenced parent record does not exist. The application logs the error, continues, and commits the dependent child records that reference a non-existent parent. If the foreign key check is deferred or if the constraint was added later, the data corruption is silent. Savepoints should be used for expected, recoverable failures (duplicate rows in a bulk load), not as a blanket error suppressor that hides bugs.
 
 ---
 

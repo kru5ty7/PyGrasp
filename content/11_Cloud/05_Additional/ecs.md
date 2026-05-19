@@ -1,6 +1,6 @@
 ﻿---
 title: 49 - ECS (Elastic Container Service)
-description: ECS is AWS's managed container orchestration service — it runs Docker containers at scale without Kubernetes complexity, using Fargate (serverless compute) or EC2 (managed instances) as the backing infrastructure.
+description: ECS is AWS's managed container orchestration service - it runs Docker containers at scale without Kubernetes complexity, using Fargate (serverless compute) or EC2 (managed instances) as the backing infrastructure.
 tags: [aws, cloud, layer-11, ecs, containers, fargate]
 status: draft
 difficulty: intermediate
@@ -11,14 +11,14 @@ created: 2026-05-18
 
 # ECS (Elastic Container Service)
 
-> ECS runs your Docker containers in production without requiring you to manage Kubernetes — Fargate removes even the EC2 instances, leaving you to manage only the container definition and service configuration.
+> ECS runs your Docker containers in production without requiring you to manage Kubernetes - Fargate removes even the EC2 instances, leaving you to manage only the container definition and service configuration.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- Two launch types: Fargate (serverless — AWS provisions compute per task) and EC2 (you manage EC2 instances in the cluster)
+- Two launch types: Fargate (serverless - AWS provisions compute per task) and EC2 (you manage EC2 instances in the cluster)
 - Core objects: Cluster → Service → Task Definition → Task (running container)
 - Task definition: specifies image (ECR URI), CPU/memory, environment variables, ports, log configuration
 - Service: maintains N running tasks, handles rolling deploys, integrates with ALB for load balancing
@@ -26,27 +26,27 @@ created: 2026-05-18
 - ECS vs EKS vs Lambda: ECS for containerised services without Kubernetes; EKS for teams that need Kubernetes; Lambda for short event-driven tasks
 
 **Tricky points:**
-- Task definition revisions are immutable — creating a new revision is required for any change; services are updated to point to the new revision
+- Task definition revisions are immutable - creating a new revision is required for any change; services are updated to point to the new revision
 - Fargate requires tasks to be in a VPC with a subnet that can reach ECR (public subnet or ECR VPC endpoint)
 - The task execution role (for pulling images and writing logs) is separate from the task role (for your application's AWS API calls)
 - ECS service rolling deployment: by default, ECS deploys new tasks before stopping old ones (`minimumHealthyPercent` and `maximumPercent`)
-- Container environment variables in task definitions are plaintext — use Secrets Manager or SSM Parameter Store references for sensitive values
+- Container environment variables in task definitions are plaintext - use Secrets Manager or SSM Parameter Store references for sensitive values
 
 ---
 
 ## What It Is
 
-ECS is the general contractor who builds and manages a fleet of identical apartments (containers) for you. You give the contractor the blueprint (task definition): what the unit looks like (the Docker image), how many rooms it needs (CPU and memory), what utilities it requires (environment variables and port mappings), and how to track usage (log configuration). The contractor builds and runs as many units as you specify, replaces any that break down, and connects them to the building's main entrance (an Application Load Balancer). With Fargate, the contractor also owns the land the building sits on — you do not see or manage the physical servers underneath.
+ECS is the general contractor who builds and manages a fleet of identical apartments (containers) for you. You give the contractor the blueprint (task definition): what the unit looks like (the Docker image), how many rooms it needs (CPU and memory), what utilities it requires (environment variables and port mappings), and how to track usage (log configuration). The contractor builds and runs as many units as you specify, replaces any that break down, and connects them to the building's main entrance (an Application Load Balancer). With Fargate, the contractor also owns the land the building sits on - you do not see or manage the physical servers underneath.
 
 The comparison with Lambda is important because Python developers regularly face the choice between the two. Lambda is purpose-built for short-lived, event-driven tasks: process a message, respond to an HTTP request, react to a file upload. ECS is purpose-built for long-running services: an API server that must handle steady traffic, a background worker that runs continuously, a data pipeline that processes streaming data for hours. Lambda has a 15-minute execution cap; ECS tasks run as long as the container stays alive. Lambda charges per invocation and per GB-second of execution; ECS charges per vCPU-second and per GB-second of task duration while the task is running, regardless of utilisation. For a service that runs 24 hours a day at consistent load, ECS Fargate is typically cheaper than Lambda. For a webhook handler that fires 100 times per day for 200ms each, Lambda is dramatically cheaper.
 
-The Kubernetes comparison is equally important. Amazon EKS (Elastic Kubernetes Service) runs managed Kubernetes clusters. ECS is not Kubernetes — it is a simpler, AWS-proprietary orchestration system. EKS gives you the full Kubernetes API, ecosystem, and portability at the cost of Kubernetes operational complexity. ECS gives you straightforward container orchestration with a smaller operational surface area but no portability outside AWS. Teams with Kubernetes expertise and multi-cloud requirements choose EKS. Teams that want to run containers on AWS with minimal orchestration overhead choose ECS.
+The Kubernetes comparison is equally important. Amazon EKS (Elastic Kubernetes Service) runs managed Kubernetes clusters. ECS is not Kubernetes - it is a simpler, AWS-proprietary orchestration system. EKS gives you the full Kubernetes API, ecosystem, and portability at the cost of Kubernetes operational complexity. ECS gives you straightforward container orchestration with a smaller operational surface area but no portability outside AWS. Teams with Kubernetes expertise and multi-cloud requirements choose EKS. Teams that want to run containers on AWS with minimal orchestration overhead choose ECS.
 
 ---
 
 ## How It Actually Works
 
-The deployment workflow for a Python service on ECS Fargate involves creating a task definition (the container blueprint), creating a service that runs that task definition on a cluster, and optionally wiring the service to an Application Load Balancer for HTTP traffic. Updates to the application are deployed by registering a new task definition revision and updating the service to use it — ECS handles the rolling replacement.
+The deployment workflow for a Python service on ECS Fargate involves creating a task definition (the container blueprint), creating a service that runs that task definition on a cluster, and optionally wiring the service to an Application Load Balancer for HTTP traffic. Updates to the application are deployed by registering a new task definition revision and updating the service to use it - ECS handles the rolling replacement.
 
 ```python
 import boto3
@@ -121,7 +121,7 @@ def deploy_new_version(image_tag: str):
         taskDefinition=task_def_revision,
         forceNewDeployment=True,
     )
-    print(f"Service updated to {task_def_revision} — rolling deployment started")
+    print(f"Service updated to {task_def_revision} - rolling deployment started")
 
 
 # --- Check deployment status ---
@@ -171,11 +171,11 @@ aws ecs create-service \
 
 ECS pulls container images from ECR at task launch. Understanding the ECR push workflow, authentication model, and lifecycle policies is prerequisite knowledge for ECS operations.
 
-[[ecr|ECR (Elastic Container Registry)]] — the ECR repository stores the Docker images that ECS task definitions reference; the two services are used together in every ECS container deployment workflow.
+[[ecr|ECR (Elastic Container Registry)]] - the ECR repository stores the Docker images that ECS task definitions reference; the two services are used together in every ECS container deployment workflow.
 
 The task execution role and the task role are two separate IAM roles that ECS Fargate uses. The execution role is for ECS infrastructure operations (pull image from ECR, write logs to CloudWatch); the task role is for your application's AWS API calls (read from S3, write to DynamoDB).
 
-[[iam-roles|IAM Roles]] — the task execution role vs task role distinction is an instance of the IAM roles model; the separation of infrastructure permissions from application permissions is the same principle as Lambda's execution role.
+[[iam-roles|IAM Roles]] - the task execution role vs task role distinction is an instance of the IAM roles model; the separation of infrastructure permissions from application permissions is the same principle as Lambda's execution role.
 
 ---
 
@@ -185,13 +185,13 @@ Misconception 1: ECS Fargate is always more expensive than running on EC2.
 Reality: Fargate eliminates EC2 instance management overhead and bills only for the CPU and memory consumed by running tasks. For workloads with variable or unpredictable task counts, Fargate often costs less than maintaining a fleet of EC2 instances sized for peak load. For workloads with sustained high concurrency, EC2-backed ECS with Reserved Instances is typically cheaper than Fargate, because Reserved Instance discounts (up to 72%) are unavailable on Fargate.
 
 Misconception 2: Updating the Docker image with the same tag automatically redeploys the ECS service.
-Reality: ECS services do not monitor ECR for image changes. The service continues running the exact image digest that was resolved when the current task definition was registered. To deploy a new image, you must register a new task definition revision (which resolves the tag to the current digest) and then update the service to use the new revision. This is by design — it prevents unexpected deployments when the underlying image is updated.
+Reality: ECS services do not monitor ECR for image changes. The service continues running the exact image digest that was resolved when the current task definition was registered. To deploy a new image, you must register a new task definition revision (which resolves the tag to the current digest) and then update the service to use the new revision. This is by design - it prevents unexpected deployments when the underlying image is updated.
 
 ---
 
 ## Why It Matters in Practice
 
-ECS Fargate is the default choice for Python services that need to run continuously, handle sustained traffic, or exceed Lambda's 15-minute execution limit. A FastAPI application, a background Celery worker, or a long-running data processing pipeline are all natural fits for ECS Fargate. The task definition model — image, CPU, memory, environment variables, secrets, health check — maps cleanly to how Python services are configured in other environments, making it approachable for developers who are already comfortable with Docker.
+ECS Fargate is the default choice for Python services that need to run continuously, handle sustained traffic, or exceed Lambda's 15-minute execution limit. A FastAPI application, a background Celery worker, or a long-running data processing pipeline are all natural fits for ECS Fargate. The task definition model - image, CPU, memory, environment variables, secrets, health check - maps cleanly to how Python services are configured in other environments, making it approachable for developers who are already comfortable with Docker.
 
 ---
 
@@ -219,7 +219,7 @@ aws iam attach-role-policy \
 # Fix: set taskRoleArn in the task definition to a role with the needed permissions
 # The executionRoleArn is for ECS infrastructure; taskRoleArn is for your application code
 
-# In Python code inside the container — this works when taskRoleArn is set correctly:
+# In Python code inside the container - this works when taskRoleArn is set correctly:
 import boto3
 s3 = boto3.client("s3")  # credentials come from the task IAM role automatically
 response = s3.list_objects_v2(Bucket="my-data-bucket")

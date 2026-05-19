@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Hash Collisions
 
-> Collisions are not a failure of hash tables — they are mathematically inevitable, and the resolution strategy determines whether the hash table stays near O(1) or degrades toward O(n).
+> Collisions are not a failure of hash tables - they are mathematically inevitable, and the resolution strategy determines whether the hash table stays near O(1) or degrades toward O(n).
 
 ---
 
@@ -21,15 +21,15 @@ created: 2026-05-18
 - A collision occurs when `hash(key_a) % table_size == hash(key_b) % table_size` for two different keys
 - Two resolution strategies: chaining (each bucket holds a list of entries) and open addressing (probe for next free slot)
 - CPython's `dict` uses open addressing with a pseudo-random probe sequence
-- Worst case for any hash table is O(n) — when all n keys land in the same bucket
+- Worst case for any hash table is O(n) - when all n keys land in the same bucket
 - Python uses hash randomisation (PYTHONHASHSEED) to prevent deliberate collision injection (Hash DoS)
 
 **Tricky points:**
-- The birthday paradox means collisions become likely far sooner than intuition suggests — with 23 people, there is a 50% chance two share a birthday; hash collision probability grows similarly
-- Open addressing requires that lookups continue probing on collision — deleted slots need a "tombstone" marker, not a true empty marker
-- Hash DoS attacks work by finding many strings with the same hash, causing all to collide in one bucket — this degrades service from O(1) to O(n)
+- The birthday paradox means collisions become likely far sooner than intuition suggests - with 23 people, there is a 50% chance two share a birthday; hash collision probability grows similarly
+- Open addressing requires that lookups continue probing on collision - deleted slots need a "tombstone" marker, not a true empty marker
+- Hash DoS attacks work by finding many strings with the same hash, causing all to collide in one bucket - this degrades service from O(1) to O(n)
 - PYTHONHASHSEED randomises the hash seed per process, so `hash("abc")` returns a different value on each Python restart
-- Load factor (entries / capacity) must be kept low — CPython resizes at ~2/3 load to maintain O(1) average
+- Load factor (entries / capacity) must be kept low - CPython resizes at ~2/3 load to maintain O(1) average
 
 ---
 
@@ -48,24 +48,24 @@ Space complexity: O(n) for chaining (extra linked-list nodes); O(n) for open add
 
 ## What It Is
 
-Consider assigning student IDs to lockers in a school. If you give each student a locker number based on the last two digits of their student ID, any two students whose IDs end in the same two digits compete for the same locker. You cannot avoid this — with 100 lockers and 200 students, at least half of the lockers must share occupants, by the pigeonhole principle. But even with 200 lockers and 200 students, two students are likely to clash far sooner than you expect.
+Consider assigning student IDs to lockers in a school. If you give each student a locker number based on the last two digits of their student ID, any two students whose IDs end in the same two digits compete for the same locker. You cannot avoid this - with 100 lockers and 200 students, at least half of the lockers must share occupants, by the pigeonhole principle. But even with 200 lockers and 200 students, two students are likely to clash far sooner than you expect.
 
-This is the birthday paradox: the probability that at least two people in a group of 23 share a birthday is about 50%. Similarly, with a hash table of 365 buckets, you only need 23 entries before there is a roughly even chance that two entries share a bucket. This is not a flaw in the hash function — it is a consequence of probability. Collisions are statistically certain as the table fills, and the resolution strategy is what prevents them from corrupting the data or destroying performance.
+This is the birthday paradox: the probability that at least two people in a group of 23 share a birthday is about 50%. Similarly, with a hash table of 365 buckets, you only need 23 entries before there is a roughly even chance that two entries share a bucket. This is not a flaw in the hash function - it is a consequence of probability. Collisions are statistically certain as the table fills, and the resolution strategy is what prevents them from corrupting the data or destroying performance.
 
-Two strategies dominate. Chaining stores a linked list (or dynamic array) at each bucket. When two keys collide, both entries are appended to the list at that bucket. Lookup traverses the list until it finds the matching key. Open addressing does not use auxiliary lists — instead, when a collision occurs, it searches for the next available slot in the table itself, following a probing sequence. Both strategies have O(1) average behaviour when the table is not too full, and both degrade to O(n) in the worst case.
+Two strategies dominate. Chaining stores a linked list (or dynamic array) at each bucket. When two keys collide, both entries are appended to the list at that bucket. Lookup traverses the list until it finds the matching key. Open addressing does not use auxiliary lists - instead, when a collision occurs, it searches for the next available slot in the table itself, following a probing sequence. Both strategies have O(1) average behaviour when the table is not too full, and both degrade to O(n) in the worst case.
 
 ---
 
 ## How It Actually Works
 
-CPython's `dict` uses open addressing with a pseudo-random probing sequence rather than simple linear probing. Linear probing (trying index+1, index+2, ...) causes "primary clustering" — collisions create long runs of occupied slots, which make future collisions more likely in the same region. CPython's probe sequence is `index = (5 * index + 1 + perturb) % size` where `perturb` is derived from the original hash value and is right-shifted on each iteration. This spreads probes across the table more evenly.
+CPython's `dict` uses open addressing with a pseudo-random probing sequence rather than simple linear probing. Linear probing (trying index+1, index+2, ...) causes "primary clustering" - collisions create long runs of occupied slots, which make future collisions more likely in the same region. CPython's probe sequence is `index = (5 * index + 1 + perturb) % size` where `perturb` is derived from the original hash value and is right-shifted on each iteration. This spreads probes across the table more evenly.
 
-Open addressing requires careful handling of deletion. If a slot is deleted and left truly empty, a lookup for a key that previously probed past that slot will incorrectly terminate early (hitting the empty slot) and report the key as absent. CPython uses "tombstone" slots — deleted entries are marked specially so probing continues through them, but new entries can reuse them. This tombstone accumulation is one reason hash tables occasionally need full rehashing even when not growing.
+Open addressing requires careful handling of deletion. If a slot is deleted and left truly empty, a lookup for a key that previously probed past that slot will incorrectly terminate early (hitting the empty slot) and report the key as absent. CPython uses "tombstone" slots - deleted entries are marked specially so probing continues through them, but new entries can reuse them. This tombstone accumulation is one reason hash tables occasionally need full rehashing even when not growing.
 
 ```python
 # Demonstrating collision mechanics
 
-# Same hash modulo small table size — artificial collision
+# Same hash modulo small table size - artificial collision
 table_size = 8
 keys = ["a", "i", "q"]  # With PYTHONHASHSEED=0 these may collide
 
@@ -220,7 +220,7 @@ print(oht.get("z"))   # 30
 
 ## How It Connects
 
-Hash collisions are the internal complication that the hash table note abstracts away. Understanding the O(n) worst case, the tombstone deletion requirement, and the role of load factor requires understanding how collisions are resolved — this note is the detailed internals behind the O(1) averages claimed in the hash tables overview.
+Hash collisions are the internal complication that the hash table note abstracts away. Understanding the O(n) worst case, the tombstone deletion requirement, and the role of load factor requires understanding how collisions are resolved - this note is the detailed internals behind the O(1) averages claimed in the hash tables overview.
 
 [[hash-tables|Hash Tables]]
 
@@ -233,7 +233,7 @@ CPython's dict uses a specific compact open-addressing design with a separate in
 ## Common Misconceptions
 
 Misconception 1: "A good hash function eliminates collisions."
-Reality: No hash function eliminates collisions when the number of possible keys exceeds the number of buckets. With a 1000-bucket table and a billion possible string keys, collisions are guaranteed by the pigeonhole principle. A good hash function distributes entries uniformly — so no bucket has dramatically more entries than others — but it cannot prevent all collisions.
+Reality: No hash function eliminates collisions when the number of possible keys exceeds the number of buckets. With a 1000-bucket table and a billion possible string keys, collisions are guaranteed by the pigeonhole principle. A good hash function distributes entries uniformly - so no bucket has dramatically more entries than others - but it cannot prevent all collisions.
 
 Misconception 2: "Hash DoS attacks are not a real concern for Python applications."
 Reality: Before Python 3.3, an attacker who could send arbitrary strings to a server (as form field names, JSON keys, or HTTP headers) could craft strings with identical hashes, causing all of them to land in the same bucket and making every dict operation O(n). This brought servers to a halt in practice. Python 3.3 introduced PYTHONHASHSEED randomisation to counter this. The attack is real and was exploited.
@@ -245,7 +245,7 @@ Reality: Deletion in an open-addressing table must leave a tombstone, not a true
 
 ## Why It Matters in Practice
 
-A hash table with all keys in one bucket is functionally a linked list — every operation requires scanning the full list. Any production system that allows external input to become hash table keys must either use hash randomisation (which Python does by default for strings) or validate that inputs cannot be crafted to collide. Custom `__hash__` implementations are a common source of accidentally poor hash functions that cause unexpected O(n) performance.
+A hash table with all keys in one bucket is functionally a linked list - every operation requires scanning the full list. Any production system that allows external input to become hash table keys must either use hash randomisation (which Python does by default for strings) or validate that inputs cannot be crafted to collide. Custom `__hash__` implementations are a common source of accidentally poor hash functions that cause unexpected O(n) performance.
 
 Understanding load factor management helps when sizing pre-allocated dictionaries. Python's `dict` starts small and resizes automatically, but in memory-constrained environments or when inserting large volumes of known-size data, pre-sizing with `dict.fromkeys(iterable)` or managing load factor deliberately can prevent costly resize operations.
 

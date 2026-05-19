@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Isolation Levels
 
-> Isolation levels define how concurrent transactions interact with each other. Choosing the right level means knowing which anomalies your application can tolerate and which it cannot — the wrong choice produces silent data corruption, and the right choice costs exactly as much coordination as necessary.
+> Isolation levels define how concurrent transactions interact with each other. Choosing the right level means knowing which anomalies your application can tolerate and which it cannot - the wrong choice produces silent data corruption, and the right choice costs exactly as much coordination as necessary.
 
 ---
 
@@ -19,17 +19,17 @@ created: 2026-05-18
 
 **Core idea:**
 - Four standard levels: READ UNCOMMITTED, READ COMMITTED, REPEATABLE READ, SERIALIZABLE
-- PostgreSQL does not implement READ UNCOMMITTED — it is treated as READ COMMITTED
+- PostgreSQL does not implement READ UNCOMMITTED - it is treated as READ COMMITTED
 - READ COMMITTED is PostgreSQL's default: each statement sees only committed data as of statement start
-- REPEATABLE READ: each statement sees a snapshot taken at transaction start — same query always returns the same rows
+- REPEATABLE READ: each statement sees a snapshot taken at transaction start - same query always returns the same rows
 - SERIALIZABLE: full isolation, transactions appear to execute one at a time
 - The phenomena levels prevent: dirty reads, non-repeatable reads, phantom reads, serialization anomalies
-- PostgreSQL implements isolation via MVCC — readers never block writers
+- PostgreSQL implements isolation via MVCC - readers never block writers
 
 **Tricky points:**
-- READ COMMITTED does not mean a transaction sees a stable view of data — each statement gets a fresh snapshot
+- READ COMMITTED does not mean a transaction sees a stable view of data - each statement gets a fresh snapshot
 - REPEATABLE READ in PostgreSQL prevents phantom reads (stronger than the SQL standard requires)
-- SERIALIZABLE uses Serializable Snapshot Isolation (SSI), not traditional locking — it detects conflicts and aborts one transaction rather than blocking
+- SERIALIZABLE uses Serializable Snapshot Isolation (SSI), not traditional locking - it detects conflicts and aborts one transaction rather than blocking
 - Raising the isolation level can cause serialization failures (error 40001) that the application must retry
 - Most applications need READ COMMITTED; financial double-entry or inventory reservation typically needs SERIALIZABLE
 
@@ -37,7 +37,7 @@ created: 2026-05-18
 
 ## What It Is
 
-Isolation levels are the volume knob on database concurrency. Turn it all the way down (READ UNCOMMITTED) and transactions can see each other's uncommitted writes — maximum throughput, zero safety. Turn it all the way up (SERIALIZABLE) and the database guarantees that concurrent transactions produce results identical to some sequential ordering of those transactions — full safety, maximum coordination overhead. The levels in between are carefully defined stopping points that prevent specific categories of anomalies while permitting others. The SQL standard names four levels and three anomalies; choosing a level means choosing which anomalies you are willing to accept.
+Isolation levels are the volume knob on database concurrency. Turn it all the way down (READ UNCOMMITTED) and transactions can see each other's uncommitted writes - maximum throughput, zero safety. Turn it all the way up (SERIALIZABLE) and the database guarantees that concurrent transactions produce results identical to some sequential ordering of those transactions - full safety, maximum coordination overhead. The levels in between are carefully defined stopping points that prevent specific categories of anomalies while permitting others. The SQL standard names four levels and three anomalies; choosing a level means choosing which anomalies you are willing to accept.
 
 The three classic anomalies are defined by what a transaction can observe about other concurrent transactions. A dirty read occurs when Transaction A reads data written but not yet committed by Transaction B. If Transaction B later rolls back, Transaction A has made decisions based on data that never existed. A non-repeatable read occurs when Transaction A reads a row, Transaction B commits an update to that row, and Transaction A reads the same row again and gets a different value. A phantom read occurs when Transaction A queries a range of rows, Transaction B inserts a new row that matches that range and commits, and Transaction A re-queries the range and finds a new row that was not there before. Each successive anomaly requires more coordination to prevent.
 
@@ -45,7 +45,7 @@ PostgreSQL's implementation differs from the SQL standard in one important way: 
 
 At READ COMMITTED, the snapshot point is per statement: each SQL statement in the transaction sees all data that was committed before that statement began. This is correct and safe for most single-statement operations, but it means that within a long transaction, two identical `SELECT` statements can return different results if another transaction committed changes between them. The transaction does not see a frozen view of the world; it sees the world as it was at the moment each individual statement ran.
 
-At REPEATABLE READ, the snapshot point is per transaction: the snapshot is taken when the first statement of the transaction runs, and every subsequent statement in that transaction sees the same snapshot. A row read once will return the same value every time it is read within the transaction, regardless of what other transactions commit in the meantime. PostgreSQL's implementation of REPEATABLE READ also prevents phantom reads — a stronger guarantee than the SQL standard requires at this level — because MVCC snapshots capture the entire state of the database at transaction start, including which rows exist.
+At REPEATABLE READ, the snapshot point is per transaction: the snapshot is taken when the first statement of the transaction runs, and every subsequent statement in that transaction sees the same snapshot. A row read once will return the same value every time it is read within the transaction, regardless of what other transactions commit in the meantime. PostgreSQL's implementation of REPEATABLE READ also prevents phantom reads - a stronger guarantee than the SQL standard requires at this level - because MVCC snapshots capture the entire state of the database at transaction start, including which rows exist.
 
 SERIALIZABLE is the strongest level. It guarantees that the outcome of concurrent transactions is equivalent to some serial execution order. PostgreSQL implements this using Serializable Snapshot Isolation (SSI), a technique that tracks read/write dependencies between concurrent transactions. When SSI detects a dependency cycle that would produce a non-serializable outcome, it aborts one of the transactions with error code 40001 (`ERROR: could not serialize access due to concurrent update`). The aborted transaction must be retried by the application. SSI is notably less blocking than the traditional approach of acquiring predicate locks for every read, which makes PostgreSQL's SERIALIZABLE practical for many real workloads.
 
@@ -83,7 +83,7 @@ BEGIN;
 UPDATE accounts SET balance = 900 WHERE id = 1;
 COMMIT;
 
--- Session 1 continues — sees the NEW committed value
+-- Session 1 continues - sees the NEW committed value
 SELECT balance FROM accounts WHERE id = 1;
 -- Returns: 900 (not 1000)
 COMMIT;
@@ -99,7 +99,7 @@ BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ;
 SELECT COUNT(*) FROM orders WHERE status = 'pending';  -- Returns 50
 -- Session 2 inserts a new pending order and commits here
 SELECT SUM(total) FROM orders WHERE status = 'pending';
--- Still sees 50 orders — the new one is not visible because snapshot was taken at BEGIN
+-- Still sees 50 orders - the new one is not visible because snapshot was taken at BEGIN
 COMMIT;
 ```
 
@@ -119,7 +119,7 @@ SERIALIZABLE transactions that conflict are aborted with error 40001. The applic
 --         continue
 ```
 
-A practical example where SERIALIZABLE is necessary: a double-entry bookkeeping system that reads an account balance to decide whether a debit is permitted, then writes the debit. Under READ COMMITTED, two concurrent transactions can both read the same balance, both decide the debit is allowed, and both commit — resulting in an overdraft. Under SERIALIZABLE, SSI detects the read/write dependency cycle and aborts one transaction.
+A practical example where SERIALIZABLE is necessary: a double-entry bookkeeping system that reads an account balance to decide whether a debit is permitted, then writes the debit. Under READ COMMITTED, two concurrent transactions can both read the same balance, both decide the debit is allowed, and both commit - resulting in an overdraft. Under SERIALIZABLE, SSI detects the read/write dependency cycle and aborts one transaction.
 
 ```sql
 -- SERIALIZABLE prevents the concurrent overdraft problem
@@ -139,7 +139,7 @@ Isolation levels are one of the four ACID properties (the I). Understanding what
 
 [[acid-properties|ACID Properties]]
 
-The mechanics of how PostgreSQL enforces isolation — MVCC, row versioning, snapshot timestamps — are the same mechanisms that make locking in PostgreSQL unique compared to other databases. MVCC means that in PostgreSQL, readers never block writers and writers never block readers, unlike lock-based isolation in other systems.
+The mechanics of how PostgreSQL enforces isolation - MVCC, row versioning, snapshot timestamps - are the same mechanisms that make locking in PostgreSQL unique compared to other databases. MVCC means that in PostgreSQL, readers never block writers and writers never block readers, unlike lock-based isolation in other systems.
 
 [[locks-sql|Locking in SQL]]
 
@@ -154,20 +154,20 @@ Applications that use ORMs like SQLAlchemy often set isolation levels at the con
 Misconception 1: "READ COMMITTED means my transaction sees a consistent snapshot of the database."
 Reality: READ COMMITTED means each statement sees a snapshot taken at statement start, not transaction start. A long transaction running multiple queries at READ COMMITTED will see different versions of the data as other transactions commit between its statements. For a consistent view across multiple statements, REPEATABLE READ is required.
 
-Misconception 2: "REPEATABLE READ only prevents repeatable reads, not phantoms — I need SERIALIZABLE to prevent phantom rows from appearing."
+Misconception 2: "REPEATABLE READ only prevents repeatable reads, not phantoms - I need SERIALIZABLE to prevent phantom rows from appearing."
 Reality: The SQL standard says REPEATABLE READ can still allow phantom reads, but PostgreSQL's MVCC implementation prevents phantoms at REPEATABLE READ as well. A transaction at REPEATABLE READ in PostgreSQL sees a snapshot of the entire database taken at transaction start, including which rows exist, so new rows inserted by other transactions are invisible for the duration of the transaction.
 
 Misconception 3: "SERIALIZABLE is too expensive to use in production."
 Reality: PostgreSQL's Serializable Snapshot Isolation is considerably more efficient than the older predicate-locking approach used in some other databases. It adds overhead compared to READ COMMITTED, but for workloads that genuinely require serializable correctness (financial transfers, inventory reservation), the alternative is application-level retry logic or distributed locks, both of which are more complex and potentially slower. The key operational requirement is that applications must handle 40001 serialization failure errors and retry transactions.
 
-Misconception 4: "Choosing a higher isolation level always prevents bugs — I should just use SERIALIZABLE everywhere."
+Misconception 4: "Choosing a higher isolation level always prevents bugs - I should just use SERIALIZABLE everywhere."
 Reality: Higher isolation levels cause more transaction aborts and require application-level retry logic. A system that uses SERIALIZABLE everywhere but does not implement retry logic will fail with 40001 errors under concurrency. The correct approach is to use the lowest isolation level that is safe for each specific workload.
 
 ---
 
 ## Why It Matters in Practice
 
-For most CRUD web applications — user registrations, content management, settings updates — READ COMMITTED is sufficient. Each operation is a single statement or a short transaction that does not depend on a stable view of data across multiple reads. The default PostgreSQL isolation level handles these workloads correctly without any explicit configuration.
+For most CRUD web applications - user registrations, content management, settings updates - READ COMMITTED is sufficient. Each operation is a single statement or a short transaction that does not depend on a stable view of data across multiple reads. The default PostgreSQL isolation level handles these workloads correctly without any explicit configuration.
 
 The choice becomes critical in two categories of application. First, any system that reads a value, makes a decision based on it, and writes a new value (read-modify-write) is vulnerable to race conditions under READ COMMITTED if two transactions do this concurrently. Inventory reservation, balance checks before debits, and unique username assignment all have this shape. SERIALIZABLE or explicit row locking with `SELECT FOR UPDATE` is required. Second, any reporting or auditing transaction that must see a consistent snapshot across multiple queries needs at minimum REPEATABLE READ, otherwise the report can reflect a mix of before and after states from concurrent transactions.
 

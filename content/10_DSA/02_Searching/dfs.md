@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Depth-First Search
 
-> DFS is the exploration algorithm of choice for problems involving reachability, connectivity, and path existence — and it underlies virtually every tree traversal algorithm you have ever used.
+> DFS is the exploration algorithm of choice for problems involving reachability, connectivity, and path existence - and it underlies virtually every tree traversal algorithm you have ever used.
 
 ---
 
@@ -20,16 +20,16 @@ created: 2026-05-18
 **Core idea:**
 - Start from a source node, mark it visited, and immediately recurse into its first unvisited neighbour
 - Continue going deeper until you reach a dead end (all neighbours visited), then backtrack to the previous node and try the next unvisited neighbour
-- Uses a stack — implicitly via the call stack in recursive DFS, or explicitly in iterative DFS
+- Uses a stack - implicitly via the call stack in recursive DFS, or explicitly in iterative DFS
 - Does NOT guarantee shortest path
 - O(V + E) time; O(V) space (call stack depth in worst case)
 - Essential for: cycle detection, topological sort, connected components, path existence, tree traversals
 
 **Tricky points:**
-- Recursive DFS can hit Python's default recursion limit (1000) on deep graphs — use iterative DFS or increase the limit with `sys.setrecursionlimit()` for large inputs
-- Iterative DFS (with an explicit stack) does not visit nodes in the same order as recursive DFS — iterative DFS visits in reverse neighbour order because the stack reverses the order
+- Recursive DFS can hit Python's default recursion limit (1000) on deep graphs - use iterative DFS or increase the limit with `sys.setrecursionlimit()` for large inputs
+- Iterative DFS (with an explicit stack) does not visit nodes in the same order as recursive DFS - iterative DFS visits in reverse neighbour order because the stack reverses the order
 - The visited set must be maintained; without it DFS loops forever on cyclic graphs
-- Pre-order, in-order, and post-order tree traversals are all DFS traversals — they differ only in when the node is processed relative to its children
+- Pre-order, in-order, and post-order tree traversals are all DFS traversals - they differ only in when the node is processed relative to its children
 - For directed graphs, DFS is used to detect cycles and produce topological sort; for undirected graphs, it finds connected components
 
 ---
@@ -48,17 +48,17 @@ created: 2026-05-18
 
 Think of exploring a maze with a ball of string. You enter a corridor and keep walking forward, unspooling the string behind you to mark where you have been. When you reach a dead end or a junction where all exits lead to already-visited corridors, you follow the string back to the last junction that had an unexplored exit and try that exit instead. You continue this process until you have explored every reachable corridor. The string is your path record; the act of following it back is backtracking.
 
-DFS embodies this maze-exploration strategy. It commits fully to one path before considering alternatives. Starting from a node, it visits a neighbour, then a neighbour of that neighbour, and keeps going deeper until it reaches a node with no unvisited neighbours. Then it backtracks — returning to the most recent node that still has unexplored neighbours — and explores from there. The exploration order is depth-first: you go as far as you can in one direction before backtracking and trying another.
+DFS embodies this maze-exploration strategy. It commits fully to one path before considering alternatives. Starting from a node, it visits a neighbour, then a neighbour of that neighbour, and keeps going deeper until it reaches a node with no unvisited neighbours. Then it backtracks - returning to the most recent node that still has unexplored neighbours - and explores from there. The exploration order is depth-first: you go as far as you can in one direction before backtracking and trying another.
 
-The mechanism that implements this naturally is recursion. Each recursive call corresponds to moving one step deeper into the maze. The call stack is the ball of string — it records the path from the source to the current node, and returning from a recursive call is the backtrack step. This is why the space complexity of DFS is O(depth), which in the worst case (a path graph) equals O(V). When the depth is large enough to overflow Python's recursion stack, an iterative DFS with an explicit stack achieves the same traversal without recursion.
+The mechanism that implements this naturally is recursion. Each recursive call corresponds to moving one step deeper into the maze. The call stack is the ball of string - it records the path from the source to the current node, and returning from a recursive call is the backtrack step. This is why the space complexity of DFS is O(depth), which in the worst case (a path graph) equals O(V). When the depth is large enough to overflow Python's recursion stack, an iterative DFS with an explicit stack achieves the same traversal without recursion.
 
 ---
 
 ## How It Actually Works
 
-Recursive DFS marks the current node as visited, processes it, and then loops over its neighbours. For each unvisited neighbour, it recurses. When the recursion for a neighbour completes (the entire subgraph reachable through that neighbour has been explored), the loop continues to the next neighbour. When all neighbours are exhausted, the function returns — this is the backtrack. The order in which a node is processed relative to its recursive calls determines whether it is pre-order (before recursing), post-order (after recursing), or in-order (between left and right children, for binary trees).
+Recursive DFS marks the current node as visited, processes it, and then loops over its neighbours. For each unvisited neighbour, it recurses. When the recursion for a neighbour completes (the entire subgraph reachable through that neighbour has been explored), the loop continues to the next neighbour. When all neighbours are exhausted, the function returns - this is the backtrack. The order in which a node is processed relative to its recursive calls determines whether it is pre-order (before recursing), post-order (after recursing), or in-order (between left and right children, for binary trees).
 
-Iterative DFS replaces the call stack with an explicit stack data structure. Push the source node. Enter a loop: pop the top node, if not visited mark it visited and process it, then push all its unvisited neighbours. The loop exits when the stack is empty. The iteration order differs from recursive DFS because the stack reverses the order in which neighbours are pushed — to match recursive DFS order exactly, push neighbours in reverse order.
+Iterative DFS replaces the call stack with an explicit stack data structure. Push the source node. Enter a loop: pop the top node, if not visited mark it visited and process it, then push all its unvisited neighbours. The loop exits when the stack is empty. The iteration order differs from recursive DFS because the stack reverses the order in which neighbours are pushed - to match recursive DFS order exactly, push neighbours in reverse order.
 
 ```python
 # --- Recursive DFS ---
@@ -180,7 +180,7 @@ print(dfs_iterative(graph, 'A'))   # ['A', 'B', 'D', 'E', 'F', 'C']
 
 ## How It Connects
 
-DFS is complementary to BFS: both explore all nodes reachable from a source in O(V + E) time, but DFS uses a stack (depth-first) while BFS uses a queue (breadth-first). The choice between them depends on the structure of the problem. DFS's post-order property — processing a node after all its descendants — is what makes it suitable for topological sort and cycle detection, applications where BFS cannot be directly substituted.
+DFS is complementary to BFS: both explore all nodes reachable from a source in O(V + E) time, but DFS uses a stack (depth-first) while BFS uses a queue (breadth-first). The choice between them depends on the structure of the problem. DFS's post-order property - processing a node after all its descendants - is what makes it suitable for topological sort and cycle detection, applications where BFS cannot be directly substituted.
 
 [[bfs|Breadth-First Search]]
 [[bfs-vs-dfs|BFS vs DFS]]
@@ -192,10 +192,10 @@ DFS is complementary to BFS: both explore all nodes reachable from a source in O
 ## Common Misconceptions
 
 Misconception 1: "Recursive DFS and iterative DFS always visit nodes in the same order."
-Reality: They visit the same set of nodes but not necessarily in the same order. The call stack processes neighbours in the order they are listed; the explicit stack in iterative DFS processes them in reverse order because items pushed last are popped first. To match recursive DFS order in the iterative version, push neighbours in reverse order before processing. For many applications (like cycle detection or connectivity), the order does not matter — but for topological sort or when order is semantically significant, the difference matters.
+Reality: They visit the same set of nodes but not necessarily in the same order. The call stack processes neighbours in the order they are listed; the explicit stack in iterative DFS processes them in reverse order because items pushed last are popped first. To match recursive DFS order in the iterative version, push neighbours in reverse order before processing. For many applications (like cycle detection or connectivity), the order does not matter - but for topological sort or when order is semantically significant, the difference matters.
 
 Misconception 2: "DFS is not suitable for finding paths because it does not guarantee shortest paths."
-Reality: DFS finds a valid path between two nodes if one exists — it will not miss a path. It does not find the shortest path, but it does find existence of a path and can reconstruct one specific path. For maze problems where you need any valid solution rather than the optimal one, DFS is a perfectly valid approach and often simpler to implement with backtracking. The limitation is only that the path DFS finds is not guaranteed to be the shortest.
+Reality: DFS finds a valid path between two nodes if one exists - it will not miss a path. It does not find the shortest path, but it does find existence of a path and can reconstruct one specific path. For maze problems where you need any valid solution rather than the optimal one, DFS is a perfectly valid approach and often simpler to implement with backtracking. The limitation is only that the path DFS finds is not guaranteed to be the shortest.
 
 Misconception 3: "DFS always uses O(V) space."
 Reality: DFS uses O(d) space where d is the depth of the deepest path explored. For a balanced binary tree, d = O(log V). For a path graph (a line of nodes), d = O(V). For a broad, shallow graph (star topology), d = O(1). The O(V) worst case applies when the graph is a single long path, where every node must be on the call stack simultaneously.
@@ -204,7 +204,7 @@ Reality: DFS uses O(d) space where d is the depth of the deepest path explored. 
 
 ## Why It Matters in Practice
 
-DFS appears in an enormous range of applications. Every tree traversal algorithm (pre-order, in-order, post-order) is DFS. Topological sort of a DAG — essential for dependency resolution in build systems, package managers, and task schedulers — uses DFS post-order. Cycle detection in directed graphs uses DFS with three-colour marking. Finding connected components in undirected graphs, detecting strongly connected components (Tarjan's algorithm, Kosaraju's algorithm) — all DFS-based. Solving backtracking problems like sudoku, n-queens, and permutation generation all use the same DFS-with-backtracking pattern.
+DFS appears in an enormous range of applications. Every tree traversal algorithm (pre-order, in-order, post-order) is DFS. Topological sort of a DAG - essential for dependency resolution in build systems, package managers, and task schedulers - uses DFS post-order. Cycle detection in directed graphs uses DFS with three-colour marking. Finding connected components in undirected graphs, detecting strongly connected components (Tarjan's algorithm, Kosaraju's algorithm) - all DFS-based. Solving backtracking problems like sudoku, n-queens, and permutation generation all use the same DFS-with-backtracking pattern.
 
 In Python, the primary concern with recursive DFS on large inputs is the recursion limit. For competitive programming and interview problems where the graph may have hundreds of thousands of nodes, iterative DFS with an explicit stack is the safe choice. For production code with graphs of bounded depth (like abstract syntax trees or dependency graphs of realistic projects), recursive DFS is readable and correct.
 

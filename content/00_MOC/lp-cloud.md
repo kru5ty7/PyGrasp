@@ -1,16 +1,16 @@
 ---
-title: Learning Path — Cloud (AWS)
-description: AWS fundamentals, IAM, S3, EC2, Lambda, and additional services — with boto3 code, architecture diagrams, and "What Breaks in Production" sections.
+title: Learning Path - Cloud (AWS)
+description: AWS fundamentals, IAM, S3, EC2, Lambda, and additional services - with boto3 code, architecture diagrams, and "What Breaks in Production" sections.
 tags: [moc, learning-path, cloud, aws, layer-11]
 ---
 
-# Learning Path — Cloud (AWS)
+# Learning Path - Cloud (AWS)
 
 > AWS from first principles. Assumes Layer 13 (containers) and some HLD knowledge. Every note includes architecture diagrams, boto3 code, and a "What Breaks in Production" section.
 
 ---
 
-## Layer 11a — AWS Foundations
+## Layer 11a - AWS Foundations
 
 1. [[aws-overview|AWS Overview]]
 2. [[aws-regions-and-az|AWS Regions and Availability Zones]]
@@ -20,7 +20,7 @@ tags: [moc, learning-path, cloud, aws, layer-11]
 
 ---
 
-## Layer 11b — IAM (Identity and Access Management)
+## Layer 11b - IAM (Identity and Access Management)
 
 1. [[iam-overview|IAM Overview]]
 2. [[iam-users-groups|IAM Users and Groups]]
@@ -33,7 +33,7 @@ tags: [moc, learning-path, cloud, aws, layer-11]
 
 ---
 
-## Layer 11c — S3
+## Layer 11c - S3
 
 1. [[s3-overview|S3 Overview]]
 2. [[s3-buckets|S3 Buckets and Objects]]
@@ -47,7 +47,7 @@ tags: [moc, learning-path, cloud, aws, layer-11]
 
 ---
 
-## Layer 11d — EC2
+## Layer 11d - EC2
 
 1. [[ec2-overview|EC2 Overview]]
 2. [[ec2-instance-types|EC2 Instance Types]]
@@ -62,7 +62,7 @@ tags: [moc, learning-path, cloud, aws, layer-11]
 
 ---
 
-## Layer 11e — Lambda
+## Layer 11e - Lambda
 
 1. [[lambda-overview|Lambda Overview]]
 2. [[lambda-python|Lambda with Python]]
@@ -77,7 +77,7 @@ tags: [moc, learning-path, cloud, aws, layer-11]
 
 ---
 
-## Layer 11f — Additional AWS Services
+## Layer 11f - Additional AWS Services
 
 1. [[sqs|SQS (Simple Queue Service)]]
 2. [[sns|SNS (Simple Notification Service)]]

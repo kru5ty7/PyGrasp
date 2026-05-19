@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Linked Lists
 
-> Linked lists sacrifice random access to gain cheap insertion and deletion — a fundamental trade-off that determines when they are the right tool.
+> Linked lists sacrifice random access to gain cheap insertion and deletion - a fundamental trade-off that determines when they are the right tool.
 
 ---
 
@@ -19,15 +19,15 @@ created: 2026-05-18
 
 **Core idea:**
 - Each node stores a value and a `next` pointer to the following node
-- Nodes are allocated independently on the heap — no contiguous memory requirement
-- Insert or delete at a known position: O(1) — just rewire pointers
-- Access element by index: O(n) — must traverse from head
+- Nodes are allocated independently on the heap - no contiguous memory requirement
+- Insert or delete at a known position: O(1) - just rewire pointers
+- Access element by index: O(n) - must traverse from head
 - No index arithmetic is possible because nodes are not adjacent in memory
 
 **Tricky points:**
-- Insert/delete is O(1) only if you already have a reference to the node — finding it first is O(n)
+- Insert/delete is O(1) only if you already have a reference to the node - finding it first is O(n)
 - Forgetting to update the tail pointer during insertion causes silent bugs
-- Linked lists have poor cache performance — each node access is a pointer dereference to a random heap location
+- Linked lists have poor cache performance - each node access is a pointer dereference to a random heap location
 - Python does not have a built-in singly linked list; `collections.deque` uses a doubly linked list internally
 - Off-by-one errors are common when implementing reverse or cycle detection
 
@@ -51,11 +51,11 @@ Space complexity: O(n)
 
 ## What It Is
 
-Picture a treasure hunt where each clue tells you where the next clue is hidden, but gives you no information about any clue beyond the next one. To reach the fifth clue, you must start at clue one, read where clue two is, go there, read where clue three is, and so on. You cannot jump directly to clue five — there is no map of all locations. This is exactly how a linked list works: each element knows only about the one that follows it, and getting to any particular element requires starting from the beginning and following the chain.
+Picture a treasure hunt where each clue tells you where the next clue is hidden, but gives you no information about any clue beyond the next one. To reach the fifth clue, you must start at clue one, read where clue two is, go there, read where clue three is, and so on. You cannot jump directly to clue five - there is no map of all locations. This is exactly how a linked list works: each element knows only about the one that follows it, and getting to any particular element requires starting from the beginning and following the chain.
 
-The advantage of this design appears when you need to add a new clue between clue three and clue four. In a treasure hunt book (an array), you would need to physically renumber and rewrite every clue from four onward to make room. In the linked treasure hunt, you simply write a new clue, update clue three to point to it, and write in the new clue the location of the original clue four. Two changes — done. The length of the hunt is irrelevant to how long that insertion takes.
+The advantage of this design appears when you need to add a new clue between clue three and clue four. In a treasure hunt book (an array), you would need to physically renumber and rewrite every clue from four onward to make room. In the linked treasure hunt, you simply write a new clue, update clue three to point to it, and write in the new clue the location of the original clue four. Two changes - done. The length of the hunt is irrelevant to how long that insertion takes.
 
-This trade-off shapes every situation where linked lists appear. They are not universally better or worse than arrays — they are specifically better at insertion and deletion when you already know the position, and specifically worse at positional access and iteration. Real-world uses include implementing other structures (stacks, queues, LRU caches) and scenarios where the order of a collection changes frequently and random access is rare.
+This trade-off shapes every situation where linked lists appear. They are not universally better or worse than arrays - they are specifically better at insertion and deletion when you already know the position, and specifically worse at positional access and iteration. Real-world uses include implementing other structures (stacks, queues, LRU caches) and scenarios where the order of a collection changes frequently and random access is rare.
 
 ---
 
@@ -63,7 +63,7 @@ This trade-off shapes every situation where linked lists appear. They are not un
 
 A singly linked list is composed of node objects, each containing two fields: the data (the value stored) and a reference to the next node. The list itself maintains a `head` reference pointing to the first node, and optionally a `tail` reference pointing to the last node. The last node's `next` reference is `None`, signalling the end of the list.
 
-Insertion at the head is the cheapest operation: create a new node, set its `next` to the current head, and update `head` to point to the new node. This is O(1) regardless of list length. Insertion at the tail with a tail pointer is also O(1): create a new node, set the current tail's `next` to it, and update `tail`. Insertion in the middle requires traversal to the predecessor node, then a pointer rewire — the traversal is O(n), but the actual insertion is O(1). Deletion follows the same pattern: find the predecessor, point it to the node after the one being deleted, and discard the deleted node.
+Insertion at the head is the cheapest operation: create a new node, set its `next` to the current head, and update `head` to point to the new node. This is O(1) regardless of list length. Insertion at the tail with a tail pointer is also O(1): create a new node, set the current tail's `next` to it, and update `tail`. Insertion in the middle requires traversal to the predecessor node, then a pointer rewire - the traversal is O(n), but the actual insertion is O(1). Deletion follows the same pattern: find the predecessor, point it to the node after the one being deleted, and discard the deleted node.
 
 ```python
 class Node:
@@ -79,7 +79,7 @@ class LinkedList:
         self._length = 0
 
     def append(self, value):
-        """Insert at tail — O(1) with tail pointer."""
+        """Insert at tail - O(1) with tail pointer."""
         node = Node(value)
         if self.tail is None:
             self.head = self.tail = node
@@ -89,7 +89,7 @@ class LinkedList:
         self._length += 1
 
     def prepend(self, value):
-        """Insert at head — O(1)."""
+        """Insert at head - O(1)."""
         node = Node(value)
         node.next = self.head
         self.head = node
@@ -98,7 +98,7 @@ class LinkedList:
         self._length += 1
 
     def delete(self, value):
-        """Delete first occurrence — O(n) to find, O(1) to remove."""
+        """Delete first occurrence - O(n) to find, O(1) to remove."""
         if self.head is None:
             return
         if self.head.value == value:
@@ -118,7 +118,7 @@ class LinkedList:
             current = current.next
 
     def reverse(self):
-        """Reverse in place — O(n)."""
+        """Reverse in place - O(n)."""
         prev = None
         current = self.head
         self.tail = self.head
@@ -170,7 +170,7 @@ Arrays and linked lists are the two foundational sequential data structures, and
 
 [[arrays|Arrays]]
 
-Doubly linked lists extend the singly linked list with a backward pointer on every node. This single change unlocks O(1) deletion of a known node without needing to traverse to the predecessor — a capability that is essential for LRU cache implementations.
+Doubly linked lists extend the singly linked list with a backward pointer on every node. This single change unlocks O(1) deletion of a known node without needing to traverse to the predecessor - a capability that is essential for LRU cache implementations.
 
 [[doubly-linked-lists|Doubly Linked Lists]]
 
@@ -179,19 +179,19 @@ Doubly linked lists extend the singly linked list with a backward pointer on eve
 ## Common Misconceptions
 
 Misconception 1: "Linked lists are faster than arrays for insertion."
-Reality: Linked list insertion is O(1) only at the point of insertion, and only when you already hold a reference to that position. If you must first search for where to insert, the search is O(n) — the same as the O(n) shift cost in an array. The linked list wins only when you already have the node reference.
+Reality: Linked list insertion is O(1) only at the point of insertion, and only when you already hold a reference to that position. If you must first search for where to insert, the search is O(n) - the same as the O(n) shift cost in an array. The linked list wins only when you already have the node reference.
 
 Misconception 2: "Linked lists use less memory than arrays."
 Reality: Linked lists use more memory per element than arrays. Each node stores the value plus one (or two, for doubly linked) pointer fields. An array of integers stores only the integers. The heap allocation overhead per node also adds up. Arrays are typically more memory-efficient.
 
 Misconception 3: "Python's `list` is a linked list."
-Reality: Python's `list` is a dynamic array — a contiguous block of object pointers that resizes on demand. It is not a linked list. The Python standard library's linked-list implementation is `collections.deque`, which is a doubly linked list of fixed-size blocks.
+Reality: Python's `list` is a dynamic array - a contiguous block of object pointers that resizes on demand. It is not a linked list. The Python standard library's linked-list implementation is `collections.deque`, which is a doubly linked list of fixed-size blocks.
 
 ---
 
 ## Why It Matters in Practice
 
-Linked lists appear directly in interview problems — reversing a list, detecting cycles (Floyd's algorithm), finding the middle node, and merging sorted lists are all standard questions. More importantly, they are the structural foundation for stacks, queues, and more complex structures like LRU caches. Understanding pointer manipulation at this level builds the mental model needed for every pointer-based structure that follows.
+Linked lists appear directly in interview problems - reversing a list, detecting cycles (Floyd's algorithm), finding the middle node, and merging sorted lists are all standard questions. More importantly, they are the structural foundation for stacks, queues, and more complex structures like LRU caches. Understanding pointer manipulation at this level builds the mental model needed for every pointer-based structure that follows.
 
 In Python, you will rarely implement a singly linked list in production code. The practical takeaway is understanding why `collections.deque` should be used for queue operations instead of `list`, and why the deque's performance guarantees come from its linked structure. The concept transfers directly.
 

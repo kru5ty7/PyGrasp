@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Disjoint Sets (Union-Find)
 
-> Union-Find answers one of the most practical questions in graph theory — "are these two elements in the same group?" — in near-constant time, making it the engine behind Kruskal's MST algorithm and undirected cycle detection.
+> Union-Find answers one of the most practical questions in graph theory - "are these two elements in the same group?" - in near-constant time, making it the engine behind Kruskal's MST algorithm and undirected cycle detection.
 
 ---
 
@@ -19,17 +19,17 @@ created: 2026-05-18
 
 **Core idea:**
 - Maintains a collection of non-overlapping (disjoint) sets with two operations: `find` (which set does element x belong to?) and `union` (merge the sets containing x and y)
-- Path compression: during `find`, make every visited node point directly to the root — flattens the tree for future queries
-- Union by rank (or size): always attach the smaller tree under the larger tree — prevents tall trees
-- Combined optimisations give amortized near-O(1) per operation: O(α(n)) where α is the inverse Ackermann function — effectively constant for all practical n
+- Path compression: during `find`, make every visited node point directly to the root - flattens the tree for future queries
+- Union by rank (or size): always attach the smaller tree under the larger tree - prevents tall trees
+- Combined optimisations give amortized near-O(1) per operation: O(α(n)) where α is the inverse Ackermann function - effectively constant for all practical n
 - Applications: Kruskal's MST, undirected cycle detection, network connectivity, image segmentation
 
 **Tricky points:**
-- The `find` operation with path compression mutates the parent array as a side effect — this is intentional and correct
-- Union by rank uses height as a proxy; union by size uses subtree node count — both give the same asymptotic complexity
-- Checking if two elements are in the same set: `find(x) == find(y)` — if their roots are the same, they share a set
+- The `find` operation with path compression mutates the parent array as a side effect - this is intentional and correct
+- Union by rank uses height as a proxy; union by size uses subtree node count - both give the same asymptotic complexity
+- Checking if two elements are in the same set: `find(x) == find(y)` - if their roots are the same, they share a set
 - Adding a new edge (u, v) to an undirected graph creates a cycle if and only if `find(u) == find(y)` before the union
-- The `parent` array is initialised with `parent[i] = i` — every element starts as its own root
+- The `parent` array is initialised with `parent[i] = i` - every element starts as its own root
 
 ---
 
@@ -51,9 +51,9 @@ Note: α(n) is the inverse Ackermann function. For all practical n (including n 
 
 Imagine a social circle network at a large university. Each student starts as their own social group. When two students become friends, their groups merge. Over time, clusters of mutual friends form. The question "are Alice and Bob in the same social circle?" should be answerable quickly, even after thousands of friendships have formed and groups have merged.
 
-A naive approach would maintain an explicit list of group members and scan lists on every query — O(n) per query. A better approach represents each group by one representative member (the "root" of the group). To find which group someone belongs to, follow the chain of references up to the root. To merge two groups, simply point one root to the other. This is Union-Find without optimisations — O(n) in the worst case if the chain grows long.
+A naive approach would maintain an explicit list of group members and scan lists on every query - O(n) per query. A better approach represents each group by one representative member (the "root" of the group). To find which group someone belongs to, follow the chain of references up to the root. To merge two groups, simply point one root to the other. This is Union-Find without optimisations - O(n) in the worst case if the chain grows long.
 
-Path compression and union by rank are the two optimisations that make this structure nearly magical in practice. Path compression says: the next time you follow a chain to the root, rewire every node you visited to point directly to the root. The tree flattens itself. Union by rank says: when merging two groups, always attach the shorter tree under the taller one — the root of the smaller group becomes a child of the root of the larger group. The tree stays shallow. Together, these two rules make the amortised cost per operation so close to O(1) that the theoretical bound — the inverse Ackermann function — is the only function that grows even more slowly.
+Path compression and union by rank are the two optimisations that make this structure nearly magical in practice. Path compression says: the next time you follow a chain to the root, rewire every node you visited to point directly to the root. The tree flattens itself. Union by rank says: when merging two groups, always attach the shorter tree under the taller one - the root of the smaller group becomes a child of the root of the larger group. The tree stays shallow. Together, these two rules make the amortised cost per operation so close to O(1) that the theoretical bound - the inverse Ackermann function - is the only function that grows even more slowly.
 
 ---
 
@@ -61,9 +61,9 @@ Path compression and union by rank are the two optimisations that make this stru
 
 The data structure is stored in two arrays: `parent` and `rank` (or `size`). `parent[i]` is the parent of element i in its tree. When `parent[i] == i`, element i is a root. Initially, every element is its own root: `parent[i] = i` for all i.
 
-`find(x)` traverses from x up to the root by following parent pointers. With path compression, it then sets `parent[x]` directly to the root (for the next call to be O(1)), and also does the same for every node on the path — using a recursive one-pass or iterative two-pass approach.
+`find(x)` traverses from x up to the root by following parent pointers. With path compression, it then sets `parent[x]` directly to the root (for the next call to be O(1)), and also does the same for every node on the path - using a recursive one-pass or iterative two-pass approach.
 
-`union(x, y)` calls `find` on both x and y to get their roots. If the roots are the same, x and y are already in the same set — no action needed (and this signals a cycle in graph problems). If the roots differ, one root becomes a child of the other. Union by rank attaches the tree with lower rank under the tree with higher rank. If ranks are equal, either attachment is valid, and the rank of the new root is incremented by 1.
+`union(x, y)` calls `find` on both x and y to get their roots. If the roots are the same, x and y are already in the same set - no action needed (and this signals a cycle in graph problems). If the roots differ, one root becomes a child of the other. Union by rank attaches the tree with lower rank under the tree with higher rank. If ranks are equal, either attachment is valid, and the rank of the new root is incremented by 1.
 
 ```python
 class UnionFind:
@@ -114,7 +114,7 @@ def has_cycle(num_vertices, edges):
     uf = UnionFind(num_vertices)
     for u, v in edges:
         if not uf.union(u, v):
-            return True    # union returned False — already in same set
+            return True    # union returned False - already in same set
     return False
 
 # Path graph: no cycle
@@ -135,7 +135,7 @@ def kruskal_mst(num_vertices, edges):
     total_weight = 0
 
     for u, v, weight in sorted_edges:
-        if uf.union(u, v):   # no cycle — safe to add
+        if uf.union(u, v):   # no cycle - safe to add
             mst.append((u, v, weight))
             total_weight += weight
             if len(mst) == num_vertices - 1:
@@ -199,11 +199,11 @@ class UnionFindIterative:
 
 ## How It Connects
 
-Kruskal's MST algorithm processes edges in order of weight and adds each edge if it does not create a cycle. The cycle check is `find(u) == find(v)`. Without Union-Find, each cycle check would require a BFS or DFS — O(V) per edge, making Kruskal's O(EV). With Union-Find, the cycle check is O(α(V)) ≈ O(1), and Kruskal's total complexity is dominated by the O(E log E) sort.
+Kruskal's MST algorithm processes edges in order of weight and adds each edge if it does not create a cycle. The cycle check is `find(u) == find(v)`. Without Union-Find, each cycle check would require a BFS or DFS - O(V) per edge, making Kruskal's O(EV). With Union-Find, the cycle check is O(α(V)) ≈ O(1), and Kruskal's total complexity is dominated by the O(E log E) sort.
 
 [[graphs|Graphs]]
 
-Graph representations determine how edges are stored and iterated. Kruskal's algorithm works directly from an edge list — one of the three standard representations. Understanding when an edge list is appropriate (algorithm needs all edges sorted, no per-vertex neighbour iteration needed) is a practical representation decision.
+Graph representations determine how edges are stored and iterated. Kruskal's algorithm works directly from an edge list - one of the three standard representations. Understanding when an edge list is appropriate (algorithm needs all edges sorted, no per-vertex neighbour iteration needed) is a practical representation decision.
 
 [[graph-representations|Graph Representations]]
 
@@ -211,22 +211,22 @@ Graph representations determine how edges are stored and iterated. Kruskal's alg
 
 ## Common Misconceptions
 
-Misconception 1: "Path compression changes the logical structure of the Union-Find — elements move between sets."
+Misconception 1: "Path compression changes the logical structure of the Union-Find - elements move between sets."
 Reality: Path compression only changes which node is the direct parent pointer target. The root of each set remains the same, and every element still finds the same root after compression. The sets are identical; only the internal tree shape (the pointer structure) changes to be flatter. `find(x)` always returns the same root before and after compression.
 
 Misconception 2: "Union-Find can only be used for integers 0 to n−1."
 Reality: Union-Find is typically implemented with integer indices for performance, but it can support arbitrary keys by adding a mapping layer (a dict from key to integer index). For interview purposes, the integer implementation is standard. For production code with string or object keys, maintain a separate `{key: index}` dict alongside the arrays.
 
 Misconception 3: "The O(α(n)) complexity means Union-Find is only slightly better than O(log n)."
-Reality: α(n) grows astronomically slowly — more slowly than any iterated logarithm. α(2⁶⁵⁵³⁶) = 4. For any dataset you will ever encounter in computing, α(n) ≤ 5. This means Union-Find operations are essentially constant time — not "almost" constant, but constant to every significant digit for all practical purposes.
+Reality: α(n) grows astronomically slowly - more slowly than any iterated logarithm. α(2⁶⁵⁵³⁶) = 4. For any dataset you will ever encounter in computing, α(n) ≤ 5. This means Union-Find operations are essentially constant time - not "almost" constant, but constant to every significant digit for all practical purposes.
 
 ---
 
 ## Why It Matters in Practice
 
-Union-Find is the standard solution for any "group membership" or "connectivity" problem that involves incremental merging. Network connectivity monitoring — tracking which servers in a distributed system are reachable from which others as links go up and down — is a real-time Union-Find problem. Image segmentation algorithms use Union-Find to merge adjacent pixels of similar colour into connected regions. Percolation simulations (is there a connected path from top to bottom in a grid?) are Union-Find problems. Social network friend-of-friend analysis is Union-Find.
+Union-Find is the standard solution for any "group membership" or "connectivity" problem that involves incremental merging. Network connectivity monitoring - tracking which servers in a distributed system are reachable from which others as links go up and down - is a real-time Union-Find problem. Image segmentation algorithms use Union-Find to merge adjacent pixels of similar colour into connected regions. Percolation simulations (is there a connected path from top to bottom in a grid?) are Union-Find problems. Social network friend-of-friend analysis is Union-Find.
 
-In competitive programming and interviews, Union-Find appears in problems phrased as "number of connected components after adding edges," "detect cycle in undirected graph," or "group elements by equivalence class." Recognising that incremental merging of groups with fast connectivity queries is the Union-Find pattern — rather than rebuilding a BFS or DFS on every query — is the key insight.
+In competitive programming and interviews, Union-Find appears in problems phrased as "number of connected components after adding edges," "detect cycle in undirected graph," or "group elements by equivalence class." Recognising that incremental merging of groups with fast connectivity queries is the Union-Find pattern - rather than rebuilding a BFS or DFS on every query - is the key insight.
 
 ---
 
@@ -234,13 +234,13 @@ In competitive programming and interviews, Union-Find appears in problems phrase
 
 Common question forms:
 - "Number of provinces (connected components)."
-- "Redundant connection — find the edge that creates a cycle."
-- "Accounts merge — group email accounts that share an email address."
-- "Most stones removed — connected components in a grid."
+- "Redundant connection - find the edge that creates a cycle."
+- "Accounts merge - group email accounts that share an email address."
+- "Most stones removed - connected components in a grid."
 - "Detect cycle in an undirected graph."
 
 Answer frame:
-For any "group by connectivity" or "cycle detection in undirected graph" problem, immediately name Union-Find. State the two operations: `find` with path compression, `union` with union by rank. For cycle detection: iterate edges; if `find(u) == find(v)` before calling union, that edge is redundant (cycle). For connected components: count the number of distinct roots after all unions — this equals the number of disjoint sets. For accounts merge, explain mapping email strings to integer IDs, then unioning all emails in each account.
+For any "group by connectivity" or "cycle detection in undirected graph" problem, immediately name Union-Find. State the two operations: `find` with path compression, `union` with union by rank. For cycle detection: iterate edges; if `find(u) == find(v)` before calling union, that edge is redundant (cycle). For connected components: count the number of distinct roots after all unions - this equals the number of disjoint sets. For accounts merge, explain mapping email strings to integer IDs, then unioning all emails in each account.
 
 ---
 

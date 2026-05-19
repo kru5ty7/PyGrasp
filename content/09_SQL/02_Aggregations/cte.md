@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Common Table Expressions (CTEs)
 
-> A CTE names a subquery at the top of the query so the rest of the query can reference it like a table — the primary value is readability and maintainability, not performance.
+> A CTE names a subquery at the top of the query so the rest of the query can reference it like a table - the primary value is readability and maintainability, not performance.
 
 ---
 
@@ -20,15 +20,15 @@ created: 2026-05-18
 **Core idea:**
 - A CTE is introduced with WITH cte_name AS (SELECT ...) and can be referenced by name in the subsequent query
 - Multiple CTEs can be chained in one WITH block, separated by commas; each CTE can reference the ones defined before it
-- CTEs are logically equivalent to inline subqueries in most databases — the optimizer treats them the same
+- CTEs are logically equivalent to inline subqueries in most databases - the optimizer treats them the same
 - PostgreSQL 12+ inlines CTEs by default; earlier versions materialized them (computed once and stored), which could help or hurt performance
 - The MATERIALIZED and NOT MATERIALIZED keywords in PostgreSQL allow explicit control over this behavior
 - Recursive CTEs use a different structure (UNION ALL) and are covered separately
 
 **Tricky points:**
-- CTEs are not inherently faster than subqueries — any perceived performance difference in modern PostgreSQL is due to inlining behavior, not the CTE itself
-- A CTE defined in a WITH block cannot be referenced outside the single statement it belongs to — it is not a view or a temporary table
-- In PostgreSQL pre-12, CTEs were always materialized (optimization fences) — this could prevent the optimizer from pushing WHERE predicates into the CTE, causing full scans
+- CTEs are not inherently faster than subqueries - any perceived performance difference in modern PostgreSQL is due to inlining behavior, not the CTE itself
+- A CTE defined in a WITH block cannot be referenced outside the single statement it belongs to - it is not a view or a temporary table
+- In PostgreSQL pre-12, CTEs were always materialized (optimization fences) - this could prevent the optimizer from pushing WHERE predicates into the CTE, causing full scans
 - The same CTE can be referenced multiple times in the same query; whether the database re-executes or caches the result depends on the MATERIALIZED setting
 - CTEs cannot be indexed or have statistics; for large intermediate results that are reused, a temporary table with an index may outperform a CTE
 
@@ -36,11 +36,11 @@ created: 2026-05-18
 
 ## What It Is
 
-Writing a complex SQL query without CTEs is like writing a long legal document as a single unbroken paragraph. Every clause refers back to earlier clauses, every condition depends on something defined three hundred words earlier, and following the logic requires reading the whole thing several times. CTEs are the paragraph breaks and section headings of SQL — they let you name each step of a multi-stage query, define it once at the top, and refer to it by name in later steps.
+Writing a complex SQL query without CTEs is like writing a long legal document as a single unbroken paragraph. Every clause refers back to earlier clauses, every condition depends on something defined three hundred words earlier, and following the logic requires reading the whole thing several times. CTEs are the paragraph breaks and section headings of SQL - they let you name each step of a multi-stage query, define it once at the top, and refer to it by name in later steps.
 
-The WITH keyword introduces the CTE block. Each CTE is a named SELECT statement enclosed in parentheses. After all CTEs are defined, the final SELECT (or INSERT, UPDATE, DELETE) statement references them as if they were ordinary tables. The CTE definitions exist only for the duration of that one statement — they are not stored anywhere and are not visible to other queries.
+The WITH keyword introduces the CTE block. Each CTE is a named SELECT statement enclosed in parentheses. After all CTEs are defined, the final SELECT (or INSERT, UPDATE, DELETE) statement references them as if they were ordinary tables. The CTE definitions exist only for the duration of that one statement - they are not stored anywhere and are not visible to other queries.
 
-The most important thing to understand about CTEs is what they are not. They are not a performance optimization tool in most modern databases. A CTE in PostgreSQL 12 or later is inlined by the optimizer, meaning it is treated identically to an equivalent inline subquery — the execution plan will be the same. CTEs are a readability and maintainability tool. They let developers decompose a query into named, understandable steps, which makes the query easier to read, review, test, and modify.
+The most important thing to understand about CTEs is what they are not. They are not a performance optimization tool in most modern databases. A CTE in PostgreSQL 12 or later is inlined by the optimizer, meaning it is treated identically to an equivalent inline subquery - the execution plan will be the same. CTEs are a readability and maintainability tool. They let developers decompose a query into named, understandable steps, which makes the query easier to read, review, test, and modify.
 
 ---
 
@@ -111,7 +111,7 @@ FROM ranked
 WHERE rn = 1;
 ```
 
-In PostgreSQL, the MATERIALIZED keyword forces the CTE to be computed once and stored as an intermediate result, regardless of the inlining default. This is useful when the CTE is expensive to compute and is referenced multiple times in the same query — materializing it avoids redundant re-computation. NOT MATERIALIZED forces inlining, allowing the optimizer to push predicates through the CTE boundary.
+In PostgreSQL, the MATERIALIZED keyword forces the CTE to be computed once and stored as an intermediate result, regardless of the inlining default. This is useful when the CTE is expensive to compute and is referenced multiple times in the same query - materializing it avoids redundant re-computation. NOT MATERIALIZED forces inlining, allowing the optimizer to push predicates through the CTE boundary.
 
 ```sql
 -- Force materialization in PostgreSQL when the CTE is referenced twice
@@ -152,7 +152,7 @@ Misconception 2: "A CTE defined in a WITH block can be reused across multiple qu
 Reality: A CTE exists only for the single statement it is defined in. Once that statement finishes, the CTE is gone. For a result set that needs to persist across multiple queries, use a temporary table or a view. A materialized view is appropriate if the result needs to be precomputed and queried repeatedly without re-executing the underlying logic each time.
 
 Misconception 3: "Using a CTE makes my query run in the order I wrote the steps."
-Reality: SQL is a declarative language. The database optimizer decides the execution order based on statistics, indexes, and join costs — not the order in which CTEs are written. Writing `WITH step1 AS (...), step2 AS (...)` does not guarantee step1 executes before step2. The optimizer may reorder operations, inline CTEs, or execute parts of the query in parallel.
+Reality: SQL is a declarative language. The database optimizer decides the execution order based on statistics, indexes, and join costs - not the order in which CTEs are written. Writing `WITH step1 AS (...), step2 AS (...)` does not guarantee step1 executes before step2. The optimizer may reorder operations, inline CTEs, or execute parts of the query in parallel.
 
 ---
 
@@ -199,7 +199,7 @@ Common question forms:
 - "How do you filter on a window function result?"
 
 Answer frame:
-For the CTE vs subquery question: they are functionally equivalent in most modern databases, and the choice is primarily about readability. CTEs name intermediate steps, making complex queries easier to understand and maintain. For the performance question: CTEs are not inherently faster; in PostgreSQL 12+ they are inlined by default and produce the same plan as subqueries. The MATERIALIZED keyword enables explicit caching for CTEs used multiple times. For the window function filter question: window functions run after WHERE, so their results cannot be filtered in the same SELECT level — the standard solution is to compute the window function in a CTE and filter in the outer query with WHERE.
+For the CTE vs subquery question: they are functionally equivalent in most modern databases, and the choice is primarily about readability. CTEs name intermediate steps, making complex queries easier to understand and maintain. For the performance question: CTEs are not inherently faster; in PostgreSQL 12+ they are inlined by default and produce the same plan as subqueries. The MATERIALIZED keyword enables explicit caching for CTEs used multiple times. For the window function filter question: window functions run after WHERE, so their results cannot be filtered in the same SELECT level - the standard solution is to compute the window function in a CTE and filter in the outer query with WHERE.
 
 ---
 

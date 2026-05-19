@@ -1,6 +1,6 @@
 ﻿---
 title: 12 - Principle of Least Privilege
-description: Least privilege means giving every identity only the minimum permissions required for its specific function — it is the foundational security design principle for IAM and the primary defence against credential compromise.
+description: Least privilege means giving every identity only the minimum permissions required for its specific function - it is the foundational security design principle for IAM and the primary defence against credential compromise.
 tags: [aws, cloud, layer-11, iam, security, least-privilege]
 status: draft
 difficulty: intermediate
@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Principle of Least Privilege
 
-> Least privilege is the practice of granting exactly what is needed and nothing more — every over-permissioned role is a silent risk that becomes a loud incident the moment any credential is compromised.
+> Least privilege is the practice of granting exactly what is needed and nothing more - every over-permissioned role is a silent risk that becomes a loud incident the moment any credential is compromised.
 
 ---
 
@@ -19,28 +19,28 @@ created: 2026-05-18
 
 **Core idea:**
 - Start with no permissions; add only what is demonstrably required
-- Scope every permission to the specific resource, not `*` — prefer `arn:aws:s3:::my-bucket/*` over `arn:aws:s3:::*`
+- Scope every permission to the specific resource, not `*` - prefer `arn:aws:s3:::my-bucket/*` over `arn:aws:s3:::*`
 - Tools for finding minimal permissions: IAM Access Analyzer, CloudTrail action history, IAM Access Advisor (last-used data)
 - Common violations: `AdministratorAccess` on Lambda, `s3:*` on all buckets, wildcard resources on any sensitive action
-- Blast radius: the damage from a compromised credential is bounded by its permissions — narrow permissions limit the blast radius
+- Blast radius: the damage from a compromised credential is bounded by its permissions - narrow permissions limit the blast radius
 - Permission boundaries are a mechanism for delegating IAM management without granting full IAM admin rights
 
 **Tricky points:**
-- AWS's own managed policies (like `AmazonS3FullAccess`) are broader than most applications need — they are starting points, not production policies
-- "I'll tighten it later" is one of the most expensive technical debt items in cloud security — tightening permissions in production requires testing each removed permission against real workloads
-- IAM Access Advisor shows last-used dates for services but not for specific actions within a service — you may still be granting unused actions within an allowed service
-- Some AWS actions have no resource-level constraint support — they require `"Resource": "*"` regardless — check the IAM documentation for each service
+- AWS's own managed policies (like `AmazonS3FullAccess`) are broader than most applications need - they are starting points, not production policies
+- "I'll tighten it later" is one of the most expensive technical debt items in cloud security - tightening permissions in production requires testing each removed permission against real workloads
+- IAM Access Advisor shows last-used dates for services but not for specific actions within a service - you may still be granting unused actions within an allowed service
+- Some AWS actions have no resource-level constraint support - they require `"Resource": "*"` regardless - check the IAM documentation for each service
 - Lambda functions that use `AdministratorAccess` because "it was the easiest way to get it working" are the single most common unnecessary privilege in AWS accounts
 
 ---
 
 ## What It Is
 
-Think of least privilege like the access control system in a surgery suite. The surgeon can touch everything in the operating room. The anaesthesiologist can access the drug cabinet, the ventilator, and the monitoring equipment, but not the surgical instruments. The scrub technician can handle the sterile field and instruments, but not the drugs. The cleaning staff can enter after the procedure, but not during. None of them have access to the pharmacy, the billing office, or other wards. Each person has exactly what their specific role requires — no more, regardless of seniority or convenience. Giving the cleaning staff full hospital access because it would simplify their master key does not make operational sense, and the same logic applies to IAM.
+Think of least privilege like the access control system in a surgery suite. The surgeon can touch everything in the operating room. The anaesthesiologist can access the drug cabinet, the ventilator, and the monitoring equipment, but not the surgical instruments. The scrub technician can handle the sterile field and instruments, but not the drugs. The cleaning staff can enter after the procedure, but not during. None of them have access to the pharmacy, the billing office, or other wards. Each person has exactly what their specific role requires - no more, regardless of seniority or convenience. Giving the cleaning staff full hospital access because it would simplify their master key does not make operational sense, and the same logic applies to IAM.
 
 In practice, least privilege in AWS means three things applied together. First, restrict the actions: instead of `s3:*` (all S3 operations), specify `s3:GetObject, s3:PutObject` (only the operations the code actually performs). Second, restrict the resources: instead of applying those actions to `*` (every resource in every account accessible from this role), specify the exact ARN of the bucket. Third, add conditions where relevant: restrict `s3:DeleteObject` to only succeed when the request originates from within the VPC, or only when the requesting user has completed MFA. Each layer of restriction reduces the possible damage from a compromised credential.
 
-The iterative approach to achieving least privilege is more practical than trying to get it perfect from the start. Begin with a broader policy that allows the code to function, then use AWS tools to observe which permissions are actually used, and tighten from there. IAM Access Advisor (per role, shows which services were accessed and when) provides the service-level view. CloudTrail provides the action-level view — you can search for all API calls made by a specific role over a period and compare them to the role's policy to identify unused permissions. AWS IAM Access Analyzer goes further: it can analyse resource-based policies across your account and flag external access that may not be intended.
+The iterative approach to achieving least privilege is more practical than trying to get it perfect from the start. Begin with a broader policy that allows the code to function, then use AWS tools to observe which permissions are actually used, and tighten from there. IAM Access Advisor (per role, shows which services were accessed and when) provides the service-level view. CloudTrail provides the action-level view - you can search for all API calls made by a specific role over a period and compare them to the role's policy to identify unused permissions. AWS IAM Access Analyzer goes further: it can analyse resource-based policies across your account and flag external access that may not be intended.
 
 ---
 
@@ -51,7 +51,7 @@ The tools for applying least privilege form a workflow. When creating a new role
 Permission boundaries add a second layer: they define the maximum permissions an identity can have, regardless of what policies are attached. An administrator who needs to allow team members to create IAM roles (for new Lambda functions) but does not want those members to be able to create roles with more permissions than the team should have can set a permission boundary on all roles created within that context. Even if a developer attaches `AdministratorAccess` to a new role, the permission boundary prevents the role from exercising those permissions.
 
 ```bash
-# IAM Access Advisor — see which services a role last accessed
+# IAM Access Advisor - see which services a role last accessed
 aws iam generate-service-last-accessed-details \
   --arn arn:aws:iam::123456789012:role/my-lambda-role
 
@@ -76,7 +76,7 @@ aws accessanalyzer list-findings \
   --analyzer-name account-analyzer \
   --output table
 
-# IAM Policy Simulator — test a policy before deploying
+# IAM Policy Simulator - test a policy before deploying
 aws iam simulate-custom-policy \
   --policy-input-list file://my-policy.json \
   --action-names s3:GetObject s3:DeleteBucket sqs:DeleteQueue \
@@ -136,7 +136,7 @@ def create_minimal_policy(role_name: str, bucket_name: str) -> dict:
                   a.startswith('PutObject') or a.startswith('ListBucket')]
     
     if not s3_actions:
-        print("No S3 actions detected — check the role name and time range")
+        print("No S3 actions detected - check the role name and time range")
         return {}
     
     policy = {
@@ -166,15 +166,15 @@ def create_minimal_policy(role_name: str, bucket_name: str) -> dict:
 
 ## How It Connects
 
-Least privilege is the design philosophy that guides every IAM policy decision. It is not a separate system — it is the practice of applying IAM correctly. Every other IAM note in this layer should be read with this principle in mind.
+Least privilege is the design philosophy that guides every IAM policy decision. It is not a separate system - it is the practice of applying IAM correctly. Every other IAM note in this layer should be read with this principle in mind.
 
-[[iam-policies|IAM Policies]] — the mechanism for implementing least privilege; understanding policy structure is required to write narrow, specific policies rather than broad ones.
+[[iam-policies|IAM Policies]] - the mechanism for implementing least privilege; understanding policy structure is required to write narrow, specific policies rather than broad ones.
 
-[[iam-roles|IAM Roles]] — the primary entity to which least-privilege policies are attached for application code; each Lambda function and EC2 instance role should be narrowly scoped.
+[[iam-roles|IAM Roles]] - the primary entity to which least-privilege policies are attached for application code; each Lambda function and EC2 instance role should be narrowly scoped.
 
 The Access Analyzer and CloudTrail are the observability tools for verifying that least privilege is maintained over time as applications evolve.
 
-[[cloudwatch|CloudWatch]] — monitoring and alerting infrastructure that can be configured to alert on unexpected IAM actions, complementing the Access Analyzer for ongoing least-privilege enforcement.
+[[cloudwatch|CloudWatch]] - monitoring and alerting infrastructure that can be configured to alert on unexpected IAM actions, complementing the Access Analyzer for ongoing least-privilege enforcement.
 
 ---
 
@@ -183,17 +183,17 @@ The Access Analyzer and CloudTrail are the observability tools for verifying tha
 Misconception 1: "I'll start with AdministratorAccess and lock it down once the app is working."
 Reality: Permission tightening never happens in practice. The "working" application becomes a production dependency, and removing permissions in production requires testing each removal carefully to avoid breaking live users. Organisations that start with AdministratorAccess remain with it indefinitely. The correct approach is the reverse: start with no permissions, add them one by one as the application is developed and tested, and deploy the production role with only the confirmed-needed permissions.
 
-Misconception 2: "Using `s3:*` on a specific bucket is fine — it is still scoped to one resource."
-Reality: `s3:*` on a specific bucket grants not just read and write but also the ability to delete all objects, change the bucket's public access settings, modify the bucket policy, enable cross-account access, and enable public ACLs. Most applications need two or three specific S3 actions. Granting all of them on the bucket exposes operations that could permanently delete data or make the bucket publicly accessible if the role is compromised. Enumerate the specific actions needed: `s3:GetObject`, `s3:PutObject`, `s3:ListBucket` — and nothing else.
+Misconception 2: "Using `s3:*` on a specific bucket is fine - it is still scoped to one resource."
+Reality: `s3:*` on a specific bucket grants not just read and write but also the ability to delete all objects, change the bucket's public access settings, modify the bucket policy, enable cross-account access, and enable public ACLs. Most applications need two or three specific S3 actions. Granting all of them on the bucket exposes operations that could permanently delete data or make the bucket publicly accessible if the role is compromised. Enumerate the specific actions needed: `s3:GetObject`, `s3:PutObject`, `s3:ListBucket` - and nothing else.
 
-Misconception 3: "Least privilege makes development harder — developers should have broad permissions to move fast."
+Misconception 3: "Least privilege makes development harder - developers should have broad permissions to move fast."
 Reality: Developers should have broader permissions in development accounts; production roles should be narrowly scoped. These are different environments with different risk profiles. A CI/CD pipeline deploying to production uses a deployment role scoped to the exact actions needed for that deployment, not a developer's personal broad-access credentials. Least privilege in production does not impede development speed when the principle is applied at the environment boundary rather than at the individual developer level.
 
 ---
 
 ## Why It Matters in Production
 
-The blast radius concept is why least privilege matters in practice. A compromised credential with `AdministratorAccess` on a Lambda function means an attacker has full control of the AWS account — they can create new IAM users, delete data, access secrets, launch mining instances, and exfiltrate everything. A compromised credential for a Lambda function with `s3:GetObject` on one specific bucket means an attacker can read the contents of that bucket and nothing else. The security posture of the entire account is different, and the incident response is a contained data exposure rather than a full account compromise.
+The blast radius concept is why least privilege matters in practice. A compromised credential with `AdministratorAccess` on a Lambda function means an attacker has full control of the AWS account - they can create new IAM users, delete data, access secrets, launch mining instances, and exfiltrate everything. A compromised credential for a Lambda function with `s3:GetObject` on one specific bucket means an attacker can read the contents of that bucket and nothing else. The security posture of the entire account is different, and the incident response is a contained data exposure rather than a full account compromise.
 
 Least privilege also reduces the impact of bugs. A Python application with a bug that accidentally calls `s3:DeleteObject` instead of `s3:GetObject` is stopped by an `AccessDenied` error if the role does not have delete permission. The same bug in a role with `s3:*` succeeds silently and deletes data. Narrow permissions act as a second layer of defence against application errors, not just against security incidents.
 
@@ -211,7 +211,7 @@ aws lambda list-functions --query 'Functions[*].{Name:FunctionName,Role:Role}' -
 aws iam list-attached-role-policies \
   --role-name my-overpermissioned-role \
   --output table
-# If you see AdministratorAccess, AmazonS3FullAccess, etc. — investigate
+# If you see AdministratorAccess, AmazonS3FullAccess, etc. - investigate
 
 # Replace with minimal policy
 aws iam detach-role-policy \
@@ -256,7 +256,7 @@ for p in policies:
 **Scenario 3: Unused permissions removed in production break an infrequently-called code path.**
 
 ```python
-# When tightening permissions, simulate all code paths — not just the happy path
+# When tightening permissions, simulate all code paths - not just the happy path
 # Use the IAM policy simulator for every action the code might call
 
 import boto3
@@ -270,7 +270,7 @@ actions_to_test = [
     's3:GetObject',
     's3:PutObject',
     's3:ListBucket',
-    's3:DeleteObject',   # only used in the cleanup path — verify if needed
+    's3:DeleteObject',   # only used in the cleanup path - verify if needed
     's3:GetBucketAcl',   # may be called by some SDK versions automatically
 ]
 
@@ -285,7 +285,7 @@ for eval_result in result['EvaluationResults']:
     decision = eval_result['EvalDecision']
     print(f"{action}: {decision}")
     if decision == 'allowed' and action == 's3:DeleteObject':
-        print("  WARNING: delete permission is granted — confirm if required")
+        print("  WARNING: delete permission is granted - confirm if required")
 ```
 
 ---

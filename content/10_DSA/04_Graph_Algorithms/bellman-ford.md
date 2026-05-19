@@ -11,25 +11,25 @@ created: 2026-05-18
 
 # Bellman-Ford Algorithm
 
-> Bellman-Ford finds shortest paths from a source vertex even when edges have negative weights, and it detects negative-weight cycles — developers must know it as the correct algorithm for graphs where Dijkstra's greedy assumption breaks down.
+> Bellman-Ford finds shortest paths from a source vertex even when edges have negative weights, and it detects negative-weight cycles - developers must know it as the correct algorithm for graphs where Dijkstra's greedy assumption breaks down.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- Relax all edges V-1 times — after k relaxations, shortest paths using at most k edges are correct
+- Relax all edges V-1 times - after k relaxations, shortest paths using at most k edges are correct
 - A path in a graph with V vertices uses at most V-1 edges, so V-1 rounds of relaxation suffices
 - After V-1 rounds, run one more pass: if any edge can still be relaxed, a negative cycle exists
-- O(V × E) time — slower than Dijkstra's O((V + E) log V) but handles the general case
+- O(V × E) time - slower than Dijkstra's O((V + E) log V) but handles the general case
 - Use when the graph may contain negative edge weights
 - Real-world applications: currency arbitrage detection, distance-vector routing protocols (RIP)
 
 **Tricky points:**
-- Initialise all distances to infinity except the source (distance 0) — same as Dijkstra
+- Initialise all distances to infinity except the source (distance 0) - same as Dijkstra
 - Edge relaxation: if `dist[u] + weight < dist[v]`, update `dist[v]`
-- The algorithm must iterate over all edges V-1 times — not just once per edge
-- Negative cycle detection requires a V-th round of relaxation — not a check during the V-1 rounds
+- The algorithm must iterate over all edges V-1 times - not just once per edge
+- Negative cycle detection requires a V-th round of relaxation - not a check during the V-1 rounds
 - If a vertex's distance is still infinity after V-1 rounds, it is unreachable from the source (not a negative cycle)
 
 ---
@@ -46,11 +46,11 @@ created: 2026-05-18
 
 ## What It Is
 
-Imagine you are estimating the total cost of a multi-step supply chain. Each step has a cost, but some steps offer discounts — represented as negative weights — because a supplier subsidises part of the route. You want the cheapest total cost from the factory to the customer. The catch is that if a cycle of steps offers a net negative cost (a "money loop"), you could travel around it indefinitely, reducing the cost to negative infinity. Bellman-Ford's job is to find the cheapest routes and also to detect if any such money loops exist.
+Imagine you are estimating the total cost of a multi-step supply chain. Each step has a cost, but some steps offer discounts - represented as negative weights - because a supplier subsidises part of the route. You want the cheapest total cost from the factory to the customer. The catch is that if a cycle of steps offers a net negative cost (a "money loop"), you could travel around it indefinitely, reducing the cost to negative infinity. Bellman-Ford's job is to find the cheapest routes and also to detect if any such money loops exist.
 
 The algorithm works through a process of gradual refinement. In the first round, it finds all shortest paths that use exactly one edge. In the second round, it finds all shortest paths that use at most two edges. After k rounds, it has found all shortest paths that use at most k edges. Since any simple (cycle-free) path in a graph with V vertices can have at most V-1 edges, V-1 rounds of this refinement process are sufficient to discover all shortest simple paths. This is fundamentally different from Dijkstra's approach, which greedily finalises one vertex per step using the assumption that no future edge can reduce an already-finalised distance.
 
-The negative cycle detection follows naturally from this framework. After V-1 rounds, every shortest simple path has been found. If there is any edge (u, v) with weight w such that `dist[u] + w < dist[v]`, it means there is still a path to v through u that is shorter than the best known path using V-1 edges — which is only possible if that path uses V or more edges, implying a cycle. And since the path is shorter with more edges, the cycle must have net negative weight. This single additional pass reveals the existence of a negative cycle.
+The negative cycle detection follows naturally from this framework. After V-1 rounds, every shortest simple path has been found. If there is any edge (u, v) with weight w such that `dist[u] + w < dist[v]`, it means there is still a path to v through u that is shorter than the best known path using V-1 edges - which is only possible if that path uses V or more edges, implying a cycle. And since the path is shorter with more edges, the cycle must have net negative weight. This single additional pass reveals the existence of a negative cycle.
 
 ---
 
@@ -184,7 +184,7 @@ def find_arbitrage(currencies: list, rates: list) -> bool:
 
 Bellman-Ford and Dijkstra solve the same problem (single-source shortest paths) but under different constraints. Dijkstra is faster but requires non-negative edge weights; Bellman-Ford is slower but handles negative weights and detects negative cycles. The correct choice depends entirely on whether negative weights are possible in the input graph.
 
-Both algorithms compute single-source shortest paths, which means they give the shortest path from one source to all other vertices. The all-pairs shortest paths problem — shortest path between every pair of vertices — is solved by Floyd-Warshall, which extends the Bellman-Ford relaxation idea across all possible intermediate vertices.
+Both algorithms compute single-source shortest paths, which means they give the shortest path from one source to all other vertices. The all-pairs shortest paths problem - shortest path between every pair of vertices - is solved by Floyd-Warshall, which extends the Bellman-Ford relaxation idea across all possible intermediate vertices.
 
 [[dijkstra|Dijkstra's Algorithm]]
 [[graphs|Graphs]]
@@ -198,7 +198,7 @@ Misconception 1: Bellman-Ford detects all negative cycles in a graph.
 Reality: Bellman-Ford run from a single source only detects negative cycles reachable from that source. If there are negative cycles in disconnected parts of the graph, they will not be detected. To detect all negative cycles, run Bellman-Ford from every vertex, or use Floyd-Warshall (which can detect negative cycles on the diagonal of the distance matrix).
 
 Misconception 2: The algorithm must complete all V-1 rounds before results are valid.
-Reality: The algorithm can terminate early if a complete round produces no updates — the distances have converged and further rounds would not change anything. This optimisation is valid and can significantly reduce running time on graphs that converge quickly. Many textbook presentations omit this optimisation, but it is standard in production implementations.
+Reality: The algorithm can terminate early if a complete round produces no updates - the distances have converged and further rounds would not change anything. This optimisation is valid and can significantly reduce running time on graphs that converge quickly. Many textbook presentations omit this optimisation, but it is standard in production implementations.
 
 ---
 
@@ -206,7 +206,7 @@ Reality: The algorithm can terminate early if a complete round produces no updat
 
 The distance-vector routing protocol RIP (Routing Information Protocol), used in older network routers, is based directly on Bellman-Ford: each router maintains a distance estimate to every other router, and periodically exchanges estimates with neighbours, triggering updates. The "count to infinity" problem in RIP (where routers can get stuck in a routing loop after a link failure) is a consequence of Bellman-Ford's iterative relaxation applied in a distributed, asynchronous setting.
 
-Currency arbitrage detection is a direct application: model currencies as vertices and exchange rates as directed edges with weight `-log(rate)`. A negative cycle in this graph represents a sequence of currency exchanges that yields a net profit. Detecting this cycle with the Vth-round relaxation check identifies arbitrage opportunities — a use case that has been employed in both academic research and financial systems.
+Currency arbitrage detection is a direct application: model currencies as vertices and exchange rates as directed edges with weight `-log(rate)`. A negative cycle in this graph represents a sequence of currency exchanges that yields a net profit. Detecting this cycle with the Vth-round relaxation check identifies arbitrage opportunities - a use case that has been employed in both academic research and financial systems.
 
 ---
 

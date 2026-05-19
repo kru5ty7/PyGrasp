@@ -1,6 +1,6 @@
 ﻿---
 title: 32 - Deploying Python Apps on EC2
-description: The production-grade pattern for running a Python web application on EC2 uses gunicorn as the WSGI server behind nginx as a reverse proxy, managed by systemd — understanding why each layer exists prevents common deployment failures.
+description: The production-grade pattern for running a Python web application on EC2 uses gunicorn as the WSGI server behind nginx as a reverse proxy, managed by systemd - understanding why each layer exists prevents common deployment failures.
 tags: [aws, cloud, layer-11, ec2, deployment, python, gunicorn]
 status: draft
 difficulty: intermediate
@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Deploying Python Apps on EC2
 
-> Deploying a Python web application to EC2 means choosing a stack — gunicorn, nginx, systemd, virtualenv — where each component has a specific, non-interchangeable role, and getting the configuration right determines whether your application handles production traffic reliably.
+> Deploying a Python web application to EC2 means choosing a stack - gunicorn, nginx, systemd, virtualenv - where each component has a specific, non-interchangeable role, and getting the configuration right determines whether your application handles production traffic reliably.
 
 ---
 
@@ -22,35 +22,35 @@ created: 2026-05-18
 - gunicorn runs the Python application workers; it cannot safely handle slow clients, TLS, or static files
 - nginx sits in front of gunicorn: terminates HTTPS, serves static files, buffers slow clients, proxies dynamic requests to gunicorn via a Unix socket
 - systemd manages gunicorn as a service: starts on boot, restarts on crash, logs to journald
-- Environment variables (secrets, database URLs) must not be in code — use systemd `EnvironmentFile` or AWS Parameter Store / Secrets Manager
+- Environment variables (secrets, database URLs) must not be in code - use systemd `EnvironmentFile` or AWS Parameter Store / Secrets Manager
 
 **Tricky points:**
-- gunicorn workers must equal roughly `(2 * vCPUs) + 1` for CPU-bound workloads — too few means wasted CPU capacity, too many means memory pressure
+- gunicorn workers must equal roughly `(2 * vCPUs) + 1` for CPU-bound workloads - too few means wasted CPU capacity, too many means memory pressure
 - A Unix socket between nginx and gunicorn is faster and more secure than a TCP loopback port (no port collision, no TCP overhead)
-- `gunicorn --timeout` defaults to 30 seconds — requests taking longer (ML inference, slow DB queries) need an increased timeout or async workers
-- Static files served by gunicorn are a performance antipattern — nginx serves them 10-100x faster from disk without touching Python
-- The virtualenv must be activated in the systemd unit with the full path — `ExecStart=/home/appuser/venv/bin/gunicorn`
+- `gunicorn --timeout` defaults to 30 seconds - requests taking longer (ML inference, slow DB queries) need an increased timeout or async workers
+- Static files served by gunicorn are a performance antipattern - nginx serves them 10-100x faster from disk without touching Python
+- The virtualenv must be activated in the systemd unit with the full path - `ExecStart=/home/appuser/venv/bin/gunicorn`
 
 ---
 
 ## What It Is
 
-Imagine a busy restaurant. The kitchen (gunicorn workers) processes orders — each worker handles one order at a time, producing the meal. But the kitchen cannot deal directly with customers: it cannot manage the front door, handle coat checks, or carry out all the preliminary customer management. A front-of-house team (nginx) manages all of that: greeting customers, handling the coat check (SSL), directing them to their tables, and relaying orders to the kitchen. The kitchen staff can focus entirely on cooking. If a customer sits down and orders but then spends 20 minutes deciding what to add to their order (a slow client), the front-of-house handles the wait — the kitchen worker does not stand idle waiting for them.
+Imagine a busy restaurant. The kitchen (gunicorn workers) processes orders - each worker handles one order at a time, producing the meal. But the kitchen cannot deal directly with customers: it cannot manage the front door, handle coat checks, or carry out all the preliminary customer management. A front-of-house team (nginx) manages all of that: greeting customers, handling the coat check (SSL), directing them to their tables, and relaying orders to the kitchen. The kitchen staff can focus entirely on cooking. If a customer sits down and orders but then spends 20 minutes deciding what to add to their order (a slow client), the front-of-house handles the wait - the kitchen worker does not stand idle waiting for them.
 
-This separation of concerns — nginx handling the internet-facing work, gunicorn handling the Python-specific work — is the reason the two-layer architecture exists. Python's reference implementation (CPython) has the Global Interpreter Lock (GIL), which means a single Python process can only execute one thread at a time. gunicorn works around this by running multiple worker processes, each handling one request at a time. But those worker processes are expensive — each one holds a Python interpreter, your application's full in-memory state, and connection pool resources. You want gunicorn workers to spend their time executing Python code, not waiting for a slow network connection to receive the full HTTP request body.
+This separation of concerns - nginx handling the internet-facing work, gunicorn handling the Python-specific work - is the reason the two-layer architecture exists. Python's reference implementation (CPython) has the Global Interpreter Lock (GIL), which means a single Python process can only execute one thread at a time. gunicorn works around this by running multiple worker processes, each handling one request at a time. But those worker processes are expensive - each one holds a Python interpreter, your application's full in-memory state, and connection pool resources. You want gunicorn workers to spend their time executing Python code, not waiting for a slow network connection to receive the full HTTP request body.
 
-nginx solves the slow-client problem by buffering. When a mobile client is uploading a large file slowly, nginx receives and buffers the entire request body before passing it to gunicorn in a single fast call. Without this buffering, a gunicorn worker would sit idle for the entire duration of the upload — unable to handle any other requests. With nginx in front, gunicorn workers are always busy processing complete requests and returning results, while nginx handles all the buffering and connection management.
+nginx solves the slow-client problem by buffering. When a mobile client is uploading a large file slowly, nginx receives and buffers the entire request body before passing it to gunicorn in a single fast call. Without this buffering, a gunicorn worker would sit idle for the entire duration of the upload - unable to handle any other requests. With nginx in front, gunicorn workers are always busy processing complete requests and returning results, while nginx handles all the buffering and connection management.
 
 ---
 
 ## How It Actually Works
 
-The deployment stack operates as a chain of processes. nginx listens on ports 80 and 443. For HTTPS requests, it terminates the TLS connection using a certificate from Let's Encrypt (via certbot) or AWS Certificate Manager (if the ALB handles TLS — then EC2 instances can use plain HTTP). After TLS termination, nginx evaluates the request: if it matches a static file location (`/static/`, `/media/`), nginx serves it directly from disk. If it matches the application location (`/`), nginx forwards the request to gunicorn via a Unix domain socket — a file-based IPC channel that is faster than a TCP loopback connection.
+The deployment stack operates as a chain of processes. nginx listens on ports 80 and 443. For HTTPS requests, it terminates the TLS connection using a certificate from Let's Encrypt (via certbot) or AWS Certificate Manager (if the ALB handles TLS - then EC2 instances can use plain HTTP). After TLS termination, nginx evaluates the request: if it matches a static file location (`/static/`, `/media/`), nginx serves it directly from disk. If it matches the application location (`/`), nginx forwards the request to gunicorn via a Unix domain socket - a file-based IPC channel that is faster than a TCP loopback connection.
 
-gunicorn receives the request on the Unix socket, passes it to a Python worker process as a WSGI environ dictionary, runs the application code, gets the response, and sends it back through the socket to nginx. nginx then sends the response to the client. systemd monitors the gunicorn process group — if gunicorn crashes (due to an uncaught exception that propagates all the way to the worker level, an out-of-memory kill, or a signal), systemd restarts it according to the `Restart=on-failure` policy in the service unit.
+gunicorn receives the request on the Unix socket, passes it to a Python worker process as a WSGI environ dictionary, runs the application code, gets the response, and sends it back through the socket to nginx. nginx then sends the response to the client. systemd monitors the gunicorn process group - if gunicorn crashes (due to an uncaught exception that propagates all the way to the worker level, an out-of-memory kill, or a signal), systemd restarts it according to the `Restart=on-failure` policy in the service unit.
 
 ```bash
-# On the EC2 instance (Ubuntu 22.04 — run via user data or manual SSH)
+# On the EC2 instance (Ubuntu 22.04 - run via user data or manual SSH)
 
 # 1. Update and install system packages
 sudo apt-get update -y
@@ -148,7 +148,7 @@ sudo nginx -t && sudo systemctl reload nginx
 ```
 
 ```python
-# wsgi.py — the entry point gunicorn calls
+# wsgi.py - the entry point gunicorn calls
 from myapp import create_app
 
 app = create_app()
@@ -156,13 +156,13 @@ app = create_app()
 if __name__ == "__main__":
     app.run()
 
-# .env file (referenced by systemd EnvironmentFile) — never commit this
+# .env file (referenced by systemd EnvironmentFile) - never commit this
 # DATABASE_URL=postgresql://user:password@rds-host:5432/mydb
 # SECRET_KEY=your-secret-key-here
 # AWS_DEFAULT_REGION=eu-west-1
 # ENVIRONMENT=production
 
-# Deployment update script — pull new code and restart gunicorn
+# Deployment update script - pull new code and restart gunicorn
 import subprocess, sys
 
 def deploy_update():
@@ -175,7 +175,7 @@ def deploy_update():
     subprocess.run(["/home/appuser/venv/bin/pip", "install", "-r",
                     "/home/appuser/app/requirements.txt"], check=True)
 
-    # Graceful restart — gunicorn workers finish their current requests
+    # Graceful restart - gunicorn workers finish their current requests
     # before being replaced (send SIGHUP to master process)
     subprocess.run(["sudo", "systemctl", "reload", "gunicorn"], check=True)
     print("Deployment complete")
@@ -192,13 +192,13 @@ worker_count = (2 * vcpus) + 1
 
 ## How It Connects
 
-Environment variables — database passwords, secret keys, API tokens — must never be hardcoded in application code or the systemd unit file. The recommended pattern is to store secrets in AWS Secrets Manager or Parameter Store and retrieve them at application startup or inject them via the systemd `EnvironmentFile`.
+Environment variables - database passwords, secret keys, API tokens - must never be hardcoded in application code or the systemd unit file. The recommended pattern is to store secrets in AWS Secrets Manager or Parameter Store and retrieve them at application startup or inject them via the systemd `EnvironmentFile`.
 
-[[secret-management|Secret Management]] — how to store and retrieve secrets from AWS Secrets Manager or Parameter Store, and how to inject them into a Python application running under systemd.
+[[secret-management|Secret Management]] - how to store and retrieve secrets from AWS Secrets Manager or Parameter Store, and how to inject them into a Python application running under systemd.
 
 For production deployments serving real traffic, the EC2 instance should sit behind an Application Load Balancer rather than being directly internet-exposed. The ALB handles SSL termination (removing the need for nginx to manage certificates) and provides health-check-based traffic routing.
 
-[[ec2-elb|Elastic Load Balancer]] — when the ALB handles TLS termination, nginx does not need SSL certificates; EC2 instances receive plain HTTP from the ALB on the application port; the nginx configuration simplifies to proxying without SSL.
+[[ec2-elb|Elastic Load Balancer]] - when the ALB handles TLS termination, nginx does not need SSL certificates; EC2 instances receive plain HTTP from the ALB on the application port; the nginx configuration simplifies to proxying without SSL.
 
 ---
 
@@ -208,7 +208,7 @@ Misconception 1: `flask run` or Django's development server is fine for producti
 Reality: The Flask development server (`app.run()`) and Django's `python manage.py runserver` are single-threaded servers designed for development. They handle one request at a time, do not buffer clients, have no worker management, and do not restart on crashes. Running them in production means your application cannot handle concurrent requests, is one exception away from going offline, and has no graceful restart capability. gunicorn (or uWSGI, or uvicorn for async frameworks) is the correct WSGI/ASGI server for production.
 
 Misconception 2: More gunicorn workers always means better performance.
-Reality: Each gunicorn worker is a full Python process with its own memory footprint. A Flask application with 500MB of in-memory state running 20 workers on a 2GB instance will exhaust memory, causing the OS to swap and performance to collapse. The standard formula — `(2 * vCPUs) + 1` for CPU-bound workloads — is a starting point, but the actual limit is constrained by available memory. Profile your worker memory usage and size your instance and worker count together.
+Reality: Each gunicorn worker is a full Python process with its own memory footprint. A Flask application with 500MB of in-memory state running 20 workers on a 2GB instance will exhaust memory, causing the OS to swap and performance to collapse. The standard formula - `(2 * vCPUs) + 1` for CPU-bound workloads - is a starting point, but the actual limit is constrained by available memory. Profile your worker memory usage and size your instance and worker count together.
 
 ---
 
@@ -216,7 +216,7 @@ Reality: Each gunicorn worker is a full Python process with its own memory footp
 
 The gunicorn + nginx + systemd stack is the foundation of EC2-based Python deployments across thousands of production applications. Understanding why each layer exists prevents two categories of mistakes: deploying without nginx (gunicorn handles slow clients directly, exhausting workers under load) and deploying without systemd (process crashes cause permanent downtime until someone SSH's in and restarts manually).
 
-The deployment update process is equally important. Rolling updates — deploying new code to one instance at a time while the others remain in service — require the ability to gracefully restart gunicorn (`systemctl reload gunicorn` sends SIGHUP to the master, which starts new workers with the new code and waits for old workers to finish their current requests before killing them). Abrupt restarts (`systemctl restart gunicorn`) cause brief downtime as all workers are killed simultaneously.
+The deployment update process is equally important. Rolling updates - deploying new code to one instance at a time while the others remain in service - require the ability to gracefully restart gunicorn (`systemctl reload gunicorn` sends SIGHUP to the master, which starts new workers with the new code and waits for old workers to finish their current requests before killing them). Abrupt restarts (`systemctl restart gunicorn`) cause brief downtime as all workers are killed simultaneously.
 
 ---
 
@@ -228,11 +228,11 @@ The deployment update process is equally important. Rolling updates — deployin
 # Increase timeout in the gunicorn start command
 ExecStart=/home/appuser/venv/bin/gunicorn \
     --workers 5 \
-    --timeout 300 \    # 5 minutes — adjust for your slowest legitimate request
+    --timeout 300 \    # 5 minutes - adjust for your slowest legitimate request
     --bind unix:/run/gunicorn/gunicorn.sock \
     wsgi:app
 
-# Or use async workers (gevent) for I/O-bound workloads — no timeout on waiting
+# Or use async workers (gevent) for I/O-bound workloads - no timeout on waiting
 ExecStart=/home/appuser/venv/bin/gunicorn \
     --workers 5 \
     --worker-class gevent \
@@ -243,7 +243,7 @@ ExecStart=/home/appuser/venv/bin/gunicorn \
 **nginx proxy_read_timeout shorter than gunicorn timeout, causing 504 Gateway Timeout before gunicorn even kills the worker.**
 
 ```nginx
-# nginx.conf — must be longer than or equal to gunicorn --timeout
+# nginx.conf - must be longer than or equal to gunicorn --timeout
 location / {
     proxy_pass http://gunicorn;
     proxy_read_timeout 300s;   # must be >= gunicorn timeout
@@ -255,10 +255,10 @@ location / {
 **Deploying new code with `systemctl restart gunicorn` instead of `reload`, causing a brief outage as all workers restart simultaneously.**
 
 ```bash
-# Bad — kills all workers immediately, brief downtime
+# Bad - kills all workers immediately, brief downtime
 sudo systemctl restart gunicorn
 
-# Good — sends SIGHUP; master starts new workers before killing old ones
+# Good - sends SIGHUP; master starts new workers before killing old ones
 sudo systemctl reload gunicorn
 
 # Verify gunicorn supports graceful restart (it does for sync workers)

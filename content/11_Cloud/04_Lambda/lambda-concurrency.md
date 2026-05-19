@@ -1,6 +1,6 @@
 ﻿---
 title: 41 - Lambda Concurrency and Scaling
-description: Lambda scales by adding concurrent execution environments — understanding the concurrency model, account limits, reserved and provisioned concurrency, and throttling is critical for production reliability.
+description: Lambda scales by adding concurrent execution environments - understanding the concurrency model, account limits, reserved and provisioned concurrency, and throttling is critical for production reliability.
 tags: [aws, cloud, layer-11, lambda, concurrency, scaling]
 status: draft
 difficulty: intermediate
@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Lambda Concurrency and Scaling
 
-> Lambda scales horizontally and automatically — every simultaneous invocation gets its own execution environment — but the account-level concurrency ceiling, throttling behaviour, and cost model for pre-warmed environments demand deliberate configuration.
+> Lambda scales horizontally and automatically - every simultaneous invocation gets its own execution environment - but the account-level concurrency ceiling, throttling behaviour, and cost model for pre-warmed environments demand deliberate configuration.
 
 ---
 
@@ -21,26 +21,26 @@ created: 2026-05-18
 - Concurrency = number of simultaneous in-flight invocations across all function instances
 - Account-level default limit: 1000 concurrent executions (soft limit, requestable increase)
 - Reserved concurrency: reserves N executions for a specific function (and caps it there)
-- Provisioned Concurrency: N environments pre-initialised and always ready — eliminates cold starts, billed per minute
+- Provisioned Concurrency: N environments pre-initialised and always ready - eliminates cold starts, billed per minute
 - Throttling (HTTP 429): returned when a function exceeds its reserved limit or the account limit is reached
 - CloudWatch metrics: `ConcurrentExecutions`, `Throttles`, `ProvisionedConcurrencyUtilization`
 
 **Tricky points:**
 - Setting reserved concurrency to 0 effectively disables a function (useful for emergency stops)
-- Reserved concurrency subtracts from the account pool — if one function reserves 800 of 1000, only 200 remain for all other functions
+- Reserved concurrency subtracts from the account pool - if one function reserves 800 of 1000, only 200 remain for all other functions
 - For SQS event source mappings, Lambda scales in increments of 60 executions per minute, up to the queue's depth
-- Provisioned Concurrency requires a published version or alias — it cannot be set on `$LATEST`
+- Provisioned Concurrency requires a published version or alias - it cannot be set on `$LATEST`
 - Burst concurrency limit (per-region, per-account): 500–3000 immediate burst capacity, then 500 per minute until the reserved limit is reached
 
 ---
 
 ## What It Is
 
-Lambda's scaling model is like a self-service copy shop with an unlimited number of photocopiers. Every customer (invocation) who walks in gets their own machine immediately — no waiting in line. The machines spin up and spin down as customers arrive and leave, and you are only charged for the minutes each machine is actually running. This is the promise of automatic horizontal scaling: Lambda adds execution environments (machines) in response to demand without any manual intervention.
+Lambda's scaling model is like a self-service copy shop with an unlimited number of photocopiers. Every customer (invocation) who walks in gets their own machine immediately - no waiting in line. The machines spin up and spin down as customers arrive and leave, and you are only charged for the minutes each machine is actually running. This is the promise of automatic horizontal scaling: Lambda adds execution environments (machines) in response to demand without any manual intervention.
 
 The ceiling on this model is the account-level concurrency limit. The default is 1000 concurrent executions across all Lambda functions in a region. If your account runs 900 concurrent executions on one function and another function starts receiving traffic, that second function has only 100 units of concurrency headroom before it hits the account limit and begins returning throttle errors (HTTP 429). In a microservices architecture where dozens of Lambda functions share a single AWS account, this pool contention is a real operational concern.
 
-Reserved concurrency solves the pool contention problem in two directions simultaneously. Setting a function's reserved concurrency to 200 means: this function can use at most 200 concurrent executions, and no other function can claim those 200 slots. The reservation is both a floor (guaranteed availability) and a ceiling (blast radius containment). A runaway function — say, one processing a sudden queue backlog — cannot consume the entire account's concurrency and starve all other functions. Provisioned Concurrency takes a different cut: it pre-initialises environments so that when an invocation arrives, no cold start occurs. It is the latency optimisation; reserved concurrency is the capacity management tool.
+Reserved concurrency solves the pool contention problem in two directions simultaneously. Setting a function's reserved concurrency to 200 means: this function can use at most 200 concurrent executions, and no other function can claim those 200 slots. The reservation is both a floor (guaranteed availability) and a ceiling (blast radius containment). A runaway function - say, one processing a sudden queue backlog - cannot consume the entire account's concurrency and starve all other functions. Provisioned Concurrency takes a different cut: it pre-initialises environments so that when an invocation arrives, no cold start occurs. It is the latency optimisation; reserved concurrency is the capacity management tool.
 
 ---
 
@@ -123,18 +123,18 @@ aws application-autoscaling put-scaling-policy \
 
 Concurrency and cold starts are tightly coupled. Provisioned Concurrency is the answer to cold starts on latency-sensitive functions, but it requires publishing a function version. The cold start note describes the cost-benefit analysis of Provisioned Concurrency.
 
-[[lambda-cold-start|Lambda Cold Starts]] — covers the cold start lifecycle and explains why Provisioned Concurrency eliminates cold starts where the scheduled-ping approach does not.
+[[lambda-cold-start|Lambda Cold Starts]] - covers the cold start lifecycle and explains why Provisioned Concurrency eliminates cold starts where the scheduled-ping approach does not.
 
 The concurrency limit and throttling behaviour are directly relevant to SQS-triggered functions, where throttled invocations cause messages to become visible again in the queue and potentially be retried excessively.
 
-[[sqs|SQS (Simple Queue Service)]] — covers the visibility timeout, dead-letter queue, and how throttling of Lambda invocations interacts with SQS message redelivery.
+[[sqs|SQS (Simple Queue Service)]] - covers the visibility timeout, dead-letter queue, and how throttling of Lambda invocations interacts with SQS message redelivery.
 
 ---
 
 ## Common Misconceptions
 
 Misconception 1: Setting a high memory allocation increases Lambda's concurrency.
-Reality: Memory allocation and concurrency are independent dimensions. More memory gives a single invocation more CPU (because CPU is proportional to memory), which can make each invocation finish faster, thereby freeing the concurrency slot sooner. But memory does not directly increase the number of simultaneous invocations — that is governed by the concurrency limit.
+Reality: Memory allocation and concurrency are independent dimensions. More memory gives a single invocation more CPU (because CPU is proportional to memory), which can make each invocation finish faster, thereby freeing the concurrency slot sooner. But memory does not directly increase the number of simultaneous invocations - that is governed by the concurrency limit.
 
 Misconception 2: Provisioned Concurrency means you pay nothing extra for the provisioned environments when no traffic is running.
 Reality: Provisioned Concurrency is billed by the hour at a per-GB-second rate, regardless of whether the environments handle any invocations. Provisioning 20 environments with 1GB memory for 24 hours costs 20 × 1 × 86400 GB-seconds at the provisioned concurrency rate, whether traffic is zero or high. This makes it important to use Auto Scaling to scale the provisioned pool down during low-traffic periods.
@@ -195,7 +195,7 @@ Common question forms:
 - "What happens when a Lambda function is throttled?"
 
 Answer frame:
-Explain the execution environment model — one environment per concurrent invocation. Describe the account concurrency pool (default 1000) and the burst scaling ramp-up. Distinguish reserved concurrency (capacity management + blast radius cap) from provisioned concurrency (cold start elimination, costs when idle). For throttling: synchronous callers receive 429 and should retry with backoff; SQS event source mappings retry automatically via visibility timeout expiry; EventBridge async invocations are retried by Lambda.
+Explain the execution environment model - one environment per concurrent invocation. Describe the account concurrency pool (default 1000) and the burst scaling ramp-up. Distinguish reserved concurrency (capacity management + blast radius cap) from provisioned concurrency (cold start elimination, costs when idle). For throttling: synchronous callers receive 429 and should retry with backoff; SQS event source mappings retry automatically via visibility timeout expiry; EventBridge async invocations are retried by Lambda.
 
 ---
 

@@ -1,16 +1,16 @@
 ---
-title: Learning Path — DSA (Data Structures and Algorithms)
-description: Data structures, sorting, searching, techniques, and graph algorithms — with step-by-step visuals, complexity cards, and Python implementations.
+title: Learning Path - DSA (Data Structures and Algorithms)
+description: Data structures, sorting, searching, techniques, and graph algorithms - with step-by-step visuals, complexity cards, and Python implementations.
 tags: [moc, learning-path, dsa, algorithms, layer-10]
 ---
 
-# Learning Path — DSA
+# Learning Path - DSA
 
-> Data structures and algorithms from first principles. Standalone — can be read any time. Every note includes a visual diagram, complexity card, and Python implementation.
+> Data structures and algorithms from first principles. Standalone - can be read any time. Every note includes a visual diagram, complexity card, and Python implementation.
 
 ---
 
-## Layer 10a — Data Structures
+## Layer 10a - Data Structures
 
 1. [[big-o-notation|Big O Notation]]
 2. [[arrays|Arrays]]
@@ -32,7 +32,7 @@ tags: [moc, learning-path, dsa, algorithms, layer-10]
 
 ---
 
-## Layer 10b — Sorting Algorithms
+## Layer 10b - Sorting Algorithms
 
 1. [[bubble-sort|Bubble Sort]]
 2. [[selection-sort|Selection Sort]]
@@ -42,11 +42,11 @@ tags: [moc, learning-path, dsa, algorithms, layer-10]
 6. [[heap-sort|Heap Sort]]
 7. [[counting-sort|Counting Sort]]
 8. [[sorting-comparison|Sorting Algorithm Comparison]]
-9. [[python-sort-internals|Timsort — Python's Sorting Algorithm]]
+9. [[python-sort-internals|Timsort - Python's Sorting Algorithm]]
 
 ---
 
-## Layer 10c — Searching Algorithms
+## Layer 10c - Searching Algorithms
 
 1. [[linear-search|Linear Search]]
 2. [[binary-search|Binary Search]]
@@ -57,7 +57,7 @@ tags: [moc, learning-path, dsa, algorithms, layer-10]
 
 ---
 
-## Layer 10d — Techniques and Patterns
+## Layer 10d - Techniques and Patterns
 
 1. [[recursion|Recursion]]
 2. [[divide-and-conquer|Divide and Conquer]]
@@ -72,7 +72,7 @@ tags: [moc, learning-path, dsa, algorithms, layer-10]
 
 ---
 
-## Layer 10e — Graph Algorithms
+## Layer 10e - Graph Algorithms
 
 1. [[dijkstra|Dijkstra's Algorithm]]
 2. [[bellman-ford|Bellman-Ford Algorithm]]

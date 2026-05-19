@@ -1,21 +1,21 @@
 ---
-title: Learning Path — SQL
-description: SQL fundamentals, joins, aggregations, indexes, transactions, and advanced patterns — standalone layer, no Python prerequisite.
+title: Learning Path - SQL
+description: SQL fundamentals, joins, aggregations, indexes, transactions, and advanced patterns - standalone layer, no Python prerequisite.
 tags: [moc, learning-path, sql, databases, layer-9]
 ---
 
-# Learning Path — SQL
+# Learning Path - SQL
 
-> SQL from scratch to production. Standalone — can be read any time. Every note includes runnable SQL examples and a "What Breaks" section.
+> SQL from scratch to production. Standalone - can be read any time. Every note includes runnable SQL examples and a "What Breaks" section.
 
 ---
 
-## Layer 9a — SQL Fundamentals
+## Layer 9a - SQL Fundamentals
 
 1. [[what-is-sql|What is SQL]]
 2. [[sql-databases|SQL Databases (PostgreSQL, MySQL, SQLite)]]
-3. [[ddl|DDL — CREATE, ALTER, DROP]]
-4. [[dml|DML — INSERT, UPDATE, DELETE]]
+3. [[ddl|DDL - CREATE, ALTER, DROP]]
+4. [[dml|DML - INSERT, UPDATE, DELETE]]
 5. [[select-basics|SELECT Basics]]
 6. [[where-clause|WHERE Clause]]
 7. [[ordering-and-limiting|ORDER BY, LIMIT, OFFSET]]
@@ -24,7 +24,7 @@ tags: [moc, learning-path, sql, databases, layer-9]
 
 ---
 
-## Layer 9b — Joins and Relationships
+## Layer 9b - Joins and Relationships
 
 1. [[joins-overview|Joins Overview]]
 2. [[inner-join|INNER JOIN]]
@@ -37,7 +37,7 @@ tags: [moc, learning-path, sql, databases, layer-9]
 
 ---
 
-## Layer 9c — Aggregations and Grouping
+## Layer 9c - Aggregations and Grouping
 
 1. [[aggregate-functions|Aggregate Functions (COUNT, SUM, AVG, MIN, MAX)]]
 2. [[group-by|GROUP BY]]
@@ -49,7 +49,7 @@ tags: [moc, learning-path, sql, databases, layer-9]
 
 ---
 
-## Layer 9d — Indexes and Performance
+## Layer 9d - Indexes and Performance
 
 1. [[sql-indexes|SQL Indexes]]
 2. [[b-tree-index|B-Tree Index Internals]]
@@ -61,7 +61,7 @@ tags: [moc, learning-path, sql, databases, layer-9]
 
 ---
 
-## Layer 9e — Transactions and ACID
+## Layer 9e - Transactions and ACID
 
 1. [[transactions|Transactions]]
 2. [[acid-properties|ACID Properties]]
@@ -72,7 +72,7 @@ tags: [moc, learning-path, sql, databases, layer-9]
 
 ---
 
-## Layer 9f — Advanced SQL
+## Layer 9f - Advanced SQL
 
 1. [[views|Views]]
 2. [[materialized-views|Materialized Views]]

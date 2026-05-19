@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # WHERE Clause
 
-> WHERE is how you tell the database which rows to include in a result or modify with DML — and the way SQL handles NULL in comparisons is almost universally misunderstood until it causes a production bug.
+> WHERE is how you tell the database which rows to include in a result or modify with DML - and the way SQL handles NULL in comparisons is almost universally misunderstood until it causes a production bug.
 
 ---
 
@@ -37,13 +37,13 @@ created: 2026-05-18
 
 Imagine a bouncer at a club entrance with a clipboard of rules. The rules might say "guests must be over 21 AND have a reservation" or "VIP members OR guests on the early list may enter." The bouncer checks each person against the rules and either lets them in or turns them away. The bouncer does not change the people; they just decide who gets through the door. The WHERE clause is that bouncer for your data.
 
-WHERE appears in SELECT, UPDATE, and DELETE statements. It takes an expression that can evaluate to TRUE, FALSE, or NULL for each row in the source table. Only rows where the expression evaluates to TRUE pass through. Rows where the expression evaluates to FALSE or NULL are excluded. This three-valued logic — TRUE, FALSE, and NULL (unknown) — is one of the most important and most misunderstood aspects of SQL.
+WHERE appears in SELECT, UPDATE, and DELETE statements. It takes an expression that can evaluate to TRUE, FALSE, or NULL for each row in the source table. Only rows where the expression evaluates to TRUE pass through. Rows where the expression evaluates to FALSE or NULL are excluded. This three-valued logic - TRUE, FALSE, and NULL (unknown) - is one of the most important and most misunderstood aspects of SQL.
 
 The simplest WHERE expressions use comparison operators. `WHERE age > 18` keeps rows where the age column's value is greater than 18. `WHERE status = 'active'` keeps rows where status equals the string 'active'. `WHERE id <> 42` keeps all rows except the one where id is 42. These operators work exactly as you would expect for non-NULL values.
 
 Multiple conditions are combined with AND and OR. AND requires both conditions to be TRUE for a row to pass. OR requires at least one condition to be TRUE. NOT inverts a condition. AND has higher operator precedence than OR, which means without parentheses, `a OR b AND c` is interpreted as `a OR (b AND c)`. This is a constant source of logic bugs. When combining AND and OR, always use parentheses to make the grouping explicit, even when you believe the precedence is what you want.
 
-NULL requires special handling. NULL represents an unknown or missing value. Comparing NULL to anything — even another NULL — with a regular comparison operator produces NULL, not TRUE or FALSE. The expression `NULL = NULL` evaluates to NULL. The expression `NULL = 1` evaluates to NULL. Since WHERE requires TRUE to include a row, any expression that produces NULL causes the row to be excluded. To test whether a value is NULL, use `IS NULL` or `IS NOT NULL`. These are the only operators that correctly identify NULL.
+NULL requires special handling. NULL represents an unknown or missing value. Comparing NULL to anything - even another NULL - with a regular comparison operator produces NULL, not TRUE or FALSE. The expression `NULL = NULL` evaluates to NULL. The expression `NULL = 1` evaluates to NULL. Since WHERE requires TRUE to include a row, any expression that produces NULL causes the row to be excluded. To test whether a value is NULL, use `IS NULL` or `IS NOT NULL`. These are the only operators that correctly identify NULL.
 
 ---
 
@@ -51,9 +51,9 @@ NULL requires special handling. NULL represents an unknown or missing value. Com
 
 The database engine evaluates the WHERE expression for each candidate row produced by the FROM clause. The evaluation is short-circuit in most databases: for AND, if the left side evaluates to FALSE, the right side is not evaluated (the result is already FALSE). For OR, if the left side evaluates to TRUE, the right side is not evaluated. This means expressions with side effects (rare in SQL) may or may not be evaluated depending on their position.
 
-WHERE predicates interact heavily with indexes. When the WHERE clause contains a condition on an indexed column — such as `WHERE user_id = 42` — the optimizer can use the index to locate matching rows directly rather than scanning the entire table. This is called an index seek or index scan. When the WHERE clause wraps a column in a function — such as `WHERE LOWER(email) = 'alice@example.com'` — the optimizer cannot use an ordinary index on the email column, because the index stores the original values, not the function results. In PostgreSQL, you can create a functional index that stores `LOWER(email)` to support this pattern.
+WHERE predicates interact heavily with indexes. When the WHERE clause contains a condition on an indexed column - such as `WHERE user_id = 42` - the optimizer can use the index to locate matching rows directly rather than scanning the entire table. This is called an index seek or index scan. When the WHERE clause wraps a column in a function - such as `WHERE LOWER(email) = 'alice@example.com'` - the optimizer cannot use an ordinary index on the email column, because the index stores the original values, not the function results. In PostgreSQL, you can create a functional index that stores `LOWER(email)` to support this pattern.
 
-The LIKE operator performs pattern matching. The `%` wildcard matches any sequence of characters (including zero characters). The `_` wildcard matches any single character. `LIKE 'A%'` matches any string starting with A. `LIKE '%son'` matches any string ending with son. A leading wildcard — `LIKE '%smith%'` — prevents index usage because the matching range is unknown. For full-text search needs, PostgreSQL provides dedicated full-text search features.
+The LIKE operator performs pattern matching. The `%` wildcard matches any sequence of characters (including zero characters). The `_` wildcard matches any single character. `LIKE 'A%'` matches any string starting with A. `LIKE '%son'` matches any string ending with son. A leading wildcard - `LIKE '%smith%'` - prevents index usage because the matching range is unknown. For full-text search needs, PostgreSQL provides dedicated full-text search features.
 
 ```sql
 -- Basic comparison
@@ -104,7 +104,7 @@ SELECT * FROM users WHERE email ILIKE 'alice@example.com';
 
 ## How It Connects
 
-WHERE is evaluated in the second step of SQL's logical execution order — after FROM but before SELECT, GROUP BY, and aggregation. The select-basics note explains why this ordering matters and why SELECT aliases are unavailable in WHERE.
+WHERE is evaluated in the second step of SQL's logical execution order - after FROM but before SELECT, GROUP BY, and aggregation. The select-basics note explains why this ordering matters and why SELECT aliases are unavailable in WHERE.
 
 [[select-basics|SELECT Basics]]
 
@@ -141,7 +141,7 @@ Understanding that WHERE is the primary mechanism for index utilization fundamen
 
 ## What Breaks
 
-The NOT IN with NULL issue is a silent correctness failure — the query runs without error but returns wrong results.
+The NOT IN with NULL issue is a silent correctness failure - the query runs without error but returns wrong results.
 
 ```sql
 -- Suppose the 'deleted_user_ids' subquery returns: (1, 2, NULL)
@@ -186,5 +186,5 @@ Explain three-valued logic (TRUE, FALSE, NULL) in SQL. Describe why `= NULL` pro
 - [[select-basics|SELECT Basics]]
 - [[sql-indexes|SQL Indexes]]
 - [[having-clause|HAVING Clause]]
-- [[dml|DML — INSERT, UPDATE, DELETE]]
+- [[dml|DML - INSERT, UPDATE, DELETE]]
 - [[full-text-search|Full-Text Search]]

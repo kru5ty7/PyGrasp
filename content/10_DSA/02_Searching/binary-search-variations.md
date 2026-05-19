@@ -23,13 +23,13 @@ created: 2026-05-18
 - Find last occurrence (right boundary): find the rightmost index where `arr[i] == target`
 - Find insertion point: find where `target` belongs in the sorted array (Python's `bisect_left`)
 - Search on the answer: given a monotone predicate `f(x)`, find the minimum x where `f(x)` is True
-- Search in rotated sorted array: one partition is always fully sorted — identify it and check if target lies there
+- Search in rotated sorted array: one partition is always fully sorted - identify it and check if target lies there
 
 **Tricky points:**
 - The left-boundary and right-boundary searches look nearly identical; the only difference is whether you move left or right when `arr[mid] == target`
 - For the search-on-the-answer template, the predicate must be monotone: False for some prefix, then True for all values from some threshold onward
 - When the loop exits, `lo` is the answer for left-boundary searches (smallest valid index)
-- Using `mid = lo + (hi - lo) // 2` biases toward the lower middle — for right-boundary searches, some templates need `mid = lo + (hi - lo + 1) // 2` to avoid infinite loops with a two-element window
+- Using `mid = lo + (hi - lo) // 2` biases toward the lower middle - for right-boundary searches, some templates need `mid = lo + (hi - lo + 1) // 2` to avoid infinite loops with a two-element window
 - Python's `bisect_left` implements the left-boundary/insertion-point search; `bisect_right` implements the right-boundary variant
 
 ---
@@ -48,9 +48,9 @@ created: 2026-05-18
 
 The basic binary search for an exact match is the simplest application of a more general principle: given a sorted space of possibilities and a question that can be answered "too small," "correct," or "too large," you can find the answer in O(log n) steps by halving the space at each step. Once you internalise this principle, you start seeing binary search in places that do not look like array searches at all.
 
-Consider a software engineer debugging a regression: they know their code worked at some commit in the past and is broken now, and they need to find which specific commit introduced the bug. A linear scan means testing each commit from oldest to newest — O(n) test runs. But if "broken" is a monotone property (once the commit that introduced the bug is passed, all later commits are also broken), binary search applies: test the middle commit, determine whether it is broken or not, and eliminate half the remaining commits. This is `git bisect`, which is literally binary search on a commit history. The array is not an array; it is a timeline of commits.
+Consider a software engineer debugging a regression: they know their code worked at some commit in the past and is broken now, and they need to find which specific commit introduced the bug. A linear scan means testing each commit from oldest to newest - O(n) test runs. But if "broken" is a monotone property (once the commit that introduced the bug is passed, all later commits are also broken), binary search applies: test the middle commit, determine whether it is broken or not, and eliminate half the remaining commits. This is `git bisect`, which is literally binary search on a commit history. The array is not an array; it is a timeline of commits.
 
-This generalisation — binary search on the answer rather than the array — is one of the most powerful algorithmic patterns. Many optimisation problems ask: "what is the minimum value of X such that some condition holds?" If the condition is monotone in X (false for small X, true for large X), you can binary search on X directly, calling a predicate function at each midpoint. The predicate function might be arbitrarily complex: simulate a process, run a greedy algorithm, compute a sum. As long as it is monotone, binary search finds the minimum satisfying X in O(log(range)) iterations times the cost of one predicate evaluation.
+This generalisation - binary search on the answer rather than the array - is one of the most powerful algorithmic patterns. Many optimisation problems ask: "what is the minimum value of X such that some condition holds?" If the condition is monotone in X (false for small X, true for large X), you can binary search on X directly, calling a predicate function at each midpoint. The predicate function might be arbitrarily complex: simulate a process, run a greedy algorithm, compute a sum. As long as it is monotone, binary search finds the minimum satisfying X in O(log(range)) iterations times the cost of one predicate evaluation.
 
 ---
 
@@ -165,8 +165,8 @@ print(search_rotated(rotated, 3)) # -1
 
 # Using Python's bisect module for boundary searches
 import bisect
-print(bisect.bisect_left(arr, 2))  # 1 — first occurrence
-print(bisect.bisect_right(arr, 2)) # 4 — one past last occurrence
+print(bisect.bisect_left(arr, 2))  # 1 - first occurrence
+print(bisect.bisect_right(arr, 2)) # 4 - one past last occurrence
 ```
 
 ## Visualizer
@@ -177,7 +177,7 @@ print(bisect.bisect_right(arr, 2)) # 4 — one past last occurrence
 
 ## How It Connects
 
-All variations share the same O(log n) complexity as standard binary search — the loop narrows the window by half each iteration regardless of what the predicate or condition is. The predicate-based form is a direct instance of divide and conquer applied to answer spaces rather than data arrays. Many LeetCode hard problems that appear unrelated to searching — minimum capacity to ship packages in D days, Koko eating bananas, splitting an array into k parts with minimised maximum sum — all reduce to binary search on the answer once the monotone predicate is identified.
+All variations share the same O(log n) complexity as standard binary search - the loop narrows the window by half each iteration regardless of what the predicate or condition is. The predicate-based form is a direct instance of divide and conquer applied to answer spaces rather than data arrays. Many LeetCode hard problems that appear unrelated to searching - minimum capacity to ship packages in D days, Koko eating bananas, splitting an array into k parts with minimised maximum sum - all reduce to binary search on the answer once the monotone predicate is identified.
 
 [[binary-search|Binary Search]]
 [[divide-and-conquer|Divide and Conquer]]
@@ -194,7 +194,7 @@ Misconception 2: "When arr[mid] equals the target during a boundary search, you 
 Reality: For the basic exact-match search, returning immediately on a match is correct and efficient. For boundary searches, you must continue: for the first occurrence, record mid as a candidate and narrow right (hi = mid - 1) to check whether an earlier occurrence exists; for the last occurrence, record mid and narrow left (lo = mid + 1) to check whether a later occurrence exists. Returning immediately gives a valid occurrence but not necessarily the first or last.
 
 Misconception 3: "Binary search on the answer only works for searching integer values."
-Reality: Binary search on the answer works for any monotone function over a totally ordered domain. You can binary search on real-valued answers (with a tolerance condition) to find, for example, the square root of a number to arbitrary precision. The loop termination condition changes from `lo < hi` (integers) to `hi - lo > epsilon` (reals). The core pattern — evaluate predicate at midpoint, discard half, narrow to convergence — is identical.
+Reality: Binary search on the answer works for any monotone function over a totally ordered domain. You can binary search on real-valued answers (with a tolerance condition) to find, for example, the square root of a number to arbitrary precision. The loop termination condition changes from `lo < hi` (integers) to `hi - lo > epsilon` (reals). The core pattern - evaluate predicate at midpoint, discard half, narrow to convergence - is identical.
 
 ---
 
@@ -202,7 +202,7 @@ Reality: Binary search on the answer works for any monotone function over a tota
 
 Binary search variations are among the most commonly tested algorithmic patterns in technical interviews, particularly at senior levels. The exact-match binary search is almost too simple to distinguish candidates; interviewers use rotated array search, first/last occurrence, and binary search on the answer to probe deeper understanding. The ability to recognise when a problem has a monotone structure and to formulate the correct predicate is what separates candidates who memorise binary search from candidates who understand it.
 
-In production code, the Python `bisect` module handles the most common cases (insertion point, first/last occurrence) efficiently. But the predicate-based form — particularly for capacity/scheduling problems in distributed systems or for parameter tuning in machine learning pipelines — appears in real engineering work, not just interviews.
+In production code, the Python `bisect` module handles the most common cases (insertion point, first/last occurrence) efficiently. But the predicate-based form - particularly for capacity/scheduling problems in distributed systems or for parameter tuning in machine learning pipelines - appears in real engineering work, not just interviews.
 
 ---
 
@@ -215,7 +215,7 @@ Common question forms:
 - "How do you find where to insert an element in a sorted list?"
 
 Answer frame:
-For boundary searches: describe the left-boundary template (record match, narrow right) and right-boundary template (record match, narrow left). Distinguish from exact-match search. For rotated array: explain the key insight that one half is always sorted, and describe how to identify which half and whether the target lies in it. For binary search on the answer: identify the monotone predicate, set lo and hi to the extremes of the answer range, and apply the left-boundary template with the predicate as the condition. Always state what the loop invariant is — examiners award marks for this explicitly.
+For boundary searches: describe the left-boundary template (record match, narrow right) and right-boundary template (record match, narrow left). Distinguish from exact-match search. For rotated array: explain the key insight that one half is always sorted, and describe how to identify which half and whether the target lies in it. For binary search on the answer: identify the monotone predicate, set lo and hi to the extremes of the answer range, and apply the left-boundary template with the predicate as the condition. Always state what the loop invariant is - examiners award marks for this explicitly.
 
 ---
 

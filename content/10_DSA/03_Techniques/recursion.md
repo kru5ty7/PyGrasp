@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Recursion
 
-> Recursion is a function that calls itself with progressively smaller inputs until it reaches a base case — every developer must understand it because it is the foundation for tree traversal, divide-and-conquer, backtracking, and dynamic programming.
+> Recursion is a function that calls itself with progressively smaller inputs until it reaches a base case - every developer must understand it because it is the foundation for tree traversal, divide-and-conquer, backtracking, and dynamic programming.
 
 ---
 
@@ -22,12 +22,12 @@ created: 2026-05-18
 - Each call creates a new frame on the call stack with its own local variables
 - Python's default recursion limit is 1000 (`sys.getrecursionlimit()`)
 - The three questions: what is the base case? what does one step do? what does the function return?
-- Python does not optimise tail recursion — deep recursion risks a `RecursionError`
+- Python does not optimise tail recursion - deep recursion risks a `RecursionError`
 - `sys.setrecursionlimit(n)` raises the limit, but the real fix is usually an iterative approach
 
 **Tricky points:**
 - Forgetting the base case causes infinite recursion and a stack overflow
-- The return value must be passed back explicitly — forgetting `return` in the recursive case silently returns `None`
+- The return value must be passed back explicitly - forgetting `return` in the recursive case silently returns `None`
 - Each call gets its own copy of local variables; shared state requires explicit passing or a mutable container
 - Python's overhead per call (frame creation) makes recursion noticeably slower than loops for performance-critical code
 - Mutual recursion (f calls g, g calls f) is valid but doubles the depth pressure
@@ -46,17 +46,17 @@ created: 2026-05-18
 
 ## What It Is
 
-Think of recursion like a set of Russian nesting dolls. When you open the outermost doll you find a smaller but identical doll inside, and inside that another, and so on — until you reach the smallest doll that contains nothing. That innermost doll is the base case. You didn't need a different technique to open each doll; you used exactly the same action at every level. Recursion works the same way: the function does not need to know how deep the nesting goes — it only needs to know how to handle one level and when to stop.
+Think of recursion like a set of Russian nesting dolls. When you open the outermost doll you find a smaller but identical doll inside, and inside that another, and so on - until you reach the smallest doll that contains nothing. That innermost doll is the base case. You didn't need a different technique to open each doll; you used exactly the same action at every level. Recursion works the same way: the function does not need to know how deep the nesting goes - it only needs to know how to handle one level and when to stop.
 
 A cleaner mental model is to think in terms of trust. When writing a recursive function, you trust that the recursive call will correctly solve the smaller version of the problem. Your only job is to handle the current step and hand off everything else. This is called the recursive leap of faith and it is what makes recursive solutions readable: `factorial(n)` is defined as `n * factorial(n - 1)` because you trust that `factorial(n - 1)` will return the correct value. You do not need to trace through the entire call chain to convince yourself the function is correct.
 
-Every time a function calls itself, Python adds a new frame to the call stack. That frame stores the local variables, parameters, and the return address for that particular call. When the base case is reached, the frames begin unwinding — each one returns its value to the frame that called it, collapsing the stack back down to the original caller. This unwinding is where the actual computation often happens; in factorial, all the multiplications occur on the way back up, not on the way down.
+Every time a function calls itself, Python adds a new frame to the call stack. That frame stores the local variables, parameters, and the return address for that particular call. When the base case is reached, the frames begin unwinding - each one returns its value to the frame that called it, collapsing the stack back down to the original caller. This unwinding is where the actual computation often happens; in factorial, all the multiplications occur on the way back up, not on the way down.
 
 ---
 
 ## How It Actually Works
 
-The mechanics rest entirely on the call stack. When `factorial(5)` is called, Python creates a frame for it. That frame calls `factorial(4)`, creating another frame. This continues down to `factorial(0)`, which hits the base case and returns 1 without making another call. From that point, each frame receives the return value from the call it made, performs its multiplication, and returns upward. The entire chain of frames exists simultaneously on the stack — that is why deep recursion consumes memory proportional to the depth, not to the total number of operations.
+The mechanics rest entirely on the call stack. When `factorial(5)` is called, Python creates a frame for it. That frame calls `factorial(4)`, creating another frame. This continues down to `factorial(0)`, which hits the base case and returns 1 without making another call. From that point, each frame receives the return value from the call it made, performs its multiplication, and returns upward. The entire chain of frames exists simultaneously on the stack - that is why deep recursion consumes memory proportional to the depth, not to the total number of operations.
 
 Python enforces a hard limit on this stack depth (default 1000 frames) to prevent unbounded memory consumption from a missing base case. For problems with recursion depth much smaller than 1000 (tree traversals, divide-and-conquer on moderate inputs) this limit is not a practical concern. For problems where depth scales with n (linear recursion on large n), the iterative version is the correct choice in production Python code. The `sys.setrecursionlimit()` function adjusts the limit but does not eliminate the underlying stack growth; it only moves the failure point.
 
@@ -72,14 +72,14 @@ def factorial(n: int) -> int:
     return n * factorial(n - 1)
 
 
-# Naive recursive Fibonacci — exponential time, avoid for large n
+# Naive recursive Fibonacci - exponential time, avoid for large n
 def fib_naive(n: int) -> int:
     if n <= 1:
         return n
     return fib_naive(n - 1) + fib_naive(n - 2)
 
 
-# Recursive binary search — O(log n) depth
+# Recursive binary search - O(log n) depth
 def binary_search(arr: list, target: int, lo: int, hi: int) -> int:
     if lo > hi:
         return -1
@@ -107,9 +107,9 @@ sys.setrecursionlimit(2000)      # use sparingly
 
 ## How It Connects
 
-Recursion is not merely a technique — it is the mechanism underlying most of the important algorithms in this layer. Divide and conquer splits a problem and recurses on each half; dynamic programming memoises recursive calls to avoid redundant work; backtracking recurses through a decision tree and unwinds when a path fails. Understanding the call stack and the recursive trust model is a prerequisite for all of them.
+Recursion is not merely a technique - it is the mechanism underlying most of the important algorithms in this layer. Divide and conquer splits a problem and recurses on each half; dynamic programming memoises recursive calls to avoid redundant work; backtracking recurses through a decision tree and unwinds when a path fails. Understanding the call stack and the recursive trust model is a prerequisite for all of them.
 
-The call stack itself is a concrete data structure — a last-in, first-out stack — and every recursive function is implicitly managing one. Iterative solutions to inherently recursive problems (tree traversal, depth-first search) work by making that stack explicit using a `collections.deque` or a list.
+The call stack itself is a concrete data structure - a last-in, first-out stack - and every recursive function is implicitly managing one. Iterative solutions to inherently recursive problems (tree traversal, depth-first search) work by making that stack explicit using a `collections.deque` or a list.
 
 [[call-stack|Call Stack]]
 [[divide-and-conquer|Divide and Conquer]]
@@ -130,7 +130,7 @@ Reality: Correctness and scalability are separate concerns. A naive recursive Fi
 
 ## Why It Matters in Practice
 
-Recursion appears throughout real codebases wherever data has hierarchical or self-similar structure: parsing nested JSON, traversing file system trees, evaluating abstract syntax trees in compilers, implementing depth-first search on graphs. It is not an academic construct — it is the natural expression of algorithms that would require explicit stack management to express iteratively.
+Recursion appears throughout real codebases wherever data has hierarchical or self-similar structure: parsing nested JSON, traversing file system trees, evaluating abstract syntax trees in compilers, implementing depth-first search on graphs. It is not an academic construct - it is the natural expression of algorithms that would require explicit stack management to express iteratively.
 
 In interviews, recursion is the entry point to a large class of problems. Understanding the three questions (base case, step, return value) and the leap-of-faith model lets you design recursive solutions quickly. Knowing when to convert to iteration or add memoisation separates a correct solution from a production-ready one.
 

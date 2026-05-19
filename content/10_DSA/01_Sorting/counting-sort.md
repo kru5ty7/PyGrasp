@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Counting Sort
 
-> Counting sort breaks the O(n log n) comparison-sort lower bound by never comparing elements — it counts and reconstructs, making it O(n) when the value range is small.
+> Counting sort breaks the O(n log n) comparison-sort lower bound by never comparing elements - it counts and reconstructs, making it O(n) when the value range is small.
 
 ---
 
@@ -19,18 +19,18 @@ created: 2026-05-18
 
 **Core idea:**
 - Count the occurrences of each distinct value in a frequency array indexed by value
-- Transform the frequency array into a prefix-sum (cumulative count) array — each entry now holds the starting output index for that value
+- Transform the frequency array into a prefix-sum (cumulative count) array - each entry now holds the starting output index for that value
 - Walk the input array and place each element at its correct output index, decrementing the count after each placement
 - O(n + k) time and space, where k is the range of values (max - min + 1)
 - Stable: the reverse-walk placement step preserves the original relative order of equal elements
 - Works only for integers (or objects with a bounded integer key)
 
 **Tricky points:**
-- When k >> n (large range, few elements), counting sort uses more time and space than comparison sorts — it is only beneficial when k is O(n)
+- When k >> n (large range, few elements), counting sort uses more time and space than comparison sorts - it is only beneficial when k is O(n)
 - The prefix-sum step is essential for stability; a simpler version that just outputs each value `count[v]` times works but loses stability
 - Negative integers require offsetting: subtract `min_val` from each value to shift the range to start at 0
 - Counting sort is the building block for radix sort: radix sort applies counting sort digit by digit
-- Python's integers are unbounded — always check the actual value range before applying counting sort
+- Python's integers are unbounded - always check the actual value range before applying counting sort
 
 ---
 
@@ -46,11 +46,11 @@ created: 2026-05-18
 
 ## What It Is
 
-Imagine a teacher who needs to return a class of 30 students' test scores in sorted order. Each score is an integer from 0 to 100. Rather than comparing scores pairwise — which takes O(n log n) — she takes a blank sheet with 101 rows labelled 0 through 100. She reads each score and makes a tally mark in the corresponding row. When she is done, she reads the rows from 0 to 100 in order, writing down each score as many times as it was tallied. The result is sorted. She never compared two scores against each other — she compared each score against a fixed scale.
+Imagine a teacher who needs to return a class of 30 students' test scores in sorted order. Each score is an integer from 0 to 100. Rather than comparing scores pairwise - which takes O(n log n) - she takes a blank sheet with 101 rows labelled 0 through 100. She reads each score and makes a tally mark in the corresponding row. When she is done, she reads the rows from 0 to 100 in order, writing down each score as many times as it was tallied. The result is sorted. She never compared two scores against each other - she compared each score against a fixed scale.
 
 This is counting sort. The "blank sheet with 101 rows" is the count array. The "reading tally marks in order" is the reconstruction step. The algorithm works because the values themselves serve as indices into the count array, and the count array's structure already encodes the sorted order. For a bounded integer domain, this is strictly more efficient than any comparison sort.
 
-The key limitation is that the count array must have k slots where k is the range of possible values. If you are sorting the ages of 1,000 people (values 0–150), k is 151 and the algorithm is extremely efficient. If you are sorting 1,000 people by their social security number (values 0–999,999,999), k is one billion and the count array alone would consume gigabytes of memory. The algorithm's efficiency is tightly coupled to the ratio of n to k. When k is O(n), the total complexity is O(n) — better than any comparison sort. When k is O(n²), it is worse than merge sort. Counting sort is therefore a specialised tool, not a general-purpose one.
+The key limitation is that the count array must have k slots where k is the range of possible values. If you are sorting the ages of 1,000 people (values 0–150), k is 151 and the algorithm is extremely efficient. If you are sorting 1,000 people by their social security number (values 0–999,999,999), k is one billion and the count array alone would consume gigabytes of memory. The algorithm's efficiency is tightly coupled to the ratio of n to k. When k is O(n), the total complexity is O(n) - better than any comparison sort. When k is O(n²), it is worse than merge sort. Counting sort is therefore a specialised tool, not a general-purpose one.
 
 ---
 
@@ -101,7 +101,7 @@ print(counting_sort(temps))   # [-5, -5, -1, 0, 2, 3]
 
 
 def counting_sort_simple(arr: list) -> list:
-    """Simplified (non-stable) version — just reconstruct from counts."""
+    """Simplified (non-stable) version - just reconstruct from counts."""
     if not arr:
         return []
     min_val, max_val = min(arr), max(arr)
@@ -132,10 +132,10 @@ Counting sort is the foundational subroutine for radix sort, which sorts large i
 ## Common Misconceptions
 
 Misconception 1: "Counting sort violates the O(n log n) lower bound for sorting."
-Reality: The O(n log n) lower bound applies to comparison-based sorting algorithms, which make decisions based on pairwise comparisons between elements. Counting sort is not comparison-based — it uses the integer values as array indices, which is a fundamentally different operation. There is no contradiction: the lower bound simply does not apply to non-comparison sorts. The cost is paid elsewhere: in the constraint that elements must be integers within a bounded range.
+Reality: The O(n log n) lower bound applies to comparison-based sorting algorithms, which make decisions based on pairwise comparisons between elements. Counting sort is not comparison-based - it uses the integer values as array indices, which is a fundamentally different operation. There is no contradiction: the lower bound simply does not apply to non-comparison sorts. The cost is paid elsewhere: in the constraint that elements must be integers within a bounded range.
 
 Misconception 2: "Counting sort is O(n) time."
-Reality: Counting sort is O(n + k) time, where k is the range of values. If k is O(n), the algorithm is effectively O(n). But if k is much larger than n — for example, sorting 100 values in the range 0 to 1,000,000 — then k dominates and the algorithm is O(k) = O(1,000,000), which is far slower than merge sort's O(n log n) = O(100 * 7) ≈ O(700). Always check the k/n ratio before choosing counting sort.
+Reality: Counting sort is O(n + k) time, where k is the range of values. If k is O(n), the algorithm is effectively O(n). But if k is much larger than n - for example, sorting 100 values in the range 0 to 1,000,000 - then k dominates and the algorithm is O(k) = O(1,000,000), which is far slower than merge sort's O(n log n) = O(100 * 7) ≈ O(700). Always check the k/n ratio before choosing counting sort.
 
 Misconception 3: "The simple version of counting sort (output each value count[v] times) is equivalent to the prefix-sum version."
 Reality: The simple version is correct but not stable: it writes all occurrences of a value consecutively without preserving the original relative order of those occurrences. For sorting plain integers where values carry no associated data, this does not matter. But when sorting objects by an integer key (for example, sorting student records by grade), the non-stable version can mix up records with equal keys. The prefix-sum version preserves their original relative order, which is essential when counting sort is used as a subroutine inside radix sort.
@@ -144,7 +144,7 @@ Reality: The simple version is correct but not stable: it writes all occurrences
 
 ## Why It Matters in Practice
 
-Counting sort is the right tool when you need to sort large quantities of integers drawn from a bounded range. Sorting millions of log events by hour of day (0-23), sorting exam scores (0-100), sorting character frequencies for a compression algorithm — these are all cases where k is small enough that counting sort's O(n + k) dominates comparison sort's O(n log n). Database systems use counting-sort-based algorithms internally for aggregation operations on integer columns.
+Counting sort is the right tool when you need to sort large quantities of integers drawn from a bounded range. Sorting millions of log events by hour of day (0-23), sorting exam scores (0-100), sorting character frequencies for a compression algorithm - these are all cases where k is small enough that counting sort's O(n + k) dominates comparison sort's O(n log n). Database systems use counting-sort-based algorithms internally for aggregation operations on integer columns.
 
 In Python, the `collections.Counter` class performs the counting step of counting sort in a single pass. For the specific case of sorting integers in a small range, the simple (non-stable) version can be written in two lines using Counter, making it both the theoretically optimal and practically convenient choice.
 

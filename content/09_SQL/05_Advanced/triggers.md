@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Triggers
 
-> A trigger is the database's event listener — it fires silently and automatically when data changes, which makes it powerful and dangerous in equal measure.
+> A trigger is the database's event listener - it fires silently and automatically when data changes, which makes it powerful and dangerous in equal measure.
 
 ---
 
@@ -22,14 +22,14 @@ created: 2026-05-18
 - BEFORE triggers fire before the operation and can modify or cancel the row change
 - AFTER triggers fire after the operation; the change has already been committed to the table
 - Row-level triggers fire once per affected row; statement-level triggers fire once per SQL statement
-- In PostgreSQL, triggers call a trigger function — the logic lives in a separate CREATE FUNCTION
+- In PostgreSQL, triggers call a trigger function - the logic lives in a separate CREATE FUNCTION
 - Common uses: audit logging, automatic timestamps, derived column maintenance, cross-table consistency
 
 **Tricky points:**
 - Triggers are invisible to application developers reading application code
 - A trigger that fails raises an exception and rolls back the triggering statement
 - BEFORE triggers can inspect and modify NEW (the incoming row) before it lands
-- Triggers can cascade — a trigger can fire another trigger on a different table
+- Triggers can cascade - a trigger can fire another trigger on a different table
 - High-write tables with expensive triggers can have significant throughput reduction
 - TRUNCATE does not fire row-level triggers, only statement-level ones
 
@@ -39,11 +39,11 @@ created: 2026-05-18
 
 A trigger is like a motion sensor in a building's security system. You do not have to remember to log every time someone enters a room. The sensor notices the motion automatically and fires the alarm or records the event, regardless of who the person is or what door they used. The person walking through the door does not have to know the sensor exists. The behavior happens at the infrastructure level, not at the person level. That is exactly how a database trigger works: the event (a row change) is detected automatically, and a predefined response fires without any participation from the application that caused the event.
 
-In PostgreSQL, a trigger is a two-part object. First, you write a trigger function using CREATE FUNCTION — this is a regular PL/pgSQL function that returns a special type called trigger. Inside this function, PostgreSQL gives you access to two special records: NEW contains the row that is being inserted or updated (the incoming values), and OLD contains the row as it existed before an update or delete. The function can read these records, modify NEW before it is written, raise an exception to cancel the operation, or perform any other SQL work. Second, you attach the function to a specific table event using CREATE TRIGGER, which specifies when the trigger fires (BEFORE or AFTER), which operation (INSERT, UPDATE, DELETE), and at what granularity (FOR EACH ROW or FOR EACH STATEMENT).
+In PostgreSQL, a trigger is a two-part object. First, you write a trigger function using CREATE FUNCTION - this is a regular PL/pgSQL function that returns a special type called trigger. Inside this function, PostgreSQL gives you access to two special records: NEW contains the row that is being inserted or updated (the incoming values), and OLD contains the row as it existed before an update or delete. The function can read these records, modify NEW before it is written, raise an exception to cancel the operation, or perform any other SQL work. Second, you attach the function to a specific table event using CREATE TRIGGER, which specifies when the trigger fires (BEFORE or AFTER), which operation (INSERT, UPDATE, DELETE), and at what granularity (FOR EACH ROW or FOR EACH STATEMENT).
 
-The BEFORE/AFTER distinction changes the trigger's capabilities fundamentally. A BEFORE trigger fires before the row change is applied to the table. This gives it the ability to modify the incoming row (by changing NEW) or cancel the entire operation (by returning NULL from the trigger function). This is the right place for automatic field computation — setting updated_at to NOW(), normalizing a value, or enforcing a business rule that the CHECK constraint cannot express. An AFTER trigger fires after the row is already written. The data is committed to the table at that point, so the trigger cannot change what was written. AFTER triggers are the right place for side effects like writing to an audit table or notifying an external system.
+The BEFORE/AFTER distinction changes the trigger's capabilities fundamentally. A BEFORE trigger fires before the row change is applied to the table. This gives it the ability to modify the incoming row (by changing NEW) or cancel the entire operation (by returning NULL from the trigger function). This is the right place for automatic field computation - setting updated_at to NOW(), normalizing a value, or enforcing a business rule that the CHECK constraint cannot express. An AFTER trigger fires after the row is already written. The data is committed to the table at that point, so the trigger cannot change what was written. AFTER triggers are the right place for side effects like writing to an audit table or notifying an external system.
 
-The hidden danger of triggers is precisely their invisibility. An application developer writes a simple UPDATE statement, runs it, and the row updates. But three triggers are now also running. One writes to an audit table. One updates a summary counter in another table. One sends a message to a notification queue. None of this is visible in the application code. When the UPDATE takes 200ms instead of 2ms, the developer profiles the UPDATE and finds it fast — but they do not see the trigger overhead. When data appears in unexpected places, the developer searches the application code and finds nothing. Triggers create behavior that exists only in the database schema, making the system harder to reason about holistically.
+The hidden danger of triggers is precisely their invisibility. An application developer writes a simple UPDATE statement, runs it, and the row updates. But three triggers are now also running. One writes to an audit table. One updates a summary counter in another table. One sends a message to a notification queue. None of this is visible in the application code. When the UPDATE takes 200ms instead of 2ms, the developer profiles the UPDATE and finds it fast - but they do not see the trigger overhead. When data appears in unexpected places, the developer searches the application code and finds nothing. Triggers create behavior that exists only in the database schema, making the system harder to reason about holistically.
 
 ---
 
@@ -72,7 +72,7 @@ EXECUTE FUNCTION set_updated_at();
 
 Now every UPDATE on orders automatically sets updated_at to the current timestamp, regardless of whether the application included that column in the SET clause. The application does not need to remember to set it.
 
-Audit logging with an AFTER trigger demonstrates a different pattern — writing to a separate table after the fact:
+Audit logging with an AFTER trigger demonstrates a different pattern - writing to a separate table after the fact:
 
 ```sql
 CREATE TABLE order_audit_log (
@@ -103,7 +103,7 @@ FOR EACH ROW
 EXECUTE FUNCTION log_order_status_change();
 ```
 
-The IS DISTINCT FROM comparison handles NULL correctly — unlike != which returns NULL when either side is NULL, IS DISTINCT FROM returns true when values differ including when one is NULL. This is important for nullable columns.
+The IS DISTINCT FROM comparison handles NULL correctly - unlike != which returns NULL when either side is NULL, IS DISTINCT FROM returns true when values differ including when one is NULL. This is important for nullable columns.
 
 Statement-level triggers are less common but worth understanding. A FOR EACH STATEMENT trigger fires once per SQL statement, not once per row. It does not have access to NEW and OLD (because there is no single row to inspect). It is useful for coarse-grained auditing (log that an UPDATE occurred on a table, not which rows changed) or for operations like invalidating a cache after any modification to a table.
 
@@ -119,7 +119,7 @@ EXECUTE FUNCTION notify_cache_invalidation();
 
 ## How It Connects
 
-Triggers execute inside the same transaction as the triggering statement. If the trigger function raises an exception, the entire transaction is rolled back — including the original statement that fired the trigger. This tight coupling between triggers and transactions is why understanding ACID properties and transaction boundaries is essential before working with triggers on production tables.
+Triggers execute inside the same transaction as the triggering statement. If the trigger function raises an exception, the entire transaction is rolled back - including the original statement that fired the trigger. This tight coupling between triggers and transactions is why understanding ACID properties and transaction boundaries is essential before working with triggers on production tables.
 
 Stored procedures and triggers share the same procedural language (PL/pgSQL) and the same DECLARE/BEGIN/EXCEPTION syntax. The difference is that triggers are called by the database engine implicitly, while stored procedures are called explicitly by application code or a CALL statement.
 
@@ -138,7 +138,7 @@ Reality: Foreign key constraints enforced by the database are the right tool for
 Misconception 2: "BEFORE triggers prevent invalid data from entering the database."
 Reality: A BEFORE trigger fires as part of the same transaction as the INSERT or UPDATE. If the trigger function does not return NULL and does not raise an exception, the operation proceeds. The trigger can modify the incoming row, but if it does nothing, the data is written as-is. Constraint validation (NOT NULL, CHECK, UNIQUE, FOREIGN KEY) is separate from trigger logic and runs at constraint-check time, not at trigger time. Triggers are not a replacement for constraints.
 
-Misconception 3: "Triggers are free — they do not affect INSERT/UPDATE performance."
+Misconception 3: "Triggers are free - they do not affect INSERT/UPDATE performance."
 Reality: Every row-level trigger adds overhead to every matching DML operation. On a table that receives 10,000 inserts per second, a trigger that writes to an audit table means 10,000 additional inserts per second into the audit table within the same transactions. This doubles the write load on that pathway. Triggers on high-write tables must be profiled under realistic load.
 
 ---
@@ -147,7 +147,7 @@ Reality: Every row-level trigger adds overhead to every matching DML operation. 
 
 Triggers are the standard mechanism for automatic timestamps in databases where the application cannot be trusted to set them consistently. The pattern of a BEFORE UPDATE trigger setting updated_at = NOW() is so common that many teams create a single trigger function and attach it to dozens of tables. It is reliable, DRY, and requires no application-level participation.
 
-Audit logging via AFTER triggers is similarly common in regulated industries — finance, healthcare, e-commerce with dispute resolution requirements. The audit requirement is: every change to certain tables must be recorded with who changed it, when, and what changed. Putting this in a trigger ensures no application path can bypass the audit, including direct database access by administrators or scripts. The trigger fires regardless of the client.
+Audit logging via AFTER triggers is similarly common in regulated industries - finance, healthcare, e-commerce with dispute resolution requirements. The audit requirement is: every change to certain tables must be recorded with who changed it, when, and what changed. Putting this in a trigger ensures no application path can bypass the audit, including direct database access by administrators or scripts. The trigger fires regardless of the client.
 
 ---
 

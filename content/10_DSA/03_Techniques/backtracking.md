@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Backtracking
 
-> Backtracking explores all possible configurations by building solutions incrementally and pruning dead ends early — every developer targeting algorithmic roles must master it because it is the standard approach for constraint satisfaction, permutation/combination enumeration, and puzzle solving.
+> Backtracking explores all possible configurations by building solutions incrementally and pruning dead ends early - every developer targeting algorithmic roles must master it because it is the standard approach for constraint satisfaction, permutation/combination enumeration, and puzzle solving.
 
 ---
 
@@ -19,16 +19,16 @@ created: 2026-05-18
 
 **Core idea:**
 - Template: choose → recurse → unchoose (the undo step restores state for the next branch)
-- Prunes branches as soon as a partial solution violates a constraint — unlike brute force, which generates all possibilities then filters
+- Prunes branches as soon as a partial solution violates a constraint - unlike brute force, which generates all possibilities then filters
 - Applies to: all permutations/combinations/subsets, N-Queens, Sudoku, word search in a grid, graph coloring
 - The solution space is a decision tree; backtracking is DFS on that tree with early termination
-- State modification must be reversible — the unchoose step must perfectly undo what choose did
+- State modification must be reversible - the unchoose step must perfectly undo what choose did
 - Time complexity is hard to state generally; depends on branching factor and pruning effectiveness
 
 **Tricky points:**
-- Forgetting the unchoose step corrupts state across branches — the most common backtracking bug
+- Forgetting the unchoose step corrupts state across branches - the most common backtracking bug
 - When building a list of results, append a copy (`result.append(current[:])`) not a reference to the mutable list
-- The order of the base case and the constraint check matters — check constraints before recursing, not after
+- The order of the base case and the constraint check matters - check constraints before recursing, not after
 - For subsets/combinations, passing a `start` index prevents duplicate sets (avoids including the same element twice)
 - Python's `path.pop()` is the canonical undo step for list-based state; `board[r][c] = '.'` for grid-based state
 
@@ -47,9 +47,9 @@ created: 2026-05-18
 
 ## What It Is
 
-Think of backtracking as navigating a maze with a pencil and eraser. You draw your path forward, committing to each corridor as you take it. The moment you reach a dead end — a wall, a locked door, or a constraint you cannot satisfy — you reach back to your most recent decision point, erase the path from there to the dead end, and try a different corridor. You continue this process until you either find the exit or exhaust every possible path. The eraser is the defining feature: without it, you could only follow one path and declare failure if it did not work. With it, you can systematically explore every option.
+Think of backtracking as navigating a maze with a pencil and eraser. You draw your path forward, committing to each corridor as you take it. The moment you reach a dead end - a wall, a locked door, or a constraint you cannot satisfy - you reach back to your most recent decision point, erase the path from there to the dead end, and try a different corridor. You continue this process until you either find the exit or exhaust every possible path. The eraser is the defining feature: without it, you could only follow one path and declare failure if it did not work. With it, you can systematically explore every option.
 
-The decision tree is the formal structure behind this intuition. Each node in the tree represents a partial solution (the choices made so far), and each edge represents one more choice. The leaves represent either complete valid solutions or dead ends where no further extension is possible. Backtracking performs depth-first search on this tree: go as deep as possible along one branch, recognise a dead end, backtrack to the parent, try the next sibling branch. The pruning step — recognising a dead end before reaching the bottom — is what separates backtracking from brute force, which descends all the way to the leaves before checking validity.
+The decision tree is the formal structure behind this intuition. Each node in the tree represents a partial solution (the choices made so far), and each edge represents one more choice. The leaves represent either complete valid solutions or dead ends where no further extension is possible. Backtracking performs depth-first search on this tree: go as deep as possible along one branch, recognise a dead end, backtrack to the parent, try the next sibling branch. The pruning step - recognising a dead end before reaching the bottom - is what separates backtracking from brute force, which descends all the way to the leaves before checking validity.
 
 The N-Queens problem makes the structure concrete. You are placing n queens on an n×n chessboard such that no two queens attack each other. A brute-force approach would generate all possible ways to place n queens (n^n possibilities), then filter for valid configurations. Backtracking places one queen per row, checking immediately after each placement whether it conflicts with previously placed queens. If a conflict is detected on row 4, the algorithm backtracks to row 4's placement, tries the next column, and never generates the millions of configurations that would follow from the conflicting position. On most boards, backtracking prunes the search space by several orders of magnitude relative to brute force.
 
@@ -59,7 +59,7 @@ The N-Queens problem makes the structure concrete. You are placing n queens on a
 
 The template for any backtracking problem is always three steps inside a recursive function: choose (make a decision and update state), recurse (call the function with the updated state), unchoose (undo the update exactly). The base case at the top of the function either records a complete solution or returns immediately if the current state is already invalid (the pruning condition). The recursive call iterates over all available choices, applying the template to each.
 
-The undo step is the part most likely to introduce bugs. For a list-based path (building permutations, combinations), the undo is `path.pop()`. For a grid (word search, Sudoku), the undo restores the cell to its original value. For a boolean visited array, the undo is `visited[i] = False`. The undo must be in the same scope as the choose — use a try/finally pattern if there is any risk of the recursive call raising an exception that bypasses the undo.
+The undo step is the part most likely to introduce bugs. For a list-based path (building permutations, combinations), the undo is `path.pop()`. For a grid (word search, Sudoku), the undo restores the cell to its original value. For a boolean visited array, the undo is `visited[i] = False`. The undo must be in the same scope as the choose - use a try/finally pattern if there is any risk of the recursive call raising an exception that bypasses the undo.
 
 ```python
 from typing import List
@@ -178,7 +178,7 @@ print(len(n_queens(8)))               # 92
 
 Backtracking is depth-first search applied to the implicit decision tree of a problem. Where DFS traverses an explicit graph, backtracking traverses a virtual graph where nodes are partial solutions and edges are choices. The visited-set tracking in DFS corresponds to the used array in permutation backtracking; the graph adjacency list corresponds to the set of available choices at each step.
 
-Recursion is the mechanism: the call stack manages the "memory" of which choices have been made so far. When the function returns (backtracks), the call stack frame is popped and the previous state is restored — but only if the undo step has properly reversed the state mutations made in the current frame. This is why the choose-recurse-unchoose structure must be strictly followed.
+Recursion is the mechanism: the call stack manages the "memory" of which choices have been made so far. When the function returns (backtracks), the call stack frame is popped and the previous state is restored - but only if the undo step has properly reversed the state mutations made in the current frame. This is why the choose-recurse-unchoose structure must be strictly followed.
 
 [[recursion|Recursion]]
 [[dfs|Depth-First Search]]
@@ -201,7 +201,7 @@ Reality: Backtracking is often the correct approach, and its actual running time
 
 Backtracking underpins constraint satisfaction solvers used in scheduling, configuration management, and automated theorem proving. Sudoku solvers, crossword puzzle generators, and automated test case generators all use variants of backtracking. In compilers and query planners, backtracking-style search is used to find valid execution orderings or plan transformations. Understanding backtracking makes you fluent in the class of problems where you must find configurations satisfying multiple simultaneous constraints.
 
-For interviews, backtracking problems are among the most common at senior-level positions because they test the ability to decompose a search space, identify pruning conditions, and manage state correctly across recursive calls. The choose-recurse-unchoose template gives you a systematic approach to any such problem — the question becomes how to define the state and what the pruning conditions are, not how to structure the code.
+For interviews, backtracking problems are among the most common at senior-level positions because they test the ability to decompose a search space, identify pruning conditions, and manage state correctly across recursive calls. The choose-recurse-unchoose template gives you a systematic approach to any such problem - the question becomes how to define the state and what the pruning conditions are, not how to structure the code.
 
 ---
 

@@ -19,13 +19,13 @@ created: 2026-05-18
 
 **Core idea:**
 - Each node represents a single character; paths from root to marked nodes spell out stored strings
-- Insert, search, and prefix-check are all O(L) where L is the string length — independent of the number of stored strings
+- Insert, search, and prefix-check are all O(L) where L is the string length - independent of the number of stored strings
 - An end-of-word marker at a node distinguishes a complete word from a mere prefix
 - Standard implementation: each node holds a dict (or array of 26) mapping characters to child nodes
 - Applications: autocomplete, spell checking, IP routing tables, prefix matching in search engines
 
 **Tricky points:**
-- O(L) search is only better than a hash table's O(L) hash computation when you also need prefix operations — for pure lookup, a hash table is simpler
+- O(L) search is only better than a hash table's O(L) hash computation when you also need prefix operations - for pure lookup, a hash table is simpler
 - The end-of-word marker is critical: without it, "app" and "apple" become indistinguishable (both have paths in the trie)
 - Deletion requires checking whether the deleted node is a prefix of another word before removing nodes
 - Space cost is high: a node with 26 children (standard English alphabet) requires up to 26 pointers even if only one child exists
@@ -43,17 +43,17 @@ created: 2026-05-18
 | Prefix search (return all matches) | O(L + k) | O(L + k) |
 | Delete word of length L | O(L) | O(L) |
 
-Space complexity: O(total characters × alphabet size) — can be large.
+Space complexity: O(total characters × alphabet size) - can be large.
 
 ---
 
 ## What It Is
 
-Imagine a large wall of filing cabinets at a library's front desk, each drawer labelled with a single letter. To find a book, you open drawer 'P', inside which is another set of mini-drawers — one for each second letter. You open 'Y', which leads to another set for the third letter. You open 'T', then 'H', then 'O', then 'N', at which point a tag says "word ends here — Python section is on shelf 42." To find the book for "Pythagoras," you follow the same P-Y-T-H path and then diverge at 'A'. The shared path P-Y-T-H was traversed only once, serving both words.
+Imagine a large wall of filing cabinets at a library's front desk, each drawer labelled with a single letter. To find a book, you open drawer 'P', inside which is another set of mini-drawers - one for each second letter. You open 'Y', which leads to another set for the third letter. You open 'T', then 'H', then 'O', then 'N', at which point a tag says "word ends here - Python section is on shelf 42." To find the book for "Pythagoras," you follow the same P-Y-T-H path and then diverge at 'A'. The shared path P-Y-T-H was traversed only once, serving both words.
 
-This shared-prefix structure is the trie's key insight. In a dictionary of English words, thousands of words start with "pre" — prehistoric, preliminary, prelude, and so on. A trie stores the 'p', 'r', 'e' path exactly once and branches at the fourth letter. A hash table would store "prehistoric" as an independent entry with no knowledge that it shares a prefix with "preliminary." When you want to find all words starting with "pre," the hash table must scan all entries (O(n)); the trie walks to the 'e' node and collects all descendants (O(prefix_length + matches)).
+This shared-prefix structure is the trie's key insight. In a dictionary of English words, thousands of words start with "pre" - prehistoric, preliminary, prelude, and so on. A trie stores the 'p', 'r', 'e' path exactly once and branches at the fourth letter. A hash table would store "prehistoric" as an independent entry with no knowledge that it shares a prefix with "preliminary." When you want to find all words starting with "pre," the hash table must scan all entries (O(n)); the trie walks to the 'e' node and collects all descendants (O(prefix_length + matches)).
 
-Autocomplete systems — from search engine suggestions to IDE code completion — are the canonical use case. When a user types "py", the system needs all stored words starting with "py" returned quickly. In a trie, this means descending three levels (root → 'p' → 'y'), arriving at the node for prefix "py," and collecting all words reachable from there. The cost depends on the prefix length and the number of matches, not the total vocabulary size. For a vocabulary of one million words, a hash-based approach requires filtering all one million entries; a trie requires only as much work as the words that share the prefix.
+Autocomplete systems - from search engine suggestions to IDE code completion - are the canonical use case. When a user types "py", the system needs all stored words starting with "py" returned quickly. In a trie, this means descending three levels (root → 'p' → 'y'), arriving at the node for prefix "py," and collecting all words reachable from there. The cost depends on the prefix length and the number of matches, not the total vocabulary size. For a vocabulary of one million words, a hash-based approach requires filtering all one million entries; a trie requires only as much work as the words that share the prefix.
 
 ---
 
@@ -75,7 +75,7 @@ class Trie:
         self.root = TrieNode()
 
     def insert(self, word):
-        """Insert word into trie — O(L)."""
+        """Insert word into trie - O(L)."""
         node = self.root
         for char in word:
             if char not in node.children:
@@ -84,12 +84,12 @@ class Trie:
         node.is_end_of_word = True
 
     def search(self, word):
-        """Return True if word is in trie — O(L)."""
+        """Return True if word is in trie - O(L)."""
         node = self._traverse(word)
         return node is not None and node.is_end_of_word
 
     def starts_with(self, prefix):
-        """Return True if any word in trie starts with prefix — O(L)."""
+        """Return True if any word in trie starts with prefix - O(L)."""
         return self._traverse(prefix) is not None
 
     def _traverse(self, prefix):
@@ -102,7 +102,7 @@ class Trie:
         return node
 
     def autocomplete(self, prefix):
-        """Return all words in trie that start with prefix — O(L + k)."""
+        """Return all words in trie that start with prefix - O(L + k)."""
         node = self._traverse(prefix)
         if node is None:
             return []
@@ -118,7 +118,7 @@ class Trie:
             self._collect(child, current_prefix + char, results)
 
     def delete(self, word):
-        """Delete word from trie — O(L)."""
+        """Delete word from trie - O(L)."""
         self._delete(self.root, word, 0)
 
     def _delete(self, node, word, depth):
@@ -158,7 +158,7 @@ print("autocomplete 'ba':", sorted(trie.autocomplete("ba")))
 
 trie.delete("app")
 print("after delete 'app':", trie.search("app"))         # False
-print("'apple' still there:", trie.search("apple"))      # True — deletion was careful
+print("'apple' still there:", trie.search("apple"))      # True - deletion was careful
 
 
 # Dict-of-dicts implementation (more compact, common in interview code)
@@ -197,11 +197,11 @@ print("search 'hel':", search_word(compact_trie, "hel"))     # False (no end mar
 
 ## How It Connects
 
-Hash tables offer O(L) lookup for a string of length L (due to hashing cost), but no prefix operations. The trie's advantage over a hash table is not raw lookup speed — it is the prefix-based operations that hash tables cannot support efficiently. Understanding hash tables makes the contrast with tries sharper.
+Hash tables offer O(L) lookup for a string of length L (due to hashing cost), but no prefix operations. The trie's advantage over a hash table is not raw lookup speed - it is the prefix-based operations that hash tables cannot support efficiently. Understanding hash tables makes the contrast with tries sharper.
 
 [[hash-tables|Hash Tables]]
 
-Graphs provide the general framework for understanding trie traversal. A trie is a directed acyclic graph with labeled edges (the characters) and no cycles. DFS on the trie is what `autocomplete` and `_collect` perform — collecting all words is a DFS that accumulates the path.
+Graphs provide the general framework for understanding trie traversal. A trie is a directed acyclic graph with labeled edges (the characters) and no cycles. DFS on the trie is what `autocomplete` and `_collect` perform - collecting all words is a DFS that accumulates the path.
 
 [[graphs|Graphs]]
 
@@ -215,14 +215,14 @@ Reality: For pure existence checking ("is this word in the dictionary?"), a hash
 Misconception 2: "A trie uses O(n) space where n is the number of words."
 Reality: A trie uses O(total characters × alphabet size) space. If every stored word is unique with no shared prefixes, each character requires its own node with up to 26 child pointers. In the worst case this is far more than O(n) where n is the number of words. Compressed tries (radix trees) mitigate this by collapsing single-child chains.
 
-Misconception 3: "The end-of-word marker is optional — I can tell when a word ends by checking whether a node has no children."
-Reality: The end-of-word marker is mandatory. Consider "app" and "apple": the node for the third 'p' in "apple" follows the node for the 'p' in "app." If "app" was inserted but "apple" was not, the 'p' node for "app" has no children — and indeed the marker approach works there. But if both "app" and "apple" were inserted, the 'p' node for "app" has one child ('l'). Without an end-of-word flag on it, there is no way to distinguish "app is stored" from "app is a prefix of apple."
+Misconception 3: "The end-of-word marker is optional - I can tell when a word ends by checking whether a node has no children."
+Reality: The end-of-word marker is mandatory. Consider "app" and "apple": the node for the third 'p' in "apple" follows the node for the 'p' in "app." If "app" was inserted but "apple" was not, the 'p' node for "app" has no children - and indeed the marker approach works there. But if both "app" and "apple" were inserted, the 'p' node for "app" has one child ('l'). Without an end-of-word flag on it, there is no way to distinguish "app is stored" from "app is a prefix of apple."
 
 ---
 
 ## Why It Matters in Practice
 
-Autocomplete is the most visible trie application in everyday software — every search engine, every IDE, and every phone keyboard uses some form of prefix tree. IP routing tables in network routers use tries (specifically Patricia tries or CIDR prefix tries) to match destination IP addresses to routing rules — a packet arriving at a router is matched against a trie of IP prefixes in microseconds. DNS lookup caches also use trie structures for hierarchical domain matching.
+Autocomplete is the most visible trie application in everyday software - every search engine, every IDE, and every phone keyboard uses some form of prefix tree. IP routing tables in network routers use tries (specifically Patricia tries or CIDR prefix tries) to match destination IP addresses to routing rules - a packet arriving at a router is matched against a trie of IP prefixes in microseconds. DNS lookup caches also use trie structures for hierarchical domain matching.
 
 In competitive programming and technical interviews, tries appear frequently in string problems involving prefix matching, word search in grids, and dictionary-based validation. The trie is the right tool whenever the problem involves multiple strings with shared prefixes and the operations are "insert," "search," and "find all matching prefix."
 
@@ -237,7 +237,7 @@ Common question forms:
 - "Replace words in a sentence with their shortest root from a dictionary."
 
 Answer frame:
-For trie implementation, describe the node structure (children dict + is_end flag), then implement insert (loop creating nodes), search (loop + check is_end), and startsWith (loop without the is_end check). For Word Search II, explain that building a trie from the word list allows the board DFS to prune early — if the current path is not a prefix in the trie, stop exploring that direction. For "replace with shortest root," walk the trie character by character for each word until you find the first is_end=True node — that is the shortest matching root.
+For trie implementation, describe the node structure (children dict + is_end flag), then implement insert (loop creating nodes), search (loop + check is_end), and startsWith (loop without the is_end check). For Word Search II, explain that building a trie from the word list allows the board DFS to prune early - if the current path is not a prefix in the trie, stop exploring that direction. For "replace with shortest root," walk the trie character by character for each word until you find the first is_end=True node - that is the shortest matching root.
 
 ---
 

@@ -1,5 +1,5 @@
 ﻿---
-title: 04 - DML — INSERT, UPDATE, DELETE
+title: 04 - DML - INSERT, UPDATE, DELETE
 description: DML statements change the data inside a database's tables, and every one of them can cause irreversible data loss if used without care or proper transaction management.
 tags: [sql, layer-9, dml, mutations]
 status: draft
@@ -9,9 +9,9 @@ domain: sql
 created: 2026-05-18
 ---
 
-# DML — INSERT, UPDATE, DELETE
+# DML - INSERT, UPDATE, DELETE
 
-> DML is how data enters, changes, and leaves a database — and every DML statement that runs without a WHERE clause or outside a transaction is a production incident waiting to happen.
+> DML is how data enters, changes, and leaves a database - and every DML statement that runs without a WHERE clause or outside a transaction is a production incident waiting to happen.
 
 ---
 
@@ -35,7 +35,7 @@ created: 2026-05-18
 
 ## What It Is
 
-Imagine a filing cabinet full of folders. DDL is the act of building the cabinet — choosing the number of drawers, labeling them, deciding what kinds of documents go where. DML is everything that happens once the cabinet exists: filing new documents (INSERT), updating the information on existing documents (UPDATE), and throwing documents away (DELETE). The cabinet's structure does not change. Only the contents do.
+Imagine a filing cabinet full of folders. DDL is the act of building the cabinet - choosing the number of drawers, labeling them, deciding what kinds of documents go where. DML is everything that happens once the cabinet exists: filing new documents (INSERT), updating the information on existing documents (UPDATE), and throwing documents away (DELETE). The cabinet's structure does not change. Only the contents do.
 
 DML stands for Data Manipulation Language. It covers the statements that interact with data rather than schema. INSERT adds one or more new rows to a table. UPDATE modifies columns of existing rows. DELETE removes rows. Every operation that changes what data is stored in the database is DML. Queries that only read data (SELECT) are sometimes grouped separately as DQL (Data Query Language), though in practice most people refer to SELECT as part of DML as well.
 
@@ -47,7 +47,7 @@ UPDATE modifies columns of rows that match a WHERE clause. The WHERE clause is w
 
 ## How It Actually Works
 
-When PostgreSQL processes an INSERT, it acquires a row-level lock on the new row (or rather, on the page it will occupy), writes the new row data to a heap page (the table's storage file), and records the change in the WAL (Write-Ahead Log) for crash recovery. The new row is marked as visible only to the current transaction until the transaction commits. This is part of PostgreSQL's MVCC (Multi-Version Concurrency Control) model — each transaction sees a consistent snapshot of the database and is not affected by uncommitted changes from other transactions.
+When PostgreSQL processes an INSERT, it acquires a row-level lock on the new row (or rather, on the page it will occupy), writes the new row data to a heap page (the table's storage file), and records the change in the WAL (Write-Ahead Log) for crash recovery. The new row is marked as visible only to the current transaction until the transaction commits. This is part of PostgreSQL's MVCC (Multi-Version Concurrency Control) model - each transaction sees a consistent snapshot of the database and is not affected by uncommitted changes from other transactions.
 
 UPDATE in PostgreSQL does not modify a row in place. Instead, it inserts a new version of the row and marks the old version as dead. The old version remains on disk until VACUUM reclaims it. This is also MVCC: if another transaction holds a snapshot from before your UPDATE, it still reads the old version. The dead tuples left by UPDATE accumulate over time and can cause table bloat if VACUUM does not run frequently enough. DELETE works similarly: rows are marked as dead rather than physically removed.
 
@@ -100,17 +100,17 @@ RETURNING id, title;
 
 ## How It Connects
 
-DML changes are only safe when wrapped in transactions. A transaction groups multiple DML statements into an atomic unit — either all succeed or all roll back. Without transactions, a partial failure (for example, money debited but not credited) leaves the database in a corrupt state.
+DML changes are only safe when wrapped in transactions. A transaction groups multiple DML statements into an atomic unit - either all succeed or all roll back. Without transactions, a partial failure (for example, money debited but not credited) leaves the database in a corrupt state.
 
 [[transactions|Transactions]]
 
-The WHERE clause is what restricts UPDATE and DELETE to specific rows. Understanding how the WHERE clause works — comparison operators, NULL handling, AND/OR logic — is essential for writing safe DML.
+The WHERE clause is what restricts UPDATE and DELETE to specific rows. Understanding how the WHERE clause works - comparison operators, NULL handling, AND/OR logic - is essential for writing safe DML.
 
 [[where-clause|WHERE Clause]]
 
 DDL defines the table structure that DML operates on. Changes to the schema via ALTER TABLE (adding or removing columns) can silently break DML statements that assume a particular column order.
 
-[[ddl|DDL — CREATE, ALTER, DROP]]
+[[ddl|DDL - CREATE, ALTER, DROP]]
 
 ---
 
@@ -129,9 +129,9 @@ Reality: In PostgreSQL's MVCC model, DELETE marks the row as dead (invisible to 
 
 ## Why It Matters in Practice
 
-The most common category of production database incident is accidental mass data modification. An UPDATE without a WHERE clause that runs against production wipes the email addresses of every user. A DELETE that was meant to target one record removes ten thousand records because a copy-paste error dropped the WHERE clause. These are not hypothetical — they happen regularly at real companies. The only defenses are: use transactions so you can roll back, preview the affected rows with a SELECT using the same WHERE clause before running the UPDATE or DELETE, and connect to production databases with a role that has the minimum permissions necessary.
+The most common category of production database incident is accidental mass data modification. An UPDATE without a WHERE clause that runs against production wipes the email addresses of every user. A DELETE that was meant to target one record removes ten thousand records because a copy-paste error dropped the WHERE clause. These are not hypothetical - they happen regularly at real companies. The only defenses are: use transactions so you can roll back, preview the affected rows with a SELECT using the same WHERE clause before running the UPDATE or DELETE, and connect to production databases with a role that has the minimum permissions necessary.
 
-Understanding RETURNING changes how you write application code. Without it, inserting a row and then needing its generated ID requires two round trips to the database. With RETURNING, one query gives you both the confirmation that the insert succeeded and the values the database generated. This is not a minor optimization — in a web handler that inserts a row and immediately redirects to a URL containing the new ID, the RETURNING approach is both faster and race-condition-free.
+Understanding RETURNING changes how you write application code. Without it, inserting a row and then needing its generated ID requires two round trips to the database. With RETURNING, one query gives you both the confirmation that the insert succeeded and the values the database generated. This is not a minor optimization - in a web handler that inserts a row and immediately redirects to a URL containing the new ID, the RETURNING approach is both faster and race-condition-free.
 
 ---
 
@@ -178,6 +178,6 @@ Define DML as data manipulation (not structure). Name INSERT, UPDATE, DELETE. Ex
 
 - [[transactions|Transactions]]
 - [[where-clause|WHERE Clause]]
-- [[ddl|DDL — CREATE, ALTER, DROP]]
+- [[ddl|DDL - CREATE, ALTER, DROP]]
 - [[select-basics|SELECT Basics]]
 - [[acid-properties|ACID Properties]]

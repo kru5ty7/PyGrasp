@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Transactions
 
-> A transaction is a sequence of SQL operations that execute as a single unit — either every operation succeeds and the changes are committed, or every operation is rolled back as if nothing happened. Without transactions, partial failures corrupt your data silently.
+> A transaction is a sequence of SQL operations that execute as a single unit - either every operation succeeds and the changes are committed, or every operation is rolled back as if nothing happened. Without transactions, partial failures corrupt your data silently.
 
 ---
 
@@ -26,9 +26,9 @@ created: 2026-05-18
 - Long-running transactions hold locks and delay replication, so they should be kept short
 
 **Tricky points:**
-- DDL statements (`ALTER TABLE`, `CREATE INDEX`) inside a transaction are rolled back if the transaction fails — PostgreSQL supports transactional DDL, MySQL does not
+- DDL statements (`ALTER TABLE`, `CREATE INDEX`) inside a transaction are rolled back if the transaction fails - PostgreSQL supports transactional DDL, MySQL does not
 - In autocommit mode, a single `DELETE FROM orders` with no `WHERE` clause commits immediately and is unrecoverable
-- PostgreSQL enters an error state after any failed statement inside a transaction — you must `ROLLBACK` before issuing new commands
+- PostgreSQL enters an error state after any failed statement inside a transaction - you must `ROLLBACK` before issuing new commands
 - Nested transactions are not natively supported, but savepoints provide equivalent behavior
 
 ---
@@ -37,11 +37,11 @@ created: 2026-05-18
 
 Think of a transaction as a sealed envelope. You write everything you want to send inside the envelope before you seal it. While the envelope is open, no one else can read what is inside. Only when you seal it (commit) does the contents become visible to the rest of the world. If you change your mind before sealing, you tear up the envelope and nothing was ever sent. The database works exactly this way: your writes are invisible until commit, and rollback makes them vanish entirely.
 
-The canonical illustration is a bank transfer. Alice wants to send Bob $100. This requires two operations: deduct $100 from Alice's account and add $100 to Bob's account. If the deduction succeeds but the credit fails — say, the server crashes between the two statements — Alice has lost $100 and Bob received nothing. The database is now in an impossible state: money has disappeared. A transaction prevents this by ensuring both operations succeed together or neither takes effect.
+The canonical illustration is a bank transfer. Alice wants to send Bob $100. This requires two operations: deduct $100 from Alice's account and add $100 to Bob's account. If the deduction succeeds but the credit fails - say, the server crashes between the two statements - Alice has lost $100 and Bob received nothing. The database is now in an impossible state: money has disappeared. A transaction prevents this by ensuring both operations succeed together or neither takes effect.
 
 Without transactions, every multi-step write is a potential corruption waiting to happen. Web applications routinely perform several related inserts and updates that must all succeed together: creating an order, decrementing inventory, charging the customer, and sending a confirmation. If any step fails mid-sequence, the partial state left behind can trigger downstream errors that are far harder to diagnose than the original failure. Transactions make the error surface clean and predictable.
 
-Transactions also define a visibility boundary for other concurrent sessions. While your transaction is open, no other session sees your uncommitted changes. This means you can read your own writes within the transaction, make decisions based on what you have written, and then commit — all without other sessions observing an intermediate state. This property is isolation, and it is one of the four guarantees that make up ACID.
+Transactions also define a visibility boundary for other concurrent sessions. While your transaction is open, no other session sees your uncommitted changes. This means you can read your own writes within the transaction, make decisions based on what you have written, and then commit - all without other sessions observing an intermediate state. This property is isolation, and it is one of the four guarantees that make up ACID.
 
 ---
 
@@ -79,7 +79,7 @@ Long-running transactions cause two classes of production problems. First, they 
 
 ## How It Connects
 
-Understanding transactions is the foundation for everything in the concurrency and reliability section of SQL. The four guarantees that transactions provide are formalized as ACID properties — atomicity, consistency, isolation, and durability — each of which has specific implementation mechanisms in PostgreSQL.
+Understanding transactions is the foundation for everything in the concurrency and reliability section of SQL. The four guarantees that transactions provide are formalized as ACID properties - atomicity, consistency, isolation, and durability - each of which has specific implementation mechanisms in PostgreSQL.
 
 [[acid-properties|ACID Properties]]
 
@@ -96,7 +96,7 @@ When multiple transactions run concurrently and need the same rows, the database
 ## Common Misconceptions
 
 Misconception 1: "Autocommit is safe because the database handles committing automatically."
-Reality: Autocommit commits each statement individually. Any multi-step operation — a transfer, an order creation, a status update that must stay in sync with a log entry — is not atomic under autocommit. A failure between statements leaves the database in a partial state that is impossible to distinguish from a valid state without domain knowledge.
+Reality: Autocommit commits each statement individually. Any multi-step operation - a transfer, an order creation, a status update that must stay in sync with a log entry - is not atomic under autocommit. A failure between statements leaves the database in a partial state that is impossible to distinguish from a valid state without domain knowledge.
 
 Misconception 2: "Rolling back a transaction undoes everything, including things like sequence increments and external side effects."
 Reality: `ROLLBACK` undoes data changes within the transaction, but sequences in PostgreSQL advance without being rolled back. If your transaction increments a sequence (via `SERIAL` or `NEXTVAL`) and then rolls back, the sequence value is not reclaimed. More critically, `ROLLBACK` cannot undo external side effects: emails sent, API calls made, or files written during the transaction are not reversed by a database rollback.
@@ -110,7 +110,7 @@ Reality: An implicit or explicit connection close without a `COMMIT` rolls back 
 
 Every application that writes to a relational database depends on transactions, whether the developer is aware of it or not. Order management, financial ledgers, inventory systems, and user account operations all involve multiple related writes that must succeed together. The moment you have two or more statements that must be atomic, you need an explicit transaction.
 
-The failure cases that transactions prevent are among the most damaging in production: partial writes that create inconsistent data, double-charges on payment failures, and inventory counts that drift out of sync with order records. These bugs often do not manifest immediately — the data looks correct until a report runs or a reconciliation check fails weeks later. Wrapping multi-step writes in explicit transactions is one of the cheapest reliability improvements available to any application developer.
+The failure cases that transactions prevent are among the most damaging in production: partial writes that create inconsistent data, double-charges on payment failures, and inventory counts that drift out of sync with order records. These bugs often do not manifest immediately - the data looks correct until a report runs or a reconciliation check fails weeks later. Wrapping multi-step writes in explicit transactions is one of the cheapest reliability improvements available to any application developer.
 
 ---
 

@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Tabulation
 
-> Tabulation is the iterative, bottom-up form of dynamic programming — it fills a table from known base cases up to the target, avoiding recursion and stack overhead entirely — developers who master it can solve the hardest DP problems without hitting Python's recursion limit.
+> Tabulation is the iterative, bottom-up form of dynamic programming - it fills a table from known base cases up to the target, avoiding recursion and stack overhead entirely - developers who master it can solve the hardest DP problems without hitting Python's recursion limit.
 
 ---
 
@@ -21,16 +21,16 @@ created: 2026-05-18
 - Build a table (array or 2D grid) starting from base cases and fill in dependency order
 - No recursion, no stack frames, no `RecursionError` risk
 - Table dimensions equal the number of independent state variables
-- Each cell is computed from previously filled cells — ordering must respect dependencies
+- Each cell is computed from previously filled cells - ordering must respect dependencies
 - Space optimisation: if only the previous row or element is needed, reduce the table
 - Preferred when all subproblems will be needed or when recursion depth is a concern
 
 **Tricky points:**
-- Getting the fill order wrong causes reads from uninitialised cells — always trace the dependency direction
+- Getting the fill order wrong causes reads from uninitialised cells - always trace the dependency direction
 - Off-by-one errors in table size are common: a table for amounts 0..n needs n+1 cells
 - Space optimisation can make code harder to read; prefer clarity unless space is a hard constraint
-- Tabulation always computes every subproblem; memoization only computes reachable ones — memoization can be faster for sparse problems
-- 2D table initialisation with `[[0]*cols for _ in range(rows)]` — never use `[[0]*cols]*rows` (aliased rows)
+- Tabulation always computes every subproblem; memoization only computes reachable ones - memoization can be faster for sparse problems
+- 2D table initialisation with `[[0]*cols for _ in range(rows)]` - never use `[[0]*cols]*rows` (aliased rows)
 
 ---
 
@@ -49,15 +49,15 @@ created: 2026-05-18
 
 Think of tabulation as filling out a tax form by following the instruction booklet. The booklet says: "First complete Line 7. Then compute Line 12 using Line 7. Then compute Line 23 using Lines 12 and 15." Each line depends only on lines you have already completed. You never skip ahead or jump backward. By the time you reach the final line, every value you need has been computed and written down in a specific cell of the form. The tax form is the DP table, and the instruction order is the fill order that respects dependencies.
 
-This is the opposite of how memoization works. Memoization starts from the question you want to answer and recurses downward until it reaches base cases, then unwinds. Tabulation starts from the base cases — the smallest, simplest sub-answers you already know — and builds upward until it reaches the answer you want. Neither approach re-computes anything; both are correct implementations of dynamic programming. The difference is direction and mechanism.
+This is the opposite of how memoization works. Memoization starts from the question you want to answer and recurses downward until it reaches base cases, then unwinds. Tabulation starts from the base cases - the smallest, simplest sub-answers you already know - and builds upward until it reaches the answer you want. Neither approach re-computes anything; both are correct implementations of dynamic programming. The difference is direction and mechanism.
 
-The practical advantage of tabulation in Python is the absence of recursion. Every recursive call in memoization creates a stack frame; for problems where the recursion depth is O(n), this means n frames on the call stack simultaneously. Python's default limit of 1000 frames caps this. Tabulation uses a simple loop — the Python interpreter handles it as a flat iteration with no stack growth. For large inputs, tabulation is the only safe option in standard Python. A secondary advantage is memory access pattern: iterating through a contiguous array in order is cache-friendly and can be meaningfully faster on modern hardware than the pointer-chasing involved in recursive calls.
+The practical advantage of tabulation in Python is the absence of recursion. Every recursive call in memoization creates a stack frame; for problems where the recursion depth is O(n), this means n frames on the call stack simultaneously. Python's default limit of 1000 frames caps this. Tabulation uses a simple loop - the Python interpreter handles it as a flat iteration with no stack growth. For large inputs, tabulation is the only safe option in standard Python. A secondary advantage is memory access pattern: iterating through a contiguous array in order is cache-friendly and can be meaningfully faster on modern hardware than the pointer-chasing involved in recursive calls.
 
 ---
 
 ## How It Actually Works
 
-The implementation pattern for tabulation is always the same. Define what `dp[i]` (or `dp[i][j]`) represents — this is the state. Write the recurrence relation — the formula expressing how `dp[i]` is computed from previous entries. Identify the base cases and initialise those cells. Fill the table in the order that ensures all dependencies are ready. Return the cell corresponding to the original question.
+The implementation pattern for tabulation is always the same. Define what `dp[i]` (or `dp[i][j]`) represents - this is the state. Write the recurrence relation - the formula expressing how `dp[i]` is computed from previous entries. Identify the base cases and initialise those cells. Fill the table in the order that ensures all dependencies are ready. Return the cell corresponding to the original question.
 
 For Fibonacci, the state is `dp[i]` = the ith Fibonacci number. The recurrence is `dp[i] = dp[i-1] + dp[i-2]`. Base cases: `dp[0] = 0`, `dp[1] = 1`. Fill order: left to right from index 2. Space optimisation: since each cell only needs the two previous values, two variables replace the entire array.
 
@@ -161,7 +161,7 @@ print(edit_distance("intention", "execution"))  # 5
 
 Tabulation and memoization are two implementations of the same dynamic programming idea. Choosing between them is a matter of practicality: memoization preserves the recursive structure and is easier to derive, while tabulation avoids recursion overhead and is more memory-friendly when space optimisation is applied. For problems where only a fraction of subproblems are reachable, memoization avoids computing unused cells; for problems where all cells are needed and inputs are large, tabulation is the safer choice in Python.
 
-The space optimisation pattern — reducing a 2D table to two 1D arrays, or a 1D array to two scalar variables — appears in many interview solutions and is worth practising. It requires careful thought about which cells each new cell depends on, but the payoff in space complexity is often the difference between an acceptable and an optimal solution.
+The space optimisation pattern - reducing a 2D table to two 1D arrays, or a 1D array to two scalar variables - appears in many interview solutions and is worth practising. It requires careful thought about which cells each new cell depends on, but the payoff in space complexity is often the difference between an acceptable and an optimal solution.
 
 [[dynamic-programming|Dynamic Programming]]
 [[memoization|Memoization]]
@@ -183,7 +183,7 @@ Reality: Rolling a 2D table down to a 1D array or two variables makes the code h
 
 Tabulation is the production-ready form of dynamic programming in Python. It does not risk hitting the recursion limit, its memory access patterns are cache-friendly, and space optimisation techniques can reduce its footprint dramatically. Interview problems that involve filling a grid, counting paths, or computing minimum costs over sequences are almost always best expressed as tabulation once the state and recurrence are identified.
 
-The edit distance algorithm underpins Unix `diff`, spell checkers, and DNA sequence alignment tools. Knapsack variants model resource allocation and scheduling. Shortest path problems in graphs can be reformulated as DP. Understanding tabulation as a general pattern — define state, write recurrence, fill in order, return target cell — gives you a systematic attack on a large class of problems that would otherwise seem to require case-by-case insight.
+The edit distance algorithm underpins Unix `diff`, spell checkers, and DNA sequence alignment tools. Knapsack variants model resource allocation and scheduling. Shortest path problems in graphs can be reformulated as DP. Understanding tabulation as a general pattern - define state, write recurrence, fill in order, return target cell - gives you a systematic attack on a large class of problems that would otherwise seem to require case-by-case insight.
 
 ---
 

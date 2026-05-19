@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # SQL Indexes
 
-> An index is a purpose-built lookup structure that lets the database skip a full table scan and jump directly to matching rows — understanding when to create one (and when not to) separates fast queries from slow ones.
+> An index is a purpose-built lookup structure that lets the database skip a full table scan and jump directly to matching rows - understanding when to create one (and when not to) separates fast queries from slow ones.
 
 ---
 
@@ -20,15 +20,15 @@ created: 2026-05-18
 **Core idea:**
 - Without an index, the database reads every row in the table (sequential scan)
 - An index stores a sorted, compact copy of one or more columns plus a pointer to the full row
-- B-tree is the default index type — handles equality, range, and ORDER BY
+- B-tree is the default index type - handles equality, range, and ORDER BY
 - Hash indexes handle equality only and are rarely preferred over B-tree
 - GIN indexes handle arrays, JSONB keys, and full-text search
 - Every write (INSERT, UPDATE, DELETE) must update all applicable indexes
 
 **Tricky points:**
-- Low-cardinality columns (e.g., a boolean) make poor index candidates — the planner may ignore the index entirely
+- Low-cardinality columns (e.g., a boolean) make poor index candidates - the planner may ignore the index entirely
 - Indexes consume disk space and memory (they are cached in the buffer pool)
-- An index on a column wrapped in a function (e.g., `LOWER(email)`) will not be used by `WHERE email = 'foo'` — the function defeats the index
+- An index on a column wrapped in a function (e.g., `LOWER(email)`) will not be used by `WHERE email = 'foo'` - the function defeats the index
 - Index selectivity determines usefulness: an index on `status` with two possible values is far less useful than one on `user_id` with millions of distinct values
 
 ---
@@ -37,7 +37,7 @@ created: 2026-05-18
 
 Think of a book's back-of-book index. When you want to find every page that mentions "transactions," you do not read the entire book from page one. Instead you flip to the index, find the entry for "transactions," and get a list of page numbers. The database index works identically: it is a separate, sorted structure that maps column values to row locations, so the engine can go directly to the right pages on disk.
 
-Without an index, the database performs a sequential scan — it reads every block of the table from start to finish to find rows that match a WHERE clause. For a table with ten rows this is irrelevant. For a table with ten million rows, a sequential scan may read hundreds of megabytes of data from disk just to return three rows.
+Without an index, the database performs a sequential scan - it reads every block of the table from start to finish to find rows that match a WHERE clause. For a table with ten rows this is irrelevant. For a table with ten million rows, a sequential scan may read hundreds of megabytes of data from disk just to return three rows.
 
 When an index exists on the column being filtered, the database instead traverses the index structure (almost always a B-tree), arrives at the matching entries in O(log n) steps, and follows the row pointers back to the actual table storage (called the heap). The number of disk pages touched drops from millions to a handful.
 
@@ -67,13 +67,13 @@ CREATE INDEX idx_products_tags ON products USING GIN (tags);
 CREATE INDEX idx_articles_fts ON articles USING GIN (to_tsvector('english', body));
 ```
 
-Index selectivity is the ratio of distinct values to total rows. An index on a column with two distinct values (say `is_active` with TRUE and FALSE) would still need to read roughly half the table after using the index — the planner often decides a sequential scan is cheaper because it avoids the overhead of index traversal and random I/O. An index on `user_id` in an orders table, where nearly every value is unique, is highly selective and extremely valuable.
+Index selectivity is the ratio of distinct values to total rows. An index on a column with two distinct values (say `is_active` with TRUE and FALSE) would still need to read roughly half the table after using the index - the planner often decides a sequential scan is cheaper because it avoids the overhead of index traversal and random I/O. An index on `user_id` in an orders table, where nearly every value is unique, is highly selective and extremely valuable.
 
 ```sql
--- Low selectivity — index may be ignored
+-- Low selectivity - index may be ignored
 CREATE INDEX idx_users_is_active ON users(is_active);  -- only 2 values
 
--- High selectivity — index will be used consistently
+-- High selectivity - index will be used consistently
 CREATE INDEX idx_users_email ON users(email);  -- nearly all distinct
 
 -- Check index usage and scans in PostgreSQL
@@ -143,7 +143,7 @@ CREATE INDEX idx_users_email_lower ON users(LOWER(email));
 SELECT * FROM users WHERE LOWER(email) = 'alice@example.com';
 ```
 
-**Index bloat after heavy updates.** In PostgreSQL, UPDATE creates a new row version and marks the old one dead — both the table and the index retain dead entries until VACUUM runs. A table that is updated millions of times per day without regular autovacuum can accumulate massive index bloat, slowing both reads and writes.
+**Index bloat after heavy updates.** In PostgreSQL, UPDATE creates a new row version and marks the old one dead - both the table and the index retain dead entries until VACUUM runs. A table that is updated millions of times per day without regular autovacuum can accumulate massive index bloat, slowing both reads and writes.
 
 ---
 
@@ -155,7 +155,7 @@ Common question forms:
 - "What is index selectivity?"
 
 Answer frame:
-Start with the sequential scan problem — without an index the database reads every row. Explain that an index is a sorted auxiliary structure (typically a B-tree) that lets the engine jump to matching rows in O(log n) steps. Mention the write overhead tradeoff. Demonstrate selectivity judgment: a boolean column has low selectivity and the planner may reject the index; a unique identifier has high selectivity and delivers maximum benefit. Close with the write overhead point: every index slows writes, so indexes must be justified by their read benefit.
+Start with the sequential scan problem - without an index the database reads every row. Explain that an index is a sorted auxiliary structure (typically a B-tree) that lets the engine jump to matching rows in O(log n) steps. Mention the write overhead tradeoff. Demonstrate selectivity judgment: a boolean column has low selectivity and the planner may reject the index; a unique identifier has high selectivity and delivers maximum benefit. Close with the write overhead point: every index slows writes, so indexes must be justified by their read benefit.
 
 ---
 

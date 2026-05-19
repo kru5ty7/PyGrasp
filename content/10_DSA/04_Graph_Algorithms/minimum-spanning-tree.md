@@ -11,14 +11,14 @@ created: 2026-05-18
 
 # Minimum Spanning Tree
 
-> A minimum spanning tree connects all vertices of a weighted undirected graph using the cheapest possible edges — developers must understand it because it underlies network infrastructure design, cluster analysis, and approximation algorithms for NP-hard problems.
+> A minimum spanning tree connects all vertices of a weighted undirected graph using the cheapest possible edges - developers must understand it because it underlies network infrastructure design, cluster analysis, and approximation algorithms for NP-hard problems.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- A spanning tree is a connected, acyclic subgraph containing all V vertices — it always has exactly V-1 edges
+- A spanning tree is a connected, acyclic subgraph containing all V vertices - it always has exactly V-1 edges
 - An MST is the spanning tree with the smallest total edge weight
 - Kruskal's: sort all edges by weight, greedily add edges that do not form a cycle (Union-Find detects cycles)
 - Prim's: start from any vertex, greedily add the cheapest edge connecting the MST to a new vertex (min-heap)
@@ -26,11 +26,11 @@ created: 2026-05-18
 - Applications: network cabling, cluster analysis, approximation for TSP
 
 **Tricky points:**
-- MST is for undirected graphs only — directed graph minimum spanning arborescences require Edmonds' algorithm
+- MST is for undirected graphs only - directed graph minimum spanning arborescences require Edmonds' algorithm
 - A graph may have multiple MSTs if edge weights are not all distinct
 - Kruskal's is better for sparse graphs (fewer edges to sort); Prim's with a heap is better for dense graphs
-- Union-Find with path compression and union by rank makes Kruskal's O(E log E) — the sort dominates
-- Prim's without a heap is O(V²) — acceptable for dense graphs but worse than heap-based for sparse ones
+- Union-Find with path compression and union by rank makes Kruskal's O(E log E) - the sort dominates
+- Prim's without a heap is O(V²) - acceptable for dense graphs but worse than heap-based for sparse ones
 
 ---
 
@@ -46,17 +46,17 @@ created: 2026-05-18
 
 ## What It Is
 
-Imagine you are a city planner tasked with connecting ten remote villages with roads, given a fixed budget. You have a list of every possible road between any two villages with a construction cost for each. Your goal is to ensure that any village can reach any other village — possibly via intermediate villages — while spending the minimum total amount on construction. You do not need a direct road between every pair; you just need the network to be connected. The minimum spanning tree is the cheapest set of roads that achieves this connectivity.
+Imagine you are a city planner tasked with connecting ten remote villages with roads, given a fixed budget. You have a list of every possible road between any two villages with a construction cost for each. Your goal is to ensure that any village can reach any other village - possibly via intermediate villages - while spending the minimum total amount on construction. You do not need a direct road between every pair; you just need the network to be connected. The minimum spanning tree is the cheapest set of roads that achieves this connectivity.
 
 Two greedy strategies can solve this problem. The first, Kruskal's approach, looks at all possible roads sorted from cheapest to most expensive. It greedily builds the road network by adding each road in order, as long as the road connects two villages that are not already connected to each other (i.e., it does not create a redundant loop in the network). The second, Prim's approach, grows the network from a single starting village outward. At each step, it identifies the cheapest road that adds exactly one new unconnected village to the existing connected network, and adds that village.
 
-Both strategies work because of the cut property of minimum spanning trees. A cut is any partition of the graph's vertices into two non-empty sets. For any cut, the minimum-weight edge crossing that cut — the cheapest road connecting the two groups of villages — must belong to some MST. This property is what justifies the greedy choices in both algorithms: Kruskal's adds the cheapest available edge that crosses some cut (connecting two previously disconnected components); Prim's adds the cheapest edge crossing the cut between the current MST component and all remaining vertices.
+Both strategies work because of the cut property of minimum spanning trees. A cut is any partition of the graph's vertices into two non-empty sets. For any cut, the minimum-weight edge crossing that cut - the cheapest road connecting the two groups of villages - must belong to some MST. This property is what justifies the greedy choices in both algorithms: Kruskal's adds the cheapest available edge that crosses some cut (connecting two previously disconnected components); Prim's adds the cheapest edge crossing the cut between the current MST component and all remaining vertices.
 
 ---
 
 ## How It Actually Works
 
-Kruskal's algorithm requires a Union-Find (Disjoint Set Union) data structure to efficiently detect whether two vertices are already in the same connected component. Union-Find with path compression and union by rank performs near-O(1) per operation (technically O(α(V)) where α is the inverse Ackermann function, effectively a constant for all practical inputs). Kruskal's sorts all edges once (O(E log E)) and then processes each edge in O(α(V)) — the sort dominates.
+Kruskal's algorithm requires a Union-Find (Disjoint Set Union) data structure to efficiently detect whether two vertices are already in the same connected component. Union-Find with path compression and union by rank performs near-O(1) per operation (technically O(α(V)) where α is the inverse Ackermann function, effectively a constant for all practical inputs). Kruskal's sorts all edges once (O(E log E)) and then processes each edge in O(α(V)) - the sort dominates.
 
 Prim's algorithm uses a min-heap to track the cheapest edge connecting each unincluded vertex to the current MST. When a vertex is added to the MST, all its edges to unincluded neighbours are pushed onto the heap. The algorithm pops the minimum and adds the corresponding vertex if it has not been included yet. This is structurally identical to Dijkstra's algorithm, with the key difference that Prim's heap key is the edge weight to the MST (not the total path length from the source).
 
@@ -80,7 +80,7 @@ class UnionFind:
         """Union x and y. Returns False if already in same component."""
         rx, ry = self.find(x), self.find(y)
         if rx == ry:
-            return False   # same component — adding this edge creates a cycle
+            return False   # same component - adding this edge creates a cycle
         if self.rank[rx] < self.rank[ry]:
             rx, ry = ry, rx
         self.parent[ry] = rx
@@ -141,7 +141,7 @@ def prim(
     while heap and len(in_mst) < num_vertices:
         weight, u, v = heapq.heappop(heap)
         if v in in_mst:
-            continue   # v already in MST — skip
+            continue   # v already in MST - skip
         in_mst.add(v)
         mst_edges.append((weight, u, v))
         total_weight += weight
@@ -185,7 +185,7 @@ print(f"Prim MST weight: {weight_p}")    # 14
 
 ## How It Connects
 
-Both Kruskal's and Prim's are greedy algorithms justified by the cut property. Kruskal's uses Union-Find as its core data structure — making it also an excellent application of the Disjoint Set data structure. Prim's uses a min-heap and is structurally similar to Dijkstra's algorithm, the key difference being that Prim's tracks the minimum edge cost into the MST rather than the minimum path length from a source.
+Both Kruskal's and Prim's are greedy algorithms justified by the cut property. Kruskal's uses Union-Find as its core data structure - making it also an excellent application of the Disjoint Set data structure. Prim's uses a min-heap and is structurally similar to Dijkstra's algorithm, the key difference being that Prim's tracks the minimum edge cost into the MST rather than the minimum path length from a source.
 
 The Union-Find data structure is independently important and appears in many other contexts: checking graph connectivity, detecting cycles in undirected graphs (Kruskal's uses exactly this), and implementing Kruskal's MST efficiently. Understanding Union-Find as a component of Kruskal's is the standard way to learn both simultaneously.
 
@@ -208,9 +208,9 @@ Reality: When edge weights are distinct, both algorithms produce the unique MST,
 
 ## Why It Matters in Practice
 
-Minimum spanning trees model a class of real infrastructure problems: laying fibre-optic cable to connect data centres with minimum total cable length, designing irrigation networks, and routing electrical grids. The MST problem is also a subroutine in approximation algorithms for NP-hard problems — a 2-approximation for the metric travelling salesman problem uses an MST as its foundation. In machine learning, the MST is used in single-linkage hierarchical clustering, where the MST determines how clusters are merged.
+Minimum spanning trees model a class of real infrastructure problems: laying fibre-optic cable to connect data centres with minimum total cable length, designing irrigation networks, and routing electrical grids. The MST problem is also a subroutine in approximation algorithms for NP-hard problems - a 2-approximation for the metric travelling salesman problem uses an MST as its foundation. In machine learning, the MST is used in single-linkage hierarchical clustering, where the MST determines how clusters are merged.
 
-For interviews, MST problems are common at hard difficulty and often combine Union-Find and greedy reasoning. Understanding Kruskal's algorithm completely — sort edges, Union-Find to check connectivity, add V-1 non-cycle edges — gives you a clean, implementable solution. Kruskal's also double-duties as a cycle detection algorithm for undirected graphs: if all edges are processed and some union attempts fail (because both vertices are already in the same component), the graph contains cycles.
+For interviews, MST problems are common at hard difficulty and often combine Union-Find and greedy reasoning. Understanding Kruskal's algorithm completely - sort edges, Union-Find to check connectivity, add V-1 non-cycle edges - gives you a clean, implementable solution. Kruskal's also double-duties as a cycle detection algorithm for undirected graphs: if all edges are processed and some union attempts fail (because both vertices are already in the same component), the graph contains cycles.
 
 ---
 
@@ -222,7 +222,7 @@ Common question forms:
 - "Remove the maximum number of redundant connections while keeping the graph connected."
 
 Answer frame:
-State that the problem is finding a minimum spanning tree. Choose Kruskal's (simpler to implement) or Prim's (better for dense graphs). For Kruskal's: sort edges by weight, implement Union-Find, greedily add edges that do not create cycles, stop when V-1 edges are collected. State O(E log E) time from the sort. Mention that if the graph is not connected, an MST spanning all vertices does not exist — you get a minimum spanning forest instead.
+State that the problem is finding a minimum spanning tree. Choose Kruskal's (simpler to implement) or Prim's (better for dense graphs). For Kruskal's: sort edges by weight, implement Union-Find, greedily add edges that do not create cycles, stop when V-1 edges are collected. State O(E log E) time from the sort. Mention that if the graph is not connected, an MST spanning all vertices does not exist - you get a minimum spanning forest instead.
 
 ---
 

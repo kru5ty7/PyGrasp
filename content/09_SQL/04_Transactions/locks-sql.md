@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Locking in SQL
 
-> Locks prevent concurrent transactions from conflicting on the same data. In PostgreSQL, MVCC means readers never need locks at all — but writers must still coordinate with each other, and schema changes require the most exclusive locks of all.
+> Locks prevent concurrent transactions from conflicting on the same data. In PostgreSQL, MVCC means readers never need locks at all - but writers must still coordinate with each other, and schema changes require the most exclusive locks of all.
 
 ---
 
@@ -22,13 +22,13 @@ created: 2026-05-18
 - Table-level locks range from ACCESS SHARE (SELECT) to ACCESS EXCLUSIVE (ALTER TABLE)
 - PostgreSQL's MVCC means read queries never block and never acquire row locks
 - `SELECT FOR UPDATE` acquires a row lock that blocks other `SELECT FOR UPDATE` on the same rows
-- `SELECT FOR SHARE` acquires a shared row lock — multiple sessions can hold it simultaneously, but UPDATE is blocked
+- `SELECT FOR SHARE` acquires a shared row lock - multiple sessions can hold it simultaneously, but UPDATE is blocked
 - Advisory locks provide application-level mutual exclusion using arbitrary integer keys
 
 **Tricky points:**
-- In PostgreSQL, readers never block writers and writers never block readers — only writer-writer conflicts require row locks
+- In PostgreSQL, readers never block writers and writers never block readers - only writer-writer conflicts require row locks
 - `NOWAIT` and `SKIP LOCKED` on `SELECT FOR UPDATE` change blocking behavior significantly
-- `ALTER TABLE` acquires ACCESS EXCLUSIVE — the most restrictive table lock, which blocks all reads and writes
+- `ALTER TABLE` acquires ACCESS EXCLUSIVE - the most restrictive table lock, which blocks all reads and writes
 - Lock waits are not the same as deadlocks; most production "lock issues" are long waits, not deadlock cycles
 - `pg_locks` and `pg_stat_activity` are the diagnostic entry points for lock contention
 
@@ -36,13 +36,13 @@ created: 2026-05-18
 
 ## What It Is
 
-Think of database locks as the bathroom key in a shared office. When someone takes the key (acquires a lock), no one else can use the bathroom until they return it (release the lock). The difference between a shared lock and an exclusive lock is like the difference between a reading room and a bathroom: a reading room can have many people inside simultaneously (shared), but the bathroom is for one person at a time (exclusive). PostgreSQL's locking system is more nuanced than this analogy — it has multiple modes with different compatibility rules — but the fundamental concept is the same: a lock is a signal that says "I am using this, coordinate with me before accessing it."
+Think of database locks as the bathroom key in a shared office. When someone takes the key (acquires a lock), no one else can use the bathroom until they return it (release the lock). The difference between a shared lock and an exclusive lock is like the difference between a reading room and a bathroom: a reading room can have many people inside simultaneously (shared), but the bathroom is for one person at a time (exclusive). PostgreSQL's locking system is more nuanced than this analogy - it has multiple modes with different compatibility rules - but the fundamental concept is the same: a lock is a signal that says "I am using this, coordinate with me before accessing it."
 
 The defining feature of PostgreSQL's approach to locking is that ordinary reads require no locks at all. When you run a `SELECT` statement, PostgreSQL does not ask any rows to step aside. Instead, it uses MVCC (Multi-Version Concurrency Control) to read from a snapshot of committed data. Each row has internal metadata recording which transaction created it and which transaction deleted or replaced it. A `SELECT` statement checks these fields against its snapshot timestamp and sees exactly the rows that were committed as of the snapshot point. Because readers use a separate mechanism (snapshots) from writers (heap modifications), they never contend with each other. This is why PostgreSQL handles high read concurrency so efficiently.
 
-Row-level locking becomes necessary when you need to reserve a row for exclusive modification. The canonical use case is the read-modify-write pattern: you read a value, compute a new value based on it, and write the result back. If two transactions do this simultaneously without coordination, both read the same original value, compute conflicting updates, and both commit — producing an incorrect final state. `SELECT FOR UPDATE` solves this by acquiring an exclusive row lock at read time, so the second transaction to arrive must wait until the first has committed or rolled back before it can even read the row.
+Row-level locking becomes necessary when you need to reserve a row for exclusive modification. The canonical use case is the read-modify-write pattern: you read a value, compute a new value based on it, and write the result back. If two transactions do this simultaneously without coordination, both read the same original value, compute conflicting updates, and both commit - producing an incorrect final state. `SELECT FOR UPDATE` solves this by acquiring an exclusive row lock at read time, so the second transaction to arrive must wait until the first has committed or rolled back before it can even read the row.
 
-Table-level locks exist on a spectrum from extremely permissive to completely exclusive. At the permissive end, ACCESS SHARE is held by ordinary `SELECT` statements — thousands of reads can proceed simultaneously. At the exclusive end, ACCESS EXCLUSIVE is held by `ALTER TABLE`, `DROP TABLE`, and similar DDL operations. ACCESS EXCLUSIVE conflicts with all other lock modes, including ACCESS SHARE — which means while an `ALTER TABLE` is waiting to acquire its lock, all subsequent `SELECT` statements on that table queue behind it. This is the mechanism behind the notorious production incident where a zero-downtime schema migration blocks all reads and brings an application to a standstill.
+Table-level locks exist on a spectrum from extremely permissive to completely exclusive. At the permissive end, ACCESS SHARE is held by ordinary `SELECT` statements - thousands of reads can proceed simultaneously. At the exclusive end, ACCESS EXCLUSIVE is held by `ALTER TABLE`, `DROP TABLE`, and similar DDL operations. ACCESS EXCLUSIVE conflicts with all other lock modes, including ACCESS SHARE - which means while an `ALTER TABLE` is waiting to acquire its lock, all subsequent `SELECT` statements on that table queue behind it. This is the mechanism behind the notorious production incident where a zero-downtime schema migration blocks all reads and brings an application to a standstill.
 
 Advisory locks occupy a special category. They are not tied to any specific row or table; they are arbitrary locks identified by integer keys that your application assigns meaning to. PostgreSQL stores and manages them like regular locks (they appear in `pg_locks`, they are released when the session ends), but the database has no knowledge of what they protect. They are a coordination primitive for the application layer, useful for ensuring that a background job does not run in two processes simultaneously, or that an expensive computation is not duplicated across concurrent requests.
 
@@ -149,7 +149,7 @@ Misconception 2: "Adding an index with CREATE INDEX will not disrupt production 
 Reality: `CREATE INDEX` (without `CONCURRENTLY`) acquires a `SHARE` lock on the table, which blocks all `INSERT`, `UPDATE`, and `DELETE` operations for the duration of index construction. On large tables this can take minutes. `CREATE INDEX CONCURRENTLY` avoids this by using a weaker lock, but it takes longer and has other constraints (it cannot run inside a transaction block).
 
 Misconception 3: "If a transaction is waiting for a lock, it will wait indefinitely until the lock is available."
-Reality: By default, PostgreSQL lock waits are indefinite — there is no timeout. A long wait can appear indistinguishable from a deadlock to application operators. Setting `lock_timeout` at the session or transaction level prevents indefinite waits by aborting the waiting query after the specified duration. This is a recommended production practice.
+Reality: By default, PostgreSQL lock waits are indefinite - there is no timeout. A long wait can appear indistinguishable from a deadlock to application operators. Setting `lock_timeout` at the session or transaction level prevents indefinite waits by aborting the waiting query after the specified duration. This is a recommended production practice.
 
 ```sql
 -- Abort if a lock cannot be acquired within 5 seconds
@@ -160,9 +160,9 @@ SET lock_timeout = '5s';
 
 ## Why It Matters in Practice
 
-Lock contention is one of the most common sources of production database performance problems, and most of the time it is caused by application code that holds transactions open while doing non-database work. Every millisecond a transaction is open, the locks it holds are unavailable to other transactions. An API endpoint that opens a transaction, makes an HTTP call to a third-party service, and then commits is holding database locks for the duration of the HTTP call — potentially several seconds. Any other transaction that needs the same rows is queued for that entire time.
+Lock contention is one of the most common sources of production database performance problems, and most of the time it is caused by application code that holds transactions open while doing non-database work. Every millisecond a transaction is open, the locks it holds are unavailable to other transactions. An API endpoint that opens a transaction, makes an HTTP call to a third-party service, and then commits is holding database locks for the duration of the HTTP call - potentially several seconds. Any other transaction that needs the same rows is queued for that entire time.
 
-Schema migrations are the second major source of lock-related outages. An `ALTER TABLE` to add a column, add an index without `CONCURRENTLY`, or change a column type acquires `ACCESS EXCLUSIVE` and blocks all reads. If a long-running transaction is already open on the table, the `ALTER TABLE` itself must wait — and while it waits, all subsequent reads queue behind it. The practical solution is to always run schema changes with `lock_timeout` set, use `CREATE INDEX CONCURRENTLY` for index additions, and run migrations at low-traffic times for large tables.
+Schema migrations are the second major source of lock-related outages. An `ALTER TABLE` to add a column, add an index without `CONCURRENTLY`, or change a column type acquires `ACCESS EXCLUSIVE` and blocks all reads. If a long-running transaction is already open on the table, the `ALTER TABLE` itself must wait - and while it waits, all subsequent reads queue behind it. The practical solution is to always run schema changes with `lock_timeout` set, use `CREATE INDEX CONCURRENTLY` for index additions, and run migrations at low-traffic times for large tables.
 
 ---
 

@@ -1,6 +1,6 @@
 ﻿---
 title: 24 - EC2 Instance Types
-description: EC2 instance types encode the CPU, memory, network, and storage characteristics of a virtual machine — choosing the right type is the primary cost and performance decision when deploying Python applications on EC2.
+description: EC2 instance types encode the CPU, memory, network, and storage characteristics of a virtual machine - choosing the right type is the primary cost and performance decision when deploying Python applications on EC2.
 tags: [aws, cloud, layer-11, ec2, instance-types]
 status: draft
 difficulty: beginner
@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # EC2 Instance Types
 
-> EC2 instance types let you pick exactly the CPU, memory, and network characteristics your workload needs — choosing the wrong type means either overpaying for unused resources or degrading performance through throttling.
+> EC2 instance types let you pick exactly the CPU, memory, and network characteristics your workload needs - choosing the wrong type means either overpaying for unused resources or degrading performance through throttling.
 
 ---
 
@@ -21,25 +21,25 @@ created: 2026-05-18
 - Instance type naming: `<family><generation>.<size>` (e.g. `m6i.large` = general purpose, 6th gen, Intel, large)
 - Families: t (burstable), m (general purpose), c (compute), r (memory), g/p (GPU), i (storage), x (high memory)
 - Sizes: nano, micro, small, medium, large, xlarge, 2xlarge, 4xlarge, … 48xlarge, metal
-- Each doubling in size roughly doubles the vCPUs and memory — and the price
+- Each doubling in size roughly doubles the vCPUs and memory - and the price
 - For Python web services: t3.micro (dev), t3.small/medium (light traffic), m6i.large+ (production)
 
 **Tricky points:**
-- The t family uses CPU credits — sustained high CPU on a t3.micro causes throttling when credits are exhausted
+- The t family uses CPU credits - sustained high CPU on a t3.micro causes throttling when credits are exhausted
 - Processor variants matter for consistent benchmark results: `i` suffix = Intel, `a` suffix = AMD, `g` suffix = AWS Graviton (ARM)
-- The same family across generations has different price/performance ratios — newer generations (m7i vs m5) are usually better value
+- The same family across generations has different price/performance ratios - newer generations (m7i vs m5) are usually better value
 - `xlarge` = 4 vCPUs / 16GB RAM (for m family); `2xlarge` = 8 vCPUs / 32GB; size labels are not universal across families
-- Network bandwidth and EBS throughput increase with instance size — a t3.micro has 5 Gbps network; an m6i.4xlarge has 12.5 Gbps
+- Network bandwidth and EBS throughput increase with instance size - a t3.micro has 5 Gbps network; an m6i.4xlarge has 12.5 Gbps
 
 ---
 
 ## What It Is
 
-Think of EC2 instance types as a menu of pre-configured computers. Just as a car manufacturer offers the same model body with different engine options — a 1.4L economical engine or a 3.5L performance engine — AWS offers the same virtualisation platform with different CPU, memory, network, and storage configurations. The instance type names encode those configurations concisely once you learn the naming convention.
+Think of EC2 instance types as a menu of pre-configured computers. Just as a car manufacturer offers the same model body with different engine options - a 1.4L economical engine or a 3.5L performance engine - AWS offers the same virtualisation platform with different CPU, memory, network, and storage configurations. The instance type names encode those configurations concisely once you learn the naming convention.
 
-The naming scheme follows a consistent pattern. The family letter indicates the primary optimisation: `t` for general-purpose burstable, `m` for general-purpose balanced, `c` for compute-optimised (more CPU per dollar), `r` for memory-optimised (more RAM per dollar), `g` and `p` for GPU instances (ML training and inference), and `i` for storage-optimised (NVMe SSDs with high IOPS). The generation number tells you which hardware generation the instance runs on — higher is newer, generally faster, and often cheaper per unit of compute. The processor suffix (`i` for Intel Xeon, `a` for AMD EPYC, `g` for AWS Graviton ARM) matters for applications with architecture-specific dependencies or licensing concerns. The size (nano through 48xlarge) determines how many vCPUs and how much memory the instance gets.
+The naming scheme follows a consistent pattern. The family letter indicates the primary optimisation: `t` for general-purpose burstable, `m` for general-purpose balanced, `c` for compute-optimised (more CPU per dollar), `r` for memory-optimised (more RAM per dollar), `g` and `p` for GPU instances (ML training and inference), and `i` for storage-optimised (NVMe SSDs with high IOPS). The generation number tells you which hardware generation the instance runs on - higher is newer, generally faster, and often cheaper per unit of compute. The processor suffix (`i` for Intel Xeon, `a` for AMD EPYC, `g` for AWS Graviton ARM) matters for applications with architecture-specific dependencies or licensing concerns. The size (nano through 48xlarge) determines how many vCPUs and how much memory the instance gets.
 
-The `t` family deserves special explanation because its behaviour surprises developers. Unlike `m` or `c` instances, which provide consistent CPU access, `t` instances operate on a credit system. Each vCPU earns credits when it runs below its baseline utilisation (e.g., 20% for t3.micro). Credits accumulate up to a maximum. When the CPU needs to burst above baseline — during a deployment, a request spike, or heavy application startup — it spends credits. When credits run out, the CPU is throttled back to the baseline. A t3.micro left running a CPU-intensive task for hours will eventually plateau at 20% CPU and degrade application response times, with no error message — just slow code.
+The `t` family deserves special explanation because its behaviour surprises developers. Unlike `m` or `c` instances, which provide consistent CPU access, `t` instances operate on a credit system. Each vCPU earns credits when it runs below its baseline utilisation (e.g., 20% for t3.micro). Credits accumulate up to a maximum. When the CPU needs to burst above baseline - during a deployment, a request spike, or heavy application startup - it spends credits. When credits run out, the CPU is throttled back to the baseline. A t3.micro left running a CPU-intensive task for hours will eventually plateau at 20% CPU and degrade application response times, with no error message - just slow code.
 
 ---
 
@@ -114,20 +114,20 @@ print("Running on:", instance_type)
 
 ## How It Connects
 
-Instance types interact directly with pricing — the compute cost per hour varies widely between families, generations, and sizes. Choosing between a t3.medium and an m6i.large for a production web server can differ by 3x in hourly cost, which compounds significantly at scale.
+Instance types interact directly with pricing - the compute cost per hour varies widely between families, generations, and sizes. Choosing between a t3.medium and an m6i.large for a production web server can differ by 3x in hourly cost, which compounds significantly at scale.
 
-[[aws-pricing-model|AWS Pricing Model]] — on-demand, reserved, and spot pricing for EC2 instances; how instance type choice and pricing model interact for cost optimisation.
+[[aws-pricing-model|AWS Pricing Model]] - on-demand, reserved, and spot pricing for EC2 instances; how instance type choice and pricing model interact for cost optimisation.
 
 For auto-scaling groups, the instance type specified in the launch template determines the pool of capacity available for scaling. Mixing instance types (using multiple instance types in a mixed instances policy) improves availability and reduces cost.
 
-[[ec2-auto-scaling|EC2 Auto Scaling Groups]] — how instance types are specified in launch templates and how mixed instance policies enable cost-optimised scaling using spot instances alongside on-demand.
+[[ec2-auto-scaling|EC2 Auto Scaling Groups]] - how instance types are specified in launch templates and how mixed instance policies enable cost-optimised scaling using spot instances alongside on-demand.
 
 ---
 
 ## Common Misconceptions
 
 Misconception 1: A t3.micro with 2 vCPUs means the application always has 2 full CPU cores available.
-Reality: The `t3.micro` baseline is 10% CPU utilisation across its 2 vCPUs — effectively 0.2 vCPUs of sustained compute. The instance can burst to 100% using accumulated CPU credits, but once credits are exhausted, performance drops back to 10%. Long-running CPU-intensive tasks will be throttled. For sustained CPU work, use a fixed-performance instance type (m, c, r families).
+Reality: The `t3.micro` baseline is 10% CPU utilisation across its 2 vCPUs - effectively 0.2 vCPUs of sustained compute. The instance can burst to 100% using accumulated CPU credits, but once credits are exhausted, performance drops back to 10%. Long-running CPU-intensive tasks will be throttled. For sustained CPU work, use a fixed-performance instance type (m, c, r families).
 
 Misconception 2: Newer generation instances always cost more.
 Reality: AWS typically prices newer generation instances at the same price as or lower than the equivalent older generation, while offering better performance. An m6i.large is generally the same price or cheaper than an m5.large and provides better CPU performance, more network bandwidth, and better EBS throughput. When choosing between generations for the same family and size, the newest generation is almost always the better choice.
@@ -138,7 +138,7 @@ Reality: AWS typically prices newer generation instances at the same price as or
 
 Instance type selection is the first cost lever in any EC2 deployment. A Python data pipeline that processes batch jobs could run on a c6i.2xlarge (compute-optimised) for faster data transformation, or an r6i.large (memory-optimised) for keeping a large dataset in memory, or a general-purpose m6i.large if the workload is balanced. The wrong choice means paying for resources the application does not use or experiencing performance degradation.
 
-For Python web applications specifically, the t3 family is the pragmatic choice for development and staging (cheap, adequate for low sustained load), but production APIs under real traffic need fixed-performance instances to avoid CPU credit exhaustion causing latency spikes at the worst possible time — during traffic peaks.
+For Python web applications specifically, the t3 family is the pragmatic choice for development and staging (cheap, adequate for low sustained load), but production APIs under real traffic need fixed-performance instances to avoid CPU credit exhaustion causing latency spikes at the worst possible time - during traffic peaks.
 
 ---
 
@@ -189,7 +189,7 @@ Common question forms:
 - "What instance family would you use for a memory-intensive Python data processing job?"
 
 Answer frame:
-For t3 vs m6i: t3 uses CPU credits and will throttle under sustained load — wrong for a production API. m6i provides consistent CPU access. For credits: baseline + burst model, credits earned at idle, spent at high CPU, throttle when exhausted. For memory-intensive: r family — memory-optimised, more GiB per dollar than m or c.
+For t3 vs m6i: t3 uses CPU credits and will throttle under sustained load - wrong for a production API. m6i provides consistent CPU access. For credits: baseline + burst model, credits earned at idle, spent at high CPU, throttle when exhausted. For memory-intensive: r family - memory-optimised, more GiB per dollar than m or c.
 
 ---
 

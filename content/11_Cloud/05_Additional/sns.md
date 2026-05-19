@@ -1,6 +1,6 @@
 ﻿---
 title: 44 - SNS (Simple Notification Service)
-description: SNS is AWS's managed pub/sub service — a single published message is pushed to all subscribers simultaneously, enabling fan-out, alerts, and multi-consumer event distribution.
+description: SNS is AWS's managed pub/sub service - a single published message is pushed to all subscribers simultaneously, enabling fan-out, alerts, and multi-consumer event distribution.
 tags: [aws, cloud, layer-11, sns, messaging, pub-sub]
 status: draft
 difficulty: intermediate
@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # SNS (Simple Notification Service)
 
-> SNS is a push-based pub/sub service — you publish one message to a topic and SNS delivers it to every subscriber simultaneously, making it the correct choice for fan-out, alerts, and notifications.
+> SNS is a push-based pub/sub service - you publish one message to a topic and SNS delivers it to every subscriber simultaneously, making it the correct choice for fan-out, alerts, and notifications.
 
 ---
 
@@ -20,33 +20,33 @@ created: 2026-05-18
 **Core idea:**
 - Publisher sends one message to a topic; SNS delivers it to all subscribers
 - Subscriber types: Lambda, SQS, HTTP/HTTPS, email, SMS, mobile push
-- Push-based: SNS pushes to subscribers — no polling required (unlike SQS)
+- Push-based: SNS pushes to subscribers - no polling required (unlike SQS)
 - Message filtering: subscription filter policies let subscribers receive only matching messages
 - SNS FIFO topics: ordered delivery with deduplication, only SQS FIFO queues as subscribers
 - Fan-out pattern: SNS → multiple SQS queues, each processed independently
 
 **Tricky points:**
 - SNS delivery to HTTP/HTTPS endpoints retries with exponential backoff but does not guarantee delivery if the endpoint is down for an extended period
-- Lambda subscribers require a resource-based policy on the Lambda function (just like S3) — the topic itself does not use event source mapping
+- Lambda subscribers require a resource-based policy on the Lambda function (just like S3) - the topic itself does not use event source mapping
 - Message size limit: 256KB (same as SQS)
 - For large payloads, use the SNS Extended Client Library (stores message body in S3, sends S3 reference)
-- SNS does not retain messages — if a subscriber is unavailable at delivery time, the message is lost unless an SQS queue is in the subscription chain
+- SNS does not retain messages - if a subscriber is unavailable at delivery time, the message is lost unless an SQS queue is in the subscription chain
 
 ---
 
 ## What It Is
 
-SNS is a broadcast system, like a public address loudspeaker in a building. When you pick up the microphone (publish to a topic), every room that has opted into the channel (subscribers) hears the announcement simultaneously. It does not matter whether Room 101 is going to act on the announcement immediately, file it for later, or ignore it — the loudspeaker delivers to all subscribed rooms at the moment of broadcast. Contrast this with SQS, which is more like a suggestion box: producers drop notes in, consumers check the box at their own pace.
+SNS is a broadcast system, like a public address loudspeaker in a building. When you pick up the microphone (publish to a topic), every room that has opted into the channel (subscribers) hears the announcement simultaneously. It does not matter whether Room 101 is going to act on the announcement immediately, file it for later, or ignore it - the loudspeaker delivers to all subscribed rooms at the moment of broadcast. Contrast this with SQS, which is more like a suggestion box: producers drop notes in, consumers check the box at their own pace.
 
-The architectural power of SNS is the fan-out pattern. A single event — say, a new order placed on an e-commerce site — needs to trigger multiple independent downstream processes: send an order confirmation email, update the inventory system, notify the warehouse, and record the event for analytics. Without SNS, the order service must know about all four downstream consumers and call them individually, creating tight coupling. With SNS, the order service publishes one message to a topic. Four SQS queues are subscribed to the topic. Each SQS queue feeds a separate Lambda function or consumer service. The order service knows nothing about the downstream consumers; new consumers are added by subscribing their SQS queue — no change to the order service required.
+The architectural power of SNS is the fan-out pattern. A single event - say, a new order placed on an e-commerce site - needs to trigger multiple independent downstream processes: send an order confirmation email, update the inventory system, notify the warehouse, and record the event for analytics. Without SNS, the order service must know about all four downstream consumers and call them individually, creating tight coupling. With SNS, the order service publishes one message to a topic. Four SQS queues are subscribed to the topic. Each SQS queue feeds a separate Lambda function or consumer service. The order service knows nothing about the downstream consumers; new consumers are added by subscribing their SQS queue - no change to the order service required.
 
-The key difference between SNS and SQS in terms of delivery semantics is durability. SQS retains messages for up to 14 days — a consumer can be down for hours and still process its messages when it comes back. SNS pushes to subscribers at the moment of publication. If a subscriber's HTTP endpoint is down, SNS retries according to its retry policy, but after a configured number of failures, the message is dropped. This is why the SNS → SQS fan-out pattern (rather than SNS → HTTP/Lambda directly) is the correct architecture for guaranteed processing: SQS provides the durability buffer, SNS provides the fan-out routing.
+The key difference between SNS and SQS in terms of delivery semantics is durability. SQS retains messages for up to 14 days - a consumer can be down for hours and still process its messages when it comes back. SNS pushes to subscribers at the moment of publication. If a subscriber's HTTP endpoint is down, SNS retries according to its retry policy, but after a configured number of failures, the message is dropped. This is why the SNS → SQS fan-out pattern (rather than SNS → HTTP/Lambda directly) is the correct architecture for guaranteed processing: SQS provides the durability buffer, SNS provides the fan-out routing.
 
 ---
 
 ## How It Actually Works
 
-Message filtering is one of SNS's most useful features for large-scale event routing. Each SQS queue or Lambda subscriber can define a filter policy — a JSON object matching against message attributes. Only messages whose attributes match the filter policy are delivered to that subscriber. This allows a single topic to serve as a routing backbone: an `order-events` topic receives all order events, but the `fulfillment-queue` subscription filters to `{"event_type": ["order_placed", "order_updated"]}` while the `analytics-queue` subscription receives all events unfiltered.
+Message filtering is one of SNS's most useful features for large-scale event routing. Each SQS queue or Lambda subscriber can define a filter policy - a JSON object matching against message attributes. Only messages whose attributes match the filter policy are delivered to that subscriber. This allows a single topic to serve as a routing backbone: an `order-events` topic receives all order events, but the `fulfillment-queue` subscription filters to `{"event_type": ["order_placed", "order_updated"]}` while the `analytics-queue` subscription receives all events unfiltered.
 
 ```python
 import boto3
@@ -157,13 +157,13 @@ aws lambda add-permission \
 
 ## How It Connects
 
-SNS and SQS are complementary services — SNS provides fan-out routing, SQS provides durable buffering. Together they form the canonical AWS event distribution pattern.
+SNS and SQS are complementary services - SNS provides fan-out routing, SQS provides durable buffering. Together they form the canonical AWS event distribution pattern.
 
-[[sqs|SQS (Simple Queue Service)]] — the SNS → SQS fan-out pattern depends on understanding SQS queue configuration, DLQ setup, and the SQS permission model that allows SNS to write to the queue.
+[[sqs|SQS (Simple Queue Service)]] - the SNS → SQS fan-out pattern depends on understanding SQS queue configuration, DLQ setup, and the SQS permission model that allows SNS to write to the queue.
 
 SNS topics that deliver to Lambda functions require the same resource-based permission model as S3 and EventBridge triggers. The Lambda IAM note covers both sides of the permission model.
 
-[[lambda-iam|Lambda IAM Execution Role]] — covers the resource-based policy on Lambda functions that permits external services like SNS to invoke them.
+[[lambda-iam|Lambda IAM Execution Role]] - covers the resource-based policy on Lambda functions that permits external services like SNS to invoke them.
 
 ---
 
@@ -179,7 +179,7 @@ Reality: By default, SNS wraps your message in a JSON envelope containing metada
 
 ## Why It Matters in Practice
 
-SNS solves the fan-out problem cleanly. Without it, every time a new consumer needs to react to an event, the producer must be modified to call the new consumer. With an SNS topic as the central distribution point, new consumers self-subscribe without producer changes. This pattern is the architectural backbone of event-driven microservices in AWS — order events, user sign-up events, and system health events all benefit from the topic model where producers and consumers are fully decoupled.
+SNS solves the fan-out problem cleanly. Without it, every time a new consumer needs to react to an event, the producer must be modified to call the new consumer. With an SNS topic as the central distribution point, new consumers self-subscribe without producer changes. This pattern is the architectural backbone of event-driven microservices in AWS - order events, user sign-up events, and system health events all benefit from the topic model where producers and consumers are fully decoupled.
 
 ---
 
@@ -190,7 +190,7 @@ SNS solves the fan-out problem cleanly. Without it, every time a new consumer ne
 ```python
 # Mistake: subscribe an SQS queue to an SNS topic but forget the queue resource policy
 sns.subscribe(TopicArn=topic_arn, Protocol="sqs", Endpoint=queue_arn)
-# Messages published to the topic are silently dropped — no error on publish
+# Messages published to the topic are silently dropped - no error on publish
 # SNS cannot write to the queue without explicit queue permission
 
 # Fix: add the resource-based policy to the SQS queue (see allow_sns_to_sqs above)
@@ -203,7 +203,7 @@ sns.subscribe(TopicArn=topic_arn, Protocol="sqs", Endpoint=queue_arn)
 # when RawMessageDelivery is not enabled
 def process_sqs_message(body_str: str):
     data = json.loads(body_str)  # data is the SNS envelope, not the order
-    order_id = data["order_id"]  # KeyError — the actual data is in data["Message"]
+    order_id = data["order_id"]  # KeyError - the actual data is in data["Message"]
 
 # Fix: either enable RawMessageDelivery on the subscription,
 # or unwrap the SNS envelope in the consumer

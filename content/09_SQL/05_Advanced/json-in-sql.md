@@ -11,14 +11,14 @@ created: 2026-05-18
 
 # JSON in PostgreSQL
 
-> PostgreSQL's JSONB type turns the database into a document store without giving up relational joins, transactions, or SQL — but knowing when not to use it matters as much as knowing how.
+> PostgreSQL's JSONB type turns the database into a document store without giving up relational joins, transactions, or SQL - but knowing when not to use it matters as much as knowing how.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- JSON stores data as text (validated but not indexed); JSONB stores as binary (indexed, faster queries) — prefer JSONB
+- JSON stores data as text (validated but not indexed); JSONB stores as binary (indexed, faster queries) - prefer JSONB
 - -> extracts a JSON field and returns JSON; ->> extracts and returns text
 - #> and #>> navigate nested paths using array syntax
 - @> is the containment operator: checks if the left JSONB contains the right JSONB as a subset
@@ -30,15 +30,15 @@ created: 2026-05-18
 - Updating a single field in a large JSONB document requires rewriting the entire column value
 - GIN indexes are large; creating one on a large JSONB column with many keys is storage-intensive
 - Querying inside JSONB is less efficient than querying indexed relational columns for equality lookups
-- The hybrid approach — structured columns for frequently queried fields, JSONB for everything else — is usually best
+- The hybrid approach - structured columns for frequently queried fields, JSONB for everything else - is usually best
 
 ---
 
 ## What It Is
 
-Think of a relational table as a spreadsheet where every cell in a column holds the same type of value, and every row has exactly the same columns. This is rigid but extremely efficient. Now think of a JSONB column as one column in that spreadsheet where any cell can hold a completely different JSON document — some cells have five keys, some have fifty, some have nested arrays of objects. The spreadsheet's other columns remain rigidly structured, queryable, and indexed. The JSONB column adds a flexible pocket for everything that does not fit the rigid schema. You get the best of both models in one row.
+Think of a relational table as a spreadsheet where every cell in a column holds the same type of value, and every row has exactly the same columns. This is rigid but extremely efficient. Now think of a JSONB column as one column in that spreadsheet where any cell can hold a completely different JSON document - some cells have five keys, some have fifty, some have nested arrays of objects. The spreadsheet's other columns remain rigidly structured, queryable, and indexed. The JSONB column adds a flexible pocket for everything that does not fit the rigid schema. You get the best of both models in one row.
 
-PostgreSQL introduced native JSON support with JSON (added in 9.2) and JSONB (added in 9.4). The difference is in how they store data. JSON validates the input and stores it verbatim as text — whitespace preserved, key order preserved, duplicate keys allowed. JSONB parses the JSON, stores it in a decomposed binary format, discards whitespace, deduplicates keys (last value wins), and does not preserve key order. The binary representation is what enables indexing. Almost every production use case should use JSONB.
+PostgreSQL introduced native JSON support with JSON (added in 9.2) and JSONB (added in 9.4). The difference is in how they store data. JSON validates the input and stores it verbatim as text - whitespace preserved, key order preserved, duplicate keys allowed. JSONB parses the JSON, stores it in a decomposed binary format, discards whitespace, deduplicates keys (last value wins), and does not preserve key order. The binary representation is what enables indexing. Almost every production use case should use JSONB.
 
 The practical appeal of JSONB is handling varying schemas in a relational database. An e-commerce product catalog might have 10 attributes that all products share (name, price, category, SKU) and 50 attributes that vary by product type (electronics have wattage and voltage; clothing has size and material; food has ingredients and allergens). Normalizing all possible attributes into relational columns produces a table with hundreds of nullable columns, most empty for any given row. An EAV (Entity-Attribute-Value) table avoids nullable columns but makes queries extremely verbose. JSONB stores the varying attributes in a single column per row, queryable with JSON operators, and optionally indexed.
 
@@ -138,9 +138,9 @@ WHERE id = 2;
 
 ## How It Connects
 
-JSONB and PostgreSQL full-text search share the GIN index type. Both index data that does not fit the B-tree model — full-text search indexes word stems across a document, JSONB indexes keys and values across a document. Understanding why GIN exists and what it is optimized for applies to both use cases.
+JSONB and PostgreSQL full-text search share the GIN index type. Both index data that does not fit the B-tree model - full-text search indexes word stems across a document, JSONB indexes keys and values across a document. Understanding why GIN exists and what it is optimized for applies to both use cases.
 
-The hybrid approach to JSONB — structured columns for relational data, JSONB for semi-structured metadata — is a standard pattern in Python web applications using ORMs like SQLAlchemy. The JSONB column is often mapped to a dict in the Python model, with read/write handled transparently by the ORM. Understanding the SQL semantics underneath helps when debugging queries generated by the ORM.
+The hybrid approach to JSONB - structured columns for relational data, JSONB for semi-structured metadata - is a standard pattern in Python web applications using ORMs like SQLAlchemy. The JSONB column is often mapped to a dict in the Python model, with read/write handled transparently by the ORM. Understanding the SQL semantics underneath helps when debugging queries generated by the ORM.
 
 [[sql-indexes|SQL Indexes]]
 [[full-text-search|Full Text Search]]
@@ -151,7 +151,7 @@ The hybrid approach to JSONB — structured columns for relational data, JSONB f
 
 ## Common Misconceptions
 
-Misconception 1: "JSON and JSONB are interchangeable — choose either."
+Misconception 1: "JSON and JSONB are interchangeable - choose either."
 Reality: JSON and JSONB have different storage characteristics, different capabilities, and different use cases. JSON preserves whitespace, key order, and duplicate keys, but cannot be indexed (no GIN support) and queries are slower. JSONB is binary, deduplicated, indexed, and faster to query. In almost every production application, JSONB is the correct choice. JSON is useful only when key order or duplicate keys are semantically significant, which is rare.
 
 Misconception 2: "JSONB is always better than normalized tables for flexible data."
@@ -164,7 +164,7 @@ Reality: Every UPDATE to a JSONB column rewrites the entire column value for tha
 
 ## Why It Matters in Practice
 
-JSONB in PostgreSQL fills the gap that previously required either a separate document database (MongoDB) or a rigid EAV schema. For applications that are primarily relational but have one or two entities with truly variable attributes — user preferences, product metadata, audit event payloads, webhook request/response bodies — JSONB allows the flexible storage without adding a second database system to the infrastructure.
+JSONB in PostgreSQL fills the gap that previously required either a separate document database (MongoDB) or a rigid EAV schema. For applications that are primarily relational but have one or two entities with truly variable attributes - user preferences, product metadata, audit event payloads, webhook request/response bodies - JSONB allows the flexible storage without adding a second database system to the infrastructure.
 
 The practical pattern most commonly seen in Python applications is storing event or audit data as JSONB. An events table has structured columns for the event type, user ID, timestamp, and a JSONB column for the event payload. Different event types have completely different payload schemas. Querying by event type uses the indexed column; querying by payload contents uses the GIN index when needed. The application code receives the payload as a Python dict via the ORM, with no schema migration required when a new payload field is added.
 
@@ -172,7 +172,7 @@ The practical pattern most commonly seen in Python applications is storing event
 
 ## What Breaks
 
-**Unindexed JSONB query causing full table scan.** A developer adds a WHERE clause filtering on a JSONB key — WHERE metadata->>'tenant_id' = '42' — without creating a GIN index. On a small table this is imperceptible. After the table grows to 10 million rows, this query takes 30 seconds. EXPLAIN ANALYZE shows a Seq Scan with Filter. A GIN index or, better, promoting tenant_id to a proper indexed column fixes the issue.
+**Unindexed JSONB query causing full table scan.** A developer adds a WHERE clause filtering on a JSONB key - WHERE metadata->>'tenant_id' = '42' - without creating a GIN index. On a small table this is imperceptible. After the table grows to 10 million rows, this query takes 30 seconds. EXPLAIN ANALYZE shows a Seq Scan with Filter. A GIN index or, better, promoting tenant_id to a proper indexed column fixes the issue.
 
 ```sql
 -- Better: extract frequently-queried JSONB values into indexed generated columns
@@ -184,7 +184,7 @@ CREATE INDEX ON events (tenant_id);
 
 **JSONB column storing data that should be normalized.** A team uses JSONB to store order line items as an array of objects inside the order row. Later, they need to query all orders containing a specific product. The query requires @> containment search and cannot efficiently use a JOIN or FK index. Aggregating revenue per product requires JSON expansion. What started as flexibility has become a query anti-pattern. Data that needs to be joined or aggregated belongs in its own table.
 
-**Key name typos causing silent nulls.** A query selects attributes->>'colur' (typo) instead of attributes->>'color'. The ->> operator returns NULL when the key does not exist, not an error. Every row in the result has NULL for that column. The developer does not notice because the query succeeds silently. JSONB provides no schema enforcement — typos in key names are invisible at the SQL level.
+**Key name typos causing silent nulls.** A query selects attributes->>'colur' (typo) instead of attributes->>'color'. The ->> operator returns NULL when the key does not exist, not an error. Every row in the result has NULL for that column. The developer does not notice because the query succeeds silently. JSONB provides no schema enforcement - typos in key names are invisible at the SQL level.
 
 ---
 
@@ -197,7 +197,7 @@ Common question forms:
 - "What are the downsides of storing data as JSONB?"
 
 Answer frame:
-Lead with the JSON vs JSONB distinction — binary storage, indexing capability, prefer JSONB. Explain the use case: semi-structured data with varying keys, metadata columns, event payloads. Describe the GIN index for the @> containment operator. Then pivot to when NOT to use JSONB: data you JOIN on, data you filter on in every query, data with a stable known schema — all of these belong in proper relational columns. The hybrid approach (structured + JSONB metadata) is the pattern that shows maturity.
+Lead with the JSON vs JSONB distinction - binary storage, indexing capability, prefer JSONB. Explain the use case: semi-structured data with varying keys, metadata columns, event payloads. Describe the GIN index for the @> containment operator. Then pivot to when NOT to use JSONB: data you JOIN on, data you filter on in every query, data with a stable known schema - all of these belong in proper relational columns. The hybrid approach (structured + JSONB metadata) is the pattern that shows maturity.
 
 ---
 

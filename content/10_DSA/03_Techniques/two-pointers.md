@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Two Pointers Technique
 
-> Two pointers places a left and right index into an array and moves them toward each other (or at different speeds) based on a comparison, turning O(n²) brute-force pair-checking into O(n) linear scans — it is one of the most frequently used interview techniques for array and linked list problems.
+> Two pointers places a left and right index into an array and moves them toward each other (or at different speeds) based on a comparison, turning O(n²) brute-force pair-checking into O(n) linear scans - it is one of the most frequently used interview techniques for array and linked list problems.
 
 ---
 
@@ -26,10 +26,10 @@ created: 2026-05-18
 - Problems that fit: two-sum on sorted array, remove duplicates in-place, palindrome check, cycle detection
 
 **Tricky points:**
-- Two pointers only works when you can infer which pointer to move from the current state — this usually requires sorted order
+- Two pointers only works when you can infer which pointer to move from the current state - this usually requires sorted order
 - In-place modification problems (remove duplicates, move zeros) need a slow "write" pointer and a fast "read" pointer, not left-right pointers
-- Avoid crossing pointers — the loop condition `left < right` prevents processing the same element twice
-- Three-sum extends two-sum by fixing one element and running two pointers on the remainder — sort first, skip duplicates carefully
+- Avoid crossing pointers - the loop condition `left < right` prevents processing the same element twice
+- Three-sum extends two-sum by fixing one element and running two pointers on the remainder - sort first, skip duplicates carefully
 - Floyd's cycle detection (fast/slow on linked lists) does not require sorted order; it exploits the mathematical property that two pointers in a cycle must eventually meet
 
 ---
@@ -47,11 +47,11 @@ created: 2026-05-18
 
 ## What It Is
 
-Picture a tug-of-war rope stretched between two people. To find whether any two people on a sorted team roster add up to a target total weight, one person starts reading names from the lightest end and the other from the heaviest end. If the sum of the two weights they are pointing to is too large, the person at the heavy end steps inward (toward lighter weights). If the sum is too small, the person at the light end steps inward (toward heavier weights). If the sum is exactly right, they have found their pair. The key insight is that every inward step logically eliminates an entire set of combinations without checking them explicitly — the sorted order makes each comparison informative enough to rule out a direction.
+Picture a tug-of-war rope stretched between two people. To find whether any two people on a sorted team roster add up to a target total weight, one person starts reading names from the lightest end and the other from the heaviest end. If the sum of the two weights they are pointing to is too large, the person at the heavy end steps inward (toward lighter weights). If the sum is too small, the person at the light end steps inward (toward heavier weights). If the sum is exactly right, they have found their pair. The key insight is that every inward step logically eliminates an entire set of combinations without checking them explicitly - the sorted order makes each comparison informative enough to rule out a direction.
 
 This is the essence of the opposite-ends two pointers pattern. Sorted order means you know exactly which direction to move: if the current pair sum is too large, making the right element smaller can only help; making the left element larger can only hurt. You never need to revisit a combination you have passed. Over the full scan, the left pointer and right pointer together traverse at most n positions, giving O(n) total work compared to O(n²) for exhaustively checking all pairs.
 
-The fast/slow pointer variant, also called Floyd's tortoise and hare algorithm, operates on a different principle. Imagine a circular running track. If two runners start at the same point — one running twice as fast as the other — the faster runner will always eventually lap the slower one and they will be at the same position again. If the track has no loop, the faster runner simply reaches the end first and there is no meeting. This property is the basis for cycle detection in linked lists: the slow pointer moves one step at a time, the fast pointer moves two steps, and if they ever point to the same node, a cycle is confirmed. The beauty is that this requires no extra memory — no visited set, no hash table — just two pointers.
+The fast/slow pointer variant, also called Floyd's tortoise and hare algorithm, operates on a different principle. Imagine a circular running track. If two runners start at the same point - one running twice as fast as the other - the faster runner will always eventually lap the slower one and they will be at the same position again. If the track has no loop, the faster runner simply reaches the end first and there is no meeting. This property is the basis for cycle detection in linked lists: the slow pointer moves one step at a time, the fast pointer moves two steps, and if they ever point to the same node, a cycle is confirmed. The beauty is that this requires no extra memory - no visited set, no hash table - just two pointers.
 
 ---
 
@@ -155,7 +155,7 @@ def has_cycle(head: Optional[ListNode]) -> bool:
 
 The two pointers technique is most powerful when applied to sorted arrays, which is why binary search and two pointers are often considered together. Binary search narrows a search space by repeatedly halving it; two pointers narrow it by converging from both ends. Both achieve O(log n) or O(n) from what would otherwise be O(n²) or O(n log n) brute force.
 
-The fast/slow pointer variant is the standard approach for cycle detection in linked lists and is also used to find the midpoint of a list (stop when fast reaches the end — slow is at the midpoint) and to find the start of a cycle (a classic follow-up problem). These pointer manipulation techniques on linked lists form a separate cluster of important interview patterns.
+The fast/slow pointer variant is the standard approach for cycle detection in linked lists and is also used to find the midpoint of a list (stop when fast reaches the end - slow is at the midpoint) and to find the start of a cycle (a classic follow-up problem). These pointer manipulation techniques on linked lists form a separate cluster of important interview patterns.
 
 [[arrays|Arrays]]
 [[linked-lists|Linked Lists]]
@@ -167,7 +167,7 @@ The fast/slow pointer variant is the standard approach for cycle detection in li
 ## Common Misconceptions
 
 Misconception 1: Two pointers always requires a sorted array.
-Reality: The opposite-ends variant requires sorted order to make each comparison informative. The slow/fast pointer variant for in-place array modification does not — it simply compacts valid elements to the front. Floyd's cycle detection does not require sorted order at all. The requirement depends on which variant you are using.
+Reality: The opposite-ends variant requires sorted order to make each comparison informative. The slow/fast pointer variant for in-place array modification does not - it simply compacts valid elements to the front. Floyd's cycle detection does not require sorted order at all. The requirement depends on which variant you are using.
 
 Misconception 2: Two pointers and sliding window are the same technique.
 Reality: Both use two indices, but with different behaviours. Two pointers (opposite ends) move toward each other; sliding window always moves both pointers in the same direction. The purpose also differs: two pointers finds a pair satisfying a condition, while sliding window finds a contiguous subarray satisfying a constraint. They solve overlapping but distinct problem types.

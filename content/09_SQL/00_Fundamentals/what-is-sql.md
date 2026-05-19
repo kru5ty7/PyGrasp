@@ -26,7 +26,7 @@ created: 2026-05-18
 - SQL is case-insensitive for keywords, but convention is to write keywords in uppercase.
 
 **Tricky points:**
-- "Declarative" does not mean the database does whatever it wants — the query optimizer chooses the execution plan, and you can influence it.
+- "Declarative" does not mean the database does whatever it wants - the query optimizer chooses the execution plan, and you can influence it.
 - SQL is not a programming language in the traditional sense. It has no loops, no variables in base syntax (only in procedural extensions like PL/pgSQL).
 - The written order of a SELECT statement is not the execution order. FROM runs before SELECT.
 - NULL is not a value in the normal sense. It is the absence of a value, and it behaves unexpectedly in comparisons.
@@ -38,9 +38,9 @@ created: 2026-05-18
 
 Think of SQL like a librarian system. When you walk into a library and say "I want every mystery novel published after 2010, sorted by author," you are not telling the librarian which shelf to check first, which route to walk, or how to carry the books. You are describing the result you want. The librarian (the database engine) figures out the most efficient way to retrieve it. That is what it means for SQL to be declarative.
 
-SQL — Structured Query Language — is the language used to communicate with relational database management systems (RDBMS). An RDBMS is software that stores data in tables, enforces relationships between those tables, and answers queries about the data. PostgreSQL, MySQL, and SQLite are all RDBMS products. Each of them understands SQL, though with small dialect differences.
+SQL - Structured Query Language - is the language used to communicate with relational database management systems (RDBMS). An RDBMS is software that stores data in tables, enforces relationships between those tables, and answers queries about the data. PostgreSQL, MySQL, and SQLite are all RDBMS products. Each of them understands SQL, though with small dialect differences.
 
-The contrast to declarative is imperative, which is how most programming languages work. In Python, you write step-by-step instructions: loop over this list, check this condition, append to that array. In SQL, you write a description of the output set you want, and the database decides how to produce it. This is why SQL queries can look deceptively simple while doing enormous amounts of work internally — the engine is doing the iteration, not you.
+The contrast to declarative is imperative, which is how most programming languages work. In Python, you write step-by-step instructions: loop over this list, check this condition, append to that array. In SQL, you write a description of the output set you want, and the database decides how to produce it. This is why SQL queries can look deceptively simple while doing enormous amounts of work internally - the engine is doing the iteration, not you.
 
 SQL has been standardized since 1986 by ANSI and ISO. The core syntax has changed little in fifty years, which is why SQL knowledge transfers across jobs and decades. PostgreSQL implements nearly all of the SQL standard plus a rich set of extensions. It is the recommended database for Python backend development and the reference throughout this layer.
 
@@ -48,9 +48,9 @@ SQL has been standardized since 1986 by ANSI and ISO. The core syntax has change
 
 ## How It Actually Works
 
-When you submit a SQL statement, the database engine processes it in several distinct phases. First, the parser reads the text and checks that the syntax is valid SQL. It builds an internal tree structure called a parse tree. Second, the analyzer resolves names — it checks that the tables and columns you referenced actually exist and that you have permission to access them. Third, the query planner (also called the optimizer) takes the logical query and generates one or more physical execution plans. A plan describes the operations the engine will perform: which index to use, which join algorithm to apply, in what order to access tables. The planner estimates the cost of each plan and picks the cheapest one. Fourth, the executor runs the chosen plan and streams rows back to the client.
+When you submit a SQL statement, the database engine processes it in several distinct phases. First, the parser reads the text and checks that the syntax is valid SQL. It builds an internal tree structure called a parse tree. Second, the analyzer resolves names - it checks that the tables and columns you referenced actually exist and that you have permission to access them. Third, the query planner (also called the optimizer) takes the logical query and generates one or more physical execution plans. A plan describes the operations the engine will perform: which index to use, which join algorithm to apply, in what order to access tables. The planner estimates the cost of each plan and picks the cheapest one. Fourth, the executor runs the chosen plan and streams rows back to the client.
 
-This pipeline matters because the SQL text you write is not what runs. The optimizer rewrites and rearranges your query to make it faster. When a query is slow, the problem is almost always in the plan the optimizer chose — either because it lacks the right index, or because statistics about the data are stale, or because the query was written in a way that prevents the optimizer from making a good choice. The `EXPLAIN` and `EXPLAIN ANALYZE` commands expose the execution plan so you can inspect it.
+This pipeline matters because the SQL text you write is not what runs. The optimizer rewrites and rearranges your query to make it faster. When a query is slow, the problem is almost always in the plan the optimizer chose - either because it lacks the right index, or because statistics about the data are stale, or because the query was written in a way that prevents the optimizer from making a good choice. The `EXPLAIN` and `EXPLAIN ANALYZE` commands expose the execution plan so you can inspect it.
 
 ```sql
 -- The four statement types in SQL
@@ -71,7 +71,7 @@ DELETE FROM users WHERE active = false;
 
 ## How It Connects
 
-The SELECT statement is the most complex statement in SQL. It has its own execution order, aliasing rules, and distinct behavior — all covered separately. Understanding SELECT well requires understanding how FROM, WHERE, and ORDER BY interact.
+The SELECT statement is the most complex statement in SQL. It has its own execution order, aliasing rules, and distinct behavior - all covered separately. Understanding SELECT well requires understanding how FROM, WHERE, and ORDER BY interact.
 
 [[select-basics|SELECT Basics]]
 
@@ -81,8 +81,8 @@ SQL's declarative nature becomes most important when you start reading query exe
 
 DDL and DML are the two broad categories that all SQL statements fall into. DDL defines structure; DML manipulates data. Understanding this split clarifies which operations are safe and which can cause data loss.
 
-[[ddl|DDL — CREATE, ALTER, DROP]]
-[[dml|DML — INSERT, UPDATE, DELETE]]
+[[ddl|DDL - CREATE, ALTER, DROP]]
+[[dml|DML - INSERT, UPDATE, DELETE]]
 
 ---
 
@@ -101,7 +101,7 @@ Reality: NoSQL databases solve specific problems (horizontal scale, schema flexi
 
 ## Why It Matters in Practice
 
-If you do not understand that SQL is declarative, you will fight the database constantly. You will try to control execution order through query structure in ways that do not work, and you will misread slow queries as bugs when they are actually plan choices. Understanding that the optimizer is your ally — and that your job is to give it accurate information (through indexes, statistics, and well-structured queries) — changes how you write and debug SQL.
+If you do not understand that SQL is declarative, you will fight the database constantly. You will try to control execution order through query structure in ways that do not work, and you will misread slow queries as bugs when they are actually plan choices. Understanding that the optimizer is your ally - and that your job is to give it accurate information (through indexes, statistics, and well-structured queries) - changes how you write and debug SQL.
 
 The four statement categories are not academic trivia. They map directly to security models (you can grant SELECT without granting DELETE), to transaction safety (some operations auto-commit), and to the mental model of what can go wrong. A developer who knows only SELECT syntax but not how INSERT, UPDATE, and DELETE interact with transactions will eventually corrupt data in production.
 
@@ -109,7 +109,7 @@ The four statement categories are not academic trivia. They map directly to secu
 
 ## What Breaks
 
-If you write UPDATE or DELETE without a WHERE clause, the engine applies the change to every row in the table. This is valid SQL — the engine will not warn you. In production, this means every user record gets the same email address, or every order gets deleted. Most production databases are configured with `autocommit = on` by default, which means there is no transaction to roll back. Data is gone.
+If you write UPDATE or DELETE without a WHERE clause, the engine applies the change to every row in the table. This is valid SQL - the engine will not warn you. In production, this means every user record gets the same email address, or every order gets deleted. Most production databases are configured with `autocommit = on` by default, which means there is no transaction to roll back. Data is gone.
 
 ```sql
 -- This deletes every row in the orders table. No warning. No confirmation.
@@ -138,7 +138,7 @@ Define declarative versus imperative with a concrete example. Name the four stat
 ## Related Notes
 
 - [[select-basics|SELECT Basics]]
-- [[ddl|DDL — CREATE, ALTER, DROP]]
-- [[dml|DML — INSERT, UPDATE, DELETE]]
+- [[ddl|DDL - CREATE, ALTER, DROP]]
+- [[dml|DML - INSERT, UPDATE, DELETE]]
 - [[sql-databases|SQL Databases (PostgreSQL, MySQL, SQLite)]]
 - [[explain-analyze|EXPLAIN and EXPLAIN ANALYZE]]

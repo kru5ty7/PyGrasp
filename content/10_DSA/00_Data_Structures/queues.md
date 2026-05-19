@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Queues
 
-> A queue enforces fairness — the first element to arrive is the first to be served, making it the natural model for any waiting-line problem in computing.
+> A queue enforces fairness - the first element to arrive is the first to be served, making it the natural model for any waiting-line problem in computing.
 
 ---
 
@@ -20,16 +20,16 @@ created: 2026-05-18
 **Core idea:**
 - FIFO: elements are dequeued in the same order they were enqueued
 - Enqueue: add to the back. Dequeue: remove from the front.
-- Use `collections.deque` in Python — O(1) both ends
-- Never use `list.pop(0)` for a queue — it is O(n) due to element shifting
+- Use `collections.deque` in Python - O(1) both ends
+- Never use `list.pop(0)` for a queue - it is O(n) due to element shifting
 - `queue.Queue` provides the same structure with thread-safety for producer-consumer patterns
 
 **Tricky points:**
-- `list.pop(0)` is O(n), not O(1) — a common performance bug when building queues with lists
-- `collections.deque` is O(n) for index access — do not use it if you need random access
-- Priority queue is not a FIFO queue — it dequeues the highest priority element first
+- `list.pop(0)` is O(n), not O(1) - a common performance bug when building queues with lists
+- `collections.deque` is O(n) for index access - do not use it if you need random access
+- Priority queue is not a FIFO queue - it dequeues the highest priority element first
 - Python's `heapq` is a min-heap; to simulate a max-heap, store negated priorities
-- `queue.Queue` blocks by default when empty (for thread synchronisation) — use `get(block=False)` or `get(timeout=...)` when you want non-blocking behaviour
+- `queue.Queue` blocks by default when empty (for thread synchronisation) - use `get(block=False)` or `get(timeout=...)` when you want non-blocking behaviour
 
 ---
 
@@ -49,17 +49,17 @@ Space complexity: O(n)
 
 ## What It Is
 
-Imagine a queue at a bank. The first person to arrive stands at the front; each new arrival joins the back. The teller calls the person at the front, serves them, and they leave. No matter how long the queue grows, everyone is guaranteed to be served in the order they arrived. The person who has waited longest is always served first. This fairness property — first come, first served — is exactly what a queue data structure enforces.
+Imagine a queue at a bank. The first person to arrive stands at the front; each new arrival joins the back. The teller calls the person at the front, serves them, and they leave. No matter how long the queue grows, everyone is guaranteed to be served in the order they arrived. The person who has waited longest is always served first. This fairness property - first come, first served - is exactly what a queue data structure enforces.
 
 This pattern appears throughout computing wherever tasks or messages need to be processed in arrival order. When a web server receives multiple simultaneous requests, it places them in a queue and processes them one at a time. When print jobs are sent to a shared printer, they queue up and print in the order they were submitted. When a CPU is managing multiple runnable processes, a scheduling queue determines who runs next. In every case, the FIFO property ensures that no request is indefinitely skipped over in favour of later arrivals.
 
-A priority queue is a generalisation where arrival order is replaced by priority level. The highest-priority element is dequeued first, regardless of when it arrived. A hospital triage system is the intuitive model: patients are not seen strictly in arrival order but in urgency order. In Python, `heapq` implements a priority queue using a min-heap — the smallest value is always dequeued first. Combining a priority with a timestamp (as a tiebreaker in the heap tuple) gives a structure that is both priority-aware and FIFO within each priority level.
+A priority queue is a generalisation where arrival order is replaced by priority level. The highest-priority element is dequeued first, regardless of when it arrived. A hospital triage system is the intuitive model: patients are not seen strictly in arrival order but in urgency order. In Python, `heapq` implements a priority queue using a min-heap - the smallest value is always dequeued first. Combining a priority with a timestamp (as a tiebreaker in the heap tuple) gives a structure that is both priority-aware and FIFO within each priority level.
 
 ---
 
 ## How It Actually Works
 
-The key requirement for a queue is O(1) at both the enqueue (back) and dequeue (front) ends. A Python `list` satisfies O(1) append at the back but requires O(n) removal from the front because `list.pop(0)` shifts every remaining element one position to the left. `collections.deque` solves this by using a doubly linked list of fixed-size blocks. Its `append` method adds to the right in O(1), and its `popleft` method removes from the left in O(1) — exactly what a queue needs.
+The key requirement for a queue is O(1) at both the enqueue (back) and dequeue (front) ends. A Python `list` satisfies O(1) append at the back but requires O(n) removal from the front because `list.pop(0)` shifts every remaining element one position to the left. `collections.deque` solves this by using a doubly linked list of fixed-size blocks. Its `append` method adds to the right in O(1), and its `popleft` method removes from the left in O(1) - exactly what a queue needs.
 
 The `heapq` module provides a priority queue built on a list that is maintained in heap order. `heapq.heappush(heap, item)` adds an item in O(log n), and `heapq.heappop(heap)` removes and returns the smallest item in O(log n). Because Python's heapq is a min-heap, the element with the lowest value (or the lowest first element in a tuple) is always dequeued first. Storing tuples of `(priority, item)` is the standard pattern.
 
@@ -70,21 +70,21 @@ import queue
 
 # ---- Standard FIFO queue using deque ----
 q = deque()
-q.append("first")       # enqueue — O(1)
+q.append("first")       # enqueue - O(1)
 q.append("second")
 q.append("third")
 
-front = q[0]            # peek front — O(1) for deque ends, O(n) for middle
+front = q[0]            # peek front - O(1) for deque ends, O(n) for middle
 print(front)            # "first"
 
-item = q.popleft()      # dequeue — O(1)
+item = q.popleft()      # dequeue - O(1)
 print(item)             # "first"
 print(q)                # deque(['second', 'third'])
 
 
 # ---- Why list.pop(0) is wrong for queues ----
 lst = [1, 2, 3, 4, 5]
-lst.pop(0)  # O(n) — shifts every remaining element left; never use as dequeue
+lst.pop(0)  # O(n) - shifts every remaining element left; never use as dequeue
 
 
 # ---- BFS using a queue ----
@@ -170,11 +170,11 @@ task_queue.join()
 
 ## How It Connects
 
-BFS (breadth-first search) is the algorithm most directly tied to the queue data structure — its correctness depends on visiting nodes in the order they are discovered, which is exactly the FIFO guarantee. Without a queue, BFS becomes DFS or an incorrect mixed traversal.
+BFS (breadth-first search) is the algorithm most directly tied to the queue data structure - its correctness depends on visiting nodes in the order they are discovered, which is exactly the FIFO guarantee. Without a queue, BFS becomes DFS or an incorrect mixed traversal.
 
 [[bfs|Breadth-First Search]]
 
-Deques are a superset of queues — a deque supports O(1) operations at both ends, making it usable as both a queue and a stack. Understanding queues as the restricted single-direction case makes the deque's additional power clear.
+Deques are a superset of queues - a deque supports O(1) operations at both ends, making it usable as both a queue and a stack. Understanding queues as the restricted single-direction case makes the deque's additional power clear.
 
 [[deques|Deques]]
 
@@ -182,7 +182,7 @@ Deques are a superset of queues — a deque supports O(1) operations at both end
 
 ## Common Misconceptions
 
-Misconception 1: "I can use a list as a queue in Python — it's simpler."
+Misconception 1: "I can use a list as a queue in Python - it's simpler."
 Reality: Using `list.append` for enqueue and `list.pop(0)` for dequeue appears to work correctly but is O(n) per dequeue. At scale, this turns a queue-based algorithm from O(n) to O(n²). `collections.deque` is the correct choice and is not meaningfully more complex to use.
 
 Misconception 2: "A priority queue is a type of FIFO queue."
@@ -197,7 +197,7 @@ Reality: `queue.Queue` adds locking overhead for thread safety, making it slower
 
 Queues are the backbone of asynchronous systems. Message brokers (RabbitMQ, Kafka, AWS SQS) are essentially distributed queues at massive scale. Task queues (Celery, RQ) allow web servers to offload time-consuming work to background workers while immediately returning a response to the user. Rate limiters and request buffers in API gateways are queues. The FIFO property ensures fairness and order preservation across all of these systems.
 
-In algorithms, BFS — which underpins shortest-path finding in unweighted graphs, level-order tree traversal, and connectivity analysis — is correctly implemented only with a true queue. The performance difference between using `deque.popleft()` (O(1)) and `list.pop(0)` (O(n)) becomes the difference between an O(V + E) BFS and an O(V² + E) one.
+In algorithms, BFS - which underpins shortest-path finding in unweighted graphs, level-order tree traversal, and connectivity analysis - is correctly implemented only with a true queue. The performance difference between using `deque.popleft()` (O(1)) and `list.pop(0)` (O(n)) becomes the difference between an O(V + E) BFS and an O(V² + E) one.
 
 ---
 

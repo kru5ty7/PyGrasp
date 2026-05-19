@@ -1,6 +1,6 @@
 ﻿---
 title: 40 - Lambda Cold Starts
-description: A cold start is the latency penalty Lambda pays when initialising a new execution environment — understanding its causes and mitigations is essential for latency-sensitive applications.
+description: A cold start is the latency penalty Lambda pays when initialising a new execution environment - understanding its causes and mitigations is essential for latency-sensitive applications.
 tags: [aws, cloud, layer-11, lambda, cold-start, performance]
 status: draft
 difficulty: intermediate
@@ -11,36 +11,36 @@ created: 2026-05-18
 
 # Lambda Cold Starts
 
-> A cold start is the delay between a Lambda invocation arriving and your handler code beginning to execute — it exists because Lambda must first build the execution environment from scratch before calling your function.
+> A cold start is the delay between a Lambda invocation arriving and your handler code beginning to execute - it exists because Lambda must first build the execution environment from scratch before calling your function.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- Cold start: new execution environment must be provisioned — download code, start runtime, run module-level initialisation
-- Warm invocation: an existing environment handles the request — startup overhead is negligible
+- Cold start: new execution environment must be provisioned - download code, start runtime, run module-level initialisation
+- Warm invocation: an existing environment handles the request - startup overhead is negligible
 - Cold start duration: 100ms to several seconds depending on runtime, package size, and VPC configuration
 - Python cold starts are among the fastest (~100–300ms for a minimal function without VPC)
-- Provisioned Concurrency: pre-initialises N environments — eliminates cold starts at a per-minute cost
+- Provisioned Concurrency: pre-initialises N environments - eliminates cold starts at a per-minute cost
 - Keep module-level code lean to minimise cold start duration
 
 **Tricky points:**
-- Lambda does not guarantee how long an execution environment stays warm — it can be recycled at any time
+- Lambda does not guarantee how long an execution environment stays warm - it can be recycled at any time
 - VPC-attached Lambda functions face additional cold-start latency for ENI provisioning (much improved post-2019 hyperplane ENI change, but still measurable)
-- Provisioned Concurrency eliminates cold starts but is billed even when idle — it must be cost-justified against p99 latency requirements
-- Large deployment packages (heavy ML libraries) significantly increase cold start time — container images do not eliminate cold starts, they can make them worse
+- Provisioned Concurrency eliminates cold starts but is billed even when idle - it must be cost-justified against p99 latency requirements
+- Large deployment packages (heavy ML libraries) significantly increase cold start time - container images do not eliminate cold starts, they can make them worse
 - "Warming" a function with scheduled pings is a brittle hack, not a replacement for Provisioned Concurrency
 
 ---
 
 ## What It Is
 
-A cold start is the Lambda equivalent of arriving at the office on the first day and having to assemble your entire desk setup before you can do any work. A warm invocation is arriving on day two when everything is already in place — you sit down and start immediately. The "desk assembly" process for Lambda has three steps: the execution environment provisioning (allocating compute capacity and network interfaces), the runtime initialisation (starting the Python interpreter), and the function initialisation (importing your module and running all code outside the handler function). The handler itself does not run until all three steps are complete.
+A cold start is the Lambda equivalent of arriving at the office on the first day and having to assemble your entire desk setup before you can do any work. A warm invocation is arriving on day two when everything is already in place - you sit down and start immediately. The "desk assembly" process for Lambda has three steps: the execution environment provisioning (allocating compute capacity and network interfaces), the runtime initialisation (starting the Python interpreter), and the function initialisation (importing your module and running all code outside the handler function). The handler itself does not run until all three steps are complete.
 
-Python fares well in cold start comparisons because the CPython interpreter starts quickly and module import time for typical Lambda packages is measured in tens of milliseconds. Compare this to Java or Kotlin Lambda functions, which must start the JVM and load class files — a process that can take one to three seconds even for a minimal function. For Python ML functions with heavy imports (PyTorch, TensorFlow), the module-level import time dominates the cold start and can reach five to ten seconds.
+Python fares well in cold start comparisons because the CPython interpreter starts quickly and module import time for typical Lambda packages is measured in tens of milliseconds. Compare this to Java or Kotlin Lambda functions, which must start the JVM and load class files - a process that can take one to three seconds even for a minimal function. For Python ML functions with heavy imports (PyTorch, TensorFlow), the module-level import time dominates the cold start and can reach five to ten seconds.
 
-Cold starts matter most for latency-sensitive synchronous workloads — API endpoints where users observe the latency directly. A cold start on an SQS message processing function adds latency to the first message in a batch but has no user-visible impact. A cold start on an API Gateway-fronted Lambda function means a user waiting an extra second or more for the first request to a function that has gone cold. The design response to this distinction is that Provisioned Concurrency investment should be targeted at functions where cold starts are in the user request path.
+Cold starts matter most for latency-sensitive synchronous workloads - API endpoints where users observe the latency directly. A cold start on an SQS message processing function adds latency to the first message in a batch but has no user-visible impact. A cold start on an API Gateway-fronted Lambda function means a user waiting an extra second or more for the first request to a function that has gone cold. The design response to this distinction is that Provisioned Concurrency investment should be targeted at functions where cold starts are in the user request path.
 
 ---
 
@@ -82,7 +82,7 @@ while True:
     time.sleep(5)
 ```
 
-Measuring cold start contribution from CloudWatch Logs — Lambda emits an `Init Duration` field in the REPORT log line for cold start invocations:
+Measuring cold start contribution from CloudWatch Logs - Lambda emits an `Init Duration` field in the REPORT log line for cold start invocations:
 
 ```bash
 # Query CloudWatch Logs Insights for cold start durations
@@ -123,13 +123,13 @@ def handler(event, context):
 
 ## How It Connects
 
-Cold start latency is directly linked to deployment package size. Container images can carry much larger dependency trees than ZIP packages but do not eliminate the cold start — they can increase it if the image is large.
+Cold start latency is directly linked to deployment package size. Container images can carry much larger dependency trees than ZIP packages but do not eliminate the cold start - they can increase it if the image is large.
 
-[[lambda-container|Lambda with Container Images]] — describes the container deployment path and how image size affects cold start duration; the tradeoffs between ZIP and container deployment are relevant to cold start optimisation.
+[[lambda-container|Lambda with Container Images]] - describes the container deployment path and how image size affects cold start duration; the tradeoffs between ZIP and container deployment are relevant to cold start optimisation.
 
 Provisioned Concurrency is the production-grade cold start mitigation. It works at the function version or alias level and integrates with Auto Scaling for dynamic scaling of the provisioned pool.
 
-[[lambda-concurrency|Lambda Concurrency and Scaling]] — covers reserved and provisioned concurrency in detail, including the cost model and the Auto Scaling integration for provisioned concurrency.
+[[lambda-concurrency|Lambda Concurrency and Scaling]] - covers reserved and provisioned concurrency in detail, including the cost model and the Auto Scaling integration for provisioned concurrency.
 
 ---
 
@@ -139,7 +139,7 @@ Misconception 1: Scheduling a CloudWatch Events rule to invoke a Lambda function
 Reality: Scheduled pings keep one execution environment warm but do not help when your function receives concurrent traffic exceeding one invocation. If ten simultaneous requests arrive at a function kept alive by pings, nine of those requests will trigger cold starts on new execution environments. Provisioned Concurrency is the only reliable mechanism for keeping a specified number of environments warm.
 
 Misconception 2: Python Lambda functions do not have cold starts because they are interpreted.
-Reality: Python Lambda functions absolutely have cold starts. The cold start is shorter than Java or .NET, but module-level initialisation code — particularly heavy library imports (pandas, boto3 client instantiation, database connection setup) — still contributes meaningful latency. For a Python function with `import pandas as pd` at the top of the module, the import itself can take 200–500ms on the first invocation.
+Reality: Python Lambda functions absolutely have cold starts. The cold start is shorter than Java or .NET, but module-level initialisation code - particularly heavy library imports (pandas, boto3 client instantiation, database connection setup) - still contributes meaningful latency. For a Python function with `import pandas as pd` at the top of the module, the import itself can take 200–500ms on the first invocation.
 
 ---
 
@@ -174,7 +174,7 @@ def handler(event, context):
 
 **Scenario 2: VPC attachment doubles cold start latency unnecessarily**
 
-A function is attached to a VPC to access a DynamoDB table — but DynamoDB has a public endpoint and does not require VPC access.
+A function is attached to a VPC to access a DynamoDB table - but DynamoDB has a public endpoint and does not require VPC access.
 
 ```bash
 # Mistake: putting the function in a VPC when it only calls DynamoDB and S3 (both have public endpoints)

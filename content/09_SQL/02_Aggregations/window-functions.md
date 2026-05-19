@@ -11,14 +11,14 @@ created: 2026-05-18
 
 # Window Functions
 
-> Window functions give every row a view of its neighbors — they compute values across related rows without eliminating any row from the result, solving an entire category of problems that previously required self-joins or correlated subqueries.
+> Window functions give every row a view of its neighbors - they compute values across related rows without eliminating any row from the result, solving an entire category of problems that previously required self-joins or correlated subqueries.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- A window function computes its value for each row based on a set of rows defined by the OVER() clause — the "window"
+- A window function computes its value for each row based on a set of rows defined by the OVER() clause - the "window"
 - PARTITION BY divides rows into independent partitions (like GROUP BY but without collapsing rows)
 - ORDER BY inside OVER() sets the ordering within each partition and implicitly defines a running frame
 - Frame clauses (ROWS BETWEEN, RANGE BETWEEN) explicitly control which rows are included in the window for each current row
@@ -28,17 +28,17 @@ created: 2026-05-18
 **Tricky points:**
 - Window functions cannot appear in WHERE or HAVING because they are evaluated after those clauses; wrap the query in a CTE or subquery to filter on window function results
 - An empty OVER() clause (no PARTITION BY, no ORDER BY) means the window is the entire result set
-- ORDER BY inside OVER() with no explicit frame defaults to RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW — this is not the same as ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW when there are ties
-- PARTITION BY and GROUP BY can coexist in the same query — they operate independently
+- ORDER BY inside OVER() with no explicit frame defaults to RANGE BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW - this is not the same as ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW when there are ties
+- PARTITION BY and GROUP BY can coexist in the same query - they operate independently
 - Window functions do not filter rows; all rows remain in the output
 
 ---
 
 ## What It Is
 
-Picture a long train. Each passenger in each seat can look out the window and see the carriages ahead and behind them. The view each passenger has is relative to their own position — the passenger in seat 5 has a different set of visible carriages than the passenger in seat 20. Crucially, no passengers are removed from the train just because someone looked out a window. Window functions in SQL work exactly this way. Each row in the result gets to "look at" a defined neighborhood of rows and compute a value based on what it sees. The rows themselves are never collapsed or removed.
+Picture a long train. Each passenger in each seat can look out the window and see the carriages ahead and behind them. The view each passenger has is relative to their own position - the passenger in seat 5 has a different set of visible carriages than the passenger in seat 20. Crucially, no passengers are removed from the train just because someone looked out a window. Window functions in SQL work exactly this way. Each row in the result gets to "look at" a defined neighborhood of rows and compute a value based on what it sees. The rows themselves are never collapsed or removed.
 
-This is the fundamental difference from GROUP BY aggregation. GROUP BY destroys the individual row identity — you get one row per group, period. Window functions preserve every row and attach an extra computed column to each one. A SUM(amount) OVER (PARTITION BY customer_id ORDER BY created_at) gives you a running total of each customer's spending that grows row by row through their order history, while still showing you each individual order.
+This is the fundamental difference from GROUP BY aggregation. GROUP BY destroys the individual row identity - you get one row per group, period. Window functions preserve every row and attach an extra computed column to each one. A SUM(amount) OVER (PARTITION BY customer_id ORDER BY created_at) gives you a running total of each customer's spending that grows row by row through their order history, while still showing you each individual order.
 
 The OVER() clause is what transforms an otherwise ordinary aggregate function (or a dedicated window function like RANK or LAG) into a window function. Everything that matters about how the window is defined lives inside that OVER() clause: the PARTITION BY sub-clause that splits rows into independent groups, the ORDER BY sub-clause that determines the ordering within each partition, and the optional frame clause that specifies exactly which rows around the current row are included in the window calculation.
 
@@ -88,7 +88,7 @@ SELECT
 FROM daily_sales;
 ```
 
-LAG and LEAD are window functions that access a different row's value relative to the current row — LAG looks backward, LEAD looks forward. Both accept an optional offset (default 1) and a default value for when the offset goes out of bounds.
+LAG and LEAD are window functions that access a different row's value relative to the current row - LAG looks backward, LEAD looks forward. Both accept an optional offset (default 1) and a default value for when the offset goes out of bounds.
 
 ```sql
 -- Compare each day's revenue to the previous day
@@ -134,7 +134,7 @@ WHERE rn = 1;    -- top order per customer by amount
 
 ## How It Connects
 
-Window functions are built on the same aggregation concepts as GROUP BY queries. Functions like SUM, AVG, COUNT, MIN, and MAX behave the same way inside OVER() as they do with GROUP BY — the difference is that the result is returned per row rather than per group. Understanding how those aggregate functions handle NULLs is just as important in the window context.
+Window functions are built on the same aggregation concepts as GROUP BY queries. Functions like SUM, AVG, COUNT, MIN, and MAX behave the same way inside OVER() as they do with GROUP BY - the difference is that the result is returned per row rather than per group. Understanding how those aggregate functions handle NULLs is just as important in the window context.
 
 RANK, DENSE_RANK, and ROW_NUMBER are specialized window functions for assigning ordinal positions within a partition. They share the OVER() clause syntax but have specific tie-handling behaviors that are important to know independently.
 
@@ -159,15 +159,15 @@ Misconception 3: "ORDER BY inside OVER() is the same as the query-level ORDER BY
 Reality: ORDER BY inside OVER() controls the order of rows within each window partition for purposes of frame calculation. It has no effect on the order of rows returned by the query. The query-level ORDER BY controls the output row order. Both can coexist and can specify different columns.
 
 Misconception 4: "An empty OVER() clause means the function applies to nothing."
-Reality: An empty OVER() — written as just OVER() — means the window is the entire result set, with no partitioning and no ordering. SUM(amount) OVER () returns the grand total of all amounts for every row, not zero rows.
+Reality: An empty OVER() - written as just OVER() - means the window is the entire result set, with no partitioning and no ordering. SUM(amount) OVER () returns the grand total of all amounts for every row, not zero rows.
 
 ---
 
 ## Why It Matters in Practice
 
-Window functions are the single most powerful addition to SQL that most developers learn too late. Any query involving running totals, per-group rankings, percentile assignments, period-over-period comparisons, or first/last values within a group can be written as a single clean window function query. The alternatives — self-joins and correlated subqueries — are not just harder to read; they are dramatically slower because they force repeated full or partial table scans.
+Window functions are the single most powerful addition to SQL that most developers learn too late. Any query involving running totals, per-group rankings, percentile assignments, period-over-period comparisons, or first/last values within a group can be written as a single clean window function query. The alternatives - self-joins and correlated subqueries - are not just harder to read; they are dramatically slower because they force repeated full or partial table scans.
 
-In analytical and reporting contexts, window functions are indispensable. A query that computes each customer's lifetime value as a running total, flags each customer's most recent order, assigns percentile rankings to products by revenue, and computes week-over-week growth — all in a single query — is straightforward with window functions and nearly unwritable in a maintainable form without them.
+In analytical and reporting contexts, window functions are indispensable. A query that computes each customer's lifetime value as a running total, flags each customer's most recent order, assigns percentile rankings to products by revenue, and computes week-over-week growth - all in a single query - is straightforward with window functions and nearly unwritable in a maintainable form without them.
 
 ---
 
@@ -201,7 +201,7 @@ Common question forms:
 - "Why can't you filter on a window function in a WHERE clause?"
 
 Answer frame:
-Open with the key distinction: window functions compute across a set of rows without collapsing them, unlike GROUP BY which eliminates individual row identity. Explain the OVER() clause by its three components: PARTITION BY (resets the window per partition), ORDER BY (orders rows within the partition for frame calculation), and the optional frame specification (ROWS or RANGE bounds). For the running total question, write the SUM with ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW. For the WHERE question, explain execution order — window functions run after WHERE, so filter by wrapping in a CTE.
+Open with the key distinction: window functions compute across a set of rows without collapsing them, unlike GROUP BY which eliminates individual row identity. Explain the OVER() clause by its three components: PARTITION BY (resets the window per partition), ORDER BY (orders rows within the partition for frame calculation), and the optional frame specification (ROWS or RANGE bounds). For the running total question, write the SUM with ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW. For the WHERE question, explain execution order - window functions run after WHERE, so filter by wrapping in a CTE.
 
 ---
 

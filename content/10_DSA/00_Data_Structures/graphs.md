@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Graphs
 
-> Graphs are the data structure that models the world — every network, map, dependency chain, and social connection is a graph, and the algorithms that operate on graphs are among the most impactful in computer science.
+> Graphs are the data structure that models the world - every network, map, dependency chain, and social connection is a graph, and the algorithms that operate on graphs are among the most impactful in computer science.
 
 ---
 
@@ -19,13 +19,13 @@ created: 2026-05-18
 
 **Core idea:**
 - A graph G = (V, E) consists of a set of vertices V (nodes) and a set of edges E (connections between vertices)
-- Directed graph (digraph): edges have a direction — edge (u, v) goes from u to v but not necessarily v to u
-- Undirected graph: edges have no direction — edge (u, v) implies both u→v and v→u
+- Directed graph (digraph): edges have a direction - edge (u, v) goes from u to v but not necessarily v to u
+- Undirected graph: edges have no direction - edge (u, v) implies both u→v and v→u
 - Weighted graph: each edge carries a numeric weight (cost, distance, capacity)
-- DAG (directed acyclic graph): directed graph with no cycles — used for dependency resolution, topological sort
+- DAG (directed acyclic graph): directed graph with no cycles - used for dependency resolution, topological sort
 
 **Tricky points:**
-- Trees are a special case of graphs: connected, undirected, acyclic — exactly n−1 edges for n vertices
+- Trees are a special case of graphs: connected, undirected, acyclic - exactly n−1 edges for n vertices
 - A graph can have self-loops (edge from a vertex to itself) and multiple edges between the same two vertices
 - Sparse graphs (few edges) and dense graphs (many edges) call for different representations
 - Connected (undirected): there is a path between every pair of vertices. Strongly connected (directed): there is a directed path between every ordered pair.
@@ -39,7 +39,7 @@ created: 2026-05-18
 |---|---|
 | Max edges (directed) | V × (V − 1) |
 | Max edges (undirected) | V × (V − 1) / 2 |
-| Complexity | Depends on representation — see graph-representations |
+| Complexity | Depends on representation - see graph-representations |
 
 Space complexity: O(V + E) for adjacency list, O(V²) for adjacency matrix.
 
@@ -51,15 +51,15 @@ Consider a city's road network. Intersections are vertices and roads are edges. 
 
 Now consider a social network. People are vertices. A friendship is an undirected edge (Alice is friends with Bob and Bob is friends with Alice). A follower relationship on Twitter is a directed edge (Alice follows Bob but Bob may not follow Alice). "Find all people within 3 degrees of connection from Alice" is a breadth-first search. "Identify communities" is a graph clustering problem. "Suggest new connections" is a link prediction problem. The social network is a graph, and all interesting questions about it are graph algorithm problems.
 
-Dependency management is another pervasive graph problem. In a software build system, package A depends on package B, which depends on package C. This is a directed acyclic graph where edges point from dependents to dependencies. Installing packages in the correct order — so that each package is installed after all its dependencies — is topological sort. Detecting a circular dependency (A depends on B which depends on A) is cycle detection. Package managers (pip, npm, cargo) solve these problems on DAGs millions of times per day.
+Dependency management is another pervasive graph problem. In a software build system, package A depends on package B, which depends on package C. This is a directed acyclic graph where edges point from dependents to dependencies. Installing packages in the correct order - so that each package is installed after all its dependencies - is topological sort. Detecting a circular dependency (A depends on B which depends on A) is cycle detection. Package managers (pip, npm, cargo) solve these problems on DAGs millions of times per day.
 
 ---
 
 ## How It Actually Works
 
-A graph is an abstract structure — its concrete representation in memory is a separate concern covered in the graph-representations note. At the conceptual level, a graph consists of a vertex set and an edge set. Algorithms operate on this abstraction, traversing edges to discover neighbours, accumulating path costs, or marking vertices as visited.
+A graph is an abstract structure - its concrete representation in memory is a separate concern covered in the graph-representations note. At the conceptual level, a graph consists of a vertex set and an edge set. Algorithms operate on this abstraction, traversing edges to discover neighbours, accumulating path costs, or marking vertices as visited.
 
-The two fundamental traversal algorithms — BFS and DFS — differ in the order they explore vertices. BFS uses a queue and explores all vertices at distance 1 before distance 2, discovering vertices in order of their distance from the source. DFS uses a stack (or recursion) and follows a path as deep as possible before backtracking. BFS is the right tool for shortest-path problems in unweighted graphs; DFS is the right tool for cycle detection, topological sort, and connectivity analysis.
+The two fundamental traversal algorithms - BFS and DFS - differ in the order they explore vertices. BFS uses a queue and explores all vertices at distance 1 before distance 2, discovering vertices in order of their distance from the source. DFS uses a stack (or recursion) and follows a path as deep as possible before backtracking. BFS is the right tool for shortest-path problems in unweighted graphs; DFS is the right tool for cycle detection, topological sort, and connectivity analysis.
 
 ```python
 # Graph represented as adjacency list (dict of sets)
@@ -91,7 +91,7 @@ class Graph:
         return self.adj[v]
 
     def is_connected(self):
-        """Check if undirected graph is connected — O(V + E)."""
+        """Check if undirected graph is connected - O(V + E)."""
         if not self.vertices:
             return True
         start = next(iter(self.vertices))
@@ -110,7 +110,7 @@ class Graph:
         return visited
 
     def has_cycle_undirected(self):
-        """Detect cycle in undirected graph using DFS — O(V + E)."""
+        """Detect cycle in undirected graph using DFS - O(V + E)."""
         visited = set()
 
         def dfs(v, parent):
@@ -130,7 +130,7 @@ class Graph:
         return False
 
     def connected_components(self):
-        """Find all connected components — O(V + E)."""
+        """Find all connected components - O(V + E)."""
         visited = set()
         components = []
         for v in self.vertices:
@@ -155,7 +155,7 @@ class DirectedGraph:
 
     def has_cycle(self):
         """
-        Detect cycle in directed graph — O(V + E).
+        Detect cycle in directed graph - O(V + E).
         Uses three-colour DFS: WHITE (unvisited), GRAY (in stack), BLACK (done).
         """
         WHITE, GRAY, BLACK = 0, 1, 2
@@ -165,7 +165,7 @@ class DirectedGraph:
             colour[v] = GRAY
             for neighbour in self.adj[v]:
                 if colour[neighbour] == GRAY:
-                    return True    # back edge — cycle found
+                    return True    # back edge - cycle found
                 if colour[neighbour] == WHITE:
                     if dfs(neighbour):
                         return True
@@ -179,7 +179,7 @@ class DirectedGraph:
         return False
 
     def topological_sort(self):
-        """Kahn's algorithm (BFS-based) for topological order — O(V + E)."""
+        """Kahn's algorithm (BFS-based) for topological order - O(V + E)."""
         in_degree = {v: 0 for v in self.vertices}
         for u in self.vertices:
             for v in self.adj[u]:
@@ -196,7 +196,7 @@ class DirectedGraph:
                     queue.append(neighbour)
 
         if len(order) != len(self.vertices):
-            return None   # cycle exists — topological sort not possible
+            return None   # cycle exists - topological sort not possible
         return order
 
 
@@ -210,7 +210,7 @@ print("Has cycle:", g.has_cycle_undirected())  # False (it's a path graph)
 g.add_edge(3, 1)   # creates a cycle: 1-2-3-1
 print("Has cycle after adding 3-1:", g.has_cycle_undirected())  # True
 
-# Directed graph — dependency example (course prerequisites)
+# Directed graph - dependency example (course prerequisites)
 dag = DirectedGraph()
 # course A requires B and C; B requires D
 for u, v in [("A", "B"), ("A", "C"), ("B", "D")]:
@@ -226,11 +226,11 @@ print("After circular dep, has cycle:", dag.has_cycle())  # True
 
 ## How It Connects
 
-The concrete memory representation of a graph — adjacency list vs adjacency matrix — determines the space and time complexity of all graph operations. The graph abstraction described here is independent of representation; the choice of representation affects performance for specific access patterns.
+The concrete memory representation of a graph - adjacency list vs adjacency matrix - determines the space and time complexity of all graph operations. The graph abstraction described here is independent of representation; the choice of representation affects performance for specific access patterns.
 
 [[graph-representations|Graph Representations]]
 
-BFS and DFS are the two fundamental graph traversal algorithms. Every graph algorithm — connectivity, cycle detection, shortest path, topological sort — is built on one or both of these traversals. Understanding graphs as the domain makes BFS and DFS immediately purposeful.
+BFS and DFS are the two fundamental graph traversal algorithms. Every graph algorithm - connectivity, cycle detection, shortest path, topological sort - is built on one or both of these traversals. Understanding graphs as the domain makes BFS and DFS immediately purposeful.
 
 [[bfs|Breadth-First Search]]
 [[dfs|Depth-First Search]]
@@ -240,7 +240,7 @@ BFS and DFS are the two fundamental graph traversal algorithms. Every graph algo
 ## Common Misconceptions
 
 Misconception 1: "Trees and graphs are completely different structures."
-Reality: A tree is a special case of a graph — specifically, a connected, undirected, acyclic graph with exactly n−1 edges for n vertices. Every tree is a graph; not every graph is a tree. This relationship is important because graph traversal algorithms (BFS, DFS) apply directly to trees, and tree algorithms can often be generalised to graphs.
+Reality: A tree is a special case of a graph - specifically, a connected, undirected, acyclic graph with exactly n−1 edges for n vertices. Every tree is a graph; not every graph is a tree. This relationship is important because graph traversal algorithms (BFS, DFS) apply directly to trees, and tree algorithms can often be generalised to graphs.
 
 Misconception 2: "A directed graph can always be topologically sorted."
 Reality: Topological sort is only possible on directed acyclic graphs (DAGs). A directed graph with a cycle cannot be topologically ordered because a cycle means there is no vertex that has no dependencies. Kahn's algorithm detects this: if the sorted output does not include all vertices, a cycle exists.
@@ -252,7 +252,7 @@ Reality: Many real-world graphs are naturally disconnected. A social network gra
 
 ## Why It Matters in Practice
 
-Graphs model an extraordinarily wide range of problems. Social network analysis, logistics routing, web crawling, computer network routing, compiler dependency analysis, database query planning, game state space search, fraud detection in financial networks, and recommendation engines all reduce to graph problems. Recognising that a problem has graph structure — and then selecting the appropriate algorithm (BFS for shortest path, DFS for connectivity, Dijkstra for weighted shortest path, topological sort for ordering) — is one of the highest-leverage skills in algorithm design.
+Graphs model an extraordinarily wide range of problems. Social network analysis, logistics routing, web crawling, computer network routing, compiler dependency analysis, database query planning, game state space search, fraud detection in financial networks, and recommendation engines all reduce to graph problems. Recognising that a problem has graph structure - and then selecting the appropriate algorithm (BFS for shortest path, DFS for connectivity, Dijkstra for weighted shortest path, topological sort for ordering) - is one of the highest-leverage skills in algorithm design.
 
 In day-to-day Python development, graphs appear in task dependency systems (like build tools or DAG-based workflow engines), in ORM relationship traversal, and in any system where you model "X connects to Y." The `networkx` library provides a comprehensive Python graph toolkit for production use; for algorithm interviews, the standard approach is implementing adjacency lists directly with dicts.
 

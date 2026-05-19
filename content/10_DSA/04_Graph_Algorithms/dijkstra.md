@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Dijkstra's Algorithm
 
-> Dijkstra's algorithm finds the shortest path from a source vertex to all others in a weighted graph with non-negative edges — every developer working with networks, maps, or routing must know it because it is the foundation of GPS navigation and network routing protocols.
+> Dijkstra's algorithm finds the shortest path from a source vertex to all others in a weighted graph with non-negative edges - every developer working with networks, maps, or routing must know it because it is the foundation of GPS navigation and network routing protocols.
 
 ---
 
@@ -23,14 +23,14 @@ created: 2026-05-18
 - Maintains a `dist` array where `dist[v]` = shortest known distance from source to v
 - Initialise: `dist[source] = 0`, all others `= infinity`
 - When a shorter path to a neighbour is found, push `(new_dist, neighbour)` to the heap
-- Fails with negative edge weights — use Bellman-Ford instead
+- Fails with negative edge weights - use Bellman-Ford instead
 
 **Tricky points:**
-- A vertex may be pushed to the heap multiple times with different distances — skip stale entries when popped
+- A vertex may be pushed to the heap multiple times with different distances - skip stale entries when popped
 - The visited set (or distance check) prevents re-processing a vertex after its shortest path is finalised
 - Extracting the actual path requires tracking predecessors, not just distances
 - Dense graphs (E close to V²) may benefit from a different heap implementation, but Python's `heapq` (binary heap) is the standard choice
-- The algorithm terminates early if you only need the shortest path to a specific target — stop when that vertex is popped
+- The algorithm terminates early if you only need the shortest path to a specific target - stop when that vertex is popped
 
 ---
 
@@ -48,9 +48,9 @@ created: 2026-05-18
 
 Imagine exploring a city where each road has a different travel time. You start at your hotel and want to know the fastest route to every other landmark. A sensible strategy is to always explore the nearest unvisited landmark next. Once you have reached a landmark and recorded its shortest travel time, that record is final: any other route to that landmark would have to pass through an unvisited intermediate point, which by definition has an equal or greater travel time, meaning the path through it cannot be shorter. Each confirmed landmark acts as a relay point for discovering new routes to its neighbours.
 
-This is Dijkstra's algorithm. The key insight that makes it correct — and that also makes it fail with negative edge weights — is the greedy argument above. When you extract the vertex with the smallest known distance from the priority queue, that distance is guaranteed to be final. No future discovery can improve it, because all future paths must pass through at least one unprocessed vertex, and all unprocessed vertices have equal or greater distances (since we always process the minimum). With negative edge weights, this guarantee breaks: a longer-looking path might later be reduced by a negative edge, invalidating the "once finalised, always finalised" property.
+This is Dijkstra's algorithm. The key insight that makes it correct - and that also makes it fail with negative edge weights - is the greedy argument above. When you extract the vertex with the smallest known distance from the priority queue, that distance is guaranteed to be final. No future discovery can improve it, because all future paths must pass through at least one unprocessed vertex, and all unprocessed vertices have equal or greater distances (since we always process the minimum). With negative edge weights, this guarantee breaks: a longer-looking path might later be reduced by a negative edge, invalidating the "once finalised, always finalised" property.
 
-The priority queue is the data structure that makes the algorithm efficient. Without it, finding the minimum-distance unvisited vertex at each step would require scanning all vertices — O(V) per step, O(V²) total. A min-heap extracts the minimum in O(log n) time, reducing the total cost to O((V + E) log V). Python's `heapq` module implements a min-heap on a list, and tuples are compared lexicographically — so pushing `(distance, vertex)` tuples automatically gives minimum-distance extraction.
+The priority queue is the data structure that makes the algorithm efficient. Without it, finding the minimum-distance unvisited vertex at each step would require scanning all vertices - O(V) per step, O(V²) total. A min-heap extracts the minimum in O(log n) time, reducing the total cost to O((V + E) log V). Python's `heapq` module implements a min-heap on a list, and tuples are compared lexicographically - so pushing `(distance, vertex)` tuples automatically gives minimum-distance extraction.
 
 ---
 
@@ -88,7 +88,7 @@ def dijkstra(
     while heap:
         d, u = heapq.heappop(heap)
 
-        # Skip stale entries — a shorter path was already found
+        # Skip stale entries - a shorter path was already found
         if d > dist[u]:
             continue
 
@@ -147,7 +147,7 @@ def dijkstra_to_target(
     while heap:
         d, u = heapq.heappop(heap)
         if u == target:
-            return d   # target finalised — stop
+            return d   # target finalised - stop
         if d > dist[u]:
             continue
         for v, w in graph.get(u, []):
@@ -171,7 +171,7 @@ def dijkstra_to_target(
 
 Dijkstra's algorithm is a greedy algorithm: at each step, it makes the locally optimal choice (process the nearest vertex) and that choice turns out to be globally correct under the assumption of non-negative weights. Understanding why the greedy choice is correct here, and why it fails with negative weights, is the bridge to understanding when Bellman-Ford is required instead.
 
-The algorithm also uses a heap as its core data structure. Performance is directly tied to the heap operations: each vertex is extracted once and each edge may trigger a push — giving the (V + E) log V bound. Recognising the min-heap pattern (always process the minimum) is the key to identifying Dijkstra-like structure in novel problems.
+The algorithm also uses a heap as its core data structure. Performance is directly tied to the heap operations: each vertex is extracted once and each edge may trigger a push - giving the (V + E) log V bound. Recognising the min-heap pattern (always process the minimum) is the key to identifying Dijkstra-like structure in novel problems.
 
 [[graphs|Graphs]]
 [[graph-representations|Graph Representations]]
@@ -184,18 +184,18 @@ The algorithm also uses a heap as its core data structure. Performance is direct
 ## Common Misconceptions
 
 Misconception 1: Dijkstra's algorithm fails on graphs with zero-weight edges.
-Reality: Dijkstra's algorithm requires non-negative edge weights, not strictly positive ones. Zero-weight edges are handled correctly — they simply do not increase the distance to a neighbour. The algorithm only breaks when edge weights are negative, because a negative edge can make a longer-looking path actually shorter, violating the finalisation guarantee.
+Reality: Dijkstra's algorithm requires non-negative edge weights, not strictly positive ones. Zero-weight edges are handled correctly - they simply do not increase the distance to a neighbour. The algorithm only breaks when edge weights are negative, because a negative edge can make a longer-looking path actually shorter, violating the finalisation guarantee.
 
 Misconception 2: To find the shortest path between two specific vertices, Dijkstra must run to completion.
-Reality: Dijkstra can terminate as soon as the target vertex is popped from the heap. At that moment, its distance is finalised — no future extraction can improve it. For point-to-point queries on large graphs, this early termination can save significant computation. Real-world GPS systems use bidirectional Dijkstra and A* (which adds a heuristic to guide the search) for further efficiency.
+Reality: Dijkstra can terminate as soon as the target vertex is popped from the heap. At that moment, its distance is finalised - no future extraction can improve it. For point-to-point queries on large graphs, this early termination can save significant computation. Real-world GPS systems use bidirectional Dijkstra and A* (which adds a heuristic to guide the search) for further efficiency.
 
 ---
 
 ## Why It Matters in Practice
 
-Dijkstra's algorithm is the basis for OSPF (Open Shortest Path First), the routing protocol used inside most internet backbone routers to determine how to forward packets. GPS navigation systems run variants of Dijkstra on road network graphs to compute fastest routes. Social networks use shortest-path algorithms to measure closeness between users. Any system that needs to find optimal paths through a weighted network is implementing — directly or in a modified form — the ideas behind Dijkstra's algorithm.
+Dijkstra's algorithm is the basis for OSPF (Open Shortest Path First), the routing protocol used inside most internet backbone routers to determine how to forward packets. GPS navigation systems run variants of Dijkstra on road network graphs to compute fastest routes. Social networks use shortest-path algorithms to measure closeness between users. Any system that needs to find optimal paths through a weighted network is implementing - directly or in a modified form - the ideas behind Dijkstra's algorithm.
 
-For interviews, Dijkstra problems are common at medium and hard difficulty and often appear disguised: "minimum cost to reach a destination," "cheapest flight with at most k stops," or "minimum time to spread information through a network." Recognising these as shortest-path problems and applying Dijkstra — with the heap, the distance array, and the stale-entry check — is the expected solution approach.
+For interviews, Dijkstra problems are common at medium and hard difficulty and often appear disguised: "minimum cost to reach a destination," "cheapest flight with at most k stops," or "minimum time to spread information through a network." Recognising these as shortest-path problems and applying Dijkstra - with the heap, the distance array, and the stale-entry check - is the expected solution approach.
 
 ---
 

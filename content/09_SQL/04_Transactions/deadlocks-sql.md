@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # SQL Deadlocks
 
-> A deadlock occurs when two transactions each hold a lock the other needs — both wait forever unless the database intervenes. PostgreSQL detects deadlocks automatically and kills one transaction, but the real work is writing code that prevents them from forming.
+> A deadlock occurs when two transactions each hold a lock the other needs - both wait forever unless the database intervenes. PostgreSQL detects deadlocks automatically and kills one transaction, but the real work is writing code that prevents them from forming.
 
 ---
 
@@ -26,10 +26,10 @@ created: 2026-05-18
 - `pg_locks` joined with `pg_stat_activity` reveals both waits and deadlock candidates
 
 **Tricky points:**
-- PostgreSQL's deadlock detection runs periodically (controlled by `deadlock_timeout`, default 1 second) — a deadlock is only detected after at least that long
-- The database chooses the "victim" heuristically — usually the transaction that has done less work
+- PostgreSQL's deadlock detection runs periodically (controlled by `deadlock_timeout`, default 1 second) - a deadlock is only detected after at least that long
+- The database chooses the "victim" heuristically - usually the transaction that has done less work
 - `lock_timeout` and `statement_timeout` prevent long waits but do not prevent deadlocks
-- Row update order in a single `UPDATE ... WHERE` with multiple rows is not guaranteed — this can cause deadlocks between seemingly unrelated transactions
+- Row update order in a single `UPDATE ... WHERE` with multiple rows is not guaranteed - this can cause deadlocks between seemingly unrelated transactions
 - Deadlocks are not a sign that the database is broken; they are a sign that the application acquires locks in inconsistent order
 
 ---
@@ -38,11 +38,11 @@ created: 2026-05-18
 
 A deadlock is the classic resource-cycle problem. Imagine two people standing in a narrow hallway, each carrying something large. Person A needs to move forward but person B is blocking the path. Person B needs to move forward but person A is blocking. Neither can move because moving requires the other to move first. They wait indefinitely. A database deadlock is the same situation with locks instead of bodies: Transaction A holds a lock on row 1 and is waiting for a lock on row 2. Transaction B holds a lock on row 2 and is waiting for a lock on row 1. Neither transaction can proceed because it is waiting for a lock that the other transaction holds.
 
-The critical insight about deadlocks is that they are entirely self-inflicted by the application's locking order. No database bug or hardware failure causes a deadlock. A deadlock happens because two transactions acquire locks on the same set of resources but in different sequences. If every transaction in the entire application always acquired locks in the same order — say, always in ascending order of row ID — a deadlock cycle could never form, because no transaction would ever hold a lock on a higher-numbered row while waiting for a lower-numbered row that another transaction holds.
+The critical insight about deadlocks is that they are entirely self-inflicted by the application's locking order. No database bug or hardware failure causes a deadlock. A deadlock happens because two transactions acquire locks on the same set of resources but in different sequences. If every transaction in the entire application always acquired locks in the same order - say, always in ascending order of row ID - a deadlock cycle could never form, because no transaction would ever hold a lock on a higher-numbered row while waiting for a lower-numbered row that another transaction holds.
 
 PostgreSQL handles deadlocks automatically through its deadlock detection algorithm. The database periodically checks for lock wait cycles. When a transaction has been waiting for a lock longer than the `deadlock_timeout` setting (default: 1 second), PostgreSQL inspects the lock dependency graph to determine whether a cycle exists. If it finds one, it selects one transaction as the "victim" and aborts it with error code 40P01 and the message `deadlock detected`. The aborted transaction releases all its locks, which allows the other transaction to proceed. The victim transaction's work is entirely rolled back, and the application is responsible for catching the error and retrying the transaction.
 
-The distinction between a deadlock and a long lock wait is important in practice, because operators often conflate them. A long lock wait occurs when Transaction A is waiting for a lock held by Transaction B, but Transaction B is not waiting for any lock A holds. There is no cycle; B is simply taking a long time to finish. This is not a deadlock — it is contention. The wait will eventually resolve when B commits or rolls back. Deadlocks are cyclic and permanent; lock waits are linear and temporary. The `pg_locks` view distinguishes them: if every waiting transaction forms a cycle back to itself through the dependency graph, it is a deadlock. If there are waiters but no cycle, it is contention.
+The distinction between a deadlock and a long lock wait is important in practice, because operators often conflate them. A long lock wait occurs when Transaction A is waiting for a lock held by Transaction B, but Transaction B is not waiting for any lock A holds. There is no cycle; B is simply taking a long time to finish. This is not a deadlock - it is contention. The wait will eventually resolve when B commits or rolls back. Deadlocks are cyclic and permanent; lock waits are linear and temporary. The `pg_locks` view distinguishes them: if every waiting transaction forms a cycle back to itself through the dependency graph, it is a deadlock. If there are waiters but no cycle, it is contention.
 
 ---
 
@@ -140,7 +140,7 @@ The `deadlock_timeout` setting controls how long PostgreSQL waits before running
 
 ## How It Connects
 
-Deadlocks are a direct consequence of how transactions acquire and hold locks. Understanding the locking model — row-level locks, table-level locks, and MVCC — is the prerequisite for understanding why and when deadlock cycles form.
+Deadlocks are a direct consequence of how transactions acquire and hold locks. Understanding the locking model - row-level locks, table-level locks, and MVCC - is the prerequisite for understanding why and when deadlock cycles form.
 
 [[locks-sql|Locking in SQL]]
 
@@ -156,23 +156,23 @@ Savepoints provide a mechanism to recover from a failed statement within a trans
 
 ## Common Misconceptions
 
-Misconception 1: "The database should prevent deadlocks automatically — if I'm getting deadlocks, something is wrong with PostgreSQL."
+Misconception 1: "The database should prevent deadlocks automatically - if I'm getting deadlocks, something is wrong with PostgreSQL."
 Reality: PostgreSQL detects and resolves deadlocks automatically by aborting a victim transaction. Preventing deadlocks from forming is the application's responsibility, accomplished by ensuring consistent lock acquisition order. PostgreSQL cannot prevent a deadlock without knowing the application's intended semantics; it can only detect cycles after they have formed.
 
-Misconception 2: "My application is getting lock errors — it must be a deadlock."
+Misconception 2: "My application is getting lock errors - it must be a deadlock."
 Reality: Most lock-related errors in production are lock waits that exceed a timeout (`lock_timeout` or `statement_timeout`), not true deadlocks. A deadlock requires a cycle in the lock dependency graph. A lock wait timeout occurs when one transaction simply cannot acquire a lock within the allowed time because another transaction is taking too long. The error messages are different: deadlocks produce error code 40P01, while lock timeouts produce 55P03.
 
 Misconception 3: "Setting a low deadlock_timeout will make my application more stable by catching deadlocks faster."
 Reality: A lower `deadlock_timeout` means the deadlock detection algorithm runs more frequently, which adds CPU overhead. More importantly, it changes the balance between "treating a slow lock wait as a potential deadlock" versus waiting for it to resolve naturally. Lowering it too much can cause false-positive deadlock detections on lock waits that would have resolved on their own. The default of 1 second is appropriate for most workloads.
 
 Misconception 4: "I can prevent all deadlocks by using SELECT FOR UPDATE."
-Reality: `SELECT FOR UPDATE` is a tool for acquiring row locks explicitly, which helps with consistent lock ordering when you use it carefully. But incorrect use of `SELECT FOR UPDATE` can itself cause deadlocks if different transactions acquire `FOR UPDATE` locks on the same rows in different orders. Using `SELECT FOR UPDATE` does not automatically prevent deadlocks — it requires applying the consistent lock ordering strategy.
+Reality: `SELECT FOR UPDATE` is a tool for acquiring row locks explicitly, which helps with consistent lock ordering when you use it carefully. But incorrect use of `SELECT FOR UPDATE` can itself cause deadlocks if different transactions acquire `FOR UPDATE` locks on the same rows in different orders. Using `SELECT FOR UPDATE` does not automatically prevent deadlocks - it requires applying the consistent lock ordering strategy.
 
 ---
 
 ## Why It Matters in Practice
 
-Deadlocks are inevitable in any sufficiently complex application with concurrent write paths. They are not a sign of a bug that needs to be fixed once and forgotten — they are a class of failure mode that must be handled structurally. The application must catch 40P01 errors wherever multi-row write transactions occur and implement retry logic with backoff. Any code path that modifies multiple rows in a single transaction is a potential deadlock candidate.
+Deadlocks are inevitable in any sufficiently complex application with concurrent write paths. They are not a sign of a bug that needs to be fixed once and forgotten - they are a class of failure mode that must be handled structurally. The application must catch 40P01 errors wherever multi-row write transactions occur and implement retry logic with backoff. Any code path that modifies multiple rows in a single transaction is a potential deadlock candidate.
 
 The consistent lock ordering strategy is the most effective prevention measure, but it requires discipline across the entire codebase. In large teams, a new developer adding a feature that modifies two tables in a different order from existing code can introduce deadlocks that only manifest under concurrent load. Code review checklists and automated testing with concurrent sessions are the practical tools for catching this before it reaches production.
 
@@ -199,7 +199,7 @@ WITH locked AS (
 UPDATE jobs SET status = 'done' FROM locked WHERE jobs.id = locked.id;
 ```
 
-**No retry logic causes permanent failure.** A payment service uses a transaction to update two account rows. Under load, deadlocks occur once every few hundred requests. The application does not catch 40P01 — it propagates as an unhandled 500 error. Payments randomly fail for a small percentage of users with no automatic recovery. The fix is a retry loop that catches 40P01 specifically and re-executes the transaction from `BEGIN`.
+**No retry logic causes permanent failure.** A payment service uses a transaction to update two account rows. Under load, deadlocks occur once every few hundred requests. The application does not catch 40P01 - it propagates as an unhandled 500 error. Payments randomly fail for a small percentage of users with no automatic recovery. The fix is a retry loop that catches 40P01 specifically and re-executes the transaction from `BEGIN`.
 
 ---
 
@@ -211,7 +211,7 @@ Common question forms:
 - "What is the difference between a deadlock and a lock timeout?"
 
 Answer frame:
-Define a deadlock as a cycle in the lock dependency graph — A waits for B's lock, B waits for A's lock. Explain that PostgreSQL detects deadlocks after `deadlock_timeout` elapses and aborts the victim with error 40P01. The application must catch this error and retry the transaction. Explain the prevention strategy: always acquire locks in a consistent order (typically ascending row ID or alphabetical table order). Distinguish deadlocks (cycle, permanent) from lock waits (linear, temporary, resolved by the holder committing). Describe `pg_locks` as the diagnostic tool. Give the classic two-account transfer example to make the cycle concrete.
+Define a deadlock as a cycle in the lock dependency graph - A waits for B's lock, B waits for A's lock. Explain that PostgreSQL detects deadlocks after `deadlock_timeout` elapses and aborts the victim with error 40P01. The application must catch this error and retry the transaction. Explain the prevention strategy: always acquire locks in a consistent order (typically ascending row ID or alphabetical table order). Distinguish deadlocks (cycle, permanent) from lock waits (linear, temporary, resolved by the holder committing). Describe `pg_locks` as the diagnostic tool. Give the classic two-account transfer example to make the cycle concrete.
 
 ---
 

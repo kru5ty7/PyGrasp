@@ -1,6 +1,6 @@
 ﻿---
 title: 48 - ECR (Elastic Container Registry)
-description: ECR is AWS's managed Docker container registry — it stores, versions, and secures container images for deployment to Lambda, ECS, EKS, and EC2 within the same AWS account.
+description: ECR is AWS's managed Docker container registry - it stores, versions, and secures container images for deployment to Lambda, ECS, EKS, and EC2 within the same AWS account.
 tags: [aws, cloud, layer-11, ecr, docker, containers]
 status: draft
 difficulty: beginner
@@ -11,14 +11,14 @@ created: 2026-05-18
 
 # ECR (Elastic Container Registry)
 
-> ECR is AWS's managed container image registry — you push your Docker images here, and ECS, Lambda, and EKS pull them with no cross-registry credential management when everything runs in the same account.
+> ECR is AWS's managed container image registry - you push your Docker images here, and ECS, Lambda, and EKS pull them with no cross-registry credential management when everything runs in the same account.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- Two registry types: private (authentication required, within your AWS account) and public (`public.ecr.aws` — share images publicly, AWS manages bandwidth)
+- Two registry types: private (authentication required, within your AWS account) and public (`public.ecr.aws` - share images publicly, AWS manages bandwidth)
 - Push workflow: authenticate Docker with `aws ecr get-login-password`, tag image with ECR URI, `docker push`
 - Image URI format: `<account_id>.dkr.ecr.<region>.amazonaws.com/<repo-name>:<tag>`
 - Image scanning: automatic vulnerability scan on push (Basic scanning free; Enhanced scanning uses Inspector, billed)
@@ -26,27 +26,27 @@ created: 2026-05-18
 - ECR integrates natively with Lambda container images, ECS task definitions, and EKS pod specs
 
 **Tricky points:**
-- Authentication tokens from `aws ecr get-login-password` expire after 12 hours — refresh in CI/CD pipelines
-- ECR private registries are region-specific — an image in `us-east-1` ECR cannot be referenced from `eu-west-1` ECS without replication or re-push
+- Authentication tokens from `aws ecr get-login-password` expire after 12 hours - refresh in CI/CD pipelines
+- ECR private registries are region-specific - an image in `us-east-1` ECR cannot be referenced from `eu-west-1` ECS without replication or re-push
 - Pulling images from ECR in a VPC with no internet gateway requires a VPC endpoint for ECR (`com.amazonaws.region.ecr.dkr` and `com.amazonaws.region.ecr.api`)
-- Lambda container image deployments pin to the image digest at deploy time — pushing a new image with the same tag does not automatically update the function
-- ECR stores layer data separately per repository — pushing the same layer (e.g. a Python base image) to two repositories stores it twice
+- Lambda container image deployments pin to the image digest at deploy time - pushing a new image with the same tag does not automatically update the function
+- ECR stores layer data separately per repository - pushing the same layer (e.g. a Python base image) to two repositories stores it twice
 
 ---
 
 ## What It Is
 
-ECR is a secure warehouse for your container images. When you build a Docker image, you are assembling a product on your local factory floor — it exists only on your machine. ECR is the warehouse where you ship finished products so that any deployment system in your AWS account can pick them up. The warehouse is managed: AWS handles the physical storage, the access control system (IAM authentication), and the security inspections (image scanning). You are responsible for deciding which products to store, how long to keep them (lifecycle policies), and who gets access.
+ECR is a secure warehouse for your container images. When you build a Docker image, you are assembling a product on your local factory floor - it exists only on your machine. ECR is the warehouse where you ship finished products so that any deployment system in your AWS account can pick them up. The warehouse is managed: AWS handles the physical storage, the access control system (IAM authentication), and the security inspections (image scanning). You are responsible for deciding which products to store, how long to keep them (lifecycle policies), and who gets access.
 
-The closest analogy to a general-purpose container registry is DockerHub, which many developers are familiar with from personal projects. ECR differs in two important ways. First, ECR is private by default — images are accessible only to principals authenticated and authorised within your AWS account. This eliminates the credential management complexity of pulling from a private DockerHub repository: when an ECS task or Lambda function in your account pulls from ECR, it authenticates using the IAM role of the task or function, not a stored Docker credential. Second, ECR is regional and integrated with the AWS network backbone, which means pull times within the same region are fast and there is no egress cost for pulling images within the same region.
+The closest analogy to a general-purpose container registry is DockerHub, which many developers are familiar with from personal projects. ECR differs in two important ways. First, ECR is private by default - images are accessible only to principals authenticated and authorised within your AWS account. This eliminates the credential management complexity of pulling from a private DockerHub repository: when an ECS task or Lambda function in your account pulls from ECR, it authenticates using the IAM role of the task or function, not a stored Docker credential. Second, ECR is regional and integrated with the AWS network backbone, which means pull times within the same region are fast and there is no egress cost for pulling images within the same region.
 
-The ECR public registry (`public.ecr.aws`) is a separate product for sharing images with the world, and it is also the home of AWS's own base images — including the Lambda Python runtime base images (`public.ecr.aws/lambda/python:3.12`) that the container image deployment note describes. Using AWS base images from the public ECR registry instead of DockerHub reduces pull latency in the Lambda execution environment and avoids DockerHub rate limits in CI/CD pipelines.
+The ECR public registry (`public.ecr.aws`) is a separate product for sharing images with the world, and it is also the home of AWS's own base images - including the Lambda Python runtime base images (`public.ecr.aws/lambda/python:3.12`) that the container image deployment note describes. Using AWS base images from the public ECR registry instead of DockerHub reduces pull latency in the Lambda execution environment and avoids DockerHub rate limits in CI/CD pipelines.
 
 ---
 
 ## How It Actually Works
 
-The standard push workflow involves four commands: create the repository (once), authenticate Docker, tag the image, and push. The authentication step generates a time-limited password that is piped directly into `docker login` — no password storage required.
+The standard push workflow involves four commands: create the repository (once), authenticate Docker, tag the image, and push. The authentication step generates a time-limited password that is piped directly into `docker login` - no password storage required.
 
 ```bash
 # Variables
@@ -135,7 +135,7 @@ for image in response["imageDetails"]:
           f"High: {severity_counts.get('HIGH', 0)}")
 ```
 
-Cross-account access — allowing a different AWS account to pull from a private repository:
+Cross-account access - allowing a different AWS account to pull from a private repository:
 
 ```bash
 aws ecr set-repository-policy \
@@ -161,18 +161,18 @@ aws ecr set-repository-policy \
 
 ECR is the prerequisite storage layer for Lambda container image deployments. Every container-based Lambda function must have its image in ECR before the function can be created or updated.
 
-[[lambda-container|Lambda with Container Images]] — the full Lambda container deployment workflow: building with AWS base images, pushing to ECR, and creating the Lambda function pointing to the ECR image URI.
+[[lambda-container|Lambda with Container Images]] - the full Lambda container deployment workflow: building with AWS base images, pushing to ECR, and creating the Lambda function pointing to the ECR image URI.
 
 ECR is also the image source for ECS task definitions. ECS Fargate tasks pull their container images from ECR at task launch time, making ECR authentication and image availability critical to ECS service health.
 
-[[ecs|ECS (Elastic Container Service)]] — ECS task definitions reference ECR image URIs; understanding the ECR push workflow and lifecycle policies is foundational to ECS container deployment.
+[[ecs|ECS (Elastic Container Service)]] - ECS task definitions reference ECR image URIs; understanding the ECR push workflow and lifecycle policies is foundational to ECS container deployment.
 
 ---
 
 ## Common Misconceptions
 
 Misconception 1: Pushing a new Docker image with the `latest` tag automatically updates running Lambda functions or ECS services.
-Reality: Neither Lambda nor ECS polls ECR for changes. Lambda functions pin to the image digest resolved at the time `update-function-code` or `create-function` was called — the `latest` tag resolves to a digest at that moment, and the function continues using that digest until you explicitly call `update-function-code` again. ECS services similarly run the image digest that was resolved when the task was last deployed. Using `:latest` in production creates confusion because you cannot tell from the running service what code version is deployed.
+Reality: Neither Lambda nor ECS polls ECR for changes. Lambda functions pin to the image digest resolved at the time `update-function-code` or `create-function` was called - the `latest` tag resolves to a digest at that moment, and the function continues using that digest until you explicitly call `update-function-code` again. ECS services similarly run the image digest that was resolved when the task was last deployed. Using `:latest` in production creates confusion because you cannot tell from the running service what code version is deployed.
 
 Misconception 2: ECR images are available across all AWS regions.
 Reality: ECR repositories are regional. An image pushed to a repository in `us-east-1` is only accessible from services in `us-east-1` (or cross-region replication, if configured). Deploying the same image in multiple regions requires either replicating the repository with ECR replication rules or pushing the image to each region's ECR separately in your CI/CD pipeline.
@@ -181,7 +181,7 @@ Reality: ECR repositories are regional. An image pushed to a repository in `us-e
 
 ## Why It Matters in Practice
 
-ECR is the only viable image registry for production container deployments on AWS. It integrates with IAM for authentication (no stored credentials in CI/CD), with ECS and Lambda for seamless pulls, and with AWS Inspector for security scanning. Teams that use ECR lifecycle policies avoid the storage cost accumulation of keeping every build artifact indefinitely. Teams that use semantic version tags rather than `:latest` maintain deployment traceability — every running service can be traced back to an exact image digest, which resolves to an exact commit in source control.
+ECR is the only viable image registry for production container deployments on AWS. It integrates with IAM for authentication (no stored credentials in CI/CD), with ECS and Lambda for seamless pulls, and with AWS Inspector for security scanning. Teams that use ECR lifecycle policies avoid the storage cost accumulation of keeping every build artifact indefinitely. Teams that use semantic version tags rather than `:latest` maintain deployment traceability - every running service can be traced back to an exact image digest, which resolves to an exact commit in source control.
 
 ---
 
@@ -191,7 +191,7 @@ ECR is the only viable image registry for production container deployments on AW
 
 ```bash
 # Mistake: authenticate once at the start of a long pipeline and reuse the token
-# Token expires after 12 hours — a long pipeline or retry may fail with "unauthorized"
+# Token expires after 12 hours - a long pipeline or retry may fail with "unauthorized"
 
 # Fix: re-authenticate immediately before each push step
 aws ecr get-login-password --region us-east-1 \

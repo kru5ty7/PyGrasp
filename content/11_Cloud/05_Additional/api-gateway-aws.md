@@ -1,6 +1,6 @@
 ﻿---
 title: 47 - AWS API Gateway
-description: API Gateway is AWS's managed HTTP API service — it handles routing, authentication, throttling, and the Lambda proxy integration that turns an HTTP request into a Lambda invocation and back.
+description: API Gateway is AWS's managed HTTP API service - it handles routing, authentication, throttling, and the Lambda proxy integration that turns an HTTP request into a Lambda invocation and back.
 tags: [aws, cloud, layer-11, api-gateway, rest, lambda]
 status: draft
 difficulty: intermediate
@@ -11,14 +11,14 @@ created: 2026-05-18
 
 # AWS API Gateway
 
-> API Gateway sits between your HTTP clients and your Lambda functions — it handles TLS termination, authentication, rate limiting, and request routing so your function only has to implement business logic.
+> API Gateway sits between your HTTP clients and your Lambda functions - it handles TLS termination, authentication, rate limiting, and request routing so your function only has to implement business logic.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- Two main types: REST API (feature-rich, older, ~$3.50/million requests) and HTTP API (simpler, cheaper, ~$1/million requests — use this for Lambda integrations)
+- Two main types: REST API (feature-rich, older, ~$3.50/million requests) and HTTP API (simpler, cheaper, ~$1/million requests - use this for Lambda integrations)
 - Lambda Proxy Integration: API Gateway passes the full HTTP request as the `event` dict and returns the function's response dict to the client
 - Routes: `METHOD /path` (e.g. `POST /orders`, `GET /orders/{id}`)
 - Authentication options: Lambda authoriser (custom logic), Cognito JWT authoriser, API keys
@@ -26,19 +26,19 @@ created: 2026-05-18
 - Custom domain names with ACM TLS certificates
 
 **Tricky points:**
-- REST API timeout: 29 seconds; HTTP API timeout: 30 seconds — Lambda functions used with API Gateway must complete within this window
+- REST API timeout: 29 seconds; HTTP API timeout: 30 seconds - Lambda functions used with API Gateway must complete within this window
 - API Gateway returns `502 Bad Gateway` when the Lambda function returns `null` or a malformed response dict (missing `statusCode`)
 - CORS must be configured on API Gateway AND may need CORS headers in the Lambda response
-- HTTP API does not support API keys, usage plans, or request/response transformation — use REST API if you need those features
+- HTTP API does not support API keys, usage plans, or request/response transformation - use REST API if you need those features
 - Deploying a REST API requires an explicit "Deploy" action to make changes live; HTTP API changes are deployed automatically
 
 ---
 
 ## What It Is
 
-API Gateway is the bouncer at the entrance to your serverless application. Every HTTP request from a client must pass through the bouncer before reaching the Lambda function inside. The bouncer checks credentials (authentication), enforces entry limits (throttling), records who came in and when (logging), and translates the outside world's HTTP vocabulary into the internal format your Lambda function expects (Lambda Proxy Integration). The function inside does not need to know anything about HTTP infrastructure — it receives a structured Python dict and returns a structured Python dict.
+API Gateway is the bouncer at the entrance to your serverless application. Every HTTP request from a client must pass through the bouncer before reaching the Lambda function inside. The bouncer checks credentials (authentication), enforces entry limits (throttling), records who came in and when (logging), and translates the outside world's HTTP vocabulary into the internal format your Lambda function expects (Lambda Proxy Integration). The function inside does not need to know anything about HTTP infrastructure - it receives a structured Python dict and returns a structured Python dict.
 
-The choice between REST API and HTTP API is primarily a features-vs-cost trade. REST API is the original product: it supports request/response transformation using mapping templates, API key management, usage plans, private integrations, and edge-optimised endpoints via CloudFront. HTTP API is a redesigned, streamlined product launched in 2020 for the most common use case — routing HTTP requests to Lambda functions. HTTP API is 70–80% cheaper and has lower latency than REST API but lacks API key management, request/response transformation, and usage plans. For a Python backend where Lambda handles the business logic, HTTP API is almost always the right choice.
+The choice between REST API and HTTP API is primarily a features-vs-cost trade. REST API is the original product: it supports request/response transformation using mapping templates, API key management, usage plans, private integrations, and edge-optimised endpoints via CloudFront. HTTP API is a redesigned, streamlined product launched in 2020 for the most common use case - routing HTTP requests to Lambda functions. HTTP API is 70–80% cheaper and has lower latency than REST API but lacks API key management, request/response transformation, and usage plans. For a Python backend where Lambda handles the business logic, HTTP API is almost always the right choice.
 
 The Lambda Proxy Integration is the configuration option that makes API Gateway a transparent pass-through rather than an active transformer. With proxy integration enabled, API Gateway sends the full HTTP request to Lambda as a structured `event` dict: method, path, headers, query string parameters, path parameters, and the body as a string. The Lambda function returns a dict with `statusCode`, `headers`, and `body` (as a JSON string), and API Gateway translates that back into an HTTP response for the client. The entire HTTP request-response cycle passes through Lambda without API Gateway transforming any of it.
 
@@ -169,13 +169,13 @@ def handle_get_order(order_id, user_id):
 
 ## How It Connects
 
-API Gateway is the front door for Lambda functions exposed as HTTP endpoints. It is the primary way a Python FastAPI-style backend is deployed serverlessly on AWS — but with the handler contract instead of ASGI middleware.
+API Gateway is the front door for Lambda functions exposed as HTTP endpoints. It is the primary way a Python FastAPI-style backend is deployed serverlessly on AWS - but with the handler contract instead of ASGI middleware.
 
-[[lambda-handlers|Lambda Handlers]] — the Lambda handler's required return format (`statusCode`, `headers`, `body`) is defined by the API Gateway proxy integration contract; the two are tightly coupled.
+[[lambda-handlers|Lambda Handlers]] - the Lambda handler's required return format (`statusCode`, `headers`, `body`) is defined by the API Gateway proxy integration contract; the two are tightly coupled.
 
 API Gateway authentication with JWT authorisers requires understanding the IAM and Cognito identity model. Lambda authorisers are an alternative where custom Python code makes the authorisation decision.
 
-[[iam-roles|IAM Roles]] — API Gateway can use IAM-based authentication (`AWS_IAM` authorisation type), in which callers must sign requests with SigV4; this integrates with the IAM roles model described in the IAM notes.
+[[iam-roles|IAM Roles]] - API Gateway can use IAM-based authentication (`AWS_IAM` authorisation type), in which callers must sign requests with SigV4; this integrates with the IAM roles model described in the IAM notes.
 
 ---
 
@@ -191,7 +191,7 @@ Reality: HTTP API supports JWT authorisers natively and is significantly cheaper
 
 ## Why It Matters in Practice
 
-API Gateway is the canonical way to expose Lambda functions as HTTP services without running a web server. Understanding the Lambda Proxy Integration response format is mandatory — a function that does not return the correct shape produces a 502 for every request, and the error message from API Gateway (`{"message": "Internal Server Error"}`) gives no indication of what the function returned. Developers who internalise the `statusCode + headers + body` response contract, understand the CORS configuration requirements, and know the timeout ceiling (29/30 seconds) build API-integrated Lambda functions that work reliably from the first deploy.
+API Gateway is the canonical way to expose Lambda functions as HTTP services without running a web server. Understanding the Lambda Proxy Integration response format is mandatory - a function that does not return the correct shape produces a 502 for every request, and the error message from API Gateway (`{"message": "Internal Server Error"}`) gives no indication of what the function returned. Developers who internalise the `statusCode + headers + body` response contract, understand the CORS configuration requirements, and know the timeout ceiling (29/30 seconds) build API-integrated Lambda functions that work reliably from the first deploy.
 
 ---
 

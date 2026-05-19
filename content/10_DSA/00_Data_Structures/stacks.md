@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Stacks
 
-> The stack is one of the most fundamental abstractions in computing — it is the structure that makes function calls, expression evaluation, and undo history all work.
+> The stack is one of the most fundamental abstractions in computing - it is the structure that makes function calls, expression evaluation, and undo history all work.
 
 ---
 
@@ -20,15 +20,15 @@ created: 2026-05-18
 **Core idea:**
 - LIFO: the last item pushed onto the stack is the first item popped off
 - Three core operations: push (add to top), pop (remove from top), peek (read top without removing)
-- All three operations are O(1) — the top is always directly accessible
+- All three operations are O(1) - the top is always directly accessible
 - Python implementation: use `list` with `append` for push and `pop()` for pop
-- The call stack is a stack — each function call pushes a frame; return pops it
+- The call stack is a stack - each function call pushes a frame; return pops it
 
 **Tricky points:**
-- `pop()` on an empty stack raises `IndexError` — always check before popping or handle the exception
+- `pop()` on an empty stack raises `IndexError` - always check before popping or handle the exception
 - Peek is `lst[-1]` in Python, not a dedicated method on lists
-- A stack overflow occurs when the call stack grows too deep — Python's default recursion limit is 1000
-- Do not use `list.pop(0)` for a stack — that is O(n) and pops the wrong end; use `list.pop()` (no argument)
+- A stack overflow occurs when the call stack grows too deep - Python's default recursion limit is 1000
+- Do not use `list.pop(0)` for a stack - that is O(n) and pops the wrong end; use `list.pop()` (no argument)
 - For thread-safe usage, `queue.LifoQueue` is the correct choice over a raw list
 
 ---
@@ -49,11 +49,11 @@ Space complexity: O(n)
 
 ## What It Is
 
-Think of a stack of cafeteria trays. When clean trays are returned from the dishwasher, they are placed on top of the pile. When a student comes to collect a tray, they take from the top. The tray that was returned most recently is the first one taken. The tray at the very bottom of the stack — the one put there when the cafeteria opened — might sit undisturbed for the entire lunch service. There is only one access point: the top.
+Think of a stack of cafeteria trays. When clean trays are returned from the dishwasher, they are placed on top of the pile. When a student comes to collect a tray, they take from the top. The tray that was returned most recently is the first one taken. The tray at the very bottom of the stack - the one put there when the cafeteria opened - might sit undisturbed for the entire lunch service. There is only one access point: the top.
 
-This single-access constraint might seem like a limitation, but it turns out to describe a pattern that appears everywhere in computing. When you call a function inside another function, the computer needs to remember where to return after the inner function finishes. It pushes the return address and local variables onto the call stack. When the inner function returns, those values are popped, and execution resumes exactly where it left off. If that inner function calls yet another function, another frame is pushed on top. The call stack is a real, physical stack in your computer's memory, and it is why deeply recursive programs can crash with a "stack overflow" error — the stack runs out of space because too many frames have been pushed without being popped.
+This single-access constraint might seem like a limitation, but it turns out to describe a pattern that appears everywhere in computing. When you call a function inside another function, the computer needs to remember where to return after the inner function finishes. It pushes the return address and local variables onto the call stack. When the inner function returns, those values are popped, and execution resumes exactly where it left off. If that inner function calls yet another function, another frame is pushed on top. The call stack is a real, physical stack in your computer's memory, and it is why deeply recursive programs can crash with a "stack overflow" error - the stack runs out of space because too many frames have been pushed without being popped.
 
-The LIFO property is exactly what makes parenthesis matching work. When you scan `(({[()]})` and encounter an opening bracket, you push it. When you encounter a closing bracket, you pop the top and check whether it matches. The most recent unmatched opening bracket is always the one on top — LIFO ensures they are checked in the correct order. Any algorithm where you need to process things in reverse order of when you encountered them is a candidate for a stack.
+The LIFO property is exactly what makes parenthesis matching work. When you scan `(({[()]})` and encounter an opening bracket, you push it. When you encounter a closing bracket, you pop the top and check whether it matches. The most recent unmatched opening bracket is always the one on top - LIFO ensures they are checked in the correct order. Any algorithm where you need to process things in reverse order of when you encountered them is a candidate for a stack.
 
 ---
 
@@ -70,10 +70,10 @@ stack.append(10)   # push
 stack.append(20)
 stack.append(30)
 
-top = stack[-1]    # peek — O(1), no removal
+top = stack[-1]    # peek - O(1), no removal
 print(top)         # 30
 
-value = stack.pop()  # pop — O(1), removes and returns 30
+value = stack.pop()  # pop - O(1), removes and returns 30
 print(value)         # 30
 print(stack)         # [10, 20]
 
@@ -171,7 +171,7 @@ The call stack is the most pervasive stack in computing, and it is precisely wha
 
 [[call-stack|Call Stack]]
 
-DFS (depth-first search) on a graph is naturally implemented with a stack — either explicitly (as shown above) or implicitly through recursive calls. Understanding the stack as the mechanism behind DFS makes it easier to convert recursive DFS to iterative when recursion depth is a concern.
+DFS (depth-first search) on a graph is naturally implemented with a stack - either explicitly (as shown above) or implicitly through recursive calls. Understanding the stack as the mechanism behind DFS makes it easier to convert recursive DFS to iterative when recursion depth is a concern.
 
 [[dfs|Depth-First Search]]
 
@@ -179,20 +179,20 @@ DFS (depth-first search) on a graph is naturally implemented with a stack — ei
 
 ## Common Misconceptions
 
-Misconception 1: "A stack is a restricted list — it is less useful because you can only access one end."
+Misconception 1: "A stack is a restricted list - it is less useful because you can only access one end."
 Reality: The restriction is the point. Forcing all access through one end is what gives the LIFO property, which is precisely what balanced-parentheses checking, function call management, undo history, and DFS require. A structure with unrestricted access does not have that property.
 
-Misconception 2: "Python's `list` is not a stack — I should use a dedicated stack class."
+Misconception 2: "Python's `list` is not a stack - I should use a dedicated stack class."
 Reality: Python's `list` with `append` and `pop()` (no argument) is a perfectly efficient stack. `append` is O(1) amortized, `pop()` is O(1) exactly. The only reason to wrap it in a class is for interface clarity or to prevent accidental access to elements other than the top.
 
 Misconception 3: "Stack overflow only happens in recursive programs."
-Reality: Any deep call chain — recursive or not — can exhaust the call stack. A long chain of mutually calling functions, event callbacks, or deeply nested framework calls can also overflow the stack. Python's limit of 1000 frames (by default, adjustable with `sys.setrecursionlimit`) applies to all call depth, not only explicit recursion.
+Reality: Any deep call chain - recursive or not - can exhaust the call stack. A long chain of mutually calling functions, event callbacks, or deeply nested framework calls can also overflow the stack. Python's limit of 1000 frames (by default, adjustable with `sys.setrecursionlimit`) applies to all call depth, not only explicit recursion.
 
 ---
 
 ## Why It Matters in Practice
 
-Stacks are directly used in parsers, compilers, and interpreters. When a Python program is compiled, the bytecode interpreter uses a value stack to evaluate expressions. Undo/redo functionality in any application is a pair of stacks — the undo stack holds operations to be reversed, and the redo stack holds operations that were undone. Browser navigation history is also a stack (the back button pops the current page; visiting a new page pushes it).
+Stacks are directly used in parsers, compilers, and interpreters. When a Python program is compiled, the bytecode interpreter uses a value stack to evaluate expressions. Undo/redo functionality in any application is a pair of stacks - the undo stack holds operations to be reversed, and the redo stack holds operations that were undone. Browser navigation history is also a stack (the back button pops the current page; visiting a new page pushes it).
 
 The ability to convert recursive algorithms to iterative ones using an explicit stack is a practical skill. Recursive algorithms can hit Python's recursion limit on deep inputs; rewriting them iteratively with an explicit stack eliminates that constraint. This is a direct requirement in production code that processes trees, parses structured data, or traverses graphs.
 
@@ -208,7 +208,7 @@ Common question forms:
 - "Implement iterative inorder traversal of a binary tree."
 
 Answer frame:
-For balanced brackets, describe the push-on-open, pop-and-match-on-close pattern, then handle the edge cases: empty stack on closing bracket, and non-empty stack at end. For the min-stack problem, describe maintaining a parallel stack of minimums — push the current min alongside each element, pop in sync. For iterative tree traversal, sketch the stack state after one or two pushes to demonstrate you understand the order.
+For balanced brackets, describe the push-on-open, pop-and-match-on-close pattern, then handle the edge cases: empty stack on closing bracket, and non-empty stack at end. For the min-stack problem, describe maintaining a parallel stack of minimums - push the current min alongside each element, pop in sync. For iterative tree traversal, sketch the stack state after one or two pushes to demonstrate you understand the order.
 
 ---
 

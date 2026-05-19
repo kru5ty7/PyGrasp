@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Hash Tables
 
-> Hash tables are the most practically useful data structure in everyday programming — they turn the O(n) cost of finding a value by its meaning into an O(1) cost by computing where it lives.
+> Hash tables are the most practically useful data structure in everyday programming - they turn the O(n) cost of finding a value by its meaning into an O(1) cost by computing where it lives.
 
 ---
 
@@ -19,17 +19,17 @@ created: 2026-05-18
 
 **Core idea:**
 - A hash function maps each key to an integer, which is reduced modulo the table size to give a bucket index
-- O(1) average lookup, insert, and delete — regardless of the number of stored entries
+- O(1) average lookup, insert, and delete - regardless of the number of stored entries
 - Python's `dict` is a hash table; Python's `set` is a hash table without values
-- Keys must be hashable — they must implement `__hash__` and `__eq__`; mutable objects like lists cannot be keys
-- When two keys hash to the same bucket, a collision occurs — Python resolves this with open addressing
+- Keys must be hashable - they must implement `__hash__` and `__eq__`; mutable objects like lists cannot be keys
+- When two keys hash to the same bucket, a collision occurs - Python resolves this with open addressing
 
 **Tricky points:**
 - O(1) is the average case; worst case is O(n) when all keys collide into one bucket
 - The `__hash__` and `__eq__` contract: if `a == b` then `hash(a) == hash(b)` must hold
-- Objects that are equal must have equal hashes — violating this breaks dict and set
+- Objects that are equal must have equal hashes - violating this breaks dict and set
 - Python's dict maintains insertion order since Python 3.7
-- `hash()` returns different values across Python process restarts (hash randomisation) — do not persist hash values
+- `hash()` returns different values across Python process restarts (hash randomisation) - do not persist hash values
 
 ---
 
@@ -49,9 +49,9 @@ Space complexity: O(n)
 
 ## What It Is
 
-Imagine a library with 10,000 books. If you want to find a book by author surname, you could scan every shelf — that is O(n). Or the library could assign each author to a shelf number based on a formula applied to their surname: take the sum of the character codes, divide by the number of shelves, use the remainder as the shelf number. Now finding a book requires computing one formula and going directly to one shelf. The formula is the hash function; the shelves are the buckets.
+Imagine a library with 10,000 books. If you want to find a book by author surname, you could scan every shelf - that is O(n). Or the library could assign each author to a shelf number based on a formula applied to their surname: take the sum of the character codes, divide by the number of shelves, use the remainder as the shelf number. Now finding a book requires computing one formula and going directly to one shelf. The formula is the hash function; the shelves are the buckets.
 
-The magic is that this formula requires no knowledge of what other books exist. The shelf for "Tolkien" is computed independently of whether the library has ten books or ten million. The lookup time is therefore independent of the library's size — O(1). The cost you pay is that two authors might occasionally be assigned the same shelf (a collision), and the library must have a strategy for handling that. But as long as collisions are rare (a well-designed hash function and a table that is not too full), the average performance stays near O(1).
+The magic is that this formula requires no knowledge of what other books exist. The shelf for "Tolkien" is computed independently of whether the library has ten books or ten million. The lookup time is therefore independent of the library's size - O(1). The cost you pay is that two authors might occasionally be assigned the same shelf (a collision), and the library must have a strategy for handling that. But as long as collisions are rare (a well-designed hash function and a table that is not too full), the average performance stays near O(1).
 
 Hash tables are the structure behind Python's `dict`, `set`, and `frozenset`. They are what makes `"key" in my_dict` instantaneous regardless of whether the dictionary has 10 or 10 million entries. They underpin database index structures, caching systems, symbol tables in compilers, and deduplication logic. Any problem that involves counting, grouping, or looking up by a meaningful identifier is likely best solved with a hash table.
 
@@ -83,7 +83,7 @@ except TypeError as e:
 # Tuples are hashable (immutable)
 d[(1, 2)] = "tuple key"    # fine
 
-# Custom hashable class — must implement __hash__ and __eq__
+# Custom hashable class - must implement __hash__ and __eq__
 class Point:
     def __init__(self, x, y):
         self.x = x
@@ -98,7 +98,7 @@ class Point:
 p1 = Point(1, 2)
 p2 = Point(1, 2)
 mapping = {p1: "origin-ish"}
-print(mapping[p2])    # "origin-ish" — equal keys, equal hashes
+print(mapping[p2])    # "origin-ish" - equal keys, equal hashes
 
 # Simplified hash table implementation
 class SimpleHashTable:
@@ -191,7 +191,7 @@ Hash collisions are the failure mode of hash tables. Understanding what causes t
 
 [[hash-collisions|Hash Collisions]]
 
-Python's `dict` is the most-used hash table in the language. Its internal layout — compact array with a separate indices table — is an optimisation over the basic design described here, and understanding the internals helps reason about memory and performance at scale.
+Python's `dict` is the most-used hash table in the language. Its internal layout - compact array with a separate indices table - is an optimisation over the basic design described here, and understanding the internals helps reason about memory and performance at scale.
 
 [[dict-internals|Dict Internals]]
 
@@ -200,19 +200,19 @@ Python's `dict` is the most-used hash table in the language. Its internal layout
 ## Common Misconceptions
 
 Misconception 1: "dict lookup is always O(1)."
-Reality: Dict lookup is O(1) on average, assuming a good hash function and a low load factor. In the worst case — when many keys hash to the same bucket — lookup degrades to O(n). Python's hash randomisation makes it difficult for an attacker to engineer this situation deliberately, but degenerate hash functions on custom classes can cause it accidentally.
+Reality: Dict lookup is O(1) on average, assuming a good hash function and a low load factor. In the worst case - when many keys hash to the same bucket - lookup degrades to O(n). Python's hash randomisation makes it difficult for an attacker to engineer this situation deliberately, but degenerate hash functions on custom classes can cause it accidentally.
 
 Misconception 2: "Any Python object can be a dict key."
 Reality: Only hashable objects can be dict keys. An object is hashable if it has a `__hash__` method that returns an integer and an `__eq__` method that is consistent with it. Mutable built-in containers (`list`, `dict`, `set`) are not hashable. Immutable containers (`tuple`, `frozenset`) are hashable if their contents are.
 
 Misconception 3: "The `__hash__` contract only matters if I use the object as a dict key."
-Reality: The `__hash__` and `__eq__` contract also matters for sets and for any framework that internally uses hashing for deduplication or grouping. Breaking the contract — defining `__eq__` without `__hash__`, or making `__hash__` return a different value for equal objects — causes silent, hard-to-debug errors.
+Reality: The `__hash__` and `__eq__` contract also matters for sets and for any framework that internally uses hashing for deduplication or grouping. Breaking the contract - defining `__eq__` without `__hash__`, or making `__hash__` return a different value for equal objects - causes silent, hard-to-debug errors.
 
 ---
 
 ## Why It Matters in Practice
 
-Hash tables are the answer to almost every "check if we've seen this before" or "count how many times each item appears" problem. They turn O(n²) duplicate-detection loops into O(n) single-pass solutions. In database query optimisers, hash joins use a hash table to match rows from two tables without sorting. In web servers, session stores and route dispatchers are hash tables. In compilers, symbol tables — which map variable names to their types and memory locations — are hash tables.
+Hash tables are the answer to almost every "check if we've seen this before" or "count how many times each item appears" problem. They turn O(n²) duplicate-detection loops into O(n) single-pass solutions. In database query optimisers, hash joins use a hash table to match rows from two tables without sorting. In web servers, session stores and route dispatchers are hash tables. In compilers, symbol tables - which map variable names to their types and memory locations - are hash tables.
 
 The performance cliff is equally important to understand. A hash table with a poor hash function, a very high load factor, or a maliciously crafted input set can degrade to O(n) per operation. For public-facing services that accept arbitrary user input as keys (URL parameters, JSON keys), Python's PYTHONHASHSEED randomisation is the mitigation. For internal code, ensuring custom `__hash__` implementations distribute keys well is the developer's responsibility.
 
@@ -221,14 +221,14 @@ The performance cliff is equally important to understand. A hash table with a po
 ## Interview Angle
 
 Common question forms:
-- "Two Sum — find two numbers in an array that add to a target."
-- "Group anagrams — group strings that are anagrams of each other."
+- "Two Sum - find two numbers in an array that add to a target."
+- "Group anagrams - group strings that are anagrams of each other."
 - "Implement a hash table from scratch."
 - "What happens when you use a mutable object as a dict key?"
 - "Why is dict lookup O(1)?"
 
 Answer frame:
-For Two Sum, describe the single-pass hash table approach: as you iterate, check if `target - current_value` is in the table, and if not, insert `current_value`. For "explain O(1) lookup," describe the hash function, the modulo to get the bucket index, and the direct array access — no comparison with other keys required. For custom hash table implementation, describe open addressing and the resize-at-2/3-load-factor strategy.
+For Two Sum, describe the single-pass hash table approach: as you iterate, check if `target - current_value` is in the table, and if not, insert `current_value`. For "explain O(1) lookup," describe the hash function, the modulo to get the bucket index, and the direct array access - no comparison with other keys required. For custom hash table implementation, describe open addressing and the resize-at-2/3-load-factor strategy.
 
 ---
 

@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Selection Sort
 
-> Selection sort trades the number of swaps for simplicity — it makes exactly n-1 swaps regardless of input, which matters when writes to storage are expensive.
+> Selection sort trades the number of swaps for simplicity - it makes exactly n-1 swaps regardless of input, which matters when writes to storage are expensive.
 
 ---
 
@@ -26,10 +26,10 @@ created: 2026-05-18
 - In-place, O(1) extra space
 
 **Tricky points:**
-- Selection sort is O(n²) in all cases — there is no early-exit possible because it must scan the entire unsorted portion to confirm the minimum
+- Selection sort is O(n²) in all cases - there is no early-exit possible because it must scan the entire unsorted portion to confirm the minimum
 - Selection sort is not stable in its standard form: swapping the minimum into position can disrupt the relative order of equal elements
 - It makes fewer swaps than bubble sort on average, but the same number of comparisons
-- Finding the minimum requires a full scan — you cannot know the minimum without looking at every element in the unsorted portion
+- Finding the minimum requires a full scan - you cannot know the minimum without looking at every element in the unsorted portion
 - The "minimum-finding" inner loop is essentially a linear search applied n times
 
 ---
@@ -46,9 +46,9 @@ created: 2026-05-18
 
 ## What It Is
 
-Imagine you have a hand of playing cards spread face-up on a table in random order. You want to arrange them from lowest to highest. Your strategy: scan all the cards, find the lowest one, pick it up and place it at the far left. Now scan the remaining cards, find the lowest among those, and place it immediately to the right of the first. Repeat until the table is clear. At every step you are "selecting" the minimum from what remains. You never move a card more than once — each card goes directly from its starting position to its final sorted position. That is selection sort.
+Imagine you have a hand of playing cards spread face-up on a table in random order. You want to arrange them from lowest to highest. Your strategy: scan all the cards, find the lowest one, pick it up and place it at the far left. Now scan the remaining cards, find the lowest among those, and place it immediately to the right of the first. Repeat until the table is clear. At every step you are "selecting" the minimum from what remains. You never move a card more than once - each card goes directly from its starting position to its final sorted position. That is selection sort.
 
-The key property this analogy reveals is the write efficiency. Each card is physically moved exactly once. In computing terms, selection sort performs exactly n-1 swaps to sort an array of n elements. Bubble sort, by contrast, can perform O(n²) swaps because it swaps every adjacent pair it encounters out of order. If swapping is expensive — for example, if elements are large records being written to flash memory where writes have limited lifetime — selection sort's minimal write count is a genuine advantage.
+The key property this analogy reveals is the write efficiency. Each card is physically moved exactly once. In computing terms, selection sort performs exactly n-1 swaps to sort an array of n elements. Bubble sort, by contrast, can perform O(n²) swaps because it swaps every adjacent pair it encounters out of order. If swapping is expensive - for example, if elements are large records being written to flash memory where writes have limited lifetime - selection sort's minimal write count is a genuine advantage.
 
 The cost of this efficiency is that selection sort offers no shortcut. No matter how close to sorted the input already is, the algorithm must still scan the entire unsorted portion to confirm it has found the minimum. A sorted array takes exactly the same number of comparisons as a completely reversed array. This is why selection sort has no best-case improvement and is O(n²) in all cases without exception.
 
@@ -58,7 +58,7 @@ The cost of this efficiency is that selection sort offers no shortcut. No matter
 
 Selection sort maintains a boundary index that separates the sorted portion of the array (to the left) from the unsorted portion (to the right). Initially this boundary is at index 0, meaning the entire array is unsorted. In each iteration, the algorithm finds the index of the minimum element in the unsorted portion by scanning from the boundary to the end. It then swaps the minimum element with the element at the boundary index and advances the boundary by one. After n-1 iterations the boundary has reached the last element and the array is fully sorted.
 
-The inner loop in each pass runs from the current boundary to the end of the array. In the first pass it makes n-1 comparisons, in the second pass n-2, and so on. The total number of comparisons is (n-1) + (n-2) + ... + 1 = n*(n-1)/2, which is O(n²). The number of swaps is at most n-1 — one per pass, and zero if the minimum is already at the boundary position.
+The inner loop in each pass runs from the current boundary to the end of the array. In the first pass it makes n-1 comparisons, in the second pass n-2, and so on. The total number of comparisons is (n-1) + (n-2) + ... + 1 = n*(n-1)/2, which is O(n²). The number of swaps is at most n-1 - one per pass, and zero if the minimum is already at the boundary position.
 
 ```python
 def selection_sort(arr: list) -> list:
@@ -96,7 +96,7 @@ print(selection_sort([1, 2, 3, 4, 5]))  # [1, 2, 3, 4, 5]
 
 ## How It Connects
 
-Selection sort's inner loop is a direct application of linear search: it scans a subarray to find the minimum element by examining each element once. Understanding linear search makes selection sort's mechanics immediate. Heap sort can be understood as selection sort with a more efficient data structure — instead of a linear scan to find the minimum, it maintains a heap that gives O(log n) extraction, turning O(n²) into O(n log n).
+Selection sort's inner loop is a direct application of linear search: it scans a subarray to find the minimum element by examining each element once. Understanding linear search makes selection sort's mechanics immediate. Heap sort can be understood as selection sort with a more efficient data structure - instead of a linear scan to find the minimum, it maintains a heap that gives O(log n) extraction, turning O(n²) into O(n log n).
 
 [[linear-search|Linear Search]]
 [[heap-sort|Heap Sort]]
@@ -107,7 +107,7 @@ Selection sort's inner loop is a direct application of linear search: it scans a
 ## Common Misconceptions
 
 Misconception 1: "Selection sort is stable."
-Reality: The standard in-place implementation is not stable. When the minimum element is swapped into position, it can jump over equal elements, disrupting their original relative order. For example, in [3a, 3b, 1], swapping 1 with 3a produces [1, 3b, 3a] — the two 3s have swapped relative order. A stable variant exists but requires shifting rather than swapping, which increases the number of writes.
+Reality: The standard in-place implementation is not stable. When the minimum element is swapped into position, it can jump over equal elements, disrupting their original relative order. For example, in [3a, 3b, 1], swapping 1 with 3a produces [1, 3b, 3a] - the two 3s have swapped relative order. A stable variant exists but requires shifting rather than swapping, which increases the number of writes.
 
 Misconception 2: "Selection sort is faster than bubble sort because it makes fewer swaps."
 Reality: Fewer swaps does not mean faster in practice. Both algorithms make O(n²) comparisons, and comparisons are what dominate CPU time in typical sorting. Selection sort's advantage in write count only matters in specialised storage scenarios (flash memory, EEPROM) where writes are significantly more expensive than reads. For in-memory sorting, insertion sort is better than both.
@@ -121,7 +121,7 @@ Reality: It cannot. Unlike bubble sort with the `swapped` flag, selection sort h
 
 Selection sort is not used in modern software for general sorting. Its O(n²) complexity in all cases and lack of adaptivity make it worse than insertion sort for nearly-sorted data and worse than merge or quick sort for large datasets. It does not appear in standard library implementations.
 
-Its value is pedagogical and situational. It teaches the invariant-based approach to algorithm design: at the start of each pass, the left portion is sorted and contains the smallest i elements. It also introduces the rare scenario where minimising writes matters — in embedded systems writing to flash storage, making n-1 writes instead of potentially O(n²) writes is a meaningful constraint. Understanding selection sort builds the intuition that leads directly to heap sort, which achieves O(n log n) comparisons by replacing the linear minimum-finding scan with a heap.
+Its value is pedagogical and situational. It teaches the invariant-based approach to algorithm design: at the start of each pass, the left portion is sorted and contains the smallest i elements. It also introduces the rare scenario where minimising writes matters - in embedded systems writing to flash storage, making n-1 writes instead of potentially O(n²) writes is a meaningful constraint. Understanding selection sort builds the intuition that leads directly to heap sort, which achieves O(n log n) comparisons by replacing the linear minimum-finding scan with a heap.
 
 ---
 

@@ -4,7 +4,7 @@ title: Home
 
 # PyGrasp
 
-A structured Python knowledge vault — 694 notes across 13 layers, from CPython internals to AWS cloud deployments.
+A structured Python knowledge vault - 694 notes across 13 layers, from CPython internals to AWS cloud deployments.
 
 ---
 

@@ -1,6 +1,6 @@
 ﻿---
 title: 31 - Elastic Load Balancer
-description: AWS Elastic Load Balancers distribute incoming traffic across multiple EC2 instances, perform health checks, terminate SSL, and enable zero-downtime deployments — the Application Load Balancer is the standard choice for Python web applications.
+description: AWS Elastic Load Balancers distribute incoming traffic across multiple EC2 instances, perform health checks, terminate SSL, and enable zero-downtime deployments - the Application Load Balancer is the standard choice for Python web applications.
 tags: [aws, cloud, layer-11, ec2, elb, load-balancing]
 status: draft
 difficulty: intermediate
@@ -11,25 +11,25 @@ created: 2026-05-18
 
 # Elastic Load Balancer
 
-> An Application Load Balancer sits in front of your EC2 instances, routes HTTP/HTTPS traffic by path and host, terminates SSL, and continuously health-checks your application — making it the standard entry point for any production Python web service.
+> An Application Load Balancer sits in front of your EC2 instances, routes HTTP/HTTPS traffic by path and host, terminates SSL, and continuously health-checks your application - making it the standard entry point for any production Python web service.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- ALB (Application Load Balancer): HTTP/HTTPS, Layer 7, path and host routing, WebSocket, Lambda targets — use for web applications
-- NLB (Network Load Balancer): TCP/UDP, Layer 4, extreme throughput, static IP, preserves client IP — use for non-HTTP or ultra-low latency
-- CLB (Classic Load Balancer): legacy, pre-dates VPC-native design — avoid in new deployments
+- ALB (Application Load Balancer): HTTP/HTTPS, Layer 7, path and host routing, WebSocket, Lambda targets - use for web applications
+- NLB (Network Load Balancer): TCP/UDP, Layer 4, extreme throughput, static IP, preserves client IP - use for non-HTTP or ultra-low latency
+- CLB (Classic Load Balancer): legacy, pre-dates VPC-native design - avoid in new deployments
 - ALB components: Listener (port 80/443) → Rules (routing conditions) → Target Groups (instances, IPs, or Lambda)
 - SSL termination at the ALB: the ALB handles HTTPS; EC2 instances receive plain HTTP on a private port
 
 **Tricky points:**
-- Target group health checks must match what your application actually serves — a health check on `/` returning 200 is the minimum requirement
-- Stickiness (session affinity) routes requests from the same client to the same instance — useful for stateful applications, but conflicts with horizontal scaling
-- The ALB introduces a small latency (typically 1-5ms) — not usually significant, but relevant for sub-10ms SLA requirements (use NLB instead)
-- ALB access logs are stored in S3 and are not enabled by default — enable them for production
-- ALB has an idle timeout (default 60 seconds) — long-running HTTP connections (server-sent events, streaming responses) must account for this
+- Target group health checks must match what your application actually serves - a health check on `/` returning 200 is the minimum requirement
+- Stickiness (session affinity) routes requests from the same client to the same instance - useful for stateful applications, but conflicts with horizontal scaling
+- The ALB introduces a small latency (typically 1-5ms) - not usually significant, but relevant for sub-10ms SLA requirements (use NLB instead)
+- ALB access logs are stored in S3 and are not enabled by default - enable them for production
+- ALB has an idle timeout (default 60 seconds) - long-running HTTP connections (server-sent events, streaming responses) must account for this
 
 ---
 
@@ -37,15 +37,15 @@ created: 2026-05-18
 
 Think of a load balancer as a traffic controller at a busy intersection. Cars arriving from the highway (internet traffic) must be distributed across several parallel lanes (EC2 instances) to prevent any single lane from becoming blocked. The traffic controller knows which lanes are open (healthy instances pass health checks) and which are closed (failed instances are marked unhealthy). It continuously monitors the lanes and stops sending traffic to any lane where cars are piling up or the road is blocked. It also handles the toll booth (SSL termination) at the entrance, so the cars on the individual lanes do not need to worry about it.
 
-The Application Load Balancer operates at Layer 7 of the network stack — it understands HTTP. This means it can make routing decisions based on the request content: URL path, Host header, HTTP method, query string parameters, or custom headers. A request to `/api/v2/users` can be routed to the API service target group, while a request to `/static/logo.png` is routed to a CDN or a static asset server target group. Multiple microservices can sit behind a single ALB, differentiated by path prefix or hostname.
+The Application Load Balancer operates at Layer 7 of the network stack - it understands HTTP. This means it can make routing decisions based on the request content: URL path, Host header, HTTP method, query string parameters, or custom headers. A request to `/api/v2/users` can be routed to the API service target group, while a request to `/static/logo.png` is routed to a CDN or a static asset server target group. Multiple microservices can sit behind a single ALB, differentiated by path prefix or hostname.
 
-An ALB is built from three connected concepts. Listeners are the ports the ALB watches for incoming connections — typically port 80 for HTTP and port 443 for HTTPS. Rules are evaluated on each request to determine which target group should receive it — rules have conditions (path pattern, host header, etc.) and actions (forward, redirect, or return a fixed response). Target groups are collections of backend resources (EC2 instances, IP addresses, Lambda functions) that the ALB forwards traffic to. The ALB performs health checks on each target in the target group and only sends traffic to healthy targets.
+An ALB is built from three connected concepts. Listeners are the ports the ALB watches for incoming connections - typically port 80 for HTTP and port 443 for HTTPS. Rules are evaluated on each request to determine which target group should receive it - rules have conditions (path pattern, host header, etc.) and actions (forward, redirect, or return a fixed response). Target groups are collections of backend resources (EC2 instances, IP addresses, Lambda functions) that the ALB forwards traffic to. The ALB performs health checks on each target in the target group and only sends traffic to healthy targets.
 
 ---
 
 ## How It Actually Works
 
-SSL termination at the ALB is the standard pattern for HTTPS. You attach an SSL certificate (from AWS Certificate Manager, which provides free certificates) to the HTTPS listener. The ALB handles the TLS handshake with the client — the client sees HTTPS. The connection between the ALB and the EC2 instances uses plain HTTP on a private port (typically 8000 or 8080 or whatever your application listens on). This is secure because the ALB-to-instance communication travels on AWS's internal network, not the public internet. The instance never sees TLS traffic, and you do not need to manage SSL certificates on your EC2 instances.
+SSL termination at the ALB is the standard pattern for HTTPS. You attach an SSL certificate (from AWS Certificate Manager, which provides free certificates) to the HTTPS listener. The ALB handles the TLS handshake with the client - the client sees HTTPS. The connection between the ALB and the EC2 instances uses plain HTTP on a private port (typically 8000 or 8080 or whatever your application listens on). This is secure because the ALB-to-instance communication travels on AWS's internal network, not the public internet. The instance never sees TLS traffic, and you do not need to manage SSL certificates on your EC2 instances.
 
 Health checks are configured per target group. You specify the protocol (HTTP), the path (e.g., `/health`), the port, and the threshold for healthy/unhealthy. The ALB sends an HTTP GET to each registered target every `HealthCheckIntervalSeconds` (default 30 seconds). A target is considered healthy if it returns an HTTP status code in the `HealthyThresholdCount` consecutive checks (default 5 checks = 2.5 minutes to be marked healthy). A target is marked unhealthy after `UnhealthyThresholdCount` consecutive failures (default 2 checks = 1 minute to be marked unhealthy and removed from rotation).
 
@@ -128,7 +128,7 @@ alb_arn = alb_response["LoadBalancers"][0]["LoadBalancerArn"]
 alb_dns = alb_response["LoadBalancers"][0]["DNSName"]
 print(f"ALB DNS: {alb_dns}")
 
-# Add a path-based routing rule — send /api/* to the API target group
+# Add a path-based routing rule - send /api/* to the API target group
 # (after creating the HTTPS listener)
 elbv2.create_rule(
     ListenerArn="arn:aws:elasticloadbalancing:...",
@@ -166,23 +166,23 @@ waiter.wait(
 
 ## How It Connects
 
-The ALB and Auto Scaling Group are designed to work together. The ALB health check results feed into the ASG's health monitoring — instances failing ALB health checks are terminated and replaced. The ASG registers new instances with the ALB target group automatically when they launch.
+The ALB and Auto Scaling Group are designed to work together. The ALB health check results feed into the ASG's health monitoring - instances failing ALB health checks are terminated and replaced. The ASG registers new instances with the ALB target group automatically when they launch.
 
-[[ec2-auto-scaling|EC2 Auto Scaling Groups]] — ASGs attach to ALB target groups; the ALB health check type in the ASG configuration means failing an ALB health check triggers replacement, not just an EC2-level check.
+[[ec2-auto-scaling|EC2 Auto Scaling Groups]] - ASGs attach to ALB target groups; the ALB health check type in the ASG configuration means failing an ALB health check triggers replacement, not just an EC2-level check.
 
 Security groups for the ALB and the EC2 instances must be configured to work together. The ALB has its own security group allowing inbound 80 and 443 from the internet; the EC2 instances' security group should allow the application port only from the ALB's security group.
 
-[[ec2-security-groups|EC2 Security Groups]] — the recommended pattern is to reference the ALB's security group as the source in the EC2 instances' security group rule for the application port, so EC2 instances are never directly accessible from the internet.
+[[ec2-security-groups|EC2 Security Groups]] - the recommended pattern is to reference the ALB's security group as the source in the EC2 instances' security group rule for the application port, so EC2 instances are never directly accessible from the internet.
 
 ---
 
 ## Common Misconceptions
 
 Misconception 1: The ALB forwards the client's original IP address in the standard `REMOTE_ADDR` or `X-Forwarded-For` header transparently.
-Reality: Because the ALB terminates the TCP connection and creates a new one to the backend, the EC2 instance sees the ALB's private IP as the client address, not the original browser's IP. The original client IP is added to the `X-Forwarded-For` HTTP header by the ALB. Your Flask or Django application must read `request.headers.get("X-Forwarded-For")` for the real client IP — and strip the ALB's IP from the header if there are multiple entries.
+Reality: Because the ALB terminates the TCP connection and creates a new one to the backend, the EC2 instance sees the ALB's private IP as the client address, not the original browser's IP. The original client IP is added to the `X-Forwarded-For` HTTP header by the ALB. Your Flask or Django application must read `request.headers.get("X-Forwarded-For")` for the real client IP - and strip the ALB's IP from the header if there are multiple entries.
 
 Misconception 2: A target group showing the instance as "healthy" means the application is fully functional.
-Reality: The health check only validates what you configured it to check — typically an HTTP GET to `/health` returning 200. A health check can pass even if the database is down, the cache is unavailable, or most application endpoints are throwing 500 errors. The health check path should perform a minimal liveness check (application process is running), and you should rely on separate monitoring and alerting for deeper application health.
+Reality: The health check only validates what you configured it to check - typically an HTTP GET to `/health` returning 200. A health check can pass even if the database is down, the cache is unavailable, or most application endpoints are throwing 500 errors. The health check path should perform a minimal liveness check (application process is running), and you should rely on separate monitoring and alerting for deeper application health.
 
 ---
 
@@ -190,7 +190,7 @@ Reality: The health check only validates what you configured it to check — typ
 
 The ALB is the production standard for Python web applications on EC2 or ECS. It handles SSL termination, removing the need to manage certificates on individual instances. It handles path-based routing, enabling clean multi-service architectures behind a single domain. Its health checks provide automatic traffic cutover when an instance becomes unhealthy. And its integration with Auto Scaling Groups makes it the control plane for instance replacement and scaling.
 
-The deregistration delay (default 300 seconds) is a critical production feature. When the ALB deregisters a target (during ASG scale-in or a rolling deployment), it allows existing connections to complete before the instance is terminated. Without this delay, in-flight requests would be abruptly terminated. Setting an appropriate deregistration delay — long enough for your longest requests to complete, short enough that deployments are not unnecessarily slow — is part of production ALB tuning.
+The deregistration delay (default 300 seconds) is a critical production feature. When the ALB deregisters a target (during ASG scale-in or a rolling deployment), it allows existing connections to complete before the instance is terminated. Without this delay, in-flight requests would be abruptly terminated. Setting an appropriate deregistration delay - long enough for your longest requests to complete, short enough that deployments are not unnecessarily slow - is part of production ALB tuning.
 
 ---
 
@@ -199,7 +199,7 @@ The deregistration delay (default 300 seconds) is a critical production feature.
 **Python application not reading `X-Forwarded-For` for the real client IP, leading to broken IP-based rate limiting or geo-blocking.**
 
 ```python
-# Flask — get the real client IP when behind an ALB
+# Flask - get the real client IP when behind an ALB
 from flask import request
 
 def get_client_ip():
@@ -219,7 +219,7 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 
 ```python
 # Create a dedicated, lightweight health check endpoint
-# Do NOT perform database checks in the health endpoint — keep it fast
+# Do NOT perform database checks in the health endpoint - keep it fast
 @app.route("/health")
 def health():
     return {"status": "ok"}, 200

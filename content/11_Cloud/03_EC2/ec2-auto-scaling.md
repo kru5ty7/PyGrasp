@@ -1,6 +1,6 @@
 ﻿---
 title: 30 - EC2 Auto Scaling Groups
-description: An Auto Scaling Group automatically maintains a desired number of EC2 instances, replaces unhealthy ones, and scales capacity up or down in response to demand — making it the foundation of resilient, cost-efficient production deployments.
+description: An Auto Scaling Group automatically maintains a desired number of EC2 instances, replaces unhealthy ones, and scales capacity up or down in response to demand - making it the foundation of resilient, cost-efficient production deployments.
 tags: [aws, cloud, layer-11, ec2, auto-scaling, scaling]
 status: draft
 difficulty: intermediate
@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # EC2 Auto Scaling Groups
 
-> Auto Scaling Groups turn EC2 from manual instance management into an autonomous, self-healing compute fleet — the infrastructure layer that makes your application resilient to both failures and traffic spikes without human intervention.
+> Auto Scaling Groups turn EC2 from manual instance management into an autonomous, self-healing compute fleet - the infrastructure layer that makes your application resilient to both failures and traffic spikes without human intervention.
 
 ---
 
@@ -21,33 +21,33 @@ created: 2026-05-18
 - An ASG maintains a fleet of EC2 instances between a minimum and maximum capacity, targeting a desired count
 - When an instance fails a health check, the ASG terminates it and launches a replacement automatically
 - Scaling policies adjust the desired capacity based on metrics (CPU, request count) or a schedule
-- Launch templates define the instance configuration used for new instances — AMI, instance type, security groups, IAM role, user data
-- ASGs are VPC-aware — spreading instances across multiple Availability Zones provides automatic fault tolerance
+- Launch templates define the instance configuration used for new instances - AMI, instance type, security groups, IAM role, user data
+- ASGs are VPC-aware - spreading instances across multiple Availability Zones provides automatic fault tolerance
 
 **Tricky points:**
-- Scaling out (adding instances) has a cooldown period to prevent oscillation — new instances need time to start and pass health checks before the next scale-out decision
-- ELB health checks in the ASG are stricter than EC2 health checks — an instance that passes the EC2 check (is it running?) but fails the ELB check (does the application respond to HTTP GET /) will be replaced
-- The desired capacity can be updated manually, via scaling policy, or via scheduled action — all three can conflict
+- Scaling out (adding instances) has a cooldown period to prevent oscillation - new instances need time to start and pass health checks before the next scale-out decision
+- ELB health checks in the ASG are stricter than EC2 health checks - an instance that passes the EC2 check (is it running?) but fails the ELB check (does the application respond to HTTP GET /) will be replaced
+- The desired capacity can be updated manually, via scaling policy, or via scheduled action - all three can conflict
 - Instance warm-up period: new instances should not receive traffic until their user data has run and the application is ready; the warm-up period tells the ASG to wait before counting new instances toward scaling metrics
-- Lifecycle hooks let you run code during scale-out (before instance enters service) or scale-in (before instance is terminated) — used for draining connections, registering with configuration management, or deregistering from load balancers
+- Lifecycle hooks let you run code during scale-out (before instance enters service) or scale-in (before instance is terminated) - used for draining connections, registering with configuration management, or deregistering from load balancers
 
 ---
 
 ## What It Is
 
-Imagine managing a fleet of taxis for a city. During rush hour you need 50 taxis; at 3am you need 5. If a taxi breaks down, you dispatch a replacement immediately. You do not want the fleet to respond to every minor traffic fluctuation — if it rains for five minutes, you do not want to call in 20 extra taxis only to send them home when the rain stops. You want a controller that monitors demand, smooths out short-term fluctuations, and adjusts the fleet size based on sustained trends.
+Imagine managing a fleet of taxis for a city. During rush hour you need 50 taxis; at 3am you need 5. If a taxi breaks down, you dispatch a replacement immediately. You do not want the fleet to respond to every minor traffic fluctuation - if it rains for five minutes, you do not want to call in 20 extra taxis only to send them home when the rain stops. You want a controller that monitors demand, smooths out short-term fluctuations, and adjusts the fleet size based on sustained trends.
 
 An Auto Scaling Group is that controller. It observes metrics like CPU utilisation, request count, or queue depth. When the metric indicates that demand exceeds the current capacity, the ASG increases the desired count and launches new instances using the configured launch template. When demand drops, the ASG decreases the desired count and terminates excess instances. The minimum and maximum capacity bounds ensure the fleet never shrinks below what you need for availability (even at zero load) and never grows beyond what your budget allows.
 
-The health monitoring aspect is equally important. Production instances fail — disk fills up, memory leaks exhaust RAM, application processes crash and do not restart. Without an ASG, a failed instance stays failed until someone notices and manually replaces it. With an ASG, health checks run continuously. Any instance that fails an EC2 health check (is the hypervisor responsive?) or an ELB health check (does the application respond to an HTTP request?) is immediately terminated and replaced with a fresh instance built from the launch template. Self-healing infrastructure means your on-call engineer is not paged at 3am for a single instance failure.
+The health monitoring aspect is equally important. Production instances fail - disk fills up, memory leaks exhaust RAM, application processes crash and do not restart. Without an ASG, a failed instance stays failed until someone notices and manually replaces it. With an ASG, health checks run continuously. Any instance that fails an EC2 health check (is the hypervisor responsive?) or an ELB health check (does the application respond to an HTTP request?) is immediately terminated and replaced with a fresh instance built from the launch template. Self-healing infrastructure means your on-call engineer is not paged at 3am for a single instance failure.
 
 ---
 
 ## How It Actually Works
 
-The launch template is the blueprint for every instance the ASG creates. It contains all the parameters from `run_instances`: the AMI ID, instance type, key pair, security groups, IAM instance profile, user data, storage configuration, and tags. Launch templates support versioning — you update the template and specify which version the ASG should use. A common deployment workflow is: build a new AMI, create a new launch template version pointing to the new AMI, then trigger an instance refresh on the ASG to gradually replace all old instances with new ones.
+The launch template is the blueprint for every instance the ASG creates. It contains all the parameters from `run_instances`: the AMI ID, instance type, key pair, security groups, IAM instance profile, user data, storage configuration, and tags. Launch templates support versioning - you update the template and specify which version the ASG should use. A common deployment workflow is: build a new AMI, create a new launch template version pointing to the new AMI, then trigger an instance refresh on the ASG to gradually replace all old instances with new ones.
 
-Scaling policies come in three types. Target tracking policies maintain a target metric value — for example, "keep average CPU utilisation at 50%." The ASG automatically calculates how many instances are needed to hit the target and adjusts. Step scaling policies define thresholds and step adjustments — if CPU is between 60-80% add 2 instances, if CPU is above 80% add 4. Scheduled scaling sets the desired count at specific times — scale up to 20 instances at 8am Monday-Friday, scale down to 5 at 8pm.
+Scaling policies come in three types. Target tracking policies maintain a target metric value - for example, "keep average CPU utilisation at 50%." The ASG automatically calculates how many instances are needed to hit the target and adjusts. Step scaling policies define thresholds and step adjustments - if CPU is between 60-80% add 2 instances, if CPU is above 80% add 4. Scheduled scaling sets the desired count at specific times - scale up to 20 instances at 8am Monday-Friday, scale down to 5 at 8pm.
 
 ```bash
 # Create a launch template
@@ -168,23 +168,23 @@ for instance in asg["Instances"]:
 
 ## How It Connects
 
-Auto Scaling Groups work in conjunction with Elastic Load Balancers to form the standard scalable web application architecture. The ALB distributes traffic across ASG instances and performs health checks — instances that fail the ALB health check are marked unhealthy and replaced by the ASG.
+Auto Scaling Groups work in conjunction with Elastic Load Balancers to form the standard scalable web application architecture. The ALB distributes traffic across ASG instances and performs health checks - instances that fail the ALB health check are marked unhealthy and replaced by the ASG.
 
-[[ec2-elb|Elastic Load Balancer]] — the ALB target group is attached to the ASG; health check results from the ALB determine which instances the ASG considers healthy; understanding the interaction prevents the "healthy to EC2 but unhealthy to ELB" replacement loop.
+[[ec2-elb|Elastic Load Balancer]] - the ALB target group is attached to the ASG; health check results from the ALB determine which instances the ASG considers healthy; understanding the interaction prevents the "healthy to EC2 but unhealthy to ELB" replacement loop.
 
 Launch templates drive the instance configuration for every ASG-launched instance. Building and versioning launch templates is the prerequisite for rolling deployments via instance refresh.
 
-[[ec2-launch|Launching EC2 Instances]] — launch templates are the production-grade evolution of `run_instances` parameters; the instance configuration choices made at launch directly determine how ASG instances behave.
+[[ec2-launch|Launching EC2 Instances]] - launch templates are the production-grade evolution of `run_instances` parameters; the instance configuration choices made at launch directly determine how ASG instances behave.
 
 ---
 
 ## Common Misconceptions
 
 Misconception 1: Setting `DesiredCapacity=5` means there will always be exactly 5 healthy instances serving traffic.
-Reality: `DesiredCapacity` is a target, not a guarantee. During a scale-out event, new instances take time to launch, run user data, and pass health checks — there may be fewer than 5 healthy instances during this window. During an instance refresh, instances are replaced one by one; with `MinHealthyPercentage=80`, the ASG maintains at least 4 healthy instances while replacing the fifth. Relying on exactly N instances at all times requires designing for the transition period.
+Reality: `DesiredCapacity` is a target, not a guarantee. During a scale-out event, new instances take time to launch, run user data, and pass health checks - there may be fewer than 5 healthy instances during this window. During an instance refresh, instances are replaced one by one; with `MinHealthyPercentage=80`, the ASG maintains at least 4 healthy instances while replacing the fifth. Relying on exactly N instances at all times requires designing for the transition period.
 
 Misconception 2: Terminating an instance in an ASG removes it from the ASG permanently.
-Reality: If the ASG's desired capacity is 5 and you terminate one of its instances, the ASG automatically launches a replacement to bring the count back to 5. The ASG is designed to self-heal — it treats any instance falling below the desired count as a deficit to be corrected. To permanently reduce the ASG size, you must update the desired capacity first, then allow the ASG to terminate instances normally via scale-in.
+Reality: If the ASG's desired capacity is 5 and you terminate one of its instances, the ASG automatically launches a replacement to bring the count back to 5. The ASG is designed to self-heal - it treats any instance falling below the desired count as a deficit to be corrected. To permanently reduce the ASG size, you must update the desired capacity first, then allow the ASG to terminate instances normally via scale-in.
 
 ---
 
@@ -198,7 +198,7 @@ The instance refresh mechanism specifically solves the deployment problem: how d
 
 ## What Breaks in Production
 
-**Health check grace period too short, causing a replacement loop.** If the grace period is shorter than the time needed for user data to complete and the application to start, new instances fail the ELB health check immediately, are terminated as unhealthy, and replaced — creating an endless loop of launching and terminating instances.
+**Health check grace period too short, causing a replacement loop.** If the grace period is shorter than the time needed for user data to complete and the application to start, new instances fail the ELB health check immediately, are terminated as unhealthy, and replaced - creating an endless loop of launching and terminating instances.
 
 ```bash
 # Diagnose: check ASG activity history for rapid launch/terminate cycles
@@ -225,8 +225,8 @@ autoscaling.put_scaling_policy(
         "PredefinedMetricSpecification": {
             "PredefinedMetricType": "ASGAverageCPUUtilization"},
         "TargetValue": 50.0,
-        "ScaleInCooldown": 600,   # 10 minutes — allow traffic to settle after scale-in
-        "ScaleOutCooldown": 120,  # 2 minutes — scale out faster than scale in
+        "ScaleInCooldown": 600,   # 10 minutes - allow traffic to settle after scale-in
+        "ScaleOutCooldown": 120,  # 2 minutes - scale out faster than scale in
     },
 )
 ```

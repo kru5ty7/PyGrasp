@@ -11,25 +11,25 @@ created: 2026-05-18
 
 # Cycle Detection
 
-> Cycle detection determines whether a structure contains a loop — whether in a graph, a linked list, or a dependency chain — and developers must know it because cycles represent invalid states in build systems, deadlocks in resource allocation, and corrupted data in linked structures.
+> Cycle detection determines whether a structure contains a loop - whether in a graph, a linked list, or a dependency chain - and developers must know it because cycles represent invalid states in build systems, deadlocks in resource allocation, and corrupted data in linked structures.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- Undirected graphs: DFS with a visited set — a cycle exists if you reach a visited node through a non-parent edge
-- Directed graphs: DFS with three states (unvisited / in-stack / done) — a cycle exists if you reach an in-stack node
-- Linked lists: Floyd's tortoise and hare — two pointers at different speeds meet if and only if a cycle exists
-- Union-Find: for undirected graphs in Kruskal's MST — union fails if both endpoints are already connected
-- Floyd's algorithm: O(n) time, O(1) space — optimal for linked lists
+- Undirected graphs: DFS with a visited set - a cycle exists if you reach a visited node through a non-parent edge
+- Directed graphs: DFS with three states (unvisited / in-stack / done) - a cycle exists if you reach an in-stack node
+- Linked lists: Floyd's tortoise and hare - two pointers at different speeds meet if and only if a cycle exists
+- Union-Find: for undirected graphs in Kruskal's MST - union fails if both endpoints are already connected
+- Floyd's algorithm: O(n) time, O(1) space - optimal for linked lists
 - Kahn's topological sort: if output length < V, the graph has a cycle (for directed graphs)
 
 **Tricky points:**
 - In undirected graph DFS, the parent node must be tracked to avoid treating the edge back to the parent as a cycle
-- In directed graph DFS, a grey (in-stack) node signals a back edge (cycle), but a black (done) node does not — this is the critical distinction
-- Floyd's algorithm detects a cycle but does not immediately tell you where it starts — a second phase is needed for that
-- Union-Find cycle detection only works for undirected graphs — directed graph cycles require DFS or topological sort
+- In directed graph DFS, a grey (in-stack) node signals a back edge (cycle), but a black (done) node does not - this is the critical distinction
+- Floyd's algorithm detects a cycle but does not immediately tell you where it starts - a second phase is needed for that
+- Union-Find cycle detection only works for undirected graphs - directed graph cycles require DFS or topological sort
 - The three-state DFS also serves as the cycle detection step inside topological sort (DFS-based)
 
 ---
@@ -47,9 +47,9 @@ created: 2026-05-18
 
 ## What It Is
 
-Think of a treasure hunt where each clue tells you the location of the next clue. Normally, following the chain leads you to the treasure. But imagine a mischievous puzzle-setter who made clue 7 point back to clue 3 — now the chain loops and the treasure is unreachable. Cycle detection is the process of discovering that you are walking in circles rather than making progress toward a destination. It applies to any structure where elements refer to other elements: linked lists (nodes pointing to nodes), graphs (vertices connected by edges), and dependency systems (packages requiring packages).
+Think of a treasure hunt where each clue tells you the location of the next clue. Normally, following the chain leads you to the treasure. But imagine a mischievous puzzle-setter who made clue 7 point back to clue 3 - now the chain loops and the treasure is unreachable. Cycle detection is the process of discovering that you are walking in circles rather than making progress toward a destination. It applies to any structure where elements refer to other elements: linked lists (nodes pointing to nodes), graphs (vertices connected by edges), and dependency systems (packages requiring packages).
 
-The challenge is that cycles are invisible from any local vantage point. Any individual node looks identical whether it is part of a linear chain or a cycle. Detection requires a global perspective — either remembering every location you have ever visited, or using a clever speed-difference trick that exploits the mathematics of circular motion.
+The challenge is that cycles are invisible from any local vantage point. Any individual node looks identical whether it is part of a linear chain or a cycle. Detection requires a global perspective - either remembering every location you have ever visited, or using a clever speed-difference trick that exploits the mathematics of circular motion.
 
 The speed-difference trick is Floyd's tortoise and hare algorithm. Two pointers start at the beginning of a linked list. The slow pointer moves one step at a time; the fast pointer moves two steps. If there is no cycle, the fast pointer reaches the end and the algorithm terminates. If there is a cycle, the fast pointer laps the slow pointer and they meet at some node inside the cycle. The proof is elegant: once both pointers are inside the cycle, the fast pointer gains one position per step relative to the slow pointer, so the gap between them decreases by one each step until it reaches zero. They must meet within at most one full cycle traversal. The critical advantage over a visited-set approach is space: O(1) extra memory instead of O(n), because no record of visited nodes is maintained.
 
@@ -57,9 +57,9 @@ The speed-difference trick is Floyd's tortoise and hare algorithm. Two pointers 
 
 ## How It Actually Works
 
-For undirected graphs, DFS uses a visited set. When visiting a node u through an edge from its parent p, if u is already visited, a cycle is confirmed — but the edge back to p must be excluded, because revisiting the parent is not a cycle in an undirected graph. The parent is tracked as a parameter (or by recording the edge used to arrive at each node) and excluded from the cycle check.
+For undirected graphs, DFS uses a visited set. When visiting a node u through an edge from its parent p, if u is already visited, a cycle is confirmed - but the edge back to p must be excluded, because revisiting the parent is not a cycle in an undirected graph. The parent is tracked as a parameter (or by recording the edge used to arrive at each node) and excluded from the cycle check.
 
-For directed graphs, three states are needed because the concept of "visited but not yet finished" matters. An edge back to a node that is currently on the DFS call stack (in-progress, or "grey") means a directed cycle exists. An edge to a node that has already finished its DFS (done, or "black") is a cross edge or forward edge — not a cycle. Using only two states (visited/unvisited) would confuse these two cases and produce false positives for directed graphs.
+For directed graphs, three states are needed because the concept of "visited but not yet finished" matters. An edge back to a node that is currently on the DFS call stack (in-progress, or "grey") means a directed cycle exists. An edge to a node that has already finished its DFS (done, or "black") is a cross edge or forward edge - not a cycle. Using only two states (visited/unvisited) would confuse these two cases and produce false positives for directed graphs.
 
 ```python
 from collections import defaultdict, deque
@@ -147,7 +147,7 @@ def find_cycle_start(head: Optional[ListNode]) -> Optional[ListNode]:
     """
     If a cycle exists, return the node where the cycle begins.
     Uses Floyd's algorithm phase 2: after detection, one pointer starts
-    over from the head; both advance one step at a time — they meet at
+    over from the head; both advance one step at a time - they meet at
     the cycle start.
     """
     slow = head
@@ -221,7 +221,7 @@ print(find_cycle_start(n1).val)            # 2
 
 ## How It Connects
 
-Cycle detection is a prerequisite for topological sort: a DAG has a topological ordering if and only if it contains no directed cycle. Kahn's topological sort algorithm doubles as a cycle detector — if the output contains fewer vertices than the graph, unprocessed vertices form one or more cycles. The three-state DFS cycle detection is also the cycle-detection component of the DFS-based topological sort algorithm.
+Cycle detection is a prerequisite for topological sort: a DAG has a topological ordering if and only if it contains no directed cycle. Kahn's topological sort algorithm doubles as a cycle detector - if the output contains fewer vertices than the graph, unprocessed vertices form one or more cycles. The three-state DFS cycle detection is also the cycle-detection component of the DFS-based topological sort algorithm.
 
 Union-Find cycle detection is used inside Kruskal's MST algorithm: before adding an edge, check whether both endpoints are already connected. If yes, adding the edge would create a cycle and it is skipped. Understanding cycle detection in this context makes both Union-Find and Kruskal's clearer.
 
@@ -236,7 +236,7 @@ Union-Find cycle detection is used inside Kruskal's MST algorithm: before adding
 ## Common Misconceptions
 
 Misconception 1: The same DFS cycle detection algorithm works for both directed and undirected graphs.
-Reality: The algorithms look similar but differ critically. For undirected graphs, revisiting any already-visited non-parent node signals a cycle. For directed graphs, revisiting a node that is currently on the call stack (in-stack state) signals a cycle, but revisiting a node that has already finished processing does not — that node was reached via a different path, not via a back edge. Using the undirected algorithm on a directed graph produces false positives for cross edges.
+Reality: The algorithms look similar but differ critically. For undirected graphs, revisiting any already-visited non-parent node signals a cycle. For directed graphs, revisiting a node that is currently on the call stack (in-stack state) signals a cycle, but revisiting a node that has already finished processing does not - that node was reached via a different path, not via a back edge. Using the undirected algorithm on a directed graph produces false positives for cross edges.
 
 Misconception 2: Floyd's algorithm can only tell you whether a cycle exists, not where it starts.
 Reality: Floyd's two-phase algorithm also finds the cycle start. After the tortoise and hare meet, reset one pointer to the head and advance both one step at a time. They will meet at the cycle start. The mathematical proof relies on the fact that the distance from the head to the cycle start equals the distance from the meeting point to the cycle start (modulo cycle length). This second phase runs in O(n) time and uses O(1) space.
@@ -247,7 +247,7 @@ Reality: Floyd's two-phase algorithm also finds the cycle start. After the torto
 
 Cycle detection appears in several practical contexts. Deadlock detection in operating systems models processes and resources as a graph; a cycle indicates a deadlock. Build systems detect circular dependencies (A requires B, B requires A) as directed cycles. Python's import system raises `ImportError` for circular imports, which are cycles in the module dependency graph. Database query planners detect cycles in join graphs. Any time you have a system of dependencies or references that could contain loops, cycle detection is the algorithmic tool that identifies the problem.
 
-In interviews, cycle detection appears both directly ("does this graph contain a cycle?") and as a sub-problem within larger algorithms (topological sort feasibility, MST construction with Union-Find). Understanding all four variants — undirected DFS, directed three-state DFS, Floyd's linked-list algorithm, and Union-Find — and knowing which to apply in which context is the complete skill set.
+In interviews, cycle detection appears both directly ("does this graph contain a cycle?") and as a sub-problem within larger algorithms (topological sort feasibility, MST construction with Union-Find). Understanding all four variants - undirected DFS, directed three-state DFS, Floyd's linked-list algorithm, and Union-Find - and knowing which to apply in which context is the complete skill set.
 
 ---
 

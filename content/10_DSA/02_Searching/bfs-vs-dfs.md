@@ -1,6 +1,6 @@
 ﻿---
 title: 32 - BFS vs DFS
-description: A direct comparison of breadth-first search and depth-first search — when to use each, how they differ in memory use and traversal order, and how to choose between them for any graph problem.
+description: A direct comparison of breadth-first search and depth-first search - when to use each, how they differ in memory use and traversal order, and how to choose between them for any graph problem.
 tags: [dsa, layer-10, bfs, dfs, graph-traversal]
 status: draft
 difficulty: intermediate
@@ -11,15 +11,15 @@ created: 2026-05-18
 
 # BFS vs DFS
 
-> BFS and DFS cover the same ground but in different orders — and that difference in order is exactly what determines which problems each algorithm is suited for.
+> BFS and DFS cover the same ground but in different orders - and that difference in order is exactly what determines which problems each algorithm is suited for.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- BFS: queue-based, level-by-level, closest nodes first — use when proximity or minimum edge count matters
-- DFS: stack-based, depth-first with backtracking — use when you need to explore complete paths, detect cycles, or process nodes after all descendants
+- BFS: queue-based, level-by-level, closest nodes first - use when proximity or minimum edge count matters
+- DFS: stack-based, depth-first with backtracking - use when you need to explore complete paths, detect cycles, or process nodes after all descendants
 - Both: O(V + E) time, O(V) space worst case, require a visited set for cyclic graphs
 - BFS guarantees shortest path (by edge count) in unweighted graphs; DFS does not
 - DFS is natural for backtracking, topological sort, and recursive tree processing; BFS is natural for level-order processing and spreading simulations
@@ -27,7 +27,7 @@ created: 2026-05-18
 **Tricky points:**
 - BFS memory grows with graph width (all nodes at the current frontier); DFS memory grows with graph depth (the current path)
 - DFS can stack-overflow on very deep graphs in Python; BFS can exhaust memory on very wide graphs
-- Iterative DFS uses an explicit stack; BFS uses an explicit queue — the code looks almost identical with this single data structure swap
+- Iterative DFS uses an explicit stack; BFS uses an explicit queue - the code looks almost identical with this single data structure swap
 - For trees with no cycles, neither algorithm needs a visited set
 - Both algorithms can detect connected components by tracking which nodes have been visited across multiple traversals
 
@@ -44,11 +44,11 @@ created: 2026-05-18
 
 ## What It Is
 
-Think of two strategies for reading every book in a large library. The first strategy: read every book on shelf 1, then every book on shelf 2, then shelf 3, and so on — working outward from the entrance shelf by shelf. You encounter books in order of their physical proximity to the entrance. This is BFS. The second strategy: enter the library, go to the very back corner, read every book in that section, then come back to the next section over, and work your way systematically through the entire library by going deep into each section before moving to the next. This is DFS.
+Think of two strategies for reading every book in a large library. The first strategy: read every book on shelf 1, then every book on shelf 2, then shelf 3, and so on - working outward from the entrance shelf by shelf. You encounter books in order of their physical proximity to the entrance. This is BFS. The second strategy: enter the library, go to the very back corner, read every book in that section, then come back to the next section over, and work your way systematically through the entire library by going deep into each section before moving to the next. This is DFS.
 
-Both strategies eventually read every book in the library. Neither misses a book. The difference is the order in which books are encountered — and that order determines which strategy is better for different goals. If your goal is to find the closest book on a specific topic to the entrance, BFS is better: it encounters nearby books before distant ones. If your goal is to compile a complete list of all books by a particular author, DFS works fine: it covers everything eventually, and the author's books may be clustered in one deep section.
+Both strategies eventually read every book in the library. Neither misses a book. The difference is the order in which books are encountered - and that order determines which strategy is better for different goals. If your goal is to find the closest book on a specific topic to the entrance, BFS is better: it encounters nearby books before distant ones. If your goal is to compile a complete list of all books by a particular author, DFS works fine: it covers everything eventually, and the author's books may be clustered in one deep section.
 
-This analogy extends directly to graph problems. BFS is optimal when you want nodes in order of their distance from the source: finding the shortest path, discovering who is within two degrees of separation, or finding the minimum number of steps to reach a goal. DFS is optimal when you want to explore complete paths before backtracking: finding all possible routes through a maze, detecting whether a cycle exists in a network of dependencies, or generating all permutations of a set. The question to ask when choosing between them is not "which is faster?" — they are the same asymptotic complexity — but "what order do I need to process nodes in?"
+This analogy extends directly to graph problems. BFS is optimal when you want nodes in order of their distance from the source: finding the shortest path, discovering who is within two degrees of separation, or finding the minimum number of steps to reach a goal. DFS is optimal when you want to explore complete paths before backtracking: finding all possible routes through a maze, detecting whether a cycle exists in a network of dependencies, or generating all permutations of a set. The question to ask when choosing between them is not "which is faster?" - they are the same asymptotic complexity - but "what order do I need to process nodes in?"
 
 ---
 
@@ -196,7 +196,7 @@ def all_paths(graph, source, target):
 
 ## How It Connects
 
-Choosing between BFS and DFS is ultimately a question about which traversal order the problem requires. That order is determined by the data structure at the core of the algorithm. Understanding queues and stacks — and what FIFO vs LIFO ordering means — is the conceptual foundation that makes the BFS/DFS distinction intuitive rather than arbitrary.
+Choosing between BFS and DFS is ultimately a question about which traversal order the problem requires. That order is determined by the data structure at the core of the algorithm. Understanding queues and stacks - and what FIFO vs LIFO ordering means - is the conceptual foundation that makes the BFS/DFS distinction intuitive rather than arbitrary.
 
 [[queues|Queues]]
 [[stacks|Stacks]]
@@ -208,7 +208,7 @@ Choosing between BFS and DFS is ultimately a question about which traversal orde
 ## Common Misconceptions
 
 Misconception 1: "BFS is always better than DFS because it finds the shortest path."
-Reality: BFS guarantees the shortest path by edge count in unweighted graphs, which is its advantage in that specific use case. However, DFS has advantages in many other scenarios: it uses O(depth) memory rather than O(width) memory, it is better suited for cycle detection and topological sort, and it is the natural algorithm for backtracking problems. Neither algorithm is universally better — the right choice depends on what the problem requires.
+Reality: BFS guarantees the shortest path by edge count in unweighted graphs, which is its advantage in that specific use case. However, DFS has advantages in many other scenarios: it uses O(depth) memory rather than O(width) memory, it is better suited for cycle detection and topological sort, and it is the natural algorithm for backtracking problems. Neither algorithm is universally better - the right choice depends on what the problem requires.
 
 Misconception 2: "BFS uses less memory than DFS."
 Reality: BFS stores the entire frontier (all nodes at the current level) simultaneously, which can be O(V) for a wide graph. DFS stores only the current path from source to the current node, which is O(depth). For a balanced binary tree of 1,000,000 nodes, BFS would store up to 500,000 nodes at the last level, while DFS would store only about 20 nodes (the depth is log₂(1,000,000) ≈ 20). For a path graph (linear chain of nodes), DFS stores O(V) nodes while BFS stores only O(1). Memory usage depends entirely on graph shape.
@@ -235,7 +235,7 @@ Common question forms:
 - "Implement both BFS and DFS and compare their output on this graph."
 
 Answer frame:
-State the core decision rule: BFS for shortest path / closest nodes first / level-by-level processing; DFS for cycle detection / topological sort / backtracking / connectivity. Support with the data structure: queue (FIFO) for BFS, stack (LIFO) for DFS. Address memory: BFS width-bounded, DFS depth-bounded. For any specific problem: identify whether "order of discovery" matters and what order is needed, then select accordingly. Be explicit that both are O(V + E) time — speed is never the distinguishing factor, only traversal order and memory access pattern.
+State the core decision rule: BFS for shortest path / closest nodes first / level-by-level processing; DFS for cycle detection / topological sort / backtracking / connectivity. Support with the data structure: queue (FIFO) for BFS, stack (LIFO) for DFS. Address memory: BFS width-bounded, DFS depth-bounded. For any specific problem: identify whether "order of discovery" matters and what order is needed, then select accordingly. Be explicit that both are O(V + E) time - speed is never the distinguishing factor, only traversal order and memory access pattern.
 
 ---
 

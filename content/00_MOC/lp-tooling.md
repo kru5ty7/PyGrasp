@@ -1,16 +1,16 @@
 ---
-title: Learning Path — Tooling and DevOps
+title: Learning Path - Tooling and DevOps
 description: Python tooling, Docker, Kubernetes, expanded CI/CD (GitHub Actions, CD to EC2/Lambda/ECS), and observability.
 tags: [moc, learning-path, tooling, devops, layer-13]
 ---
 
-# Learning Path — Tooling and DevOps
+# Learning Path - Tooling and DevOps
 
-> The operational layer — packaging, containers, CI/CD, and observability. Can be read any time after Layer 1.
+> The operational layer - packaging, containers, CI/CD, and observability. Can be read any time after Layer 1.
 
 ---
 
-## Layer 13a — Python Tooling
+## Layer 13a - Python Tooling
 
 1. [[poetry|Poetry]]
 2. [[uv|uv]]
@@ -23,7 +23,7 @@ tags: [moc, learning-path, tooling, devops, layer-13]
 
 ---
 
-## Layer 13b — Containers
+## Layer 13b - Containers
 
 1. [[docker-basics|Docker Basics]]
 2. [[dockerfile-python|Writing a Dockerfile for Python]]
@@ -37,7 +37,7 @@ tags: [moc, learning-path, tooling, devops, layer-13]
 
 ---
 
-## Layer 13c — CI/CD
+## Layer 13c - CI/CD
 
 1. [[cicd-overview|CI/CD Overview]]
 2. [[github-actions-basics|GitHub Actions Basics]]
@@ -53,7 +53,7 @@ tags: [moc, learning-path, tooling, devops, layer-13]
 
 ---
 
-## Layer 13d — Observability
+## Layer 13d - Observability
 
 1. [[logging-production|Production Logging]]
 2. [[structured-logging|Structured Logging]]

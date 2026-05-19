@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Aggregate Functions (COUNT, SUM, AVG, MIN, MAX)
 
-> Aggregate functions reduce a set of rows to a single value — understanding their NULL behavior and the COUNT(*) vs COUNT(col) distinction prevents entire classes of silent data errors.
+> Aggregate functions reduce a set of rows to a single value - understanding their NULL behavior and the COUNT(*) vs COUNT(col) distinction prevents entire classes of silent data errors.
 
 ---
 
@@ -20,14 +20,14 @@ created: 2026-05-18
 **Core idea:**
 - Aggregate functions operate on a set of rows and return one value per group (or one value for the whole table if no GROUP BY is present)
 - COUNT(*) counts all rows including those with NULLs; COUNT(col) counts only non-NULL values in that column
-- SUM and AVG silently ignore NULL values — they do not treat NULL as zero
+- SUM and AVG silently ignore NULL values - they do not treat NULL as zero
 - MIN and MAX work on numbers, dates, and text; on text they use collation order
 - COUNT(DISTINCT col) counts unique non-NULL values
 - The FILTER clause (PostgreSQL) enables conditional aggregation without CASE expressions
 
 **Tricky points:**
 - COUNT(*) and COUNT(1) are equivalent; COUNT(col) is not
-- AVG(col) = SUM(col) / COUNT(col), not SUM(col) / COUNT(*) — NULLs shift the denominator
+- AVG(col) = SUM(col) / COUNT(col), not SUM(col) / COUNT(*) - NULLs shift the denominator
 - A query with an aggregate but no GROUP BY collapses the entire result set to exactly one row
 - MIN and MAX on text columns depend on the database collation, not alphabetical ASCII order
 - Applying DISTINCT inside an aggregate (SUM(DISTINCT col)) is valid but rarely what you want
@@ -36,11 +36,11 @@ created: 2026-05-18
 
 ## What It Is
 
-Think of aggregate functions the way you think of a spreadsheet's column formulas. When you have a spreadsheet with a thousand rows of sales data and you want a single cell showing the total revenue, you reach for SUM. When you need to know how many transactions occurred, you reach for COUNT. Aggregate functions in SQL perform exactly this kind of vertical collapse — they accept an entire column's worth of values (or a filtered subset of them) and produce one answer.
+Think of aggregate functions the way you think of a spreadsheet's column formulas. When you have a spreadsheet with a thousand rows of sales data and you want a single cell showing the total revenue, you reach for SUM. When you need to know how many transactions occurred, you reach for COUNT. Aggregate functions in SQL perform exactly this kind of vertical collapse - they accept an entire column's worth of values (or a filtered subset of them) and produce one answer.
 
 The five core aggregate functions divide neatly by what they measure. COUNT answers "how many?". SUM and AVG answer "how much in total?" and "what is the typical amount?". MIN and MAX answer "what are the extremes?". Despite their simplicity, each carries a specific rule about NULL values that changes the meaning of the result in ways that are easy to overlook.
 
-NULL in SQL means the absence of a known value. It is not zero, not an empty string, not false. Every aggregate function except COUNT(*) skips NULL values when computing its result. This is deliberate — including an unknown value in a SUM would make the total unknown, so SQL simply excludes it. The consequence is that SUM, AVG, MIN, and MAX each act on the non-NULL subset of the column, and COUNT(*) is the only way to count every row regardless of what is in any particular column.
+NULL in SQL means the absence of a known value. It is not zero, not an empty string, not false. Every aggregate function except COUNT(*) skips NULL values when computing its result. This is deliberate - including an unknown value in a SUM would make the total unknown, so SQL simply excludes it. The consequence is that SUM, AVG, MIN, and MAX each act on the non-NULL subset of the column, and COUNT(*) is the only way to count every row regardless of what is in any particular column.
 
 ---
 
@@ -84,7 +84,7 @@ SELECT
 FROM orders;
 ```
 
-MIN and MAX accept any orderable data type. On text columns the result depends on the collation in effect for the database or column. On date columns they return the earliest and latest dates. Neither function has special NULL behavior beyond the standard rule — NULLs are excluded from the comparison.
+MIN and MAX accept any orderable data type. On text columns the result depends on the collation in effect for the database or column. On date columns they return the earliest and latest dates. Neither function has special NULL behavior beyond the standard rule - NULLs are excluded from the comparison.
 
 ```sql
 -- MIN and MAX across types
@@ -100,7 +100,7 @@ FROM products;
 
 ## How It Connects
 
-Aggregate functions become far more powerful once paired with GROUP BY, which partitions rows into subgroups before the aggregate is applied. Without GROUP BY, every aggregate returns a single row for the whole table — which is sometimes exactly what is needed, but rarely the full picture.
+Aggregate functions become far more powerful once paired with GROUP BY, which partitions rows into subgroups before the aggregate is applied. Without GROUP BY, every aggregate returns a single row for the whole table - which is sometimes exactly what is needed, but rarely the full picture.
 
 Filtering on the results of aggregate functions cannot be done with WHERE; that is the job of the HAVING clause, which is evaluated after grouping and aggregation are complete.
 
@@ -117,8 +117,8 @@ Window functions extend the aggregation concept by computing aggregates across a
 Misconception 1: "COUNT(*) is slower than COUNT(1) or COUNT(col) because it reads every column."
 Reality: COUNT(*) does not instruct the engine to read every column's data. It is a syntactic form meaning "count rows." Modern query optimizers treat COUNT(*) and COUNT(1) identically, often using the smallest available index to count rows without reading column data at all.
 
-Misconception 2: "AVG handles NULLs the same way SUM does — both just skip them."
-Reality: Skipping NULLs in SUM is harmless because you are only summing known values. Skipping NULLs in AVG changes the denominator. If 3 out of 10 rows have a NULL score, AVG divides by 7, not 10. This produces a higher average than if the NULLs were treated as zero. Whether that is correct depends on the business definition — sometimes you want AVG(COALESCE(score, 0)) to treat NULLs as zero.
+Misconception 2: "AVG handles NULLs the same way SUM does - both just skip them."
+Reality: Skipping NULLs in SUM is harmless because you are only summing known values. Skipping NULLs in AVG changes the denominator. If 3 out of 10 rows have a NULL score, AVG divides by 7, not 10. This produces a higher average than if the NULLs were treated as zero. Whether that is correct depends on the business definition - sometimes you want AVG(COALESCE(score, 0)) to treat NULLs as zero.
 
 Misconception 3: "You can use an aggregate function directly in a WHERE clause."
 Reality: WHERE is evaluated before aggregation occurs, so the aggregate result does not yet exist at that stage. The database engine will raise an error. Aggregate filters must be placed in HAVING, or the query must be restructured using a subquery or CTE.
@@ -127,7 +127,7 @@ Reality: WHERE is evaluated before aggregation occurs, so the aggregate result d
 
 ## Why It Matters in Practice
 
-Aggregate functions are in virtually every production query that produces reports, dashboards, or summary data. Revenue totals, user counts, average session durations, min/max timestamps — all of these require aggregation. Getting COUNT(*) vs COUNT(col) wrong produces subtly incorrect row counts when any nullable column is involved, a mistake that often goes undetected until a data audit surfaces the discrepancy.
+Aggregate functions are in virtually every production query that produces reports, dashboards, or summary data. Revenue totals, user counts, average session durations, min/max timestamps - all of these require aggregation. Getting COUNT(*) vs COUNT(col) wrong produces subtly incorrect row counts when any nullable column is involved, a mistake that often goes undetected until a data audit surfaces the discrepancy.
 
 The NULL behavior of SUM and AVG is particularly consequential in financial systems. If a payment amount column has unexpected NULLs due to a data import error, SUM silently underreports total revenue and AVG reports a higher-than-true average. Defensive queries use COUNT(*) alongside COUNT(amount) to detect NULL presence, and COALESCE to apply a known default when appropriate.
 
@@ -173,7 +173,7 @@ Common question forms:
 - "Why can't I use an aggregate function in a WHERE clause?"
 
 Answer frame:
-Start with the fundamental rule: aggregate functions reduce multiple rows to one value and skip NULLs (except COUNT(*)). Explain that COUNT(*) counts rows unconditionally while COUNT(col) counts only non-NULL values in that column. For the WHERE question, explain the SQL logical execution order — WHERE runs before grouping, so the aggregate result does not exist yet; HAVING is the correct clause for post-aggregation filtering. Concrete examples with a small sample data set showing the difference when NULLs are present will distinguish a thorough answer from a shallow one.
+Start with the fundamental rule: aggregate functions reduce multiple rows to one value and skip NULLs (except COUNT(*)). Explain that COUNT(*) counts rows unconditionally while COUNT(col) counts only non-NULL values in that column. For the WHERE question, explain the SQL logical execution order - WHERE runs before grouping, so the aggregate result does not exist yet; HAVING is the correct clause for post-aggregation filtering. Concrete examples with a small sample data set showing the difference when NULLs are present will distinguish a thorough answer from a shallow one.
 
 ---
 

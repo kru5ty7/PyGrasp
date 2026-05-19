@@ -1,6 +1,6 @@
 ﻿---
 title: 33 - ACID Properties
-description: ACID is the four-property contract that defines what a reliable database transaction must guarantee — atomicity, consistency, isolation, and durability.
+description: ACID is the four-property contract that defines what a reliable database transaction must guarantee - atomicity, consistency, isolation, and durability.
 tags: [sql, layer-9, acid, transactions, consistency]
 status: draft
 difficulty: intermediate
@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # ACID Properties
 
-> ACID is the set of four guarantees — Atomicity, Consistency, Isolation, Durability — that define what a reliable database transaction must provide. Understanding each property tells you exactly what the database is protecting you from and what it cannot protect you from.
+> ACID is the set of four guarantees - Atomicity, Consistency, Isolation, Durability - that define what a reliable database transaction must provide. Understanding each property tells you exactly what the database is protecting you from and what it cannot protect you from.
 
 ---
 
@@ -26,20 +26,20 @@ created: 2026-05-18
 - Strict ACID requires coordination mechanisms (locks, fsync) that cost performance
 
 **Tricky points:**
-- Consistency in ACID refers to database-level constraint enforcement, not application-level correctness — the database cannot know if your business logic is wrong
+- Consistency in ACID refers to database-level constraint enforcement, not application-level correctness - the database cannot know if your business logic is wrong
 - Isolation is not binary; the standard defines four levels with different tradeoffs
-- Durability requires `fsync` to be enabled — disabling it for performance trades durability for speed
+- Durability requires `fsync` to be enabled - disabling it for performance trades durability for speed
 - The C in ACID is often said to be the weakest property because it is partially delegated to the application
 
 ---
 
 ## What It Is
 
-Think of ACID as the four promises a bank vault makes. The vault either takes all your cash in one sealed operation or none of it (atomicity). It only accepts deposits in valid denominations — counterfeit bills are rejected before the vault door closes (consistency). Your transaction with the vault is invisible to other customers until the door closes (isolation). Once the door closes and you have your receipt, the bank cannot later claim your deposit was lost (durability). These four promises together make the vault trustworthy. A database without ACID guarantees is a vault that might lose your money, accept invalid deposits, let other customers see your cash mid-transaction, or forget your deposit after a power outage.
+Think of ACID as the four promises a bank vault makes. The vault either takes all your cash in one sealed operation or none of it (atomicity). It only accepts deposits in valid denominations - counterfeit bills are rejected before the vault door closes (consistency). Your transaction with the vault is invisible to other customers until the door closes (isolation). Once the door closes and you have your receipt, the bank cannot later claim your deposit was lost (durability). These four promises together make the vault trustworthy. A database without ACID guarantees is a vault that might lose your money, accept invalid deposits, let other customers see your cash mid-transaction, or forget your deposit after a power outage.
 
-Atomicity is the most intuitive property. A transaction is indivisible — it either commits completely or rolls back completely. There is no such thing as a half-committed transaction. The bank transfer example demonstrates this: debiting one account and crediting another must be a single atomic operation. If the debit succeeds but the credit fails, atomicity ensures the debit is also undone. PostgreSQL implements atomicity through its transaction log: every change is recorded in the Write-Ahead Log before being applied, and a rollback replays the log in reverse to undo the changes.
+Atomicity is the most intuitive property. A transaction is indivisible - it either commits completely or rolls back completely. There is no such thing as a half-committed transaction. The bank transfer example demonstrates this: debiting one account and crediting another must be a single atomic operation. If the debit succeeds but the credit fails, atomicity ensures the debit is also undone. PostgreSQL implements atomicity through its transaction log: every change is recorded in the Write-Ahead Log before being applied, and a rollback replays the log in reverse to undo the changes.
 
-Consistency is subtler. It does not mean that the data is correct in a business sense — the database cannot know whether your business rules are sound. Consistency means that the database's own integrity constraints are enforced across the transaction boundary. Foreign keys, unique constraints, check constraints, and not-null constraints must all be satisfied at the moment of commit. A transaction that would leave the database in a state that violates any of these constraints is rejected entirely. Deferred constraints in PostgreSQL allow violations to exist mid-transaction as long as they are resolved by commit time.
+Consistency is subtler. It does not mean that the data is correct in a business sense - the database cannot know whether your business rules are sound. Consistency means that the database's own integrity constraints are enforced across the transaction boundary. Foreign keys, unique constraints, check constraints, and not-null constraints must all be satisfied at the moment of commit. A transaction that would leave the database in a state that violates any of these constraints is rejected entirely. Deferred constraints in PostgreSQL allow violations to exist mid-transaction as long as they are resolved by commit time.
 
 Isolation defines how concurrent transactions interact with each other. A fully isolated set of transactions behaves as if they ran one after another in serial order, even if they actually ran simultaneously. In practice, full serialization is expensive, so databases offer weaker isolation levels that permit specific anomalies in exchange for better concurrency. The default in PostgreSQL is READ COMMITTED, which prevents dirty reads but allows non-repeatable reads. PostgreSQL's implementation of isolation uses Multi-Version Concurrency Control (MVCC): rather than locking rows for reads, the database maintains multiple versions of each row so that readers see a consistent snapshot without blocking writers.
 
@@ -51,7 +51,7 @@ Durability means that once you receive a commit confirmation, that data is perma
 
 PostgreSQL's implementation of each ACID property is concrete and traceable. Understanding the mechanisms helps diagnose failures and tune configuration.
 
-Atomicity is implemented via the transaction log and rollback segments. Every write operation is first recorded in the Write-Ahead Log at `pg_wal`. If a transaction rolls back, PostgreSQL uses the information in the WAL to undo changes. The WAL also enables crash recovery: on startup after a crash, PostgreSQL replays WAL records to restore the database to the last consistent committed state. This is why `ROLLBACK` in PostgreSQL is fast for many workloads — the actual heap pages may not have been written yet, and the rollback simply marks the transaction as aborted in the transaction status table (`pg_clog` / `pg_xact`).
+Atomicity is implemented via the transaction log and rollback segments. Every write operation is first recorded in the Write-Ahead Log at `pg_wal`. If a transaction rolls back, PostgreSQL uses the information in the WAL to undo changes. The WAL also enables crash recovery: on startup after a crash, PostgreSQL replays WAL records to restore the database to the last consistent committed state. This is why `ROLLBACK` in PostgreSQL is fast for many workloads - the actual heap pages may not have been written yet, and the rollback simply marks the transaction as aborted in the transaction status table (`pg_clog` / `pg_xact`).
 
 ```sql
 -- Atomicity: both updates either commit together or both roll back
@@ -69,7 +69,7 @@ BEGIN;
 SET CONSTRAINTS fk_parent DEFERRED;
 INSERT INTO nodes (id, parent_id) VALUES (1, 2);  -- parent 2 does not exist yet
 INSERT INTO nodes (id, parent_id) VALUES (2, 1);  -- now parent 1 exists
-COMMIT;  -- constraint checked here — both nodes exist, so it passes
+COMMIT;  -- constraint checked here - both nodes exist, so it passes
 ```
 
 MVCC implements isolation without read locks. Every row has system columns `xmin` (the transaction ID that created it) and `xmax` (the transaction ID that deleted or updated it). When a transaction reads a row, it checks whether the row's `xmin` and `xmax` values indicate the row was committed and visible at the transaction's snapshot time. Writers create new row versions rather than modifying in place, so readers always see a consistent point-in-time snapshot without blocking.
@@ -89,7 +89,7 @@ Durability is controlled by the `synchronous_commit` configuration. The default 
 
 ## How It Connects
 
-ACID properties are the formal specification of what transactions guarantee. Every other concept in the concurrency section of SQL — isolation levels, locks, MVCC, savepoints — is either an implementation of one of the four properties or a tradeoff against them.
+ACID properties are the formal specification of what transactions guarantee. Every other concept in the concurrency section of SQL - isolation levels, locks, MVCC, savepoints - is either an implementation of one of the four properties or a tradeoff against them.
 
 [[transactions|Transactions]]
 
@@ -120,7 +120,7 @@ Reality: Durability depends on the `synchronous_commit` setting and, for replica
 
 ACID properties are the reason relational databases are the default choice for financial, healthcare, and order management systems. When money changes hands, when medical records are updated, or when inventory is decremented and an order is created simultaneously, the application needs the guarantee that partial writes cannot exist. ACID provides that guarantee at the database level so the application does not have to implement its own compensation logic.
 
-The tradeoffs matter as much as the properties themselves. Every ACID guarantee costs something: atomicity requires rollback logging, consistency requires constraint checking at commit, isolation requires either locks or MVCC overhead, and durability requires `fsync`. Systems that process millions of writes per second — analytics pipelines, event ingestion systems, caches — often relax one or more of these guarantees deliberately, trading reliability for throughput. Knowing what each property costs is what allows you to make that tradeoff consciously rather than accidentally.
+The tradeoffs matter as much as the properties themselves. Every ACID guarantee costs something: atomicity requires rollback logging, consistency requires constraint checking at commit, isolation requires either locks or MVCC overhead, and durability requires `fsync`. Systems that process millions of writes per second - analytics pipelines, event ingestion systems, caches - often relax one or more of these guarantees deliberately, trading reliability for throughput. Knowing what each property costs is what allows you to make that tradeoff consciously rather than accidentally.
 
 ---
 

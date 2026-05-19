@@ -1,6 +1,6 @@
 ﻿---
 title: 46 - CloudWatch
-description: CloudWatch is AWS's monitoring and observability service — it centralises logs, metrics, and alarms from all AWS services and your own application code into a single, queryable platform.
+description: CloudWatch is AWS's monitoring and observability service - it centralises logs, metrics, and alarms from all AWS services and your own application code into a single, queryable platform.
 tags: [aws, cloud, layer-11, cloudwatch, monitoring, logging]
 status: draft
 difficulty: intermediate
@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # CloudWatch
 
-> CloudWatch is the observability backbone of AWS — Lambda execution logs, custom application metrics, and infrastructure alarms all flow through it, making it the first place you look when something breaks in production.
+> CloudWatch is the observability backbone of AWS - Lambda execution logs, custom application metrics, and infrastructure alarms all flow through it, making it the first place you look when something breaks in production.
 
 ---
 
@@ -23,13 +23,13 @@ created: 2026-05-18
 - Custom metrics: `put_metric_data` API or Embedded Metrics Format (EMF) via structured log lines
 - Log Insights: SQL-like query language for searching and aggregating log data
 - Alarms: trigger SNS notifications, Auto Scaling actions, or Lambda functions when metrics breach thresholds
-- Costs money at scale — log ingestion, storage, metric API calls, and alarm evaluations all have per-unit pricing
+- Costs money at scale - log ingestion, storage, metric API calls, and alarm evaluations all have per-unit pricing
 
 **Tricky points:**
 - CloudWatch Logs are organised into log groups (per service/function) and log streams (per execution environment)
-- Lambda log groups are not deleted when you delete the function — clean them up explicitly
+- Lambda log groups are not deleted when you delete the function - clean them up explicitly
 - Default CloudWatch Logs retention: indefinite (and billed indefinitely) unless you set a retention policy
-- The Embedded Metrics Format (EMF) lets you emit custom metrics as structured log lines — no separate PutMetricData calls
+- The Embedded Metrics Format (EMF) lets you emit custom metrics as structured log lines - no separate PutMetricData calls
 - CloudWatch metric resolution: standard is 1-minute granularity; high-resolution metrics are 1-second but cost 3x more
 
 ---
@@ -40,13 +40,13 @@ CloudWatch is the nerve system of an AWS account. Think of it as a hospital's mo
 
 Logs in CloudWatch are organised hierarchically: log groups contain log streams. For Lambda, each function gets one log group (`/aws/lambda/function-name`), and each execution environment within that function gets its own log stream. When Lambda scales to 100 concurrent executions, there are 100 active log streams simultaneously writing to the same log group. CloudWatch Logs Insights queries run across all streams in a log group simultaneously, which makes it possible to find a specific error across all concurrent Lambda executions in a single query.
 
-Metrics are numeric time-series. AWS services emit dozens of standard metrics automatically — Lambda emits `Invocations`, `Errors`, `Duration`, `ConcurrentExecutions`, `Throttles`, and `ColdStartCount`. Your application code can emit custom metrics that represent business events: number of orders processed, fraud detection scores, cache hit rates. Custom metrics are the bridge between infrastructure health and business health. An alarm on `Errors > 5` tells you something is wrong; an alarm on `OrdersProcessed < 100 in the last 5 minutes during business hours` tells you revenue is at risk.
+Metrics are numeric time-series. AWS services emit dozens of standard metrics automatically - Lambda emits `Invocations`, `Errors`, `Duration`, `ConcurrentExecutions`, `Throttles`, and `ColdStartCount`. Your application code can emit custom metrics that represent business events: number of orders processed, fraud detection scores, cache hit rates. Custom metrics are the bridge between infrastructure health and business health. An alarm on `Errors > 5` tells you something is wrong; an alarm on `OrdersProcessed < 100 in the last 5 minutes during business hours` tells you revenue is at risk.
 
 ---
 
 ## How It Actually Works
 
-The Embedded Metrics Format (EMF) is the most efficient way to emit custom metrics from Lambda. Instead of making a separate `put_metric_data` API call (which adds latency to each invocation), you write a specially structured JSON log line that CloudWatch Logs automatically parses into a metric. The Lambda function's logging output doubles as metric reporting — one operation, two observable outputs.
+The Embedded Metrics Format (EMF) is the most efficient way to emit custom metrics from Lambda. Instead of making a separate `put_metric_data` API call (which adds latency to each invocation), you write a specially structured JSON log line that CloudWatch Logs automatically parses into a metric. The Lambda function's logging output doubles as metric reporting - one operation, two observable outputs.
 
 ```python
 import json
@@ -63,7 +63,7 @@ logger.setLevel(logging.INFO)
 def emit_metric(metric_name: str, value: float, unit: str = "Count", **dimensions):
     """
     Emit a custom CloudWatch metric as a structured EMF log line.
-    No additional API call — CloudWatch Logs parses this automatically.
+    No additional API call - CloudWatch Logs parses this automatically.
     """
     emf_record = {
         "_aws": {
@@ -181,18 +181,18 @@ aws logs put-retention-policy \
 
 CloudWatch Logs is the default output destination for Lambda functions and the primary debugging tool for production Lambda issues. The structured logging patterns described in the handlers note are designed specifically to be queryable with CloudWatch Logs Insights.
 
-[[lambda-handlers|Lambda Handlers]] — the structured JSON logging pattern used in Lambda handlers is what makes CloudWatch Logs Insights queries effective; the two notes are companion pieces.
+[[lambda-handlers|Lambda Handlers]] - the structured JSON logging pattern used in Lambda handlers is what makes CloudWatch Logs Insights queries effective; the two notes are companion pieces.
 
 Alarms in CloudWatch are commonly configured to trigger SNS notifications when metrics breach thresholds, completing the observability-to-alerting pipeline.
 
-[[sns|SNS (Simple Notification Service)]] — CloudWatch Alarms frequently use SNS as their notification action to fan out alerts to email, PagerDuty, Slack webhooks, or Lambda functions.
+[[sns|SNS (Simple Notification Service)]] - CloudWatch Alarms frequently use SNS as their notification action to fan out alerts to email, PagerDuty, Slack webhooks, or Lambda functions.
 
 ---
 
 ## Common Misconceptions
 
-Misconception 1: CloudWatch Logs retention is free — logs are stored indefinitely at no cost.
-Reality: CloudWatch Logs charges for both ingestion (per GB written) and storage (per GB per month stored). A high-traffic Lambda function that logs 1GB per day with indefinite retention accumulates storage costs continuously. Always set a retention policy on every log group — 30 days is sufficient for debugging; longer retention for compliance purposes belongs in S3 with log archival.
+Misconception 1: CloudWatch Logs retention is free - logs are stored indefinitely at no cost.
+Reality: CloudWatch Logs charges for both ingestion (per GB written) and storage (per GB per month stored). A high-traffic Lambda function that logs 1GB per day with indefinite retention accumulates storage costs continuously. Always set a retention policy on every log group - 30 days is sufficient for debugging; longer retention for compliance purposes belongs in S3 with log archival.
 
 Misconception 2: Using the Python `logging` module in Lambda automatically formats logs in a way that CloudWatch Logs Insights can query efficiently.
 Reality: The default Python logging format produces unstructured text (`2026-05-18 INFO handler.py:42 Processing request`). CloudWatch Logs Insights can search it, but structured JSON logs (`{"event": "request_received", "request_id": "abc", "method": "POST"}`) are far more efficient to query and filter because Logs Insights can use field-level indexing on JSON properties. Always use `json.dumps` to emit structured log lines in Lambda.
@@ -201,7 +201,7 @@ Reality: The default Python logging format produces unstructured text (`2026-05-
 
 ## Why It Matters in Practice
 
-CloudWatch is unavoidable for AWS workloads — Lambda writes to it automatically, and every AWS service emits metrics to it. The question is not whether to use CloudWatch but how deeply to invest in structured logging, custom metrics, and alarms. Teams that log structured JSON, emit custom business metrics alongside infrastructure metrics, and configure alarms before incidents occur can diagnose and resolve production issues in minutes rather than hours. Teams that log unstructured text and ignore CloudWatch until something breaks spend the critical first hour of an incident trying to understand what is happening.
+CloudWatch is unavoidable for AWS workloads - Lambda writes to it automatically, and every AWS service emits metrics to it. The question is not whether to use CloudWatch but how deeply to invest in structured logging, custom metrics, and alarms. Teams that log structured JSON, emit custom business metrics alongside infrastructure metrics, and configure alarms before incidents occur can diagnose and resolve production issues in minutes rather than hours. Teams that log unstructured text and ignore CloudWatch until something breaks spend the critical first hour of an incident trying to understand what is happening.
 
 ---
 

@@ -1,6 +1,6 @@
 ﻿---
 title: 34 - Lambda with Python
-description: Writing, configuring, and deploying Python Lambda functions — the handler contract, the runtime environment, and deployment mechanics.
+description: Writing, configuring, and deploying Python Lambda functions - the handler contract, the runtime environment, and deployment mechanics.
 tags: [aws, cloud, layer-11, lambda, python, serverless]
 status: draft
 difficulty: beginner
@@ -11,14 +11,14 @@ created: 2026-05-18
 
 # Lambda with Python
 
-> Python is the most popular Lambda runtime — understanding the handler signature, the event and context objects, and the deployment formats is the foundation of all Lambda work.
+> Python is the most popular Lambda runtime - understanding the handler signature, the event and context objects, and the deployment formats is the foundation of all Lambda work.
 
 ---
 
 ## Quick Reference
 
 **Core idea:**
-- Handler signature: `def handler(event, context)` — names are arbitrary but the convention is `handler`
+- Handler signature: `def handler(event, context)` - names are arbitrary but the convention is `handler`
 - `event`: a plain Python dict containing the trigger payload (structure varies by trigger source)
 - `context`: an object exposing function metadata and runtime state
 - Supported runtimes as of 2024: Python 3.11, 3.12 (3.10 in maintenance)
@@ -26,7 +26,7 @@ created: 2026-05-18
 - Return value for API Gateway triggers must be a dict with `statusCode` and `body`
 
 **Tricky points:**
-- `event['body']` from API Gateway arrives as a JSON string, not a dict — you must call `json.loads`
+- `event['body']` from API Gateway arrives as a JSON string, not a dict - you must call `json.loads`
 - The `context` object is not a dict; access its properties as attributes (`context.aws_request_id`)
 - `context.get_remaining_time_in_millis()` is a method call, not a property
 - Environment variables are strings; cast numeric values explicitly (`int(os.environ["BATCH_SIZE"])`)
@@ -36,11 +36,11 @@ created: 2026-05-18
 
 ## What It Is
 
-Think of the Lambda handler as a postal sorting facility worker who reports for duty every time a new parcel arrives. The parcel is the `event` — it contains everything the worker needs to know about the incoming request: where it came from, what it contains, and what should happen to it. The `context` object is the worker's employee badge — it carries identifying information about the shift (the request ID), how much time is left before the worker must clock out (the remaining execution time), and what the job site is called (the function name). The worker opens the parcel, does the work, and hands back a result. What "result" means depends on who sent the parcel.
+Think of the Lambda handler as a postal sorting facility worker who reports for duty every time a new parcel arrives. The parcel is the `event` - it contains everything the worker needs to know about the incoming request: where it came from, what it contains, and what should happen to it. The `context` object is the worker's employee badge - it carries identifying information about the shift (the request ID), how much time is left before the worker must clock out (the remaining execution time), and what the job site is called (the function name). The worker opens the parcel, does the work, and hands back a result. What "result" means depends on who sent the parcel.
 
 Python became the dominant Lambda language because of its rapid development cycle, strong data-processing ecosystem (boto3, requests, pandas, numpy), and relatively fast cold-start behaviour compared to JVM languages. AWS ships fully managed Python runtimes with pre-installed boto3 and botocore, so common AWS SDK calls work out of the box without bundling the SDK in your package.
 
-The deployment model is deliberately simple. You write your code, optionally bundle dependencies alongside it in a ZIP archive, and upload. The handler setting in the Lambda configuration tells AWS which file and function to call: `main.handler` means "call the `handler` function in `main.py`". For larger dependency trees — ML libraries, data processing stacks — the container image deployment path removes the 250MB ZIP limit entirely.
+The deployment model is deliberately simple. You write your code, optionally bundle dependencies alongside it in a ZIP archive, and upload. The handler setting in the Lambda configuration tells AWS which file and function to call: `main.handler` means "call the `handler` function in `main.py`". For larger dependency trees - ML libraries, data processing stacks - the container image deployment path removes the 250MB ZIP limit entirely.
 
 ---
 
@@ -71,7 +71,7 @@ def handler(event, context):
         "memory_limit_mb": context.memory_limit_in_mb,
     }))
 
-    # API Gateway sends the body as a JSON *string* — always parse it
+    # API Gateway sends the body as a JSON *string* - always parse it
     raw_body = event.get("body") or "{}"
     try:
         body = json.loads(raw_body)
@@ -139,11 +139,11 @@ aws lambda update-function-code \
 
 The handler described above is meaningless until it is connected to a trigger. API Gateway, S3 event notifications, and SQS event source mappings are the three most common ways Lambda receives events in Python applications.
 
-[[lambda-handlers|Lambda Handlers]] — goes deeper on the per-trigger event shapes, initialisation patterns, and structured logging conventions.
+[[lambda-handlers|Lambda Handlers]] - goes deeper on the per-trigger event shapes, initialisation patterns, and structured logging conventions.
 
 Every Lambda function runs under an IAM execution role that governs which AWS services it can call. A handler that calls `boto3.client("s3")` will fail with an `AccessDenied` error unless the execution role has the appropriate S3 permissions.
 
-[[lambda-iam|Lambda IAM Execution Role]] — explains the execution role model, resource-based policies, and how to scope permissions correctly.
+[[lambda-iam|Lambda IAM Execution Role]] - explains the execution role model, resource-based policies, and how to scope permissions correctly.
 
 ---
 
@@ -159,7 +159,7 @@ Reality: AWS-managed Python runtimes include boto3 and botocore, but the version
 
 ## Why It Matters in Practice
 
-Getting the handler contract right is the first step to writing any Lambda function. Misunderstanding how the `event` structure differs between trigger types is the single most common source of Lambda bugs — particularly the `event['body']` as string issue for API Gateway. A developer who internalises the event shape for each trigger type, uses structured logging from the start, and checks remaining time for long-running operations builds functions that are correct, observable, and resilient.
+Getting the handler contract right is the first step to writing any Lambda function. Misunderstanding how the `event` structure differs between trigger types is the single most common source of Lambda bugs - particularly the `event['body']` as string issue for API Gateway. A developer who internalises the event shape for each trigger type, uses structured logging from the start, and checks remaining time for long-running operations builds functions that are correct, observable, and resilient.
 
 ---
 

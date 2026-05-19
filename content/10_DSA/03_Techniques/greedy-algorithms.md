@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Greedy Algorithms
 
-> A greedy algorithm commits to the best-looking choice at each step without reconsidering — developers must know it because it produces provably optimal solutions for a specific class of problems and is the natural first candidate to evaluate before reaching for dynamic programming.
+> A greedy algorithm commits to the best-looking choice at each step without reconsidering - developers must know it because it produces provably optimal solutions for a specific class of problems and is the natural first candidate to evaluate before reaching for dynamic programming.
 
 ---
 
@@ -26,10 +26,10 @@ created: 2026-05-18
 - When greedy fails: coin change with non-standard denominations (US coins work; denominations like {1, 3, 4} do not)
 
 **Tricky points:**
-- The greedy choice property is problem-specific — it must be proved, not assumed
+- The greedy choice property is problem-specific - it must be proved, not assumed
 - Greedy never reconsiders past choices; one wrong choice can make the rest of the solution suboptimal
 - The distinction from DP: greedy never explores multiple options; DP explores all and picks the best
-- Activity selection greedy works by end time, not start time or duration — always verify which ordering is correct
+- Activity selection greedy works by end time, not start time or duration - always verify which ordering is correct
 - Greedy algorithms are typically O(n log n) due to an initial sort step, not O(n²) like naive DP
 
 ---
@@ -47,9 +47,9 @@ created: 2026-05-18
 
 ## What It Is
 
-Imagine you are hiking to the top of a mountain in dense fog with no map. At each fork in the path, your strategy is always to take whichever branch seems to go most directly uphill. This is the greedy strategy: always pick the option that looks best right now and never turn around. On a simple hill with a single peak, this strategy guarantees you reach the summit. On a landscape with multiple peaks and valleys, it can trap you on a local high point that is nowhere near the tallest summit. Whether the greedy strategy works depends entirely on the shape of the landscape — the structure of the problem.
+Imagine you are hiking to the top of a mountain in dense fog with no map. At each fork in the path, your strategy is always to take whichever branch seems to go most directly uphill. This is the greedy strategy: always pick the option that looks best right now and never turn around. On a simple hill with a single peak, this strategy guarantees you reach the summit. On a landscape with multiple peaks and valleys, it can trap you on a local high point that is nowhere near the tallest summit. Whether the greedy strategy works depends entirely on the shape of the landscape - the structure of the problem.
 
-Greedy algorithms formalise this intuition. At each decision point, a greedy algorithm applies a selection criterion — some measure of "best" in the local context — and commits irrevocably to that choice. The algorithm never backtracks to reconsider. For this to produce a globally optimal result, the problem must have the greedy choice property: there must always exist an optimal solution that includes the greedy choice. If you can prove that picking the locally best option never closes the door on the globally best outcome, the algorithm is correct. If you cannot, you need dynamic programming, which considers all options and finds the best combination.
+Greedy algorithms formalise this intuition. At each decision point, a greedy algorithm applies a selection criterion - some measure of "best" in the local context - and commits irrevocably to that choice. The algorithm never backtracks to reconsider. For this to produce a globally optimal result, the problem must have the greedy choice property: there must always exist an optimal solution that includes the greedy choice. If you can prove that picking the locally best option never closes the door on the globally best outcome, the algorithm is correct. If you cannot, you need dynamic programming, which considers all options and finds the best combination.
 
 The activity selection problem is the clearest illustration of why the greedy strategy works when it works. You have a set of meetings with start and end times, and a single room, and you want to schedule as many non-overlapping meetings as possible. Greedy says: always pick the meeting that ends earliest. Why? Because picking the earliest-ending meeting leaves the maximum remaining time for future meetings. Any other choice leaves the same or less remaining time. An exchange argument makes this rigorous: take any optimal solution that does not use the earliest-ending meeting, and swap that meeting out for the earliest-ending one. The resulting schedule is still valid and has the same or better coverage. Therefore the greedy choice is always safe.
 
@@ -68,7 +68,7 @@ from typing import List, Tuple
 
 # --- Activity Selection: greedily pick earliest-ending meetings ---
 def activity_selection(activities: List[Tuple[int, int]]) -> List[Tuple[int, int]]:
-    # Sort by end time — this is the greedy ordering
+    # Sort by end time - this is the greedy ordering
     sorted_acts = sorted(activities, key=lambda x: x[1])
     selected = []
     last_end = -1
@@ -81,7 +81,7 @@ def activity_selection(activities: List[Tuple[int, int]]) -> List[Tuple[int, int
     return selected
 
 
-# --- Coin Change (greedy — only correct for canonical coin systems) ---
+# --- Coin Change (greedy - only correct for canonical coin systems) ---
 def coin_change_greedy(coins: List[int], amount: int) -> List[int]:
     coins_sorted = sorted(coins, reverse=True)
     result = []
@@ -168,7 +168,7 @@ Reality: They solve different problems. Greedy is applicable only when the greed
 
 ## Why It Matters in Practice
 
-Greedy algorithms underlie some of the most important practical algorithms in computer science: Dijkstra's routing protocol, Huffman compression (used in JPEG, MP3, and HTTP/2), Prim's and Kruskal's minimum spanning tree algorithms (used in network design), and task scheduling. Their efficiency — typically O(n log n) — makes them suitable for real-time and large-scale applications where DP's polynomial but potentially quadratic complexity is too slow.
+Greedy algorithms underlie some of the most important practical algorithms in computer science: Dijkstra's routing protocol, Huffman compression (used in JPEG, MP3, and HTTP/2), Prim's and Kruskal's minimum spanning tree algorithms (used in network design), and task scheduling. Their efficiency - typically O(n log n) - makes them suitable for real-time and large-scale applications where DP's polynomial but potentially quadratic complexity is too slow.
 
 Recognising when a greedy approach is valid is a high-value skill. The questions to ask are: does always taking the locally best option leave all future options at least as good as any other choice would? If yes, greedy is provably correct. Developing this intuition through practice with canonical problems (activity selection, fractional knapsack, Huffman encoding) gives you the pattern-matching to apply it quickly in novel situations.
 
@@ -182,7 +182,7 @@ Common question forms:
 - "Select items to maximise value within a weight limit." (Note: integer knapsack requires DP, fractional is greedy.)
 
 Answer frame:
-State the greedy criterion (the selection rule). Justify why it is correct — ideally an exchange argument sketch. Sort by the criterion and iterate, tracking the relevant state. State time complexity as O(n log n) for the sort. Compare to the DP solution and explain why greedy suffices here.
+State the greedy criterion (the selection rule). Justify why it is correct - ideally an exchange argument sketch. Sort by the criterion and iterate, tracking the relevant state. State time complexity as O(n log n) for the sort. Compare to the DP solution and explain why greedy suffices here.
 
 ---
 

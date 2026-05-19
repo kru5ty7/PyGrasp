@@ -1,7 +1,7 @@
-# PyGrasp — Content Map (with sequencing)
+# PyGrasp - Content Map (with sequencing)
 
 > Proposed filenames with sequence prefixes so Quartz renders them in topic order.
-> Files are **not yet renamed** — this is the reference plan.
+> Files are **not yet renamed** - this is the reference plan.
 > Format: `NN-original-slug.md`
 
 ---

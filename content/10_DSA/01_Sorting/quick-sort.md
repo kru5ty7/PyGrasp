@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Quick Sort
 
-> Quick sort is the most commonly asked sorting algorithm in interviews and the fastest in-memory sort in practice — understanding its pivot strategies and worst-case behaviour is essential.
+> Quick sort is the most commonly asked sorting algorithm in interviews and the fastest in-memory sort in practice - understanding its pivot strategies and worst-case behaviour is essential.
 
 ---
 
@@ -26,7 +26,7 @@ created: 2026-05-18
 - Not stable in standard form
 
 **Tricky points:**
-- The worst case is O(n²) when the pivot is always the minimum or maximum — this happens with sorted/reverse-sorted input and a "first element" pivot strategy
+- The worst case is O(n²) when the pivot is always the minimum or maximum - this happens with sorted/reverse-sorted input and a "first element" pivot strategy
 - Random pivot selection reduces the probability of worst-case behaviour to negligibly small
 - Median-of-three (take the median of first, middle, last) is a common production optimisation
 - Quick sort is not stable: the partition step moves equal elements relative to the pivot without preserving order
@@ -47,9 +47,9 @@ created: 2026-05-18
 
 ## What It Is
 
-Imagine a librarian who needs to sort a shelf of books by publication year. Her strategy: pick one book at random, set it aside, and push all books published before it to the left end of the shelf and all books published after it to the right end. Now her chosen book has found its exact correct position — everything to its left belongs there, everything to its right belongs there. She then applies the same strategy independently to the left group and the right group, each time picking a book, partitioning around it, and recursing. Eventually every book has been the chosen partitioning book exactly once, and the shelf is sorted.
+Imagine a librarian who needs to sort a shelf of books by publication year. Her strategy: pick one book at random, set it aside, and push all books published before it to the left end of the shelf and all books published after it to the right end. Now her chosen book has found its exact correct position - everything to its left belongs there, everything to its right belongs there. She then applies the same strategy independently to the left group and the right group, each time picking a book, partitioning around it, and recursing. Eventually every book has been the chosen partitioning book exactly once, and the shelf is sorted.
 
-This partitioning insight is the heart of quick sort. Unlike merge sort, which splits blindly at the midpoint and does all the real work during the merge, quick sort does all its real work during the partition step. After partitioning, the pivot element is in its permanently correct position and never needs to move again. The two sub-problems are genuinely smaller and independent — they can be solved in any order. When the partitioning is balanced (pivot near the median), each level of recursion processes O(n) total elements and there are O(log n) levels, giving O(n log n) total work.
+This partitioning insight is the heart of quick sort. Unlike merge sort, which splits blindly at the midpoint and does all the real work during the merge, quick sort does all its real work during the partition step. After partitioning, the pivot element is in its permanently correct position and never needs to move again. The two sub-problems are genuinely smaller and independent - they can be solved in any order. When the partitioning is balanced (pivot near the median), each level of recursion processes O(n) total elements and there are O(log n) levels, giving O(n log n) total work.
 
 The weak point is pivot selection. If you always pick the first element as the pivot and the input happens to be sorted or reverse-sorted, every partition step places all elements on one side of the pivot, creating sub-problems of size n-1 and 0 instead of n/2 and n/2. The recursion depth becomes O(n) and the total work becomes O(n²). This is why pivot selection strategy matters enormously for quick sort's real-world performance. Random pivot selection ensures that worst-case input cannot be engineered by an adversary, and reduces the expected recursion depth to O(log n) regardless of input order.
 
@@ -103,7 +103,7 @@ def _partition(arr: list, lo: int, hi: int) -> int:
 data = [3, 6, 8, 10, 1, 2, 1]
 print(quick_sort(data))  # [1, 1, 2, 3, 6, 8, 10]
 
-# Worst-case input for naive first-element pivot — random pivot handles this fine
+# Worst-case input for naive first-element pivot - random pivot handles this fine
 sorted_data = list(range(1000))
 print(quick_sort(sorted_data)[:5])  # [0, 1, 2, 3, 4]
 ```
@@ -118,7 +118,7 @@ print(quick_sort(sorted_data)[:5])  # [0, 1, 2, 3, 4]
 
 ## How It Connects
 
-Quick sort is the most prominent application of the divide-and-conquer paradigm alongside merge sort. The difference between them reveals the two sides of the strategy: quick sort's work happens during the divide (partition) step; merge sort's work happens during the combine (merge) step. The partition operation also appears independently as "find the k-th smallest element" — Quickselect uses a single partition step without full recursion to solve this in O(n) average time.
+Quick sort is the most prominent application of the divide-and-conquer paradigm alongside merge sort. The difference between them reveals the two sides of the strategy: quick sort's work happens during the divide (partition) step; merge sort's work happens during the combine (merge) step. The partition operation also appears independently as "find the k-th smallest element" - Quickselect uses a single partition step without full recursion to solve this in O(n) average time.
 
 [[divide-and-conquer|Divide and Conquer]]
 [[merge-sort|Merge Sort]]
@@ -142,7 +142,7 @@ Reality: Pre-shuffling the input before sorting is one approach, but it requires
 
 ## Why It Matters in Practice
 
-Quick sort's in-place operation (O(log n) stack space, no auxiliary array) and excellent cache performance make it the practical choice for large-scale in-memory sorting when O(n log n) average complexity and O(1) extra memory are desired. Many systems languages and standard libraries use introsort — a hybrid that starts with quick sort and switches to heap sort when the recursion depth exceeds a threshold — to guarantee O(n log n) worst case while retaining quick sort's average-case speed.
+Quick sort's in-place operation (O(log n) stack space, no auxiliary array) and excellent cache performance make it the practical choice for large-scale in-memory sorting when O(n log n) average complexity and O(1) extra memory are desired. Many systems languages and standard libraries use introsort - a hybrid that starts with quick sort and switches to heap sort when the recursion depth exceeds a threshold - to guarantee O(n log n) worst case while retaining quick sort's average-case speed.
 
 In interviews, quick sort is the most commonly tested sorting algorithm because it requires understanding pivot selection, partitioning logic, recursion, and complexity analysis simultaneously. Being able to implement the Lomuto or Hoare partition cleanly, explain the worst-case scenario and its cause, and discuss the random pivot fix demonstrates fluency with all three.
 
@@ -157,7 +157,7 @@ Common question forms:
 - "What is Quickselect?"
 
 Answer frame:
-Describe the partition step as the key operation: pivot goes to its final position, all smaller elements left, all greater elements right. Implement Lomuto partition clearly. State average O(n log n) and worst-case O(n²), explain that worst case occurs when pivot is always the extreme element (sorted input with first-element pivot). Explain random pivot selection as the fix. For the comparison: quick sort is in-place and cache-friendly but not stable and has a quadratic worst case; merge sort is stable and guarantees O(n log n) but uses O(n) extra space. For Quickselect: instead of recursing on both partitions, recurse only on the partition containing the k-th element — O(n) average.
+Describe the partition step as the key operation: pivot goes to its final position, all smaller elements left, all greater elements right. Implement Lomuto partition clearly. State average O(n log n) and worst-case O(n²), explain that worst case occurs when pivot is always the extreme element (sorted input with first-element pivot). Explain random pivot selection as the fix. For the comparison: quick sort is in-place and cache-friendly but not stable and has a quadratic worst case; merge sort is stable and guarantees O(n log n) but uses O(n) extra space. For Quickselect: instead of recursing on both partitions, recurse only on the partition containing the k-th element - O(n) average.
 
 ---
 
@@ -166,5 +166,5 @@ Describe the partition step as the key operation: pivot goes to its final positi
 - [[merge-sort|Merge Sort]]
 - [[heap-sort|Heap Sort]]
 - [[divide-and-conquer|Divide and Conquer]]
-- [[python-sort-internals|Timsort — Python's Sorting Algorithm]]
+- [[python-sort-internals|Timsort - Python's Sorting Algorithm]]
 - [[sorting-comparison|Sorting Algorithm Comparison]]

@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Table Partitioning
 
-> Table partitioning is how databases handle tables that have grown beyond the point where a single physical file is efficient — it splits the storage while keeping the query interface unified.
+> Table partitioning is how databases handle tables that have grown beyond the point where a single physical file is efficient - it splits the storage while keeping the query interface unified.
 
 ---
 
@@ -19,30 +19,30 @@ created: 2026-05-18
 
 **Core idea:**
 - Partitioning divides a single logical table into multiple physical child tables (partitions)
-- Queries still use the parent table name — the planner routes to the right partitions automatically
+- Queries still use the parent table name - the planner routes to the right partitions automatically
 - Range partitioning (by date) is the most common pattern for time-series and event data
 - List partitioning separates rows by category or region values
-- Hash partitioning distributes rows evenly by hashing a column — useful for uniform distribution
+- Hash partitioning distributes rows evenly by hashing a column - useful for uniform distribution
 - Partition pruning: the planner skips partitions whose data cannot satisfy the query's WHERE clause
 
 **Tricky points:**
 - Indexes must be created on each partition individually (in PostgreSQL declarative partitioning, they can be created on the parent and propagate)
 - Foreign keys from other tables pointing at a partitioned table have limitations
 - The partition key must be included in any UNIQUE or PRIMARY KEY constraint
-- Data must be inserted into the correct partition — rows that do not match any partition are rejected (unless a DEFAULT partition exists)
+- Data must be inserted into the correct partition - rows that do not match any partition are rejected (unless a DEFAULT partition exists)
 - Dropping a partition is O(1) and instant; DELETE of the same rows is O(n) and slow
 
 ---
 
 ## What It Is
 
-Imagine a very large filing cabinet with thousands of folders, all in a single drawer. Finding anything requires searching the entire drawer. Now imagine replacing that one drawer with twelve drawers, one per month. Finding January invoices means opening only the January drawer — the other eleven do not need to be touched. Adding March's invoices goes directly into the March drawer. When you are done with last year, you pull out the entire drawer labeled "last year" and throw it away in one motion, rather than removing every folder one by one. That is partitioning: the same logical set of records, physically organized into separate storage units that can be accessed, maintained, and discarded independently.
+Imagine a very large filing cabinet with thousands of folders, all in a single drawer. Finding anything requires searching the entire drawer. Now imagine replacing that one drawer with twelve drawers, one per month. Finding January invoices means opening only the January drawer - the other eleven do not need to be touched. Adding March's invoices goes directly into the March drawer. When you are done with last year, you pull out the entire drawer labeled "last year" and throw it away in one motion, rather than removing every folder one by one. That is partitioning: the same logical set of records, physically organized into separate storage units that can be accessed, maintained, and discarded independently.
 
 A partitioned table in PostgreSQL looks, to the application, exactly like a normal table. You INSERT into it, SELECT from it, and JOIN against it using the same table name. The difference is entirely internal: the database engine routes each row to the appropriate physical partition based on the partition key and the partitioning strategy. The application does not need to know the partitions exist. The benefit appears in query planning and data management operations.
 
 Partition pruning is the core performance benefit. When you query SELECT * FROM events WHERE created_at >= '2026-04-01' AND created_at < '2026-05-01', the query planner knows that this date range can only be satisfied by the April partition. It skips every other partition entirely, producing the equivalent of querying a small table rather than the full multi-year table. This works because the planner evaluates the WHERE clause against the partition boundaries before executing the query. Without partitioning, a query like this requires a sequential scan of the entire table, even if it only needs 1% of the rows and there is no useful index.
 
-Data lifecycle management is the other major benefit. Time-series data accumulates without bound — log tables, event tables, audit tables. Without partitioning, deleting old data requires DELETE statements that acquire row locks, generate write-ahead log volume, and slow down the table. With monthly partitions, dropping last year's data is DROP TABLE events_2025_01 (or equivalently, ALTER TABLE events DETACH PARTITION events_2025_01 followed by DROP TABLE). This is a metadata operation: O(1), instant, no table scan, no row locks on the live partitions.
+Data lifecycle management is the other major benefit. Time-series data accumulates without bound - log tables, event tables, audit tables. Without partitioning, deleting old data requires DELETE statements that acquire row locks, generate write-ahead log volume, and slow down the table. With monthly partitions, dropping last year's data is DROP TABLE events_2025_01 (or equivalently, ALTER TABLE events DETACH PARTITION events_2025_01 followed by DROP TABLE). This is a metadata operation: O(1), instant, no table scan, no row locks on the live partitions.
 
 ---
 
@@ -74,7 +74,7 @@ CREATE TABLE events_default
     PARTITION OF events
     DEFAULT;
 
--- Indexes can be created on the parent — they propagate to all partitions
+-- Indexes can be created on the parent - they propagate to all partitions
 CREATE INDEX ON events (user_id);
 CREATE INDEX ON events (created_at);
 ```
@@ -143,10 +143,10 @@ Query optimization through EXPLAIN ANALYZE shows exactly which partitions were s
 ## Common Misconceptions
 
 Misconception 1: "Partitioning is a substitute for indexes."
-Reality: Partitioning and indexing solve different problems. Partition pruning eliminates entire partitions from consideration when the WHERE clause includes the partition key. Indexes speed up lookups within a partition. A query on a partitioned table that does not filter on the partition key will scan every partition — potentially slower than a single-table index scan on an unpartitioned table. Partitioning does not replace indexes; it complements them.
+Reality: Partitioning and indexing solve different problems. Partition pruning eliminates entire partitions from consideration when the WHERE clause includes the partition key. Indexes speed up lookups within a partition. A query on a partitioned table that does not filter on the partition key will scan every partition - potentially slower than a single-table index scan on an unpartitioned table. Partitioning does not replace indexes; it complements them.
 
 Misconception 2: "Partitioning automatically makes all queries faster."
-Reality: Partition pruning only helps when the query's WHERE clause filters on the partition key with a constant or parameter that the planner can evaluate at plan time. A query like WHERE user_id = 42 on a table partitioned by created_at provides no pruning benefit — the planner must scan all partitions. Partitioning improves performance primarily for queries and operations that align with the partition key.
+Reality: Partition pruning only helps when the query's WHERE clause filters on the partition key with a constant or parameter that the planner can evaluate at plan time. A query like WHERE user_id = 42 on a table partitioned by created_at provides no pruning benefit - the planner must scan all partitions. Partitioning improves performance primarily for queries and operations that align with the partition key.
 
 Misconception 3: "You can add a DEFAULT partition later without consequences."
 Reality: Adding a DEFAULT partition to an existing partitioned table that already has data requires a full table scan to route existing rows into the correct new partition. On large tables this is a slow operation. The DEFAULT partition should be planned from the beginning if there is any chance of out-of-range values appearing.
@@ -155,7 +155,7 @@ Reality: Adding a DEFAULT partition to an existing partitioned table that alread
 
 ## Why It Matters in Practice
 
-Event tables, audit logs, time-series metrics, and activity feeds are the canonical partitioning candidates. These tables grow without bound because rows are never updated or deleted in normal operation — they only accumulate. Without partitioning, a two-year-old events table can reach hundreds of millions of rows, at which point full-table queries become untenable and even index scans slow down due to index bloat and cache pressure. Partitioning by month or week keeps each partition small enough to fit in memory, keeps indexes small and cache-friendly, and enables instant data expiration.
+Event tables, audit logs, time-series metrics, and activity feeds are the canonical partitioning candidates. These tables grow without bound because rows are never updated or deleted in normal operation - they only accumulate. Without partitioning, a two-year-old events table can reach hundreds of millions of rows, at which point full-table queries become untenable and even index scans slow down due to index bloat and cache pressure. Partitioning by month or week keeps each partition small enough to fit in memory, keeps indexes small and cache-friendly, and enables instant data expiration.
 
 Large SaaS applications also use range or hash partitioning to distribute write load. A single hot table receiving millions of inserts per hour can become a write bottleneck. Hash partitioning across multiple physical partitions (especially if those partitions are placed on different tablespaces on different disks) distributes the write I/O, reducing contention.
 
@@ -187,7 +187,7 @@ Common question forms:
 - "What are the limitations of partitioning?"
 
 Answer frame:
-Start with the concept — physical subdivision of a single logical table. Explain partition pruning as the query performance mechanism: the planner skips partitions whose bounds cannot satisfy the WHERE clause. Give the date/time partitioning use case as the canonical example. Then explain the data lifecycle benefit: DROP TABLE on a partition vs DELETE on rows. Address the partition key restriction for unique constraints and the foreign key limitations. Show that you understand partitioning is a complement to indexes, not a replacement.
+Start with the concept - physical subdivision of a single logical table. Explain partition pruning as the query performance mechanism: the planner skips partitions whose bounds cannot satisfy the WHERE clause. Give the date/time partitioning use case as the canonical example. Then explain the data lifecycle benefit: DROP TABLE on a partition vs DELETE on rows. Address the partition key restriction for unique constraints and the foreign key limitations. Show that you understand partitioning is a complement to indexes, not a replacement.
 
 ---
 

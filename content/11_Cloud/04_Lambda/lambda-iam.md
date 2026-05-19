@@ -1,6 +1,6 @@
 ﻿---
 title: 38 - Lambda IAM Execution Role
-description: Every Lambda function assumes an IAM execution role at runtime — this role is the sole source of permissions for all AWS API calls the function makes.
+description: Every Lambda function assumes an IAM execution role at runtime - this role is the sole source of permissions for all AWS API calls the function makes.
 tags: [aws, cloud, layer-11, lambda, iam, execution-role]
 status: draft
 difficulty: intermediate
@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Lambda IAM Execution Role
 
-> The execution role is the identity Lambda assumes when your function runs — it is the only lever that controls what AWS services your code can call, and scoping it correctly is non-negotiable in production.
+> The execution role is the identity Lambda assumes when your function runs - it is the only lever that controls what AWS services your code can call, and scoping it correctly is non-negotiable in production.
 
 ---
 
@@ -26,9 +26,9 @@ created: 2026-05-18
 - Least privilege: scope permissions to specific resource ARNs, not `*`
 
 **Tricky points:**
-- The execution role governs what the function can do; the resource-based policy on the function governs who can trigger it — these are two different IAM constructs
+- The execution role governs what the function can do; the resource-based policy on the function governs who can trigger it - these are two different IAM constructs
 - VPC-attached Lambda functions need `AWSLambdaVPCAccessExecutionRole` (ENI creation permissions) or the equivalent inline policy
-- Permission boundary on the execution role limits the maximum permissions — useful in multi-team accounts
+- Permission boundary on the execution role limits the maximum permissions - useful in multi-team accounts
 - IAM policy changes propagate within seconds but the function's existing warm execution environments may hold a cached credential session; restart the function to force a re-assumption
 - `AccessDenied` errors in Lambda logs almost always trace to a missing execution role permission, not a bug in the function code
 
@@ -36,9 +36,9 @@ created: 2026-05-18
 
 ## What It Is
 
-The IAM execution role is like a building access badge issued to a contractor. When the contractor (your Lambda function) is called in to do a job, they clip on their badge (assume the execution role) and the badge determines which doors they can open: the S3 room, the DynamoDB room, the Secrets Manager safe. The badge does not belong to the contractor — it belongs to the role, and the role is issued by the organisation (your AWS account). When the contractor leaves (the function exits), they hand the badge back. Every time they return (each invocation), they get a fresh, time-limited badge from IAM's Security Token Service.
+The IAM execution role is like a building access badge issued to a contractor. When the contractor (your Lambda function) is called in to do a job, they clip on their badge (assume the execution role) and the badge determines which doors they can open: the S3 room, the DynamoDB room, the Secrets Manager safe. The badge does not belong to the contractor - it belongs to the role, and the role is issued by the organisation (your AWS account). When the contractor leaves (the function exits), they hand the badge back. Every time they return (each invocation), they get a fresh, time-limited badge from IAM's Security Token Service.
 
-This is materially different from how a long-running server gets its credentials. An EC2 instance assumes an instance profile once and uses its credentials for all operations. A Lambda function assumes its execution role on every cold start and gets a fresh set of temporary credentials (access key, secret key, session token) valid for the life of the execution environment. Those credentials are made available to your Python code automatically — when you call `boto3.client("s3")` without specifying credentials explicitly, boto3 reads them from the environment variables Lambda injects (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`). You never manage key rotation; IAM rotates the credentials automatically as part of the STS AssumeRole mechanism.
+This is materially different from how a long-running server gets its credentials. An EC2 instance assumes an instance profile once and uses its credentials for all operations. A Lambda function assumes its execution role on every cold start and gets a fresh set of temporary credentials (access key, secret key, session token) valid for the life of the execution environment. Those credentials are made available to your Python code automatically - when you call `boto3.client("s3")` without specifying credentials explicitly, boto3 reads them from the environment variables Lambda injects (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, `AWS_SESSION_TOKEN`). You never manage key rotation; IAM rotates the credentials automatically as part of the STS AssumeRole mechanism.
 
 The execution role and the resource-based policy on the function itself are two separate IAM planes that beginners routinely conflate. The execution role answers the question "what can my function do?" The resource-based policy on the function answers "who is allowed to invoke my function?" S3 triggering a Lambda function requires a resource-based permission on the Lambda function allowing `s3.amazonaws.com` to call `lambda:InvokeFunction`. It does not require any change to the execution role. Conversely, if your function needs to read from an S3 bucket, that permission belongs in the execution role, not in the resource-based policy.
 
@@ -133,20 +133,20 @@ aws iam list-role-policies --role-name my-lambda-exec-role  # inline policies
 
 ## How It Connects
 
-The execution role is the Lambda-specific application of the broader IAM role model. The underlying mechanics — trust policies, permission policies, STS AssumeRole, temporary credentials — are the same across all AWS services.
+The execution role is the Lambda-specific application of the broader IAM role model. The underlying mechanics - trust policies, permission policies, STS AssumeRole, temporary credentials - are the same across all AWS services.
 
-[[iam-roles|IAM Roles]] — the foundational note on how roles, trust policies, and permission policies work together in AWS; the execution role is an instance of this pattern.
+[[iam-roles|IAM Roles]] - the foundational note on how roles, trust policies, and permission policies work together in AWS; the execution role is an instance of this pattern.
 
 Applying least privilege to Lambda execution roles means knowing exactly which S3 buckets, DynamoDB tables, and queue ARNs the function should access. The least-privilege principle note covers the patterns for scoping policies correctly.
 
-[[iam-least-privilege|IAM Least Privilege]] — covers condition keys, resource ARN scoping, and the IAM Access Analyzer tool for identifying over-permissive policies.
+[[iam-least-privilege|IAM Least Privilege]] - covers condition keys, resource ARN scoping, and the IAM Access Analyzer tool for identifying over-permissive policies.
 
 ---
 
 ## Common Misconceptions
 
 Misconception 1: You can give a Lambda function broad permissions temporarily for debugging, then tighten them later.
-Reality: "Later" rarely arrives. Over-permissive execution roles that start as "temporary" tend to persist. An execution role with `s3:*` on `*` means a bug in the function — or a compromised execution environment — can read, overwrite, or delete any object in any bucket in the account. Applying least privilege from the first deploy is far less costly than remediating an incident caused by an over-permissive role.
+Reality: "Later" rarely arrives. Over-permissive execution roles that start as "temporary" tend to persist. An execution role with `s3:*` on `*` means a bug in the function - or a compromised execution environment - can read, overwrite, or delete any object in any bucket in the account. Applying least privilege from the first deploy is far less costly than remediating an incident caused by an over-permissive role.
 
 Misconception 2: Adding a permission to the Lambda function's resource-based policy gives the function access to other services.
 Reality: The resource-based policy on a Lambda function controls who can invoke the function, not what the function can do. To give the function the ability to read from DynamoDB, add a statement to the execution role's permission policy. The resource-based policy is only relevant when you want an external service (S3, API Gateway, EventBridge) to be allowed to call `lambda:InvokeFunction`.
@@ -155,7 +155,7 @@ Reality: The resource-based policy on a Lambda function controls who can invoke 
 
 ## Why It Matters in Production
 
-Execution role misconfiguration is the most common source of `AccessDenied` errors in Lambda. A function that cannot write to CloudWatch Logs (missing the basic execution policy) produces silent failures with no debugging trail. A function granted `s3:*` on `*` violates the principle of least privilege and creates unnecessary blast radius if the function is ever compromised. Getting the execution role right — minimal permissions, resource-scoped statements, CloudWatch Logs guaranteed — is foundational to both functional and secure Lambda deployments.
+Execution role misconfiguration is the most common source of `AccessDenied` errors in Lambda. A function that cannot write to CloudWatch Logs (missing the basic execution policy) produces silent failures with no debugging trail. A function granted `s3:*` on `*` violates the principle of least privilege and creates unnecessary blast radius if the function is ever compromised. Getting the execution role right - minimal permissions, resource-scoped statements, CloudWatch Logs guaranteed - is foundational to both functional and secure Lambda deployments.
 
 ---
 
@@ -165,7 +165,7 @@ Execution role misconfiguration is the most common source of `AccessDenied` erro
 
 ```bash
 # Mistake: attaching a custom policy that includes S3 and DynamoDB but forgetting CloudWatch Logs
-# Result: function executes but writes no logs — debugging is impossible
+# Result: function executes but writes no logs - debugging is impossible
 
 # Fix: always attach AWSLambdaBasicExecutionRole or include these permissions
 {

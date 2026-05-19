@@ -1,6 +1,6 @@
 ﻿---
 title: 35 - Lambda Handlers
-description: The Lambda handler is the entry point for every invocation — its structure, initialisation patterns, and event-specific shapes determine correctness and performance.
+description: The Lambda handler is the entry point for every invocation - its structure, initialisation patterns, and event-specific shapes determine correctness and performance.
 tags: [aws, cloud, layer-11, lambda, handlers, events]
 status: draft
 difficulty: intermediate
@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Lambda Handlers
 
-> The handler is the contract between your code and the Lambda runtime — mastering its initialisation patterns, per-trigger event shapes, and error semantics separates resilient functions from brittle ones.
+> The handler is the contract between your code and the Lambda runtime - mastering its initialisation patterns, per-trigger event shapes, and error semantics separates resilient functions from brittle ones.
 
 ---
 
@@ -19,28 +19,28 @@ created: 2026-05-18
 
 **Core idea:**
 - Handler config format: `filename.function_name` (e.g. `main.handler`)
-- Code outside the handler function runs once per execution environment — use it for connection pooling and heavy initialisation
+- Code outside the handler function runs once per execution environment - use it for connection pooling and heavy initialisation
 - API Gateway handler must return `{'statusCode': int, 'body': str}`
 - S3 handler: iterate `event['Records']`, each record has `s3.bucket.name` and `s3.object.key`
 - SQS handler: iterate `event['Records']`, each record has `body` (string) and `messageId`
 - EventBridge (scheduled) handler: event has `source`, `detail-type`, and `detail` but no business payload
 
 **Tricky points:**
-- Unhandled exceptions cause async invocations to retry — idempotency is essential for S3 and SQS triggers
+- Unhandled exceptions cause async invocations to retry - idempotency is essential for S3 and SQS triggers
 - SQS partial batch failure: if one record in a batch throws, the entire batch retries unless you use `ReportBatchItemFailures`
-- S3 object keys are URL-encoded — decode them with `urllib.parse.unquote_plus`
-- Initialisation code runs once, but the execution environment can be recycled with a new function version — do not assume it is permanent
-- Returning `None` from a synchronously invoked handler (API Gateway) results in the caller receiving an empty 200 — almost never what you want
+- S3 object keys are URL-encoded - decode them with `urllib.parse.unquote_plus`
+- Initialisation code runs once, but the execution environment can be recycled with a new function version - do not assume it is permanent
+- Returning `None` from a synchronously invoked handler (API Gateway) results in the caller receiving an empty 200 - almost never what you want
 
 ---
 
 ## What It Is
 
-The Lambda handler is like the `main()` function in a traditional application, but it is called by an external orchestrator — the Lambda runtime — rather than by the operating system. The runtime starts your process, imports your module (running all module-level code in the process), and then calls your handler function once per invocation, passing the trigger payload as `event` and runtime metadata as `context`. The runtime owns the process lifecycle; you own the handler logic.
+The Lambda handler is like the `main()` function in a traditional application, but it is called by an external orchestrator - the Lambda runtime - rather than by the operating system. The runtime starts your process, imports your module (running all module-level code in the process), and then calls your handler function once per invocation, passing the trigger payload as `event` and runtime metadata as `context`. The runtime owns the process lifecycle; you own the handler logic.
 
-The module-level execution boundary is one of the most consequential design decisions in Lambda. Any code that sits outside the handler function — creating database connections, instantiating SDK clients, loading ML models — runs exactly once when the execution environment is first created (a cold start), and then those objects persist across all warm invocations handled by that environment. This is deliberate. Opening a database connection on every invocation would be catastrophically expensive for a high-traffic function. But it also means that stale state — an expired credential, a closed connection, a corrupted in-memory cache — can silently affect every subsequent warm invocation until the environment is recycled.
+The module-level execution boundary is one of the most consequential design decisions in Lambda. Any code that sits outside the handler function - creating database connections, instantiating SDK clients, loading ML models - runs exactly once when the execution environment is first created (a cold start), and then those objects persist across all warm invocations handled by that environment. This is deliberate. Opening a database connection on every invocation would be catastrophically expensive for a high-traffic function. But it also means that stale state - an expired credential, a closed connection, a corrupted in-memory cache - can silently affect every subsequent warm invocation until the environment is recycled.
 
-The event schema is not universal. AWS defines a specific JSON structure for each trigger type. Treating a Lambda handler as a generic message receiver without knowing which trigger calls it is a frequent source of production bugs. A developer who has internalised the event shape for API Gateway proxy integration, S3 event notifications, and SQS polling — the three most common Python Lambda trigger types — can implement correct handlers without consulting the documentation for each deploy.
+The event schema is not universal. AWS defines a specific JSON structure for each trigger type. Treating a Lambda handler as a generic message receiver without knowing which trigger calls it is a frequent source of production bugs. A developer who has internalised the event shape for API Gateway proxy integration, S3 event notifications, and SQS polling - the three most common Python Lambda trigger types - can implement correct handlers without consulting the documentation for each deploy.
 
 ---
 
@@ -104,7 +104,7 @@ def s3_handler(event, context):
     """Handle S3 object creation events."""
     for record in event["Records"]:
         bucket = record["s3"]["bucket"]["name"]
-        # S3 keys are URL-encoded — decode before use
+        # S3 keys are URL-encoded - decode before use
         key = urllib.parse.unquote_plus(record["s3"]["object"]["key"])
         logger.info(json.dumps({"bucket": bucket, "key": key}))
 
@@ -134,7 +134,7 @@ def sqs_handler(event, context):
             }))
             failures.append({"itemIdentifier": message_id})
 
-    # Return only the failed item identifiers — successful ones are deleted automatically
+    # Return only the failed item identifiers - successful ones are deleted automatically
     return {"batchItemFailures": failures}
 
 
@@ -176,27 +176,27 @@ aws lambda update-event-source-mapping \
 
 The handler patterns described here depend on the trigger type. API Gateway, S3, and SQS are the three most common trigger sources for Python Lambda functions, and each has its own invocation semantics.
 
-[[lambda-triggers|Lambda Triggers (S3, API Gateway, SQS)]] — covers the event source mappings, invocation models, and trigger-specific configuration options that determine how and when your handler is called.
+[[lambda-triggers|Lambda Triggers (S3, API Gateway, SQS)]] - covers the event source mappings, invocation models, and trigger-specific configuration options that determine how and when your handler is called.
 
 Structured logging inside handlers is observable only because CloudWatch Logs captures the function's stdout. Understanding how to query those logs with CloudWatch Logs Insights completes the observability picture.
 
-[[cloudwatch|CloudWatch]] — explains log groups, log streams, and the Logs Insights query language for searching Lambda execution logs.
+[[cloudwatch|CloudWatch]] - explains log groups, log streams, and the Logs Insights query language for searching Lambda execution logs.
 
 ---
 
 ## Common Misconceptions
 
 Misconception 1: An unhandled exception in a Lambda handler means the request fails once and is done.
-Reality: For asynchronous invocations (S3, SNS, EventBridge), Lambda retries the invocation up to two additional times on failure. For SQS event source mappings, a failure causes the entire batch to return to the queue and be retried up to the queue's maximum receive count, then routed to the DLQ. Handlers for async triggers must be idempotent — processing the same event twice must produce the same outcome without side effects.
+Reality: For asynchronous invocations (S3, SNS, EventBridge), Lambda retries the invocation up to two additional times on failure. For SQS event source mappings, a failure causes the entire batch to return to the queue and be retried up to the queue's maximum receive count, then routed to the DLQ. Handlers for async triggers must be idempotent - processing the same event twice must produce the same outcome without side effects.
 
 Misconception 2: Module-level code is safe to use for credentials loaded at startup.
-Reality: Short-lived credentials — such as those obtained by calling STS AssumeRole or by reading from Secrets Manager — expire. If the execution environment lives for hours and the credentials expire after one hour, subsequent warm invocations will fail with authentication errors. Either use the Lambda execution role's automatically-rotated credentials (via boto3's default credential chain), or refresh credentials inside the handler when they are near expiry.
+Reality: Short-lived credentials - such as those obtained by calling STS AssumeRole or by reading from Secrets Manager - expire. If the execution environment lives for hours and the credentials expire after one hour, subsequent warm invocations will fail with authentication errors. Either use the Lambda execution role's automatically-rotated credentials (via boto3's default credential chain), or refresh credentials inside the handler when they are near expiry.
 
 ---
 
 ## Why It Matters in Practice
 
-Handler structure directly determines the operational behaviour of a Lambda function under load. A handler that places expensive initialisation inside the handler body re-runs that cost on every single invocation. A handler that fails on one SQS record and raises an exception causes every message in the batch to be retried — including the ones that succeeded — leading to duplicate processing and potential data corruption. Getting the initialisation pattern and the partial batch failure pattern correct from the start avoids an entire class of production incidents.
+Handler structure directly determines the operational behaviour of a Lambda function under load. A handler that places expensive initialisation inside the handler body re-runs that cost on every single invocation. A handler that fails on one SQS record and raises an exception causes every message in the batch to be retried - including the ones that succeeded - leading to duplicate processing and potential data corruption. Getting the initialisation pattern and the partial batch failure pattern correct from the start avoids an entire class of production incidents.
 
 ---
 

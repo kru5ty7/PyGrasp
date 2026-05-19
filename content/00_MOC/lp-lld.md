@@ -1,16 +1,16 @@
 ---
-title: Learning Path — Low Level Design (LLD)
+title: Learning Path - Low Level Design (LLD)
 description: OOP, SOLID principles, design patterns, concurrency safety, API design at the code level, and LLD case studies.
 tags: [moc, learning-path, lld, design-patterns, layer-7]
 ---
 
-# Learning Path — Low Level Design (LLD)
+# Learning Path - Low Level Design (LLD)
 
 > How to structure code at the class, module, and component level. Assumes Layer 1 (OOP, decorators) and Layer 2 (concurrency).
 
 ---
 
-## Layer 7a — OOP Concepts
+## Layer 7a - OOP Concepts
 
 1. [[oop-basics|OOP Basics]]
 2. [[encapsulation|Encapsulation]]
@@ -28,7 +28,7 @@ tags: [moc, learning-path, lld, design-patterns, layer-7]
 
 ---
 
-## Layer 7b — Design Patterns
+## Layer 7b - Design Patterns
 
 1. [[design-patterns-overview|Design Patterns Overview]]
 2. [[singleton|Singleton Pattern]]
@@ -48,7 +48,7 @@ tags: [moc, learning-path, lld, design-patterns, layer-7]
 
 ---
 
-## Layer 7c — Concurrency and Thread Safety
+## Layer 7c - Concurrency and Thread Safety
 
 1. [[thread-safety-basics|Thread Safety Basics]]
 2. [[immutable-objects|Immutable Objects for Safety]]
@@ -59,7 +59,7 @@ tags: [moc, learning-path, lld, design-patterns, layer-7]
 
 ---
 
-## Layer 7d — API Design (LLD)
+## Layer 7d - API Design (LLD)
 
 1. [[api-design-principles|API Design Principles]]
 2. [[api-versioning|API Versioning]]
@@ -72,7 +72,7 @@ tags: [moc, learning-path, lld, design-patterns, layer-7]
 
 ---
 
-## Layer 7e — LLD Case Studies
+## Layer 7e - LLD Case Studies
 
 1. [[lld-parking-lot|LLD: Parking Lot System]]
 2. [[lld-library-management|LLD: Library Management System]]

@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Lambda Layers
 
-> Lambda layers let you share common Python dependencies — numpy, pandas, requests, database drivers — across multiple functions without bundling the same files into every deployment package.
+> Lambda layers let you share common Python dependencies - numpy, pandas, requests, database drivers - across multiple functions without bundling the same files into every deployment package.
 
 ---
 
@@ -22,13 +22,13 @@ created: 2026-05-18
 - Layers are mounted at `/opt` in the execution environment; Python packages go under `/opt/python/`
 - Up to 5 layers per function; total unzipped size (function + layers) must not exceed 250MB
 - Single layer: 50MB zipped, 250MB unzipped
-- Layer versions are immutable — updating a layer creates a new version; functions pin to a specific version
+- Layer versions are immutable - updating a layer creates a new version; functions pin to a specific version
 - AWS and third parties publish public layers (AWS Data Wrangler, AWS SDK for Pandas, Powertools for Lambda)
 
 **Tricky points:**
-- Lambda automatically adds `/opt/python` to `sys.path` for Python runtimes — no `PYTHONPATH` fiddling needed
-- Layers are region-specific — a layer published in `us-east-1` cannot be used by a function in `eu-west-1`
-- The 250MB unzipped total limit includes the function code itself — large ML libraries hit this quickly
+- Lambda automatically adds `/opt/python` to `sys.path` for Python runtimes - no `PYTHONPATH` fiddling needed
+- Layers are region-specific - a layer published in `us-east-1` cannot be used by a function in `eu-west-1`
+- The 250MB unzipped total limit includes the function code itself - large ML libraries hit this quickly
 - Sharing a layer across accounts requires updating the layer's resource-based policy
 - For dependencies exceeding 250MB unzipped, container images are the correct path
 
@@ -36,11 +36,11 @@ created: 2026-05-18
 
 ## What It Is
 
-Think of Lambda layers as shared shelving in a workshop. Each workbench (function) in the shop can hold its own tools, but some tools — a large power drill, a specialty saw — are expensive to duplicate at every workbench. Instead, you put those tools on shared shelves in the middle of the room, and any workbench can reach over and grab them. The shared shelves are the layers. Each function still works independently; it just knows where to look for the common tools.
+Think of Lambda layers as shared shelving in a workshop. Each workbench (function) in the shop can hold its own tools, but some tools - a large power drill, a specialty saw - are expensive to duplicate at every workbench. Instead, you put those tools on shared shelves in the middle of the room, and any workbench can reach over and grab them. The shared shelves are the layers. Each function still works independently; it just knows where to look for the common tools.
 
 Before layers existed, every Lambda function had to bundle all its dependencies in its own deployment ZIP. If ten functions all needed pandas and numpy, you shipped ten copies of pandas and numpy. Each deploy of any one function required rebuilding and re-uploading a 40MB package. Layers changed this: you publish pandas and numpy as a single layer once, attach that layer to all ten functions, and each function's deployment package shrinks to just its own code. Deployments become faster, package sizes become manageable, and dependency updates become a single publish-and-reattach operation.
 
-The tradeoff is version coupling. When you update a layer, every function that references it must be updated to point to the new version. This is intentional — Lambda layers are versioned and immutable, so a function always runs against the exact library version it was tested with. It also means that a dependency security patch requires touching every function that uses the affected layer, which adds operational overhead for large function fleets.
+The tradeoff is version coupling. When you update a layer, every function that references it must be updated to point to the new version. This is intentional - Lambda layers are versioned and immutable, so a function always runs against the exact library version it was tested with. It also means that a dependency security patch requires touching every function that uses the affected layer, which adds operational overhead for large function fleets.
 
 ---
 
@@ -114,20 +114,20 @@ aws lambda add-layer-version-permission \
 
 ## How It Connects
 
-Layers are most useful in the context of large dependency trees — data science libraries, database drivers, internal shared utilities. When the dependency tree grows beyond 250MB unzipped, container images take over as the deployment mechanism.
+Layers are most useful in the context of large dependency trees - data science libraries, database drivers, internal shared utilities. When the dependency tree grows beyond 250MB unzipped, container images take over as the deployment mechanism.
 
-[[lambda-container|Lambda with Container Images]] — explains the container image deployment path, which removes the 250MB limit and is the correct choice for heavy ML or data science workloads.
+[[lambda-container|Lambda with Container Images]] - explains the container image deployment path, which removes the 250MB limit and is the correct choice for heavy ML or data science workloads.
 
 Lambda Powertools for Python is distributed as a public Lambda layer and provides structured logging, tracing, and metrics patterns that complement the handler patterns described in the handlers note.
 
-[[lambda-handlers|Lambda Handlers]] — covers initialisation patterns and structured logging, which are the primary consumers of shared layer libraries in production functions.
+[[lambda-handlers|Lambda Handlers]] - covers initialisation patterns and structured logging, which are the primary consumers of shared layer libraries in production functions.
 
 ---
 
 ## Common Misconceptions
 
 Misconception 1: You can modify a layer version after publishing it.
-Reality: Layer versions are immutable. Publishing a new version creates version N+1 with a new ARN. Functions continue to use their pinned version until you explicitly update the function configuration to reference the new ARN. This immutability is a feature — it prevents silent dependency drift across functions.
+Reality: Layer versions are immutable. Publishing a new version creates version N+1 with a new ARN. Functions continue to use their pinned version until you explicitly update the function configuration to reference the new ARN. This immutability is a feature - it prevents silent dependency drift across functions.
 
 Misconception 2: Layers are the right solution for all large dependencies.
 Reality: The 250MB total unzipped limit (function + all layers combined) rules out heavy ML frameworks. PyTorch's CPU-only package exceeds 600MB unzipped. For those use cases, the Lambda container image deployment path (up to 10GB) is the correct approach. Layers are optimally suited for moderate-sized shared libraries: HTTP clients, database drivers, utility packages, and internal shared code.
@@ -136,7 +136,7 @@ Reality: The 250MB total unzipped limit (function + all layers combined) rules o
 
 ## Why It Matters in Practice
 
-Layers reduce deployment friction and enforce dependency consistency across a Lambda function fleet. A team with twenty Python Lambda functions sharing a common database driver or internal utility library benefits immediately: one layer publish propagates the change to all functions without rebuilding twenty ZIP packages. The layer version pinning model also makes dependency auditing tractable — you can query which functions use which layer version and systematically roll out security patches.
+Layers reduce deployment friction and enforce dependency consistency across a Lambda function fleet. A team with twenty Python Lambda functions sharing a common database driver or internal utility library benefits immediately: one layer publish propagates the change to all functions without rebuilding twenty ZIP packages. The layer version pinning model also makes dependency auditing tractable - you can query which functions use which layer version and systematically roll out security patches.
 
 ---
 

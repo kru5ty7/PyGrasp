@@ -11,7 +11,7 @@ created: 2026-05-18
 
 # Merge Sort
 
-> Merge sort guarantees O(n log n) in all cases — a promise that quick sort cannot make — and its merge step is one of the most reusable subroutines in computer science.
+> Merge sort guarantees O(n log n) in all cases - a promise that quick sort cannot make - and its merge step is one of the most reusable subroutines in computer science.
 
 ---
 
@@ -21,8 +21,8 @@ created: 2026-05-18
 - Divide: split the array into two equal halves
 - Conquer: recursively sort each half (base case: array of length 0 or 1)
 - Merge: combine two sorted halves into one sorted array using two pointers
-- O(n log n) in all cases — best, average, and worst
-- O(n) extra space for the merge step — not in-place
+- O(n log n) in all cases - best, average, and worst
+- O(n) extra space for the merge step - not in-place
 - Stable: equal elements from the left half are placed before equal elements from the right half
 
 **Tricky points:**
@@ -51,13 +51,13 @@ Imagine you have two piles of sorted index cards and you want to combine them in
 
 Merge sort builds this merge operation into a recursive strategy. To sort a single pile of shuffled cards, split it roughly in half, sort each half (by recursively applying the same strategy), then merge the two sorted halves. The splitting continues until every subpile has just one card, which is trivially sorted. The recursion then unwinds, merging pairs of single cards into sorted pairs, then pairs of sorted pairs into sorted fours, and so on until the full sorted sequence is assembled. Because each merge level processes all n elements and there are log n levels (the array halves each time), the total work is O(n log n).
 
-The guarantee of O(n log n) in all cases is what distinguishes merge sort from quick sort. Quick sort is faster in practice on average but can degrade to O(n²) with bad pivot choices. Merge sort never degrades — it sorts n elements with exactly O(n log n) operations regardless of how the input is arranged. This predictability makes merge sort the preferred choice in contexts where worst-case guarantees matter, such as sorting in real-time systems or as the basis for external sorting algorithms that process data larger than available memory.
+The guarantee of O(n log n) in all cases is what distinguishes merge sort from quick sort. Quick sort is faster in practice on average but can degrade to O(n²) with bad pivot choices. Merge sort never degrades - it sorts n elements with exactly O(n log n) operations regardless of how the input is arranged. This predictability makes merge sort the preferred choice in contexts where worst-case guarantees matter, such as sorting in real-time systems or as the basis for external sorting algorithms that process data larger than available memory.
 
 ---
 
 ## How It Actually Works
 
-The algorithm splits the input at the midpoint, recursively sorts the left and right halves, then calls the merge function to combine them. The base case returns immediately for arrays of length 0 or 1. The merge function uses two index pointers, one for each half, and builds the result by repeatedly taking the smaller of the two pointed-to elements. When one half is exhausted, the remaining elements of the other half are appended directly — they are already sorted.
+The algorithm splits the input at the midpoint, recursively sorts the left and right halves, then calls the merge function to combine them. The base case returns immediately for arrays of length 0 or 1. The merge function uses two index pointers, one for each half, and builds the result by repeatedly taking the smaller of the two pointed-to elements. When one half is exhausted, the remaining elements of the other half are appended directly - they are already sorted.
 
 The merge function creates a temporary list to hold the merged result. This is where the O(n) space cost comes from: at the top level of recursion, the merge needs an auxiliary array of size n. The space is reused across recursive calls because they do not all exist simultaneously, so the dominant space cost is the single top-level merge buffer, giving O(n) total extra space.
 
@@ -97,9 +97,9 @@ print(merge_sort(data))  # [3, 9, 10, 27, 38, 43, 82]
 
 
 # Merge sort on a linked list: merge is O(1) extra space with pointers
-# because no copying is needed — nodes are relinked, not copied
+# because no copying is needed - nodes are relinked, not copied
 def merge_sort_linked(head):
-    """Skeleton — split at middle with slow/fast pointer, merge by relinking."""
+    """Skeleton - split at middle with slow/fast pointer, merge by relinking."""
     pass  # full implementation omitted for brevity
 ```
 
@@ -117,7 +117,7 @@ Merge sort is the canonical example of the divide-and-conquer strategy. Understa
 
 [[divide-and-conquer|Divide and Conquer]]
 [[quick-sort|Quick Sort]]
-[[python-sort-internals|Timsort — Python's Sorting Algorithm]]
+[[python-sort-internals|Timsort - Python's Sorting Algorithm]]
 [[sorting-comparison|Sorting Algorithm Comparison]]
 
 ---
@@ -131,13 +131,13 @@ Misconception 2: "Merge sort is always better than quick sort because it guarant
 Reality: Merge sort's O(n) space cost is a significant disadvantage compared to quick sort's O(log n) space (in-place, average case). Quick sort also has better cache performance in practice because it accesses memory sequentially within its partitions, whereas merge sort writes to a separate buffer. For in-memory sorting of random data, quick sort is typically faster. Merge sort is preferred for stability guarantees, linked list sorting, and external sorting.
 
 Misconception 3: "Merge sort for linked lists requires O(n) extra space for the merge."
-Reality: For arrays, merge requires O(n) extra space to hold the merged result before copying back. For linked lists, the merge can be performed in-place by relinking nodes using only a constant number of pointers — no auxiliary array is needed. This makes merge sort uniquely well-suited for linked lists, where O(n log n) time and O(1) extra space (beyond the recursion stack) is achievable.
+Reality: For arrays, merge requires O(n) extra space to hold the merged result before copying back. For linked lists, the merge can be performed in-place by relinking nodes using only a constant number of pointers - no auxiliary array is needed. This makes merge sort uniquely well-suited for linked lists, where O(n log n) time and O(1) extra space (beyond the recursion stack) is achievable.
 
 ---
 
 ## Why It Matters in Practice
 
-Merge sort's real-world importance comes from three areas. First, it is the foundation of external sorting: when data is too large to fit in memory, merge sort's structure maps naturally onto reading and writing sorted runs to and from disk. Database systems and big-data processing frameworks use merge-based algorithms for exactly this reason. Second, it is stable, making it appropriate whenever the relative order of equal elements must be preserved — a property quick sort does not provide. Third, it is the algorithm used in Python's Timsort as the outer structure: Timsort identifies sorted runs and merges them using a modified merge sort with a galloping optimisation.
+Merge sort's real-world importance comes from three areas. First, it is the foundation of external sorting: when data is too large to fit in memory, merge sort's structure maps naturally onto reading and writing sorted runs to and from disk. Database systems and big-data processing frameworks use merge-based algorithms for exactly this reason. Second, it is stable, making it appropriate whenever the relative order of equal elements must be preserved - a property quick sort does not provide. Third, it is the algorithm used in Python's Timsort as the outer structure: Timsort identifies sorted runs and merges them using a modified merge sort with a galloping optimisation.
 
 The merge subroutine also appears independently in several important interview problems: merging k sorted lists, counting inversions, and finding the median of two sorted arrays all reduce to merge-step variants. Knowing merge sort deeply means you understand not just one algorithm but a family of merge-based techniques.
 
@@ -152,7 +152,7 @@ Common question forms:
 - "How would you use merge sort to count inversions in an array?"
 
 Answer frame:
-Describe the three steps (divide, conquer, merge) and explain that the non-trivial work is in the merge step. State O(n log n) time in all cases and O(n) space, clarifying that the O(log n) recursion depth contributes less than the O(n) merge buffer. For linked lists: explain that the merge can relink nodes in O(1) extra space, whereas arrays require copying. For counting inversions: each time a right-half element is placed before a remaining left-half element during merge, it contributes inversions equal to the number of remaining left-half elements — instrument the merge step to accumulate this count.
+Describe the three steps (divide, conquer, merge) and explain that the non-trivial work is in the merge step. State O(n log n) time in all cases and O(n) space, clarifying that the O(log n) recursion depth contributes less than the O(n) merge buffer. For linked lists: explain that the merge can relink nodes in O(1) extra space, whereas arrays require copying. For counting inversions: each time a right-half element is placed before a remaining left-half element during merge, it contributes inversions equal to the number of remaining left-half elements - instrument the merge step to accumulate this count.
 
 ---
 
@@ -160,6 +160,6 @@ Describe the three steps (divide, conquer, merge) and explain that the non-trivi
 
 - [[quick-sort|Quick Sort]]
 - [[divide-and-conquer|Divide and Conquer]]
-- [[python-sort-internals|Timsort — Python's Sorting Algorithm]]
+- [[python-sort-internals|Timsort - Python's Sorting Algorithm]]
 - [[sorting-comparison|Sorting Algorithm Comparison]]
 - [[linked-lists|Linked Lists]]
