@@ -189,6 +189,12 @@ print("All tests passed!")
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/repository-pattern.html" style="width:100%;height:460px;border:none;border-radius:8px;" title="Repository Pattern Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 The Repository pattern is the canonical implementation of the Dependency Inversion Principle. Business logic depends on the repository abstraction; the database implements it.

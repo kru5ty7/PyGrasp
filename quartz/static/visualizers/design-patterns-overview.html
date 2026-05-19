@@ -1,0 +1,366 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Design Patterns — Overview</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618; color: #d4d4d4;
+    display: flex; align-items: flex-start; justify-content: center;
+    min-height: 100vh; padding: 1.2rem .8rem;
+  }
+  .wrap { width: 100%; max-width: 700px; }
+  h4 { font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; color: #646464; margin-bottom: .75rem; }
+  .section { margin-bottom: .75rem; }
+  .sec-header {
+    display: flex; align-items: center; gap: .5rem;
+    background: #222224; border: 1px solid #393639; border-radius: 4px;
+    padding: .35rem .7rem; cursor: pointer; user-select: none;
+    font-weight: 700; font-size: .85rem;
+  }
+  .sec-header:hover { background: #2a2a2e; }
+  .sec-header .badge {
+    font-size: .68rem; font-weight: 700; padding: .1rem .4rem;
+    border-radius: 3px; color: #fff;
+  }
+  .badge-c { background: #5a3e00; color: #f0c050; }
+  .badge-s { background: #1a3040; color: #7bc4e0; }
+  .badge-b { background: #1a3020; color: #5cdb5c; }
+  .sec-toggle { margin-left: auto; font-size: .7rem; color: #888; }
+  .sec-body { display: none; }
+  .sec-body.open { display: block; }
+  table { width: 100%; border-collapse: collapse; margin-top: 2px; }
+  thead tr { background: #222224; }
+  thead th {
+    font-size: .7rem; text-transform: uppercase; letter-spacing: .06em;
+    color: #888; padding: .3rem .5rem; text-align: left; border-bottom: 1px solid #393639;
+  }
+  tbody tr {
+    border-bottom: 1px solid #2e2e32; cursor: pointer; transition: background .1s;
+  }
+  tbody tr:hover { background: #2a2000; }
+  tbody tr.selected { background: #1a2a3a; border-left: 3px solid #4a90c4; }
+  td { padding: .3rem .5rem; font-size: .8rem; vertical-align: top; }
+  td.name { font-weight: 700; color: #d4d4d4; white-space: nowrap; }
+  td.intent { color: #aaa; }
+  td.participants { color: #888; font-size: .73rem; }
+  td.example { font-family: monospace; font-size: .73rem; color: #7bc4e0; }
+  .detail-card {
+    background: #1e1e22; border: 1px solid #4a90c4; border-radius: 4px;
+    padding: .5rem .7rem; margin-top: 2px; display: none;
+  }
+  .detail-card.open { display: block; }
+  .detail-title { font-weight: 700; font-size: .82rem; color: #7bc4e0; margin-bottom: .4rem; }
+  .mini-diagram { display: flex; align-items: center; gap: .4rem; flex-wrap: wrap; margin-bottom: .4rem; }
+  .mini-box {
+    background: #2a2a2e; border: 1px solid #393639; border-radius: 3px;
+    padding: .2rem .5rem; font-size: .73rem; font-family: monospace; white-space: nowrap;
+  }
+  .mini-box.ctx  { border-color: #f0a500; color: #f0c050; }
+  .mini-box.impl { border-color: #28a745; color: #5cdb5c; }
+  .mini-box.iface { border-color: #7bc4e0; color: #7bc4e0; }
+  .mini-arrow { color: #555; font-size: .9rem; }
+  .detail-note { font-size: .75rem; color: #888; line-height: 1.5; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Design Patterns — Interactive Reference</h4>
+
+  <!-- CREATIONAL -->
+  <div class="section" id="sec-creational">
+    <div class="sec-header" onclick="toggleSection('creational')">
+      <span class="badge badge-c">Creational</span>
+      How objects are created
+      <span class="sec-toggle" id="tog-creational">▶ expand</span>
+    </div>
+    <div class="sec-body" id="body-creational">
+      <table>
+        <thead><tr>
+          <th>Pattern</th><th>Intent</th><th>Key Participants</th><th>Python phrase</th>
+        </tr></thead>
+        <tbody id="rows-creational"></tbody>
+      </table>
+      <div id="detail-creational" class="detail-card"></div>
+    </div>
+  </div>
+
+  <!-- STRUCTURAL -->
+  <div class="section" id="sec-structural">
+    <div class="sec-header" onclick="toggleSection('structural')">
+      <span class="badge badge-s">Structural</span>
+      How objects are composed
+      <span class="sec-toggle" id="tog-structural">▶ expand</span>
+    </div>
+    <div class="sec-body" id="body-structural">
+      <table>
+        <thead><tr>
+          <th>Pattern</th><th>Intent</th><th>Key Participants</th><th>Python phrase</th>
+        </tr></thead>
+        <tbody id="rows-structural"></tbody>
+      </table>
+      <div id="detail-structural" class="detail-card"></div>
+    </div>
+  </div>
+
+  <!-- BEHAVIORAL -->
+  <div class="section" id="sec-behavioral">
+    <div class="sec-header" onclick="toggleSection('behavioral')">
+      <span class="badge badge-b">Behavioral</span>
+      How objects communicate
+      <span class="sec-toggle" id="tog-behavioral">▶ expand</span>
+    </div>
+    <div class="sec-body" id="body-behavioral">
+      <table>
+        <thead><tr>
+          <th>Pattern</th><th>Intent</th><th>Key Participants</th><th>Python phrase</th>
+        </tr></thead>
+        <tbody id="rows-behavioral"></tbody>
+      </table>
+      <div id="detail-behavioral" class="detail-card"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+var DATA = {
+  creational: [
+    {
+      name: 'Singleton',
+      intent: 'Ensure only one instance of a class exists globally.',
+      parts: 'Singleton class, private constructor',
+      ex: 'cls._instance or create',
+      detail: {
+        title: 'Singleton',
+        diagram: [{cls:'Singleton', type:'ctx'}, {a:'→'}, {cls:'Singleton._instance', type:'impl'}],
+        note: 'Override __new__ to return the cached instance. Thread safety requires a lock. Use sparingly — global state hinders testing.'
+      }
+    },
+    {
+      name: 'Factory Method',
+      intent: 'Let subclasses decide which class to instantiate.',
+      parts: 'Creator, ConcreteCreator, Product',
+      ex: 'creator.create_product()',
+      detail: {
+        title: 'Factory Method',
+        diagram: [{cls:'Creator', type:'ctx'}, {a:'→ create_product()'}, {cls:'ConcreteProduct', type:'impl'}],
+        note: 'Creator defines the factory method; subclasses override it. Client code calls factory method, not constructors directly.'
+      }
+    },
+    {
+      name: 'Abstract Factory',
+      intent: 'Create families of related objects without specifying concrete classes.',
+      parts: 'AbstractFactory, ConcreteFactory, AbstractProduct',
+      ex: 'factory.create_button()',
+      detail: {
+        title: 'Abstract Factory',
+        diagram: [{cls:'AbstractFactory', type:'iface'}, {a:'←implements'}, {cls:'MacFactory', type:'impl'}, {a:'|'}, {cls:'WinFactory', type:'impl'}],
+        note: 'Switch the whole family by swapping the factory. Each factory produces a matching set of products (e.g. macOS or Windows widgets).'
+      }
+    },
+    {
+      name: 'Builder',
+      intent: 'Construct complex objects step-by-step, separating construction from representation.',
+      parts: 'Builder, Director, Product',
+      ex: 'builder.set_engine().set_seats().build()',
+      detail: {
+        title: 'Builder',
+        diagram: [{cls:'Director', type:'ctx'}, {a:'→ uses'}, {cls:'Builder', type:'iface'}, {a:'← impl'}, {cls:'ConcreteBuilder', type:'impl'}],
+        note: 'Director orchestrates the build steps. Same director can use different builders to produce different representations.'
+      }
+    },
+    {
+      name: 'Prototype',
+      intent: 'Create new objects by cloning an existing object.',
+      parts: 'Prototype, ConcretePrototype',
+      ex: 'doc2 = doc1.clone()',
+      detail: {
+        title: 'Prototype',
+        diagram: [{cls:'Original', type:'ctx'}, {a:'→ clone()'}, {cls:'Copy', type:'impl'}],
+        note: 'Implement __copy__ / __deepcopy__. Shallow copy shares nested objects; deep copy duplicates everything. Use when construction is expensive.'
+      }
+    }
+  ],
+  structural: [
+    {
+      name: 'Adapter',
+      intent: 'Convert an incompatible interface into one the client expects.',
+      parts: 'Target, Adapter, Adaptee',
+      ex: 'adapter.request() → adaptee.specific_request()',
+      detail: {
+        title: 'Adapter',
+        diagram: [{cls:'Client', type:'ctx'}, {a:'→'}, {cls:'Adapter', type:'iface'}, {a:'→ wraps'}, {cls:'Adaptee', type:'impl'}],
+        note: 'Adapter translates calls from the Target interface to the Adaptee. Common when integrating third-party libraries.'
+      }
+    },
+    {
+      name: 'Decorator',
+      intent: 'Add behaviour to objects dynamically by wrapping them.',
+      parts: 'Component, ConcreteComponent, Decorator',
+      ex: 'LoggingDB(CachingDB(RealDB()))',
+      detail: {
+        title: 'Decorator',
+        diagram: [{cls:'ConcreteComponent', type:'impl'}, {a:'← wrapped by'}, {cls:'Decorator', type:'ctx'}, {a:'same interface'}],
+        note: 'Each decorator wraps a component and adds behaviour before/after delegating. Python @functools.wraps mirrors this for functions.'
+      }
+    },
+    {
+      name: 'Facade',
+      intent: 'Provide a simplified interface to a complex subsystem.',
+      parts: 'Facade, Subsystem classes',
+      ex: 'facade.upload_video(file)',
+      detail: {
+        title: 'Facade',
+        diagram: [{cls:'Client', type:'ctx'}, {a:'→'}, {cls:'VideoFacade', type:'iface'}, {a:'→'}, {cls:'Subsystems ×5', type:'impl'}],
+        note: 'Facade does not prevent direct subsystem access — it just makes the common case easy. Reduces coupling between client and subsystem.'
+      }
+    },
+    {
+      name: 'Repository',
+      intent: 'Abstract data-access logic behind a collection-like interface.',
+      parts: 'Repository interface, Concrete repos, Domain model',
+      ex: 'repo.find_by_id(1)',
+      detail: {
+        title: 'Repository',
+        diagram: [{cls:'Service', type:'ctx'}, {a:'→'}, {cls:'UserRepository', type:'iface'}, {a:'← impl'}, {cls:'SQLRepo / MemRepo', type:'impl'}],
+        note: 'Service depends only on the interface. Swap SQL for in-memory for tests. Domain model stays clean of persistence details.'
+      }
+    },
+    {
+      name: 'Proxy / Composite',
+      intent: 'Proxy: control access to an object. Composite: treat trees of objects uniformly.',
+      parts: 'Proxy wraps Subject; Composite holds children',
+      ex: 'proxy.request() / tree.operation()',
+      detail: {
+        title: 'Proxy & Composite',
+        diagram: [{cls:'Client', type:'ctx'}, {a:'→'}, {cls:'Proxy / Composite', type:'iface'}],
+        note: 'Proxy adds indirection (lazy load, caching, auth). Composite lets clients treat a leaf and a branch the same — e.g. file system nodes.'
+      }
+    }
+  ],
+  behavioral: [
+    {
+      name: 'Observer',
+      intent: 'Notify subscribers automatically when subject state changes.',
+      parts: 'Subject, Observer, ConcreteObserver',
+      ex: 'subject.attach(obs); subject.notify()',
+      detail: {
+        title: 'Observer',
+        diagram: [{cls:'Subject', type:'ctx'}, {a:'→ notify()'}, {cls:'Observer[]', type:'iface'}, {a:'← impl'}, {cls:'EmailAlert, SMSAlert', type:'impl'}],
+        note: 'Subject maintains a list of observers. On state change it calls update() on each. Python event systems and signals follow this pattern.'
+      }
+    },
+    {
+      name: 'Strategy',
+      intent: 'Define a family of algorithms and make them interchangeable at runtime.',
+      parts: 'Context, Strategy interface, ConcreteStrategies',
+      ex: 'nav.set_strategy(CarRoute())',
+      detail: {
+        title: 'Strategy',
+        diagram: [{cls:'Navigator (Context)', type:'ctx'}, {a:'→ _strategy'}, {cls:'RouteStrategy', type:'iface'}, {a:'← impl'}, {cls:'CarRoute, WalkRoute', type:'impl'}],
+        note: 'Context delegates to the strategy object. Swap strategy at runtime without touching Context. Replaces large if/elif chains.'
+      }
+    },
+    {
+      name: 'Command',
+      intent: 'Encapsulate a request as an object to support undo, queuing, and logging.',
+      parts: 'Invoker, Command, ConcreteCommand, Receiver',
+      ex: 'remote.execute(TurnOnCommand(light))',
+      detail: {
+        title: 'Command',
+        diagram: [{cls:'Remote (Invoker)', type:'ctx'}, {a:'→'}, {cls:'Command', type:'iface'}, {a:'→ execute()'}, {cls:'Light (Receiver)', type:'impl'}],
+        note: 'Command stores enough info to execute and undo the action. Invoker keeps a history list. Supports macro-recording and undo stacks.'
+      }
+    },
+    {
+      name: 'Iterator',
+      intent: 'Traverse a collection without exposing its internal structure.',
+      parts: 'Iterator, ConcreteIterator, Iterable',
+      ex: 'for item in collection: ...',
+      detail: {
+        title: 'Iterator',
+        diagram: [{cls:'Collection', type:'ctx'}, {a:'→ __iter__()'}, {cls:'Iterator', type:'iface'}, {a:'→ __next__()'}],
+        note: 'Python\'s for-loop protocol uses __iter__ and __next__. Raise StopIteration when exhausted. Supports lazy evaluation of large sequences.'
+      }
+    },
+    {
+      name: 'DI (Dependency Injection)',
+      intent: 'Pass dependencies into objects rather than creating them internally.',
+      parts: 'Service, Injector, Dependency interfaces',
+      ex: 'ReportService(db=MySQL(), mailer=SMTP())',
+      detail: {
+        title: 'Dependency Injection',
+        diagram: [{cls:'Injector', type:'ctx'}, {a:'→ passes'}, {cls:'ReportService', type:'iface'}, {a:'← deps'}, {cls:'MySQL, SMTP, Logger', type:'impl'}],
+        note: 'Constructor injection is preferred. For tests, swap real deps for mocks without touching service code. Inversion of Control (IoC) generalises this.'
+      }
+    }
+  ]
+};
+
+var selected = { creational: null, structural: null, behavioral: null };
+
+function toggleSection(sec) {
+  var body = document.getElementById('body-' + sec);
+  var tog = document.getElementById('tog-' + sec);
+  var isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  tog.textContent = isOpen ? '▶ expand' : '▼ collapse';
+}
+
+function buildDiagram(diag) {
+  return diag.map(function(d) {
+    if (d.a) return '<span class="mini-arrow">' + d.a + '</span>';
+    return '<span class="mini-box ' + (d.type || '') + '">' + d.cls + '</span>';
+  }).join('');
+}
+
+function renderSection(sec) {
+  var rows = document.getElementById('rows-' + sec);
+  var items = DATA[sec];
+  rows.innerHTML = items.map(function(item, i) {
+    return '<tr onclick="selectRow(\'' + sec + '\',' + i + ')" id="row-' + sec + '-' + i + '">' +
+      '<td class="name">' + item.name + '</td>' +
+      '<td class="intent">' + item.intent + '</td>' +
+      '<td class="participants">' + item.parts + '</td>' +
+      '<td class="example">' + item.ex + '</td>' +
+      '</tr>';
+  }).join('');
+}
+
+function selectRow(sec, i) {
+  var detail = document.getElementById('detail-' + sec);
+  var prevSel = selected[sec];
+  // deselect previous
+  if (prevSel !== null) {
+    var prev = document.getElementById('row-' + sec + '-' + prevSel);
+    if (prev) prev.classList.remove('selected');
+  }
+  if (prevSel === i) {
+    // toggle off
+    selected[sec] = null;
+    detail.classList.remove('open');
+    detail.innerHTML = '';
+    return;
+  }
+  selected[sec] = i;
+  var row = document.getElementById('row-' + sec + '-' + i);
+  if (row) row.classList.add('selected');
+  var d = DATA[sec][i].detail;
+  detail.innerHTML = '<div class="detail-title">' + d.title + '</div>' +
+    '<div class="mini-diagram">' + buildDiagram(d.diagram) + '</div>' +
+    '<div class="detail-note">' + d.note + '</div>';
+  detail.classList.add('open');
+}
+
+['creational','structural','behavioral'].forEach(renderSection);
+// open all sections by default
+['creational','structural','behavioral'].forEach(function(sec) {
+  document.getElementById('body-' + sec).classList.add('open');
+  document.getElementById('tog-' + sec).textContent = '▼ collapse';
+});
+</script>
+</body>
+</html>

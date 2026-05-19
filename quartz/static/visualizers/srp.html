@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SRP — Single Responsibility Principle Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 640px; margin: 0 auto; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  .cls-box {
+    border: 1px solid #393639;
+    border-radius: 4px;
+    overflow: hidden;
+    font-size: .82rem;
+    min-width: 120px;
+  }
+  .cls-hdr {
+    background: #284b63;
+    color: #fff;
+    font-weight: 700;
+    padding: .28rem .55rem;
+  }
+  .cls-section {
+    background: #2a2a2e;
+    padding: .25rem .55rem;
+    color: #9cdcfe;
+    line-height: 1.6;
+    border-top: 1px solid #393639;
+  }
+  .cls-section .method { color: #569cd6; }
+  .badge {
+    display: inline-block;
+    border-radius: 4px;
+    font-size: .7rem;
+    font-weight: 700;
+    padding: .15rem .4rem;
+    margin-top: .4rem;
+  }
+  .badge-bad { background: #3a1a1a; color: #dc3545; border: 1px solid #dc3545; }
+  .badge-good { background: #1a3a1a; color: #28a745; border: 1px solid #28a745; }
+  /* panels */
+  #panel-before, #panel-after { display: none; }
+  #panel-before.visible, #panel-after.visible { display: block; }
+  .before-wrap {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .after-row {
+    display: flex;
+    gap: .5rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .after-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .3rem;
+  }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; margin-bottom: .75rem; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:hover { opacity: .75; }
+  #btn-toggle { background: #284b63; color: #fff; }
+  .scene { margin-bottom: .75rem; min-height: 160px; }
+  .scene-label {
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: .5rem;
+  }
+  .scene-label.bad { color: #dc3545; }
+  .scene-label.good { color: #28a745; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Single Responsibility Principle — Toggle View</h4>
+
+  <div id="ctrl">
+    <button id="btn-toggle" onclick="toggle()">Show After SRP ▶</button>
+  </div>
+
+  <div id="stat">One fat class handles everything. Multiple responsibilities — harder to test, change, and understand.</div>
+
+  <!-- BEFORE -->
+  <div id="panel-before" class="visible">
+    <div class="scene-label bad">Before SRP ❌</div>
+    <div class="scene before-wrap">
+      <div class="cls-box" style="border-color:#dc3545;min-width:240px;">
+        <div class="cls-hdr">UserManager</div>
+        <div class="cls-section">
+          <div>- user_data</div>
+          <div>- email_config</div>
+          <div>- db_conn</div>
+        </div>
+        <div class="cls-section">
+          <div class="method">+ save_user()</div>
+          <div class="method">+ send_email()</div>
+          <div class="method">+ hash_password()</div>
+          <div class="method">+ validate_user()</div>
+          <div class="method">+ log_activity()</div>
+        </div>
+      </div>
+      <div class="badge badge-bad">5 responsibilities ❌</div>
+    </div>
+  </div>
+
+  <!-- AFTER -->
+  <div id="panel-after">
+    <div class="scene-label good">After SRP ✓</div>
+    <div class="scene after-row">
+      <div class="after-card">
+        <div class="cls-box" style="border-color:#28a745;">
+          <div class="cls-hdr">User</div>
+          <div class="cls-section">
+            <div class="method">+ validate()</div>
+            <div class="method">+ hash_password()</div>
+          </div>
+        </div>
+        <div class="badge badge-good">1 responsibility ✓</div>
+      </div>
+      <div class="after-card">
+        <div class="cls-box" style="border-color:#28a745;">
+          <div class="cls-hdr">EmailService</div>
+          <div class="cls-section">
+            <div class="method">+ send_email()</div>
+          </div>
+        </div>
+        <div class="badge badge-good">1 responsibility ✓</div>
+      </div>
+      <div class="after-card">
+        <div class="cls-box" style="border-color:#28a745;">
+          <div class="cls-hdr">UserRepository</div>
+          <div class="cls-section">
+            <div class="method">+ save()</div>
+            <div class="method">+ find()</div>
+          </div>
+        </div>
+        <div class="badge badge-good">1 responsibility ✓</div>
+      </div>
+      <div class="after-card">
+        <div class="cls-box" style="border-color:#28a745;">
+          <div class="cls-hdr">Logger</div>
+          <div class="cls-section">
+            <div class="method">+ log()</div>
+          </div>
+        </div>
+        <div class="badge badge-good">1 responsibility ✓</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+<script>
+var showing = 'before';
+function toggle() {
+  var btn = document.getElementById('btn-toggle');
+  var before = document.getElementById('panel-before');
+  var after = document.getElementById('panel-after');
+  var stat = document.getElementById('stat');
+  if (showing === 'before') {
+    before.classList.remove('visible');
+    after.classList.add('visible');
+    btn.textContent = '◀ Show Before SRP';
+    stat.textContent = 'Responsibilities split into focused classes. Each class has one reason to change — test them independently, modify them in isolation.';
+    showing = 'after';
+  } else {
+    after.classList.remove('visible');
+    before.classList.add('visible');
+    btn.textContent = 'Show After SRP ▶';
+    stat.textContent = 'One fat class handles everything. Multiple responsibilities — harder to test, change, and understand.';
+    showing = 'before';
+  }
+}
+</script>
+</body>
+</html>

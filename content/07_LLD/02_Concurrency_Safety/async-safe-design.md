@@ -166,6 +166,10 @@ asyncio.run(pipeline_example())
 
 ---
 
+<iframe src="/static/visualizers/async-safe-design.html" width="100%" height="440px" style="border:none;border-radius:6px;"></iframe>
+
+---
+
 ## How It Connects
 
 Async safety applies concurrency principles from threading to asyncio's cooperative model. Understanding asyncio's event loop and coroutine scheduling is prerequisite.

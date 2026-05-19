@@ -168,6 +168,8 @@ def create_form(theme_name: str) -> dict:
     }
 ```
 
+<iframe src="/static/visualizers/abstract-factory.html" width="100%" height="460px" style="border:none;border-radius:6px;" title="Abstract Factory Pattern Visualizer"></iframe>
+
 ---
 
 ## How It Connects

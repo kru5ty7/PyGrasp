@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OCP — Open/Closed Principle Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 680px; margin: 0 auto; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  .cls-box {
+    border: 1px solid #393639;
+    border-radius: 4px;
+    overflow: hidden;
+    font-size: .8rem;
+  }
+  .cls-hdr {
+    background: #284b63;
+    color: #fff;
+    font-weight: 700;
+    padding: .25rem .5rem;
+  }
+  .cls-hdr.iface {
+    background: #1a3a4a;
+    font-style: italic;
+  }
+  .cls-section {
+    background: #2a2a2e;
+    padding: .22rem .5rem;
+    line-height: 1.6;
+    border-top: 1px solid #393639;
+  }
+  .cls-section .method { color: #569cd6; }
+  .snippet {
+    background: #1e1e20;
+    border-radius: 3px;
+    padding: .35rem .5rem;
+    font-family: "Consolas", monospace;
+    font-size: .72rem;
+    color: #d4d4d4;
+    line-height: 1.55;
+    white-space: pre;
+  }
+  .snippet .kw { color: #c586c0; }
+  .snippet .fn { color: #dcdcaa; }
+  .snippet .cm { color: #6a9955; }
+  .snippet .str { color: #ce9178; }
+  .snippet .bad-line { color: #dc3545; font-weight: 700; }
+  /* panels */
+  .panel { display: none; }
+  .panel.visible { display: block; }
+  .two-col {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .75rem;
+    margin-bottom: .6rem;
+  }
+  .col-label {
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    margin-bottom: .4rem;
+  }
+  .col-label.bad { color: #dc3545; }
+  .col-label.good { color: #28a745; }
+  .arrow-row {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin: .3rem 0;
+    font-size: .72rem;
+    color: #888;
+  }
+  .sub-row {
+    display: flex;
+    gap: .4rem;
+    justify-content: center;
+    margin-bottom: .3rem;
+  }
+  .sub-row .cls-box { flex: 1; }
+  .dashed-box {
+    border: 2px dashed #28a745 !important;
+    opacity: 0;
+    transition: opacity .4s;
+  }
+  .dashed-box.visible-box { opacity: 1; }
+  .note {
+    font-size: .72rem;
+    color: #888;
+    margin-top: .3rem;
+    line-height: 1.4;
+  }
+  .note.bad { color: #dc3545; }
+  .note.good { color: #28a745; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; margin-bottom: .75rem; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Open/Closed Principle — Step Through</h4>
+
+  <div id="ctrl">
+    <button id="btn-back" disabled onclick="step(-1)">◀ Back</button>
+    <button id="btn-step" onclick="step(1)">Step →</button>
+    <button onclick="reset()">↺ Reset</button>
+    <span id="counter">Step 1 / 3</span>
+  </div>
+
+  <div id="stat">Press Step to begin.</div>
+
+  <!-- Step 1: BEFORE -->
+  <div class="panel visible" id="p1">
+    <div class="col-label bad">Before OCP ❌ — Must modify existing code to add shapes</div>
+    <div class="cls-box" style="max-width:280px;border-color:#dc3545;">
+      <div class="cls-hdr">AreaCalculator</div>
+      <div class="cls-section">
+        <div class="method">+ calculate_area(shape)</div>
+      </div>
+      <div class="cls-section" style="padding:.3rem .5rem;">
+        <div class="snippet"><span class="kw">if</span> shape == <span class="str">'circle'</span>:
+  ...
+<span class="kw">elif</span> shape == <span class="str">'rectangle'</span>:
+  ...
+<span class="kw">elif</span> shape == <span class="str">'triangle'</span>:
+  ...
+<span class="bad-line"># new shape = edit this method!</span></div>
+      </div>
+    </div>
+    <div class="note bad" style="margin-top:.4rem;">Every new shape type requires opening and modifying AreaCalculator.</div>
+  </div>
+
+  <!-- Step 2: AFTER (no Triangle yet) -->
+  <div class="panel" id="p2">
+    <div class="col-label good">After OCP ✓ — AreaCalculator never changes</div>
+    <div class="cls-box" style="max-width:200px;margin-bottom:.4rem;">
+      <div class="cls-hdr iface">Shape (abstract)</div>
+      <div class="cls-section"><div class="method">+ area(): float</div></div>
+    </div>
+    <div class="arrow-row" style="margin-left:.5rem;">extends ↓</div>
+    <div class="sub-row">
+      <div class="cls-box">
+        <div class="cls-hdr">Circle</div>
+        <div class="cls-section"><div class="method">+ area(): float</div></div>
+      </div>
+      <div class="cls-box">
+        <div class="cls-hdr">Rectangle</div>
+        <div class="cls-section"><div class="method">+ area(): float</div></div>
+      </div>
+    </div>
+    <div class="cls-box" style="max-width:240px;margin-top:.4rem;border-color:#28a745;">
+      <div class="cls-hdr">AreaCalculator</div>
+      <div class="cls-section" style="padding:.3rem .5rem;">
+        <div class="snippet"><span class="kw">def</span> <span class="fn">total</span>(shapes):
+  <span class="kw">return</span> sum(s.area()
+             <span class="kw">for</span> s <span class="kw">in</span> shapes)</div>
+      </div>
+    </div>
+    <div class="note good" style="margin-top:.4rem;">AreaCalculator just calls shape.area() — it never needs to change.</div>
+  </div>
+
+  <!-- Step 3: AFTER + Triangle (dashed) -->
+  <div class="panel" id="p3">
+    <div class="col-label good">After OCP ✓ — Adding Triangle requires zero changes to AreaCalculator</div>
+    <div class="cls-box" style="max-width:200px;margin-bottom:.4rem;">
+      <div class="cls-hdr iface">Shape (abstract)</div>
+      <div class="cls-section"><div class="method">+ area(): float</div></div>
+    </div>
+    <div class="arrow-row" style="margin-left:.5rem;">extends ↓</div>
+    <div class="sub-row">
+      <div class="cls-box">
+        <div class="cls-hdr">Circle</div>
+        <div class="cls-section"><div class="method">+ area(): float</div></div>
+      </div>
+      <div class="cls-box">
+        <div class="cls-hdr">Rectangle</div>
+        <div class="cls-section"><div class="method">+ area(): float</div></div>
+      </div>
+      <div class="cls-box dashed-box visible-box" id="tri-box">
+        <div class="cls-hdr" style="background:#1a3a1a;">Triangle ✨ new</div>
+        <div class="cls-section"><div class="method" style="color:#28a745;">+ area(): float</div></div>
+      </div>
+    </div>
+    <div class="cls-box" style="max-width:240px;margin-top:.4rem;border-color:#28a745;">
+      <div class="cls-hdr">AreaCalculator</div>
+      <div class="cls-section" style="padding:.3rem .5rem;">
+        <div class="snippet"><span class="kw">def</span> <span class="fn">total</span>(shapes):
+  <span class="kw">return</span> sum(s.area()
+             <span class="kw">for</span> s <span class="kw">in</span> shapes)</div>
+      </div>
+    </div>
+    <div class="note good" style="margin-top:.4rem;">Triangle added as a new subclass. AreaCalculator is unchanged.</div>
+  </div>
+
+</div>
+<script>
+var cur = 1;
+var msgs = [
+  'Step 1: BEFORE — AreaCalculator checks shape type with if/elif. Every new shape means editing this method.',
+  'Step 2: AFTER — Shape is an abstraction. Circle and Rectangle extend it. AreaCalculator calls shape.area() — it never changes.',
+  'Step 3: Adding Triangle — just write a new subclass. AreaCalculator is untouched. Open for extension, closed for modification.'
+];
+
+function render() {
+  for (var i = 1; i <= 3; i++) {
+    var p = document.getElementById('p' + i);
+    if (i === cur) p.classList.add('visible');
+    else p.classList.remove('visible');
+  }
+  document.getElementById('stat').textContent = msgs[cur - 1];
+  document.getElementById('counter').textContent = 'Step ' + cur + ' / 3';
+  document.getElementById('btn-back').disabled = cur === 1;
+  document.getElementById('btn-step').disabled = cur === 3;
+}
+
+function step(dir) { cur = Math.min(3, Math.max(1, cur + dir)); render(); }
+function reset() { cur = 1; render(); }
+render();
+</script>
+</body>
+</html>

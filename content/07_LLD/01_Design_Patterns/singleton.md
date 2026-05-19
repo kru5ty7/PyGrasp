@@ -159,6 +159,8 @@ class GoodService:
         return f"Processed {data} via {db_host}"
 ```
 
+<iframe src="/static/visualizers/singleton.html" width="100%" height="440px" style="border:none;border-radius:6px;" title="Singleton Pattern Visualizer"></iframe>
+
 ---
 
 ## How It Connects

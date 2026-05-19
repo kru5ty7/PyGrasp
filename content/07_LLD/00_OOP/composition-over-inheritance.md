@@ -204,6 +204,10 @@ assert fake.sent == [("test", "hi")]
 
 ---
 
+<iframe src="/static/visualizers/composition-over-inheritance.html" width="100%" height="460px" style="border:none;border-radius:6px;"></iframe>
+
+---
+
 ## How It Connects
 
 Composition is the foundation of most design patterns. The Strategy pattern composes a behavior object. The Observer pattern composes a list of listeners. The Decorator pattern composes a wrapped object. Understanding composition is prerequisite to understanding these patterns.

@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reader-Writer Locks — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 600px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; margin-bottom: 1rem; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+
+  .arena {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    min-height: 180px;
+  }
+  .readers-col {
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+    flex-shrink: 0;
+    min-width: 80px;
+  }
+  .thread-box {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .35rem .55rem;
+    font-size: .78rem;
+    font-weight: 600;
+    text-align: center;
+    min-width: 60px;
+    transition: border-color .2s, background .2s, opacity .2s;
+  }
+  .thread-box.idle { color: #646464; }
+  .thread-box.reading { border-color: #28a745; background: #1a2e1a; color: #6db86d; border-width: 2px; }
+  .thread-box.waiting { border-color: #f0a500; background: #2a2010; opacity: .6; border-width: 2px; }
+  .thread-box.writing { border-color: #007bff; background: #1a2040; color: #7b97aa; border-width: 2px; }
+  .thread-box.done { border-color: #393639; color: #646464; }
+
+  .center-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .5rem;
+    min-width: 0;
+  }
+  .resource-box {
+    background: #2a2a2e;
+    border: 2px solid #393639;
+    border-radius: 6px;
+    padding: .6rem 1rem;
+    text-align: center;
+    width: 100%;
+    transition: border-color .2s, background .2s;
+  }
+  .resource-box .res-title { font-size: .67rem; color: #646464; text-transform: uppercase; letter-spacing: .06em; margin-bottom: .25rem; }
+  .resource-box .res-status { font-size: .9rem; font-weight: 700; }
+  .resource-box .res-count { font-size: .72rem; color: #9cdcfe; margin-top: .15rem; }
+  .resource-box.read-active { border-color: #28a745; background: #1a2e1a; }
+  .resource-box.write-active { border-color: #007bff; background: #1a2040; }
+  .resource-box.clear { border-color: #393639; }
+  .arrows-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    font-size: .7rem;
+    color: #646464;
+  }
+
+  .writer-col { flex-shrink: 0; min-width: 80px; }
+  .col-label { font-size: .67rem; color: #646464; text-align: center; margin-bottom: .3rem; text-transform: uppercase; letter-spacing: .06em; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Reader-Writer Locks — Step-Through</h4>
+  <div id="stat">Press Step to begin.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>◀ Back</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+  <div class="arena">
+    <div class="readers-col">
+      <div class="col-label">Readers</div>
+      <div id="r1" class="thread-box idle">R1</div>
+      <div id="r2" class="thread-box idle">R2</div>
+      <div id="r3" class="thread-box idle">R3</div>
+    </div>
+    <div class="center-col">
+      <div id="resource" class="resource-box clear">
+        <div class="res-title">Shared Resource</div>
+        <div class="res-status" id="res-status">—</div>
+        <div class="res-count" id="res-count"></div>
+      </div>
+    </div>
+    <div class="writer-col">
+      <div class="col-label">Writer</div>
+      <div id="w1" class="thread-box idle">W</div>
+    </div>
+  </div>
+</div>
+
+<script>
+var steps = [
+  { msg: 'Initial state. No readers or writers active. Resource available.',
+    r1:'idle', r2:'idle', r3:'idle', w:'idle',
+    resCls:'clear', resStatus:'idle', resCount:'', },
+  { msg: 'R1 acquires read lock → enters resource. Multiple concurrent readers allowed.',
+    r1:'reading', r2:'idle', r3:'idle', w:'idle',
+    resCls:'read-active', resStatus:'reading', resCount:'readers: 1' },
+  { msg: 'R2 acquires read lock → also enters resource. Concurrent reads are safe.',
+    r1:'reading', r2:'reading', r3:'idle', w:'idle',
+    resCls:'read-active', resStatus:'reading', resCount:'readers: 2' },
+  { msg: 'R3 acquires read lock → enters resource.',
+    r1:'reading', r2:'reading', r3:'reading', w:'idle',
+    resCls:'read-active', resStatus:'reading', resCount:'readers: 3' },
+  { msg: 'W tries write lock → BLOCKED. Must wait for all readers to finish. 🔒',
+    r1:'reading', r2:'reading', r3:'reading', w:'waiting',
+    resCls:'read-active', resStatus:'reading', resCount:'readers: 3 — writer waiting' },
+  { msg: 'R1 releases read lock.',
+    r1:'done', r2:'reading', r3:'reading', w:'waiting',
+    resCls:'read-active', resStatus:'reading', resCount:'readers: 2 — writer waiting' },
+  { msg: 'R2 releases read lock.',
+    r1:'done', r2:'done', r3:'reading', w:'waiting',
+    resCls:'read-active', resStatus:'reading', resCount:'readers: 1 — writer waiting' },
+  { msg: 'R3 releases read lock. All readers done.',
+    r1:'done', r2:'done', r3:'done', w:'waiting',
+    resCls:'clear', resStatus:'readers: 0', resCount:'writer unblocking…' },
+  { msg: 'W acquires exclusive write lock. No readers can enter. 🔒 WRITE LOCK',
+    r1:'done', r2:'done', r3:'done', w:'writing',
+    resCls:'write-active', resStatus:'WRITE LOCK', resCount:'readers blocked' },
+  { msg: 'W releases write lock. Resource is free again. ✓',
+    r1:'idle', r2:'idle', r3:'idle', w:'done',
+    resCls:'clear', resStatus:'idle', resCount:'' }
+];
+
+var idx = 0;
+
+function draw() {
+  var s = steps[idx];
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
+  document.getElementById('btn-step').disabled = idx >= steps.length - 1;
+  document.getElementById('btn-back').disabled = idx === 0;
+  document.getElementById('r1').className = 'thread-box ' + s.r1;
+  document.getElementById('r2').className = 'thread-box ' + s.r2;
+  document.getElementById('r3').className = 'thread-box ' + s.r3;
+  document.getElementById('w1').className = 'thread-box ' + s.w;
+  document.getElementById('resource').className = 'resource-box ' + s.resCls;
+  document.getElementById('res-status').textContent = s.resStatus;
+  document.getElementById('res-count').textContent = s.resCount;
+}
+
+document.getElementById('btn-step').onclick = function() { if (idx < steps.length - 1) { idx++; draw(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+draw();
+</script>
+</body>
+</html>

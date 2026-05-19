@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LSP — Liskov Substitution Principle Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 660px; margin: 0 auto; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  .cls-box {
+    border: 1px solid #393639;
+    border-radius: 4px;
+    overflow: hidden;
+    font-size: .8rem;
+  }
+  .cls-hdr {
+    background: #284b63;
+    color: #fff;
+    font-weight: 700;
+    padding: .25rem .5rem;
+  }
+  .cls-section {
+    background: #2a2a2e;
+    padding: .22rem .5rem;
+    line-height: 1.6;
+    border-top: 1px solid #393639;
+  }
+  .cls-section .method { color: #569cd6; }
+  .cls-section .attr { color: #9cdcfe; }
+  .cls-section .bad-method { color: #dc3545; }
+  .cls-section .good-method { color: #28a745; }
+  .snippet {
+    background: #1e1e20;
+    border-radius: 3px;
+    padding: .3rem .5rem;
+    font-family: "Consolas", monospace;
+    font-size: .72rem;
+    color: #d4d4d4;
+    line-height: 1.55;
+    white-space: pre;
+  }
+  .snippet .kw { color: #c586c0; }
+  .snippet .fn { color: #dcdcaa; }
+  .snippet .cm { color: #6a9955; }
+  .snippet .ok { color: #28a745; }
+  .snippet .err { color: #dc3545; }
+  .panel { display: none; }
+  .panel.visible { display: block; }
+  .row {
+    display: flex;
+    gap: .5rem;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    margin-bottom: .4rem;
+  }
+  .col { display: flex; flex-direction: column; gap: .3rem; }
+  .arrow {
+    font-size: .72rem;
+    color: #646464;
+    padding-top: .5rem;
+  }
+  .label {
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    margin-bottom: .35rem;
+  }
+  .label.bad { color: #dc3545; }
+  .label.good { color: #28a745; }
+  .label.neutral { color: #888; }
+  .call-box {
+    border-radius: 4px;
+    padding: .4rem .5rem;
+    font-size: .78rem;
+    margin-top: .25rem;
+  }
+  .call-ok { background: #1a3a1a; border: 1px solid #28a745; }
+  .call-err { background: #3a1a1a; border: 1px solid #dc3545; }
+  .note {
+    font-size: .72rem;
+    margin-top: .3rem;
+    line-height: 1.45;
+  }
+  .note.bad { color: #dc3545; }
+  .note.good { color: #28a745; }
+  .note.neutral { color: #888; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; margin-bottom: .75rem; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Liskov Substitution Principle — Step Through</h4>
+
+  <div id="ctrl">
+    <button id="btn-back" disabled onclick="step(-1)">◀ Back</button>
+    <button id="btn-step" onclick="step(1)">Step →</button>
+    <button onclick="reset()">↺ Reset</button>
+    <span id="counter">Step 1 / 4</span>
+  </div>
+
+  <div id="stat">Press Step to begin.</div>
+
+  <!-- Step 1: Show hierarchy with Penguin violation -->
+  <div class="panel visible" id="p1">
+    <div class="label neutral">Bird hierarchy — Penguin inherits fly() from Bird</div>
+    <div class="row">
+      <div class="col">
+        <div class="cls-box">
+          <div class="cls-hdr">Bird</div>
+          <div class="cls-section"><div class="method">+ fly(): void</div></div>
+        </div>
+        <div style="font-size:.72rem;color:#646464;margin-left:.4rem;">extends ↓</div>
+        <div class="row" style="margin-bottom:0;">
+          <div class="cls-box" style="border-color:#28a745;">
+            <div class="cls-hdr">Duck</div>
+            <div class="cls-section">
+              <div class="good-method">+ fly() ✓</div>
+              <div class="method">+ quack()</div>
+            </div>
+          </div>
+          <div class="cls-box" style="border-color:#dc3545;">
+            <div class="cls-hdr">Penguin</div>
+            <div class="cls-section">
+              <div class="bad-method">+ fly() ✗</div>
+              <div style="font-size:.68rem;color:#dc3545;">raise NotImplementedError</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="note bad">Penguin inherits fly() from Bird but cannot actually fly — it raises an error.</div>
+  </div>
+
+  <!-- Step 2: Call with Duck works -->
+  <div class="panel" id="p2">
+    <div class="label neutral">Testing make_it_fly() with Duck</div>
+    <div class="snippet" style="margin-bottom:.4rem;"><span class="kw">def</span> <span class="fn">make_it_fly</span>(bird):
+    bird.fly()          <span class="cm"># expects any Bird to fly</span>
+
+make_it_fly(Duck())     <span class="ok"># works fine ✓</span></div>
+    <div class="call-box call-ok">
+      <strong style="color:#28a745;">Duck.fly()</strong> — flies successfully. LSP satisfied for Duck.
+    </div>
+  </div>
+
+  <!-- Step 3: Call with Penguin breaks -->
+  <div class="panel" id="p3">
+    <div class="label bad">Testing make_it_fly() with Penguin ❌</div>
+    <div class="snippet" style="margin-bottom:.4rem;"><span class="kw">def</span> <span class="fn">make_it_fly</span>(bird):
+    bird.fly()          <span class="cm"># expects any Bird to fly</span>
+
+make_it_fly(Penguin())  <span class="err"># raises NotImplementedError!</span></div>
+    <div class="call-box call-err">
+      <strong style="color:#dc3545;">Penguin.fly()</strong> raises NotImplementedError — caller's assumption broken!
+    </div>
+    <div class="note bad">Penguin cannot substitute Bird. This violates LSP — the subtype breaks the parent's contract.</div>
+  </div>
+
+  <!-- Step 4: Fix — split hierarchy -->
+  <div class="panel" id="p4">
+    <div class="label good">Fix ✓ — Split into FlyingBird and NonFlyingBird</div>
+    <div class="row">
+      <div class="cls-box">
+        <div class="cls-hdr">Bird</div>
+        <div class="cls-section"><div class="attr">+ name: str</div></div>
+      </div>
+    </div>
+    <div style="font-size:.72rem;color:#646464;margin:.2rem 0 .3rem .4rem;">extends ↓</div>
+    <div class="row">
+      <div class="cls-box" style="border-color:#28a745;">
+        <div class="cls-hdr">FlyingBird</div>
+        <div class="cls-section">
+          <div class="good-method">+ fly(): void ✓</div>
+        </div>
+      </div>
+      <div class="arrow" style="padding-top:.3rem;"></div>
+      <div class="cls-box" style="border-color:#28a745;">
+        <div class="cls-hdr">NonFlyingBird</div>
+        <div class="cls-section">
+          <div style="color:#888;font-size:.72rem;">(no fly method)</div>
+        </div>
+      </div>
+    </div>
+    <div style="font-size:.72rem;color:#646464;margin:.25rem 0 .25rem .4rem;">extends ↓ &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; extends ↓</div>
+    <div class="row">
+      <div class="cls-box" style="border-color:#28a745;">
+        <div class="cls-hdr">Duck</div>
+        <div class="cls-section">
+          <div class="good-method">inherits fly() ✓</div>
+          <div class="method">+ quack()</div>
+        </div>
+      </div>
+      <div class="cls-box" style="border-color:#28a745;">
+        <div class="cls-hdr">Penguin</div>
+        <div class="cls-section">
+          <div class="good-method">no fly() needed ✓</div>
+          <div class="method">+ swim()</div>
+        </div>
+      </div>
+    </div>
+    <div class="note good">Now make_it_fly() only accepts FlyingBird — Penguin is never passed in. LSP preserved.</div>
+  </div>
+
+</div>
+<script>
+var cur = 1;
+var msgs = [
+  'Step 1: Bird has fly(). Duck extends Bird — works fine. Penguin extends Bird but raises NotImplementedError in fly().',
+  'Step 2: make_it_fly(Duck()) works correctly — Duck honours the Bird contract.',
+  'Step 3: make_it_fly(Penguin()) raises NotImplementedError. Penguin cannot substitute Bird — LSP violated.',
+  'Step 4 (Fix): Split into FlyingBird and NonFlyingBird. Duck extends FlyingBird. Penguin extends NonFlyingBird. make_it_fly() only accepts FlyingBird — LSP preserved.'
+];
+
+function render() {
+  for (var i = 1; i <= 4; i++) {
+    var p = document.getElementById('p' + i);
+    if (i === cur) p.classList.add('visible');
+    else p.classList.remove('visible');
+  }
+  document.getElementById('stat').textContent = msgs[cur - 1];
+  document.getElementById('counter').textContent = 'Step ' + cur + ' / 4';
+  document.getElementById('btn-back').disabled = cur === 1;
+  document.getElementById('btn-step').disabled = cur === 4;
+}
+
+function step(dir) { cur = Math.min(4, Math.max(1, cur + dir)); render(); }
+function reset() { cur = 1; render(); }
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ISP — Interface Segregation Principle Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 660px; margin: 0 auto; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  .cls-box {
+    border: 1px solid #393639;
+    border-radius: 4px;
+    overflow: hidden;
+    font-size: .8rem;
+  }
+  .cls-hdr {
+    background: #284b63;
+    color: #fff;
+    font-weight: 700;
+    padding: .25rem .5rem;
+  }
+  .cls-hdr.iface { background: #1a3a4a; font-style: italic; }
+  .cls-section {
+    background: #2a2a2e;
+    padding: .22rem .5rem;
+    line-height: 1.6;
+    border-top: 1px solid #393639;
+  }
+  .cls-section .method { color: #569cd6; }
+  .cls-section .bad-method { color: #dc3545; }
+  .cls-section .good-method { color: #28a745; }
+  .panel { display: none; }
+  .panel.visible { display: block; }
+  .row {
+    display: flex;
+    gap: .5rem;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    margin-bottom: .4rem;
+  }
+  .col { display: flex; flex-direction: column; gap: .3rem; align-items: flex-start; }
+  .label {
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    margin-bottom: .35rem;
+  }
+  .label.bad { color: #dc3545; }
+  .label.good { color: #28a745; }
+  .badge {
+    display: inline-block;
+    border-radius: 4px;
+    font-size: .68rem;
+    font-weight: 700;
+    padding: .12rem .35rem;
+    margin-top: .25rem;
+  }
+  .badge-bad { background: #3a1a1a; color: #dc3545; border: 1px solid #dc3545; }
+  .badge-good { background: #1a3a1a; color: #28a745; border: 1px solid #28a745; }
+  .note {
+    font-size: .72rem;
+    margin-top: .35rem;
+    line-height: 1.45;
+  }
+  .note.bad { color: #dc3545; }
+  .note.good { color: #28a745; }
+  .note.neutral { color: #888; }
+  .implements-label {
+    font-size: .68rem;
+    color: #888;
+    margin: .15rem 0;
+  }
+  .iface-group {
+    display: flex;
+    gap: .4rem;
+    flex-wrap: wrap;
+    margin-bottom: .4rem;
+  }
+  .iface-group .cls-box { flex: 1; min-width: 110px; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; margin-bottom: .75rem; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:hover { opacity: .75; }
+  #btn-toggle { background: #284b63; color: #fff; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Interface Segregation Principle — Toggle View</h4>
+
+  <div id="ctrl">
+    <button id="btn-toggle" onclick="toggle()">Show After ISP ▶</button>
+  </div>
+
+  <div id="stat">One fat interface forces Robot to implement human methods it cannot meaningfully use.</div>
+
+  <!-- BEFORE -->
+  <div class="panel visible" id="panel-before">
+    <div class="label bad">Before ISP ❌ — Fat interface</div>
+    <div class="row">
+      <div class="col">
+        <div class="cls-box" style="border-color:#dc3545;min-width:200px;">
+          <div class="cls-hdr iface">IWorker</div>
+          <div class="cls-section">
+            <div class="method">+ work()</div>
+            <div class="method">+ eat()</div>
+            <div class="method">+ sleep()</div>
+            <div class="method">+ charge_battery()</div>
+          </div>
+        </div>
+      </div>
+      <div style="padding-top:.6rem;font-size:.72rem;color:#646464;">
+        implements ↓
+      </div>
+      <div class="col" style="gap:.5rem;">
+        <div class="col" style="gap:.2rem;">
+          <div class="cls-box" style="min-width:160px;">
+            <div class="cls-hdr">Human</div>
+            <div class="cls-section">
+              <div class="good-method">+ work() ✓</div>
+              <div class="good-method">+ eat() ✓</div>
+              <div class="good-method">+ sleep() ✓</div>
+              <div class="bad-method">+ charge_battery() ✗</div>
+            </div>
+          </div>
+          <div class="badge badge-bad">forced to stub charge_battery() ❌</div>
+        </div>
+        <div class="col" style="gap:.2rem;">
+          <div class="cls-box" style="min-width:160px;border-color:#dc3545;">
+            <div class="cls-hdr">Robot</div>
+            <div class="cls-section">
+              <div class="good-method">+ work() ✓</div>
+              <div class="bad-method">+ eat() ???  ✗</div>
+              <div class="bad-method">+ sleep() ???  ✗</div>
+              <div class="good-method">+ charge_battery() ✓</div>
+            </div>
+          </div>
+          <div class="badge badge-bad">forced to implement eat() and sleep() ❌</div>
+        </div>
+      </div>
+    </div>
+    <div class="note bad">Robot forced to implement human methods it cannot use — violates ISP.</div>
+  </div>
+
+  <!-- AFTER -->
+  <div class="panel" id="panel-after">
+    <div class="label good">After ISP ✓ — Segregated interfaces</div>
+    <div class="iface-group">
+      <div class="cls-box" style="border-color:#28a745;">
+        <div class="cls-hdr iface">IWorkable</div>
+        <div class="cls-section"><div class="method">+ work()</div></div>
+      </div>
+      <div class="cls-box" style="border-color:#28a745;">
+        <div class="cls-hdr iface">IHuman</div>
+        <div class="cls-section">
+          <div class="method">+ eat()</div>
+          <div class="method">+ sleep()</div>
+        </div>
+      </div>
+      <div class="cls-box" style="border-color:#28a745;">
+        <div class="cls-hdr iface">IChargeable</div>
+        <div class="cls-section"><div class="method">+ charge_battery()</div></div>
+      </div>
+    </div>
+    <div class="implements-label">implements ↓</div>
+    <div class="row">
+      <div class="col" style="gap:.2rem;">
+        <div class="cls-box" style="border-color:#28a745;min-width:180px;">
+          <div class="cls-hdr">Human</div>
+          <div class="cls-section">
+            <div class="good-method">+ work() ✓</div>
+            <div class="good-method">+ eat() ✓</div>
+            <div class="good-method">+ sleep() ✓</div>
+          </div>
+        </div>
+        <div style="font-size:.68rem;color:#28a745;">implements IWorkable + IHuman</div>
+        <div class="badge badge-good">only what it needs ✓</div>
+      </div>
+      <div class="col" style="gap:.2rem;">
+        <div class="cls-box" style="border-color:#28a745;min-width:180px;">
+          <div class="cls-hdr">Robot</div>
+          <div class="cls-section">
+            <div class="good-method">+ work() ✓</div>
+            <div class="good-method">+ charge_battery() ✓</div>
+          </div>
+        </div>
+        <div style="font-size:.68rem;color:#28a745;">implements IWorkable + IChargeable</div>
+        <div class="badge badge-good">only what it needs ✓</div>
+      </div>
+    </div>
+    <div class="note good">Each class only implements methods relevant to it. No forced stubs.</div>
+  </div>
+
+</div>
+<script>
+var showing = 'before';
+function toggle() {
+  var btn = document.getElementById('btn-toggle');
+  var before = document.getElementById('panel-before');
+  var after = document.getElementById('panel-after');
+  var stat = document.getElementById('stat');
+  if (showing === 'before') {
+    before.classList.remove('visible');
+    after.classList.add('visible');
+    btn.textContent = '◀ Show Before ISP';
+    stat.textContent = 'Interfaces split into IWorkable, IHuman, and IChargeable. Human and Robot each implement only the interfaces they need.';
+    showing = 'after';
+  } else {
+    after.classList.remove('visible');
+    before.classList.add('visible');
+    btn.textContent = 'Show After ISP ▶';
+    stat.textContent = 'One fat interface forces Robot to implement human methods it cannot meaningfully use.';
+    showing = 'before';
+  }
+}
+</script>
+</body>
+</html>

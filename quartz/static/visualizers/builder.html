@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Builder Pattern — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 600px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: 1rem;
+  }
+  .diagram {
+    display: flex;
+    gap: 1.2rem;
+    margin-bottom: 1rem;
+    align-items: flex-start;
+  }
+  .builder-col { flex: 0 0 180px; }
+  .pizza-col { flex: 1; }
+  .col-label {
+    font-size: .7rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #646464;
+    margin-bottom: .35rem;
+  }
+  .box {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    overflow: hidden;
+    transition: border .2s;
+  }
+  .box.amber { border: 2px solid #f0a500; }
+  .box.green { border: 2px solid #28a745; }
+  .box-head {
+    background: #284b63;
+    color: #fff;
+    font-weight: 700;
+    padding: .3rem .6rem;
+    font-size: .8rem;
+  }
+  .box-body { padding: .4rem .7rem; color: #b0b0b0; font-size: .78rem; line-height: 1.6; }
+  .slot {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    padding: .3rem .7rem;
+    border-top: 1px solid #393639;
+    font-size: .8rem;
+    color: #555;
+    transition: background .3s, color .3s;
+  }
+  .slot.filled { color: #d4d4d4; background: #1e2e1e; }
+  .slot.active { color: #f0a500; background: #2a220a; }
+  .slot-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: #393639;
+    flex-shrink: 0;
+    transition: background .3s;
+  }
+  .slot.filled .slot-dot { background: #28a745; }
+  .slot.active .slot-dot { background: #f0a500; }
+  .pizza-head { background: #284b63; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Builder Pattern — Step-Through</h4>
+
+  <div class="diagram">
+    <div class="builder-col">
+      <div class="col-label">Builder</div>
+      <div class="box" id="builder-box">
+        <div class="box-head">PizzaBuilder</div>
+        <div class="box-body" id="builder-body">Ready to build.</div>
+      </div>
+    </div>
+
+    <div class="pizza-col">
+      <div class="col-label">Pizza (result)</div>
+      <div class="box" id="pizza-box">
+        <div class="box-head pizza-head">Pizza</div>
+        <div class="slot" id="s-dough"><div class="slot-dot"></div><span>dough: <em>empty</em></span></div>
+        <div class="slot" id="s-sauce"><div class="slot-dot"></div><span>sauce: <em>empty</em></span></div>
+        <div class="slot" id="s-top1"><div class="slot-dot"></div><span>topping 1: <em>empty</em></span></div>
+        <div class="slot" id="s-top2"><div class="slot-dot"></div><span>topping 2: <em>empty</em></span></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="stat">Press Step to begin building the pizza.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var steps = [
+  {
+    builder: '', pizza: '',
+    builderMsg: 'Ready to build.',
+    slots: {dough:0, sauce:0, top1:0, top2:0},
+    slotText: {dough:'empty', sauce:'empty', top1:'empty', top2:'empty'},
+    msg: 'builder = PizzaBuilder() — Builder object created. Pizza result starts empty.'
+  },
+  {
+    builder: 'amber', pizza: '',
+    builderMsg: '.set_dough("thin crust")',
+    slots: {dough:2, sauce:0, top1:0, top2:0},
+    slotText: {dough:'thin crust', sauce:'empty', top1:'empty', top2:'empty'},
+    msg: '.set_dough("thin crust") — dough slot filled in Pizza. Builder configures one part at a time.'
+  },
+  {
+    builder: 'amber', pizza: '',
+    builderMsg: '.set_sauce("tomato")',
+    slots: {dough:1, sauce:2, top1:0, top2:0},
+    slotText: {dough:'thin crust', sauce:'tomato', top1:'empty', top2:'empty'},
+    msg: '.set_sauce("tomato") — sauce slot filled. Dough already locked in (green).'
+  },
+  {
+    builder: 'amber', pizza: '',
+    builderMsg: '.add_topping("cheese")',
+    slots: {dough:1, sauce:1, top1:2, top2:0},
+    slotText: {dough:'thin crust', sauce:'tomato', top1:'cheese', top2:'empty'},
+    msg: '.add_topping("cheese") — first topping added. Each step mutates the internal Pizza under construction.'
+  },
+  {
+    builder: 'amber', pizza: '',
+    builderMsg: '.add_topping("mushrooms")',
+    slots: {dough:1, sauce:1, top1:1, top2:2},
+    slotText: {dough:'thin crust', sauce:'tomato', top1:'cheese', top2:'mushrooms'},
+    msg: '.add_topping("mushrooms") — second topping added. Pizza nearly complete.'
+  },
+  {
+    builder: 'green', pizza: 'green',
+    builderMsg: '.build() — done!',
+    slots: {dough:1, sauce:1, top1:1, top2:1},
+    slotText: {dough:'thin crust', sauce:'tomato', top1:'cheese', top2:'mushrooms'},
+    msg: '.build() → complete Pizza returned. Complex object assembled step by step. Final: thin crust | tomato sauce | cheese + mushrooms.'
+  }
+];
+var idx = 0;
+
+function draw() {
+  var s = steps[idx];
+  document.getElementById('builder-box').className = 'box' + (s.builder ? ' ' + s.builder : '');
+  document.getElementById('pizza-box').className = 'box' + (s.pizza ? ' ' + s.pizza : '');
+  document.getElementById('builder-body').textContent = s.builderMsg;
+  ['dough','sauce','top1','top2'].forEach(function(k) {
+    var el = document.getElementById('s-' + k);
+    var st = s.slots[k]; // 0=empty, 1=filled, 2=active
+    el.className = 'slot' + (st===1 ? ' filled' : st===2 ? ' active' : '');
+    var txt = s.slotText[k];
+    var label = k === 'top1' ? 'topping 1' : k === 'top2' ? 'topping 2' : k;
+    el.innerHTML = '<div class="slot-dot"></div><span>' + label + ': ' + (txt === 'empty' ? '<em>empty</em>' : '<strong>' + txt + '</strong>') + '</span>';
+  });
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
+  document.getElementById('btn-step').disabled = idx === steps.length - 1;
+  document.getElementById('btn-back').disabled = idx === 0;
+}
+
+document.getElementById('btn-step').onclick = function() { if (idx < steps.length - 1) { idx++; draw(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+draw();
+</script>
+</body>
+</html>

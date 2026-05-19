@@ -154,6 +154,12 @@ service = UserService(InMemoryRepository())
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/abstraction.html" style="width:100%;height:460px;border:none;border-radius:8px;" title="Abstraction Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Abstraction and encapsulation are complementary: encapsulation hides internal state, abstraction hides implementation details behind an interface. Together they ensure that code depends on contracts, not on the specific objects fulfilling those contracts.

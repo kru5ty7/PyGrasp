@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Producer-Consumer Pattern — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 620px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; margin-bottom: 1rem; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+
+  .arena {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+  }
+  .actor-box {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .5rem .6rem;
+    min-width: 90px;
+    font-size: .78rem;
+    text-align: center;
+    flex-shrink: 0;
+    transition: border-color .2s, background .2s, opacity .2s;
+  }
+  .actor-box .actor-name { font-weight: 700; font-size: .82rem; color: #9cdcfe; margin-bottom: .2rem; }
+  .actor-box .actor-status { font-size: .7rem; color: #646464; }
+  .actor-box.active { border-color: #007bff; border-width: 2px; background: #1a2040; }
+  .actor-box.blocked { opacity: .5; border-color: #f0a500; border-width: 2px; background: #2a2010; }
+  .actor-box.done { border-color: #28a745; background: #1a2e1a; }
+
+  .queue-col {
+    flex: 1;
+    min-width: 0;
+  }
+  .queue-title {
+    font-size: .67rem;
+    color: #646464;
+    text-align: center;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: .35rem;
+  }
+  .queue-slots {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+  }
+  .slot {
+    width: 44px;
+    height: 36px;
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .72rem;
+    font-weight: 600;
+    transition: background .2s, border-color .2s, color .2s;
+    color: #d4d4d4;
+  }
+  .slot.filled { background: #28a745; border-color: #28a745; color: #fff; }
+  .slot.just-added { background: #1a7a3a; border-color: #6db86d; border-width: 2px; color: #fff; }
+  .slot.empty { background: #2a2a2e; color: #393639; }
+
+  .queue-info {
+    text-align: center;
+    font-size: .7rem;
+    color: #646464;
+    margin-top: .3rem;
+  }
+  .info-panel {
+    margin-top: .6rem;
+    display: flex;
+    gap: .5rem;
+    font-size: .72rem;
+  }
+  .info-item {
+    flex: 1;
+    background: #222226;
+    border: 1px solid #2e2e32;
+    border-radius: 4px;
+    padding: .3rem .5rem;
+  }
+  .info-item .info-label { color: #646464; font-size: .67rem; text-transform: uppercase; margin-bottom: .1rem; }
+  .info-item .info-val { color: #ce9178; }
+  .info-item.alert .info-val { color: #f0c040; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Producer-Consumer Pattern — Step-Through</h4>
+  <div id="stat">Press Step to begin.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>◀ Back</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+  <div class="arena">
+    <div id="producer" class="actor-box">
+      <div class="actor-name">Producer</div>
+      <div class="actor-status" id="prod-status">idle</div>
+    </div>
+    <div class="queue-col">
+      <div class="queue-title">Queue (capacity: 5)</div>
+      <div class="queue-slots" id="queue-slots"></div>
+      <div class="queue-info" id="queue-info">size: 0 / 5</div>
+    </div>
+    <div id="consumer" class="actor-box">
+      <div class="actor-name">Consumer</div>
+      <div class="actor-status" id="cons-status">idle</div>
+    </div>
+  </div>
+  <div class="info-panel">
+    <div class="info-item" id="info-prod">
+      <div class="info-label">Producer</div>
+      <div class="info-val" id="info-prod-val">waiting</div>
+    </div>
+    <div class="info-item" id="info-queue">
+      <div class="info-label">Queue size</div>
+      <div class="info-val" id="info-queue-val">0 / 5</div>
+    </div>
+    <div class="info-item" id="info-cons">
+      <div class="info-label">Consumer</div>
+      <div class="info-val" id="info-cons-val">waiting</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// slots: array of 5, null=empty, number=item id, 'new'=just added
+var steps = [
+  { msg: 'Initial state. Queue is empty. Producer and consumer both idle.',
+    prod: 'normal', prodSt: 'idle', cons: 'normal', consSt: 'idle',
+    slots: [null, null, null, null, null], newSlot: -1,
+    infoP: 'idle', infoQ: '0 / 5', infoC: 'idle', alertP: false, alertC: false },
+  { msg: 'Producer produces item 1 → slot 1 fills.',
+    prod: 'active', prodSt: 'producing…', cons: 'normal', consSt: 'idle',
+    slots: [1, null, null, null, null], newSlot: 0,
+    infoP: 'produced item 1', infoQ: '1 / 5', infoC: 'idle', alertP: false, alertC: false },
+  { msg: 'Producer produces item 2 → slot 2 fills.',
+    prod: 'active', prodSt: 'producing…', cons: 'normal', consSt: 'idle',
+    slots: [1, 2, null, null, null], newSlot: 1,
+    infoP: 'produced item 2', infoQ: '2 / 5', infoC: 'idle', alertP: false, alertC: false },
+  { msg: 'Consumer consumes item 1 → slot 1 empties.',
+    prod: 'normal', prodSt: 'idle', cons: 'active', consSt: 'consuming…',
+    slots: [null, 2, null, null, null], newSlot: -1,
+    infoP: 'idle', infoQ: '1 / 5', infoC: 'consumed item 1', alertP: false, alertC: false },
+  { msg: 'Producer fills slots 3, 4, 5 — queue is now full.',
+    prod: 'active', prodSt: 'producing…', cons: 'normal', consSt: 'idle',
+    slots: [3, 2, 4, 5, 6], newSlot: -1,
+    infoP: 'produced 3, 4, 5', infoQ: '5 / 5', infoC: 'idle', alertP: false, alertC: false },
+  { msg: 'Producer tries to add item but queue is FULL → BLOCKED. 🔒 Queue full — producer waiting.',
+    prod: 'blocked', prodSt: '🔒 blocked', cons: 'normal', consSt: 'idle',
+    slots: [3, 2, 4, 5, 6], newSlot: -1,
+    infoP: '🔒 waiting (queue full)', infoQ: '5 / 5', infoC: 'idle', alertP: true, alertC: false },
+  { msg: 'Consumer consumes an item → frees a slot → producer unblocks.',
+    prod: 'active', prodSt: 'unblocked!', cons: 'active', consSt: 'consuming…',
+    slots: [3, null, 4, 5, 6], newSlot: -1,
+    infoP: 'resumed', infoQ: '4 / 5', infoC: 'consumed item', alertP: false, alertC: false },
+  { msg: 'Consumer drains the queue. Queue now empty.',
+    prod: 'normal', prodSt: 'idle', cons: 'active', consSt: 'consuming…',
+    slots: [null, null, null, null, null], newSlot: -1,
+    infoP: 'idle', infoQ: '0 / 5', infoC: 'consumed all', alertP: false, alertC: false },
+  { msg: 'Consumer tries to consume from empty queue → BLOCKED. 🔒 Queue empty — consumer waiting.',
+    prod: 'normal', prodSt: 'idle', cons: 'blocked', consSt: '🔒 blocked',
+    slots: [null, null, null, null, null], newSlot: -1,
+    infoP: 'idle', infoQ: '0 / 5', infoC: '🔒 waiting (queue empty)', alertP: false, alertC: true }
+];
+
+var idx = 0;
+
+function draw() {
+  var s = steps[idx];
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
+  document.getElementById('btn-step').disabled = idx >= steps.length - 1;
+  document.getElementById('btn-back').disabled = idx === 0;
+
+  var prod = document.getElementById('producer');
+  prod.className = 'actor-box' + (s.prod !== 'normal' ? ' ' + s.prod : '');
+  document.getElementById('prod-status').textContent = s.prodSt;
+
+  var cons = document.getElementById('consumer');
+  cons.className = 'actor-box' + (s.cons !== 'normal' ? ' ' + s.cons : '');
+  document.getElementById('cons-status').textContent = s.consSt;
+
+  var html = '';
+  var filled = 0;
+  s.slots.forEach(function(v, i) {
+    if (v !== null) filled++;
+    var cls = v === null ? 'slot empty' : (i === s.newSlot ? 'slot just-added' : 'slot filled');
+    html += '<div class="' + cls + '">' + (v !== null ? v : '') + '</div>';
+  });
+  document.getElementById('queue-slots').innerHTML = html;
+  document.getElementById('queue-info').textContent = 'size: ' + filled + ' / 5';
+
+  document.getElementById('info-prod-val').textContent = s.infoP;
+  document.getElementById('info-prod').className = 'info-item' + (s.alertP ? ' alert' : '');
+  document.getElementById('info-queue-val').textContent = s.infoQ;
+  document.getElementById('info-cons-val').textContent = s.infoC;
+  document.getElementById('info-cons').className = 'info-item' + (s.alertC ? ' alert' : '');
+}
+
+document.getElementById('btn-step').onclick = function() { if (idx < steps.length - 1) { idx++; draw(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+draw();
+</script>
+</body>
+</html>

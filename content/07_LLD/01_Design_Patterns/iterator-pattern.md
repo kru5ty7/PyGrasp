@@ -160,6 +160,12 @@ print(list(sensors))  # [22.5, 23.1, 21.8] - works again
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/iterator-pattern.html" style="width:100%;height:440px;border:none;border-radius:8px;" title="Iterator Pattern Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Python's `for` loop, comprehensions, and unpacking all use the iterator protocol. Understanding iterators is foundational to understanding how Python handles sequences.

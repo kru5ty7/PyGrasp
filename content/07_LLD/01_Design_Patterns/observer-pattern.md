@@ -147,6 +147,8 @@ class TradingBot:
             print(f"[BOT] BUY signal for {symbol} at ${price:.2f}")
 ```
 
+<iframe src="/static/visualizers/observer-pattern.html" width="100%" height="460px" style="border:none;border-radius:6px;" title="Observer Pattern Visualizer"></iframe>
+
 ---
 
 ## How It Connects

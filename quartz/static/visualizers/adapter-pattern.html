@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Adapter Pattern — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 640px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: 1rem;
+  }
+  .pipeline {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+  .pipe-item { display: flex; align-items: center; gap: 0; }
+  .box {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    overflow: hidden;
+    transition: border .2s, opacity .2s;
+    min-width: 120px;
+  }
+  .box.amber { border: 2px solid #f0a500; }
+  .box.green { border: 2px solid #28a745; }
+  .box-head {
+    background: #284b63;
+    color: #fff;
+    font-weight: 700;
+    padding: .3rem .6rem;
+    font-size: .78rem;
+  }
+  .box-head.iface { background: #3a3060; font-style: italic; }
+  .box-head.adaptee { background: #2a1a3a; }
+  .box-body { padding: .4rem .6rem; color: #b0b0b0; font-size: .75rem; line-height: 1.5; }
+  .arrow {
+    flex-shrink: 0;
+    width: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+  }
+  .arrow-shaft {
+    width: 100%;
+    height: 2px;
+    background: #393639;
+    position: relative;
+  }
+  .arrow-shaft::after {
+    content: '';
+    position: absolute;
+    right: -1px;
+    top: -4px;
+    border: 5px solid transparent;
+    border-left: 7px solid #393639;
+  }
+  .arrow-shaft.amber { background: #f0a500; }
+  .arrow-shaft.amber::after { border-left-color: #f0a500; }
+  .arrow-shaft.green { background: #28a745; }
+  .arrow-shaft.green::after { border-left-color: #28a745; }
+  .arrow-shaft.return {
+    background: #28a745;
+    transform: scaleX(-1);
+  }
+  .arrow-shaft.return::after { border-left-color: #28a745; }
+  .translate-box {
+    background: #1e1e20;
+    border: 1px dashed #7b97aa;
+    border-radius: 4px;
+    padding: .4rem .6rem;
+    font-size: .75rem;
+    color: #7b97aa;
+    margin-bottom: .6rem;
+    display: none;
+  }
+  .translate-box.visible { display: block; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Adapter Pattern — Step-Through</h4>
+
+  <div class="pipeline">
+    <div class="box" id="client-box">
+      <div class="box-head">Client</div>
+      <div class="box-body">wants:<br>play_audio(file)</div>
+    </div>
+    <div class="arrow"><div class="arrow-shaft" id="a1"></div></div>
+    <div class="box" id="target-box">
+      <div class="box-head iface">Target (interface)</div>
+      <div class="box-body">+ play_audio(file)</div>
+    </div>
+    <div class="arrow"><div class="arrow-shaft" id="a2"></div></div>
+    <div class="box" id="adapter-box">
+      <div class="box-head">Adapter</div>
+      <div class="box-body">play_audio(f) &#8594;<br>adaptee.play_mp3(f)</div>
+    </div>
+    <div class="arrow"><div class="arrow-shaft" id="a3"></div></div>
+    <div class="box" id="adaptee-box">
+      <div class="box-head adaptee">Adaptee (legacy)</div>
+      <div class="box-body">+ play_mp3(file)</div>
+    </div>
+  </div>
+
+  <div class="translate-box" id="translate">
+    play_audio("song.mp3") &nbsp;&#8594;&nbsp; play_mp3("song.mp3") &nbsp;|&nbsp; Adapter bridges the gap.
+  </div>
+
+  <div id="stat">Press Step to begin. Client needs play_audio() but Adaptee only has play_mp3().</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var steps = [
+  {
+    client:'', target:'', adapter:'', adaptee:'',
+    a1:'', a2:'', a3:'', translate: false,
+    msg: 'Client wants to call play_audio(file). Adaptee only knows play_mp3(). They are incompatible — the Adapter bridges them.'
+  },
+  {
+    client:'amber', target:'amber', adapter:'', adaptee:'',
+    a1:'amber', a2:'', a3:'', translate: false,
+    msg: 'Client calls adapter.play_audio("song.mp3") — call arrives at the Target interface (amber). Adapter receives it.'
+  },
+  {
+    client:'amber', target:'amber', adapter:'amber', adaptee:'',
+    a1:'amber', a2:'amber', a3:'', translate: false,
+    msg: 'Adapter translates: internally calls adaptee.play_mp3("song.mp3") — forwarding to the Adaptee (amber).'
+  },
+  {
+    client:'green', target:'green', adapter:'green', adaptee:'green',
+    a1:'green', a2:'green', a3:'green', translate: true,
+    msg: 'Adaptee plays the file. Result flows back through Adapter to Client. Incompatible interface made compatible. play_audio() → play_mp3() — Adapter bridges the gap.'
+  }
+];
+var idx = 0;
+
+function setClass(id, cls, base) {
+  document.getElementById(id).className = (base||'box') + (cls ? ' ' + cls : '');
+}
+
+function draw() {
+  var s = steps[idx];
+  setClass('client-box', s.client);
+  setClass('target-box', s.target);
+  setClass('adapter-box', s.adapter);
+  setClass('adaptee-box', s.adaptee);
+  setClass('a1', s.a1, 'arrow-shaft');
+  setClass('a2', s.a2, 'arrow-shaft');
+  setClass('a3', s.a3, 'arrow-shaft');
+  document.getElementById('translate').className = 'translate-box' + (s.translate ? ' visible' : '');
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
+  document.getElementById('btn-step').disabled = idx === steps.length - 1;
+  document.getElementById('btn-back').disabled = idx === 0;
+}
+
+document.getElementById('btn-step').onclick = function() { if (idx < steps.length - 1) { idx++; draw(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+draw();
+</script>
+</body>
+</html>

@@ -179,6 +179,8 @@ print(f"Registered handlers: {list(Handler._registry.keys())}")
 # ['email', 'slack', 'sms']
 ```
 
+<iframe src="/static/visualizers/factory-method.html" width="100%" height="460px" style="border:none;border-radius:6px;" title="Factory Method Pattern Visualizer"></iframe>
+
 ---
 
 ## How It Connects

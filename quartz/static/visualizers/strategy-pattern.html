@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Strategy Pattern — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618; color: #d4d4d4;
+    display: flex; align-items: flex-start; justify-content: center;
+    min-height: 100vh; padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 600px; }
+  h4 { font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; color: #646464; margin-bottom: .75rem; }
+  .box {
+    background: #2a2a2e; border: 1px solid #393639; border-radius: 4px;
+    padding: .4rem .7rem; margin-bottom: .5rem;
+  }
+  .box-header {
+    background: #284b63; color: #fff; font-weight: 700; font-size: .82rem;
+    padding: .25rem .5rem; border-radius: 3px 3px 0 0; margin: -.4rem -.7rem .4rem -.7rem;
+  }
+  .box.active { border: 2px solid #f0a500; }
+  .box.done   { border: 2px solid #28a745; }
+  .box.bad    { border: 2px solid #dc3545; }
+  .box-label  { font-size: .78rem; color: #888; }
+  .box-val    { font-size: .85rem; font-family: monospace; }
+  .strategies { display: flex; gap: .5rem; margin-bottom: .5rem; }
+  .strategies .box { flex: 1; text-align: center; }
+  .slot {
+    font-size: .75rem; color: #888; background: #1e1e22;
+    border: 1px dashed #555; border-radius: 3px;
+    padding: .2rem .5rem; margin-top: .3rem; font-family: monospace;
+  }
+  .slot.filled { border-color: #f0a500; color: #f0a500; background: #2a2200; }
+  #stat {
+    padding: .5rem .75rem; background: #393639;
+    border-left: 3px solid #7b97aa; border-radius: 0 4px 4px 0;
+    font-size: .85rem; line-height: 1.5; min-height: 2.4rem; margin-bottom: .75rem;
+  }
+  #result {
+    font-family: monospace; font-size: .82rem; color: #28a745;
+    min-height: 1.2rem; margin-bottom: .6rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem; border: none; border-radius: 4px;
+    cursor: pointer; font-size: .82rem; background: #393639;
+    color: #d4d4d4; transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+  .arrow { text-align: center; color: #555; font-size: 1.1rem; margin-bottom: .3rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Strategy Pattern — Step-Through</h4>
+
+  <div class="box" id="ctx-box">
+    <div class="box-header">Navigator (Context)</div>
+    <div class="box-val">start = "A"&nbsp;&nbsp;end = "B"</div>
+    <div class="slot" id="slot">_strategy: RouteStrategy (none)</div>
+  </div>
+
+  <div class="arrow">▼ implements</div>
+
+  <div class="strategies">
+    <div class="box" id="s0">
+      <div class="box-header">CarRoute</div>
+      <div class="box-label">+ calculate(start, end): str</div>
+    </div>
+    <div class="box" id="s1">
+      <div class="box-header">WalkingRoute</div>
+      <div class="box-label">+ calculate(start, end): str</div>
+    </div>
+    <div class="box" id="s2">
+      <div class="box-header">PublicTransitRoute</div>
+      <div class="box-label">+ calculate(start, end): str</div>
+    </div>
+  </div>
+
+  <div id="result"></div>
+  <div id="stat">Press Step to begin.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>◀ Back</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var steps = [
+  {
+    msg: 'nav = Navigator(start="A", end="B") — Context created, no strategy set.',
+    ctx: '', slot: '_strategy: RouteStrategy (none)', slotFilled: false,
+    active: [], result: ''
+  },
+  {
+    msg: 'nav.set_strategy(CarRoute()) — CarRoute injected into Navigator slot.',
+    ctx: '', slot: '_strategy: CarRoute()', slotFilled: true,
+    active: [0], result: 'nav.route() → "Drive via highway — 20 min"'
+  },
+  {
+    msg: 'nav.set_strategy(WalkingRoute()) — Strategy swapped at runtime. Navigator code unchanged.',
+    ctx: '', slot: '_strategy: WalkingRoute()', slotFilled: true,
+    active: [1], result: 'nav.route() → "Walk via park — 45 min"'
+  },
+  {
+    msg: 'nav.set_strategy(PublicTransitRoute()) — Third strategy injected. Behaviour swapped at runtime — Navigator unchanged.',
+    ctx: 'done', slot: '_strategy: PublicTransitRoute()', slotFilled: true,
+    active: [2], result: 'nav.route() → "Take subway line 2 — 30 min"'
+  }
+];
+
+var idx = 0;
+
+function draw() {
+  var s = steps[idx];
+  var ctxBox = document.getElementById('ctx-box');
+  ctxBox.className = 'box' + (s.ctx === 'done' ? ' done' : '');
+  var slot = document.getElementById('slot');
+  slot.textContent = s.slot;
+  slot.className = 'slot' + (s.slotFilled ? ' filled' : '');
+  ['s0','s1','s2'].forEach(function(id, i) {
+    var el = document.getElementById(id);
+    el.className = 'box' + (s.active.indexOf(i) >= 0 ? ' active' : '');
+  });
+  document.getElementById('result').textContent = s.result;
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
+  document.getElementById('btn-step').disabled = idx === steps.length - 1;
+  document.getElementById('btn-back').disabled = idx === 0;
+}
+
+document.getElementById('btn-step').onclick = function() { if (idx < steps.length - 1) { idx++; draw(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+draw();
+</script>
+</body>
+</html>

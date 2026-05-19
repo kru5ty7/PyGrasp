@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Abstract Factory Pattern — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 640px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: 1rem;
+  }
+  .row { display: flex; gap: .75rem; margin-bottom: .6rem; align-items: flex-start; }
+  .box {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    overflow: hidden;
+    font-size: .82rem;
+    transition: border .2s, opacity .2s;
+    flex: 1;
+  }
+  .box.amber { border: 2px solid #f0a500; }
+  .box.green { border: 2px solid #28a745; }
+  .box.dim { opacity: .3; }
+  .box-head {
+    background: #284b63;
+    color: #fff;
+    font-weight: 700;
+    padding: .3rem .6rem;
+    font-size: .8rem;
+  }
+  .box-head.abstract { background: #3a3060; font-style: italic; }
+  .box-head.win { background: #1a4a2a; }
+  .box-head.mac { background: #4a2a1a; }
+  .box-body { padding: .4rem .7rem; color: #b0b0b0; font-size: .78rem; line-height: 1.5; }
+  .section-label {
+    font-size: .7rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #646464;
+    margin-bottom: .3rem;
+  }
+  .divider {
+    border: none;
+    border-top: 1px solid #393639;
+    margin: .5rem 0;
+  }
+  .arrow-down { text-align: center; font-size: .85rem; color: #646464; margin: .15rem 0; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Abstract Factory Pattern — Step-Through</h4>
+
+  <div class="section-label">Factory Hierarchy</div>
+  <div class="row">
+    <div class="box" id="abs-factory">
+      <div class="box-head abstract">GUIFactory (abstract)</div>
+      <div class="box-body">+ create_button()<br>+ create_dialog()</div>
+    </div>
+  </div>
+  <div class="arrow-down">&#8595; implements</div>
+  <div class="row">
+    <div class="box" id="win-factory">
+      <div class="box-head win">WindowsFactory</div>
+      <div class="box-body">+ create_button() &#8594; WindowsButton<br>+ create_dialog() &#8594; WindowsDialog</div>
+    </div>
+    <div class="box" id="mac-factory">
+      <div class="box-head mac">MacFactory</div>
+      <div class="box-body">+ create_button() &#8594; MacButton<br>+ create_dialog() &#8594; MacDialog</div>
+    </div>
+  </div>
+
+  <hr class="divider">
+  <div class="section-label">Product Family</div>
+  <div class="row">
+    <div class="box" id="win-btn">
+      <div class="box-head win">WindowsButton</div>
+      <div class="box-body">render() &#8594; "[Win Button]"</div>
+    </div>
+    <div class="box" id="mac-btn">
+      <div class="box-head mac">MacButton</div>
+      <div class="box-body">render() &#8594; "[Mac Button]"</div>
+    </div>
+  </div>
+  <div class="row">
+    <div class="box" id="win-dlg">
+      <div class="box-head win">WindowsDialog</div>
+      <div class="box-body">show() &#8594; "[Win Dialog]"</div>
+    </div>
+    <div class="box" id="mac-dlg">
+      <div class="box-head mac">MacDialog</div>
+      <div class="box-body">show() &#8594; "[Mac Dialog]"</div>
+    </div>
+  </div>
+
+  <div id="stat">Press Step to begin. Full factory hierarchy shown above.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var steps = [
+  {
+    wf:'', mf:'', wb:'', mb:'', wd:'', md:'',
+    msg: 'Abstract factory defines the interface. Concrete factories (WindowsFactory, MacFactory) produce families of related products.'
+  },
+  {
+    wf:'amber', mf:'dim', wb:'amber', mb:'dim', wd:'amber', md:'dim',
+    msg: 'factory = WindowsFactory() → btn = factory.create_button() → WindowsButton (amber). Dialog also comes from the Windows family.'
+  },
+  {
+    wf:'dim', mf:'amber', wb:'dim', mb:'amber', wd:'dim', md:'amber',
+    msg: 'Switch to factory = MacFactory() — same client code, same method calls. MacButton and MacDialog produced. Family of objects changed without touching client.'
+  }
+];
+var idx = 0;
+
+function setClass(id, cls) {
+  document.getElementById(id).className = 'box' + (cls ? ' ' + cls : '');
+}
+
+function draw() {
+  var s = steps[idx];
+  setClass('win-factory', s.wf);
+  setClass('mac-factory', s.mf);
+  setClass('win-btn', s.wb);
+  setClass('mac-btn', s.mb);
+  setClass('win-dlg', s.wd);
+  setClass('mac-dlg', s.md);
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
+  document.getElementById('btn-step').disabled = idx === steps.length - 1;
+  document.getElementById('btn-back').disabled = idx === 0;
+}
+
+document.getElementById('btn-step').onclick = function() { if (idx < steps.length - 1) { idx++; draw(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+draw();
+</script>
+</body>
+</html>

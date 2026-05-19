@@ -164,6 +164,8 @@ class SimpleRequest:
 req = SimpleRequest(method="GET", url="https://example.com", timeout=5.0)
 ```
 
+<iframe src="/static/visualizers/builder.html" width="100%" height="440px" style="border:none;border-radius:6px;" title="Builder Pattern Visualizer"></iframe>
+
 ---
 
 ## How It Connects

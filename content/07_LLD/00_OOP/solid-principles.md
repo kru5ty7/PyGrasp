@@ -139,6 +139,12 @@ class UserService:
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/solid-principles.html" style="width:100%;height:420px;border:none;border-radius:8px;" title="SOLID Principles Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Each SOLID principle has its own dedicated note that goes deeper into examples, edge cases, and Python-specific implementations.

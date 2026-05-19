@@ -202,6 +202,12 @@ def create_user(name: str, email: str, service: UserService = Depends(get_servic
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/dependency-injection-pattern.html" style="width:100%;height:460px;border:none;border-radius:8px;" title="Dependency Injection Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 DI is the practical technique for implementing the Dependency Inversion Principle. DIP is the design rule; DI is how you apply it in code.

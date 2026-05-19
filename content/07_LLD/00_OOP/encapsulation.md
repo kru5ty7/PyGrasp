@@ -120,6 +120,12 @@ conn = Connection("localhost", 8080)
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/encapsulation.html" style="width:100%;height:420px;border:none;border-radius:8px;" title="Encapsulation Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Encapsulation relies on properties, which are built on Python's descriptor protocol. Understanding descriptors explains why properties can intercept attribute access and how the lookup chain determines whether a descriptor or an instance attribute wins.

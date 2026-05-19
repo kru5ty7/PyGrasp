@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Singleton Pattern — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 600px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: 1rem;
+  }
+  .diagram {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1rem;
+    min-height: 160px;
+  }
+  .clients { display: flex; flex-direction: column; gap: .5rem; }
+  .box {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    overflow: hidden;
+    font-size: .82rem;
+    transition: border .2s;
+    min-width: 110px;
+  }
+  .box.amber { border: 2px solid #f0a500; }
+  .box.green { border: 2px solid #28a745; }
+  .box-head {
+    background: #284b63;
+    color: #fff;
+    font-weight: 700;
+    padding: .3rem .6rem;
+    font-size: .8rem;
+  }
+  .box-body { padding: .4rem .7rem; color: #b0b0b0; font-size: .78rem; }
+  .arrows {
+    display: flex;
+    flex-direction: column;
+    gap: .5rem;
+    align-items: center;
+  }
+  .arrow-row {
+    display: flex;
+    align-items: center;
+    gap: .3rem;
+    font-size: .78rem;
+    color: #646464;
+  }
+  .arrow-line {
+    width: 60px;
+    height: 2px;
+    background: #393639;
+    position: relative;
+  }
+  .arrow-line.amber { background: #f0a500; }
+  .arrow-line.green { background: #28a745; }
+  .arrow-line::after {
+    content: '';
+    position: absolute;
+    right: -1px;
+    top: -4px;
+    border: 5px solid transparent;
+    border-left: 7px solid #393639;
+  }
+  .arrow-line.amber::after { border-left-color: #f0a500; }
+  .arrow-line.green::after { border-left-color: #28a745; }
+  .singleton-box { min-width: 160px; }
+  .code-panel {
+    background: #1e1e20;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .6rem .8rem;
+    font-family: "Consolas", "Fira Code", monospace;
+    font-size: .76rem;
+    color: #b0c4de;
+    line-height: 1.6;
+    margin-bottom: .75rem;
+    display: none;
+  }
+  .code-panel.visible { display: block; }
+  .kw { color: #569cd6; }
+  .fn { color: #dcdcaa; }
+  .cm { color: #6a9955; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Singleton Pattern — Step-Through</h4>
+
+  <div class="diagram">
+    <div class="clients">
+      <div class="box" id="c1">
+        <div class="box-head">Client1</div>
+        <div class="box-body">get_instance()</div>
+      </div>
+      <div class="box" id="c2">
+        <div class="box-head">Client2</div>
+        <div class="box-body">get_instance()</div>
+      </div>
+      <div class="box" id="c3">
+        <div class="box-head">Client3</div>
+        <div class="box-body">get_instance()</div>
+      </div>
+    </div>
+
+    <div class="arrows" id="arrows">
+      <div class="arrow-row"><div class="arrow-line" id="a1"></div></div>
+      <div class="arrow-row"><div class="arrow-line" id="a2"></div></div>
+      <div class="arrow-row"><div class="arrow-line" id="a3"></div></div>
+    </div>
+
+    <div class="box singleton-box" id="singleton">
+      <div class="box-head">DatabaseConnection</div>
+      <div class="box-body" id="singleton-body">_instance = None</div>
+    </div>
+  </div>
+
+  <div class="code-panel" id="code-panel">
+<span class="kw">class</span> <span class="fn">DatabaseConnection</span>:
+  _instance = <span class="kw">None</span>
+
+  <span class="kw">def</span> <span class="fn">__new__</span>(cls):
+    <span class="kw">if</span> cls._instance <span class="kw">is</span> <span class="kw">None</span>:
+      cls._instance = <span class="kw">super</span>().__new__(cls)
+    <span class="kw">return</span> cls._instance  <span class="cm"># always same object</span>
+
+  <span class="cm"># __init__ called but same object returned</span>
+  </div>
+
+  <div id="stat">Press Step to begin.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var steps = [
+  {
+    clients: ['','',''], arrows: ['','',''], singleton: '', body: '_instance = None',
+    code: false,
+    msg: 'Three clients all want a DatabaseConnection. Each will call get_instance().'
+  },
+  {
+    clients: ['amber','',''], arrows: ['amber','',''], singleton: 'amber', body: '_instance = &lt;DatabaseConnection @ 0x1a2b&gt;',
+    code: false,
+    msg: 'Client1 calls DatabaseConnection.get_instance() — no instance exists yet, so one is created. Instance returned (amber).'
+  },
+  {
+    clients: ['green','amber',''], arrows: ['green','amber',''], singleton: 'amber', body: '_instance = &lt;DatabaseConnection @ 0x1a2b&gt;',
+    code: false,
+    msg: 'Client2 calls get_instance() — instance already exists. Same object returned. Same object returned.'
+  },
+  {
+    clients: ['green','green','amber'], arrows: ['green','green','amber'], singleton: 'amber', body: '_instance = &lt;DatabaseConnection @ 0x1a2b&gt;',
+    code: false,
+    msg: 'Client3 calls get_instance() — same instance again. All three clients share the exact same object.'
+  },
+  {
+    clients: ['green','green','green'], arrows: ['green','green','green'], singleton: 'green', body: '_instance = &lt;DatabaseConnection @ 0x1a2b&gt;',
+    code: true,
+    msg: 'All clients share one instance. Only one DB connection created. The __new__ method guards creation with a None check.'
+  }
+];
+var idx = 0;
+
+function draw() {
+  var s = steps[idx];
+  ['c1','c2','c3'].forEach(function(id, i) {
+    document.getElementById(id).className = 'box' + (s.clients[i] ? ' ' + s.clients[i] : '');
+  });
+  ['a1','a2','a3'].forEach(function(id, i) {
+    document.getElementById(id).className = 'arrow-line' + (s.arrows[i] ? ' ' + s.arrows[i] : '');
+  });
+  document.getElementById('singleton').className = 'box singleton-box' + (s.singleton ? ' ' + s.singleton : '');
+  document.getElementById('singleton-body').innerHTML = s.body;
+  document.getElementById('code-panel').className = 'code-panel' + (s.code ? ' visible' : '');
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
+  document.getElementById('btn-step').disabled = idx === steps.length - 1;
+  document.getElementById('btn-back').disabled = idx === 0;
+}
+
+document.getElementById('btn-step').onclick = function() { if (idx < steps.length - 1) { idx++; draw(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+draw();
+</script>
+</body>
+</html>

@@ -189,6 +189,12 @@ admin = AdminService(repo, repo, repo) # sees all methods
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/isp.html" style="width:100%;height:460px;border:none;border-radius:8px;" title="Interface Segregation Principle Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Python's Protocol system is the primary tool for implementing ISP. Small Protocols let you express exactly which capabilities a client depends on.

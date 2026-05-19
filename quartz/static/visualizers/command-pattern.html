@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Command Pattern — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618; color: #d4d4d4;
+    display: flex; align-items: flex-start; justify-content: center;
+    min-height: 100vh; padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 600px; }
+  h4 { font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; color: #646464; margin-bottom: .75rem; }
+  .row { display: flex; gap: .5rem; margin-bottom: .5rem; }
+  .box {
+    background: #2a2a2e; border: 1px solid #393639; border-radius: 4px;
+    padding: .4rem .7rem; flex: 1;
+  }
+  .box-header {
+    background: #284b63; color: #fff; font-weight: 700; font-size: .82rem;
+    padding: .25rem .5rem; border-radius: 3px 3px 0 0; margin: -.4rem -.7rem .4rem -.7rem;
+  }
+  .box.active { border: 2px solid #f0a500; }
+  .box.done   { border: 2px solid #28a745; }
+  .box.off    { border: 1px solid #393639; }
+  .box-label  { font-size: .78rem; color: #888; }
+  .box-val    { font-size: .85rem; font-family: monospace; }
+  .light-state {
+    font-size: 1.1rem; font-weight: 700; text-align: center;
+    padding: .3rem; border-radius: 3px; margin-top: .3rem;
+  }
+  .light-on  { background: #1a3d1a; color: #28a745; }
+  .light-off { background: #2a2a2e; color: #555; }
+  .history-list {
+    font-family: monospace; font-size: .78rem; min-height: 1.2rem;
+    color: #a0c8e0; margin-top: .3rem;
+  }
+  #stat {
+    padding: .5rem .75rem; background: #393639;
+    border-left: 3px solid #7b97aa; border-radius: 0 4px 4px 0;
+    font-size: .85rem; line-height: 1.5; min-height: 2.4rem; margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem; border: none; border-radius: 4px;
+    cursor: pointer; font-size: .82rem; background: #393639;
+    color: #d4d4d4; transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Command Pattern — Step-Through</h4>
+
+  <div class="row">
+    <div class="box" id="invoker-box">
+      <div class="box-header">Remote (Invoker)</div>
+      <div class="box-label">history:</div>
+      <div class="history-list" id="history">[]</div>
+    </div>
+    <div class="box" id="receiver-box">
+      <div class="box-header">Light (Receiver)</div>
+      <div class="light-state light-off" id="light-state">OFF</div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="box" id="cmd0">
+      <div class="box-header">TurnOnCommand</div>
+      <div class="box-label">+ execute() → light.turn_on()</div>
+      <div class="box-label">+ undo() → light.turn_off()</div>
+    </div>
+    <div class="box" id="cmd1">
+      <div class="box-header">TurnOffCommand</div>
+      <div class="box-label">+ execute() → light.turn_off()</div>
+      <div class="box-label">+ undo() → light.turn_on()</div>
+    </div>
+  </div>
+
+  <div id="stat">Press Step to begin.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>◀ Back</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var steps = [
+  {
+    msg: 'Initial state. Light = OFF, history is empty.',
+    lightOn: false, history: [],
+    activeCmd: -1, invokerDone: false
+  },
+  {
+    msg: 'remote.execute(TurnOnCommand(light)) — TurnOnCommand.execute() calls light.turn_on(). Stored in history.',
+    lightOn: true, history: ['TurnOn'],
+    activeCmd: 0, invokerDone: false
+  },
+  {
+    msg: 'remote.execute(TurnOffCommand(light)) — TurnOffCommand.execute() calls light.turn_off(). Appended to history.',
+    lightOn: false, history: ['TurnOn', 'TurnOff'],
+    activeCmd: 1, invokerDone: false
+  },
+  {
+    msg: 'remote.execute(TurnOnCommand(light)) — Light ON again. History grows.',
+    lightOn: true, history: ['TurnOn', 'TurnOff', 'TurnOn'],
+    activeCmd: 0, invokerDone: false
+  },
+  {
+    msg: 'remote.undo() — Last command (TurnOn) reversed via undo(). Light OFF. History shrinks. Undo supported via command history.',
+    lightOn: false, history: ['TurnOn', 'TurnOff'],
+    activeCmd: -1, invokerDone: true
+  }
+];
+
+var idx = 0;
+
+function draw() {
+  var s = steps[idx];
+  var ls = document.getElementById('light-state');
+  ls.textContent = s.lightOn ? 'ON' : 'OFF';
+  ls.className = 'light-state ' + (s.lightOn ? 'light-on' : 'light-off');
+  document.getElementById('receiver-box').className = 'box' + (s.lightOn ? ' done' : '');
+  document.getElementById('history').textContent = s.history.length ? '[' + s.history.join(', ') + ']' : '[]';
+  document.getElementById('invoker-box').className = 'box' + (s.invokerDone ? ' done' : '');
+  document.getElementById('cmd0').className = 'box' + (s.activeCmd === 0 ? ' active' : '');
+  document.getElementById('cmd1').className = 'box' + (s.activeCmd === 1 ? ' active' : '');
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
+  document.getElementById('btn-step').disabled = idx === steps.length - 1;
+  document.getElementById('btn-back').disabled = idx === 0;
+}
+
+document.getElementById('btn-step').onclick = function() { if (idx < steps.length - 1) { idx++; draw(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+draw();
+</script>
+</body>
+</html>

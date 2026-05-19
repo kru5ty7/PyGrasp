@@ -145,6 +145,12 @@ print(export_data(sample, "yaml"))
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/ocp.html" style="width:100%;height:460px;border:none;border-radius:8px;" title="Open/Closed Principle Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 OCP is closely tied to polymorphism. The mechanism that makes code open for extension is polymorphic dispatch - whether through method overriding, duck typing, or function callbacks.

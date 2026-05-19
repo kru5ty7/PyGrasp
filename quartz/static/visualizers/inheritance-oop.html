@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Inheritance — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  .class-box {
+    border: 1px solid #393639;
+    border-radius: 4px;
+    overflow: hidden;
+    transition: border-color .2s;
+  }
+  .class-box.highlight { border-color: #f0a500; }
+  .cb-header {
+    background: #284b63;
+    color: #fff;
+    font-weight: 700;
+    padding: .4rem .6rem;
+    font-size: .9rem;
+  }
+  .cb-section {
+    background: #2a2a2e;
+    padding: .4rem .6rem;
+    font-size: .85rem;
+    border-top: 1px solid #393639;
+  }
+  .cb-section div { line-height: 1.7; }
+  .inherited { color: #6c757d; }
+  .highlight-text { color: #f0a500 !important; font-weight: 700; }
+  .connector {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    opacity: 0;
+    transition: opacity .3s;
+  }
+  .connector.visible { opacity: 1; }
+  .conn-line {
+    width: 2px;
+    height: 18px;
+    background: #555;
+  }
+  .conn-label {
+    font-size: .7rem;
+    color: #646464;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+    margin: 2px 0;
+  }
+  .conn-arrow {
+    width: 0; height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 9px solid #555;
+  }
+  .box-wrap {
+    opacity: 0;
+    transition: opacity .3s;
+  }
+  .box-wrap.visible { opacity: 1; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.2rem;
+    margin-bottom: .75rem;
+    margin-top: .9rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Inheritance — Step-Through</h4>
+
+  <div style="display:flex;flex-direction:column;align-items:center;gap:0">
+
+    <!-- Vehicle -->
+    <div class="box-wrap visible" id="vehicle-wrap" style="width:260px">
+      <div class="class-box" id="vehicle-box">
+        <div class="cb-header">Vehicle</div>
+        <div class="cb-section">
+          <div>- make</div>
+          <div>- model</div>
+          <div>- year</div>
+        </div>
+        <div class="cb-section">
+          <div id="v-start">+ start()</div>
+          <div>+ stop()</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- connector V→C -->
+    <div class="connector" id="conn1" style="width:260px">
+      <div class="conn-line"></div>
+      <div class="conn-label">inherits</div>
+      <div class="conn-arrow"></div>
+    </div>
+
+    <!-- Car -->
+    <div class="box-wrap" id="car-wrap" style="width:260px">
+      <div class="class-box" id="car-box">
+        <div class="cb-header">Car</div>
+        <div class="cb-section">
+          <div class="inherited" id="car-make">- make</div>
+          <div class="inherited" id="car-model">- model</div>
+          <div class="inherited" id="car-year">- year</div>
+          <div>+ num_doors</div>
+        </div>
+        <div class="cb-section">
+          <div class="inherited" id="car-start">+ start()</div>
+          <div class="inherited">+ stop()</div>
+          <div>+ honk()</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- connector C→E -->
+    <div class="connector" id="conn2" style="width:260px">
+      <div class="conn-line"></div>
+      <div class="conn-label">inherits</div>
+      <div class="conn-arrow"></div>
+    </div>
+
+    <!-- ElectricCar -->
+    <div class="box-wrap" id="ecar-wrap" style="width:260px">
+      <div class="class-box" id="ecar-box">
+        <div class="cb-header">ElectricCar</div>
+        <div class="cb-section">
+          <div class="inherited" id="ec-make">- make</div>
+          <div class="inherited" id="ec-model">- model</div>
+          <div class="inherited" id="ec-year">- year</div>
+          <div class="inherited">+ num_doors</div>
+          <div>+ battery_capacity</div>
+        </div>
+        <div class="cb-section">
+          <div class="inherited" id="ec-start">+ start()</div>
+          <div class="inherited">+ stop()</div>
+          <div class="inherited">+ honk()</div>
+          <div>+ charge()</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div id="stat">Press Step to begin.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &rarr;</button>
+    <button id="btn-reset">&#8634; Reset</button>
+    <span id="counter">Step 0 / 4</span>
+  </div>
+</div>
+<script>
+var step = 0;
+var MSGS = [
+  'Press Step to begin.',
+  'Base class: Vehicle defines the shared blueprint — make, model, year, start(), stop().',
+  'Car inherits from Vehicle. Grey members are inherited — no need to redefine them.',
+  'ElectricCar inherits from Car — and transitively from Vehicle. It gains everything up the chain.',
+  'electric_car.start() — Python finds start() not in ElectricCar, not in Car… found in Vehicle. Method resolution order at work.'
+];
+
+function render() {
+  document.getElementById('stat').textContent = MSGS[step];
+  document.getElementById('counter').textContent = 'Step ' + step + ' / 4';
+  document.getElementById('btn-back').disabled = step === 0;
+  document.getElementById('btn-step').disabled = step === 4;
+
+  document.getElementById('conn1').classList.toggle('visible', step >= 2);
+  document.getElementById('car-wrap').classList.toggle('visible', step >= 2);
+  document.getElementById('conn2').classList.toggle('visible', step >= 3);
+  document.getElementById('ecar-wrap').classList.toggle('visible', step >= 3);
+
+  // Step 4: highlight start() in ElectricCar grey, Vehicle amber
+  var ecStart = document.getElementById('ec-start');
+  var vStart  = document.getElementById('v-start');
+  var carStart = document.getElementById('car-start');
+
+  vStart.classList.toggle('highlight-text', step === 4);
+  ecStart.classList.toggle('highlight-text', false);
+  carStart.classList.toggle('highlight-text', false);
+
+  if (step === 4) {
+    ecStart.style.cssText = 'color:#f0a500;line-height:1.7';
+    ecStart.textContent = '+ start()  ← searching…';
+    carStart.style.cssText = 'color:#f0a500;line-height:1.7';
+    carStart.textContent = '+ start()  ← not here…';
+    vStart.style.cssText = '';
+    vStart.textContent = '+ start()';
+    document.getElementById('vehicle-box').classList.add('highlight');
+    document.getElementById('ecar-box').classList.remove('highlight');
+  } else {
+    ecStart.style.cssText = '';
+    ecStart.textContent = '+ start()';
+    carStart.style.cssText = '';
+    carStart.textContent = '+ start()';
+    vStart.style.cssText = '';
+    vStart.textContent = '+ start()';
+    document.getElementById('vehicle-box').classList.remove('highlight');
+    document.getElementById('ecar-box').classList.remove('highlight');
+  }
+}
+
+document.getElementById('btn-step').onclick  = function() { if (step < 4) { step++; render(); } };
+document.getElementById('btn-back').onclick  = function() { if (step > 0) { step--; render(); } };
+document.getElementById('btn-reset').onclick = function() { step = 0; render(); };
+
+render();
+</script>
+</body>
+</html>

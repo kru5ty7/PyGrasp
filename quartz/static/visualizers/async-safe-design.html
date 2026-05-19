@@ -1,0 +1,276 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Async Safe Design — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 620px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; margin-bottom: 1rem; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+
+  .arena {
+    display: flex;
+    gap: .75rem;
+    align-items: flex-start;
+  }
+  .tasks-col {
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+    min-width: 130px;
+    flex-shrink: 0;
+  }
+  .col-label {
+    font-size: .67rem;
+    color: #646464;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: .2rem;
+    text-align: center;
+  }
+
+  .task-box {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .35rem .55rem;
+    font-size: .78rem;
+    transition: border-color .2s, background .2s, opacity .2s;
+  }
+  .task-box .t-name { font-weight: 700; font-size: .8rem; color: #9cdcfe; }
+  .task-box .t-state { font-size: .7rem; margin-top: .1rem; color: #646464; }
+  .task-box .t-await { font-size: .68rem; font-family: "Consolas", monospace; color: #646464; margin-top: .1rem; }
+  .task-box.running { border-color: #007bff; border-width: 2px; background: #1a2040; }
+  .task-box.running .t-state { color: #7b97aa; }
+  .task-box.awaiting { border-color: #f0a500; border-width: 2px; background: #2a2010; opacity: .7; }
+  .task-box.awaiting .t-state { color: #f0c040; }
+  .task-box.done { border-color: #28a745; background: #1a2e1a; }
+  .task-box.done .t-state { color: #6db86d; }
+  .task-box.queued { border-color: #393639; }
+
+  .center-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .5rem;
+    min-width: 0;
+  }
+  .loop-box {
+    background: #2a2a2e;
+    border: 2px solid #7b97aa;
+    border-radius: 50px;
+    padding: .55rem 1.1rem;
+    text-align: center;
+    width: 100%;
+    transition: border-color .2s, background .2s;
+  }
+  .loop-box .loop-title { font-size: .78rem; font-weight: 700; color: #7b97aa; }
+  .loop-box .loop-sub { font-size: .68rem; color: #646464; margin-top: .1rem; }
+  .loop-box.active { border-color: #007bff; background: #1a2040; }
+  .loop-box.active .loop-title { color: #9cdcfe; }
+
+  .arrow-box {
+    font-size: .7rem;
+    color: #646464;
+    text-align: center;
+    padding: .1rem 0;
+  }
+
+  .thread-compare {
+    margin-top: .6rem;
+    border: 1px solid #2e2e32;
+    border-radius: 4px;
+    overflow: hidden;
+    font-size: .72rem;
+  }
+  .tc-row {
+    display: flex;
+    border-bottom: 1px solid #2e2e32;
+  }
+  .tc-row:last-child { border-bottom: none; }
+  .tc-cell {
+    flex: 1;
+    padding: .3rem .5rem;
+    border-right: 1px solid #2e2e32;
+  }
+  .tc-cell:last-child { border-right: none; }
+  .tc-cell.hdr { background: #252528; color: #646464; font-size: .67rem; text-transform: uppercase; letter-spacing: .05em; }
+  .tc-cell.bad { color: #e07070; }
+  .tc-cell.good { color: #6db86d; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Async Safe Design — Event Loop Step-Through</h4>
+  <div id="stat">Press Step to begin.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>◀ Back</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+  <div class="arena">
+    <div class="tasks-col">
+      <div class="col-label">Coroutines</div>
+      <div id="task-a" class="task-box queued">
+        <div class="t-name">Task A</div>
+        <div class="t-state" id="ta-state">queued</div>
+        <div class="t-await" id="ta-await"></div>
+      </div>
+      <div id="task-b" class="task-box queued">
+        <div class="t-name">Task B</div>
+        <div class="t-state" id="tb-state">queued</div>
+        <div class="t-await" id="tb-await"></div>
+      </div>
+      <div id="task-c" class="task-box queued">
+        <div class="t-name">Task C</div>
+        <div class="t-state" id="tc-state">queued</div>
+        <div class="t-await" id="tc-await"></div>
+      </div>
+    </div>
+
+    <div class="center-col">
+      <div id="loop-box" class="loop-box">
+        <div class="loop-title">Event Loop</div>
+        <div class="loop-sub" id="loop-sub">single thread</div>
+      </div>
+      <div class="arrow-box">↑ schedules ↓ resumes</div>
+      <div class="thread-compare">
+        <div class="tc-row">
+          <div class="tc-cell hdr">Threads</div>
+          <div class="tc-cell hdr">Coroutines</div>
+        </div>
+        <div class="tc-row">
+          <div class="tc-cell bad">1 thread per task</div>
+          <div class="tc-cell good">1 thread, many tasks</div>
+        </div>
+        <div class="tc-row">
+          <div class="tc-cell bad">OS schedules, can race</div>
+          <div class="tc-cell good">await = explicit yield</div>
+        </div>
+        <div class="tc-row">
+          <div class="tc-cell bad">needs locks</div>
+          <div class="tc-cell good">no race conditions</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+var steps = [
+  { msg: 'Event loop starts. Tasks A, B, C are queued. Single thread — no races.',
+    ta:'queued', taState:'queued', taAwait:'',
+    tb:'queued', tbState:'queued', tbAwait:'',
+    tc:'queued', tcState:'queued', tcAwait:'',
+    loopCls:'', loopSub:'single thread — ready' },
+  { msg: 'Event loop starts Task A. Task A begins executing.',
+    ta:'running', taState:'running', taAwait:'',
+    tb:'queued', tbState:'queued', tbAwait:'',
+    tc:'queued', tcState:'queued', tcAwait:'',
+    loopCls:'active', loopSub:'running Task A' },
+  { msg: 'Task A hits "await io_operation()" — suspends, yields control back to loop.',
+    ta:'awaiting', taState:'suspended', taAwait:'await io_operation()',
+    tb:'queued', tbState:'queued', tbAwait:'',
+    tc:'queued', tcState:'queued', tcAwait:'',
+    loopCls:'active', loopSub:'Task A awaiting I/O' },
+  { msg: 'Event loop picks up Task B while A waits. Concurrency without threads!',
+    ta:'awaiting', taState:'suspended', taAwait:'await io_operation()',
+    tb:'running', tbState:'running', tbAwait:'',
+    tc:'queued', tcState:'queued', tcAwait:'',
+    loopCls:'active', loopSub:'running Task B (A suspended)' },
+  { msg: 'Task B completes successfully.',
+    ta:'awaiting', taState:'suspended', taAwait:'await io_operation()',
+    tb:'done', tbState:'done ✓', tbAwait:'',
+    tc:'queued', tcState:'queued', tcAwait:'',
+    loopCls:'active', loopSub:'Task B done' },
+  { msg: 'Task A\'s I/O finishes. Event loop resumes Task A from where it left off.',
+    ta:'running', taState:'resumed', taAwait:'',
+    tb:'done', tbState:'done ✓', tbAwait:'',
+    tc:'queued', tcState:'queued', tcAwait:'',
+    loopCls:'active', loopSub:'resuming Task A' },
+  { msg: 'Task A completes. Event loop starts Task C.',
+    ta:'done', taState:'done ✓', taAwait:'',
+    tb:'done', tbState:'done ✓', tbAwait:'',
+    tc:'running', tcState:'running', tcAwait:'',
+    loopCls:'active', loopSub:'running Task C' },
+  { msg: 'Task C completes. All done. Single thread, no locks needed, no race conditions. ✓',
+    ta:'done', taState:'done ✓', taAwait:'',
+    tb:'done', tbState:'done ✓', tbAwait:'',
+    tc:'done', tcState:'done ✓', tcAwait:'',
+    loopCls:'', loopSub:'all tasks complete ✓' }
+];
+
+var idx = 0;
+
+function draw() {
+  var s = steps[idx];
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
+  document.getElementById('btn-step').disabled = idx >= steps.length - 1;
+  document.getElementById('btn-back').disabled = idx === 0;
+
+  document.getElementById('task-a').className = 'task-box ' + s.ta;
+  document.getElementById('ta-state').textContent = s.taState;
+  document.getElementById('ta-await').textContent = s.taAwait;
+  document.getElementById('task-b').className = 'task-box ' + s.tb;
+  document.getElementById('tb-state').textContent = s.tbState;
+  document.getElementById('tb-await').textContent = s.tbAwait;
+  document.getElementById('task-c').className = 'task-box ' + s.tc;
+  document.getElementById('tc-state').textContent = s.tcState;
+  document.getElementById('tc-await').textContent = s.tcAwait;
+  document.getElementById('loop-box').className = 'loop-box' + (s.loopCls ? ' ' + s.loopCls : '');
+  document.getElementById('loop-sub').textContent = s.loopSub;
+}
+
+document.getElementById('btn-step').onclick = function() { if (idx < steps.length - 1) { idx++; draw(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+draw();
+</script>
+</body>
+</html>

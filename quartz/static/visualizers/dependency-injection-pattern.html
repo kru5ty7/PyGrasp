@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dependency Injection — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618; color: #d4d4d4;
+    display: flex; align-items: flex-start; justify-content: center;
+    min-height: 100vh; padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 640px; }
+  h4 { font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; color: #646464; margin-bottom: .75rem; }
+  .cols { display: flex; gap: .6rem; margin-bottom: .5rem; }
+  .col { flex: 1; }
+  .col-label { font-size: .72rem; font-weight: 700; margin-bottom: .3rem; padding: .2rem .4rem; border-radius: 3px; }
+  .col-label.bad  { background: #3d1515; color: #dc3545; }
+  .col-label.good { background: #0d2010; color: #28a745; }
+  .box {
+    background: #2a2a2e; border: 1px solid #393639; border-radius: 4px;
+    padding: .4rem .7rem; margin-bottom: .35rem;
+  }
+  .box-header {
+    background: #284b63; color: #fff; font-weight: 700; font-size: .82rem;
+    padding: .2rem .5rem; border-radius: 3px 3px 0 0; margin: -.4rem -.7rem .35rem -.7rem;
+  }
+  .box-header.injector { background: #3a2a00; color: #f0c050; }
+  .box.active { border: 2px solid #f0a500; }
+  .box.done   { border: 2px solid #28a745; }
+  .box.bad    { border: 2px solid #dc3545; }
+  .box.dim    { opacity: .35; }
+  .code { font-family: monospace; font-size: .76rem; line-height: 1.5; color: #aaa; }
+  .code .kw  { color: #569cd6; }
+  .code .fn  { color: #dcdcaa; }
+  .code .bad { color: #dc3545; }
+  .code .good { color: #28a745; }
+  .deps-row { display: flex; gap: .35rem; margin-bottom: .3rem; }
+  .dep-box { flex: 1; background: #1e1e22; border: 1px solid #393639; border-radius: 3px; padding: .25rem .4rem; font-size: .73rem; text-align: center; }
+  .dep-box.active { border-color: #f0a500; color: #f0a500; }
+  .dep-box.done   { border-color: #28a745; color: #5cdb5c; }
+  .dep-box.mock   { border-color: #7b97aa; color: #7b97aa; background: #1a2030; }
+  .arrow-down { text-align: center; color: #555; font-size: .8rem; margin-bottom: .2rem; }
+  #stat {
+    padding: .5rem .75rem; background: #393639;
+    border-left: 3px solid #7b97aa; border-radius: 0 4px 4px 0;
+    font-size: .85rem; line-height: 1.5; min-height: 2.4rem; margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem; border: none; border-radius: 4px;
+    cursor: pointer; font-size: .82rem; background: #393639;
+    color: #d4d4d4; transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Dependency Injection — Step-Through</h4>
+
+  <div class="cols">
+    <div class="col">
+      <div class="col-label bad">BEFORE ✗ — Hard-coded deps</div>
+      <div class="box" id="before-box">
+        <div class="box-header">ReportService</div>
+        <div class="code">
+          <span class="kw">def</span> <span class="fn">__init__</span>(self):<br>
+          &nbsp;&nbsp;self.db = <span class="bad">MySQL()</span><br>
+          &nbsp;&nbsp;self.mailer = <span class="bad">SMTPMailer()</span><br>
+          &nbsp;&nbsp;self.logger = <span class="bad">FileLogger()</span>
+        </div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="col-label good">AFTER ✓ — Injected deps</div>
+      <div class="box" id="injector-box">
+        <div class="box-header injector">Injector</div>
+        <div class="deps-row">
+          <div class="dep-box" id="dep0">MySQL</div>
+          <div class="dep-box" id="dep1">SMTPMailer</div>
+          <div class="dep-box" id="dep2">FileLogger</div>
+        </div>
+      </div>
+      <div class="arrow-down" id="arrow-inj">↓ passes to</div>
+      <div class="box" id="after-box">
+        <div class="box-header">ReportService</div>
+        <div class="code">
+          <span class="kw">def</span> <span class="fn">__init__</span>(self,<br>
+          &nbsp;&nbsp;<span class="good">db, mailer, logger</span>):<br>
+          &nbsp;&nbsp;self.db = db<br>
+          &nbsp;&nbsp;self.mailer = mailer<br>
+          &nbsp;&nbsp;self.logger = logger
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="box" id="test-box" style="display:none">
+    <div class="box-header">Test Scenario — Mock Injection</div>
+    <div class="deps-row">
+      <div class="dep-box mock" id="mock0">MockDB</div>
+      <div class="dep-box mock" id="mock1">FakeMailer</div>
+      <div class="dep-box mock" id="mock2">NullLogger</div>
+    </div>
+    <div class="arrow-down">↓ same interface</div>
+    <div class="code" style="padding:.2rem .4rem">
+      <span class="good">ReportService(db=MockDB(), mailer=FakeMailer(), logger=NullLogger())</span><br>
+      <span style="color:#888">— service code unchanged</span>
+    </div>
+  </div>
+
+  <div id="stat">Press Step to begin.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>◀ Back</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var steps = [
+  {
+    msg: 'BEFORE: ReportService creates its own dependencies inside __init__. Tightly coupled — cannot swap MySQL, SMTPMailer, or FileLogger without editing the class.',
+    beforeClass: 'box bad', afterClass: 'box dim', injectorClass: 'box dim',
+    deps: ['','',''], showTest: false
+  },
+  {
+    msg: 'AFTER: Dependencies are passed in via __init__ parameters. An Injector creates MySQL, SMTPMailer, and FileLogger, then passes them to ReportService.',
+    beforeClass: 'box dim', afterClass: 'box done', injectorClass: 'box done',
+    deps: ['done','done','done'], showTest: false
+  },
+  {
+    msg: 'Test scenario: inject MockDB and FakeMailer instead of real implementations. Service code is completely unchanged. This is the power of DI.',
+    beforeClass: 'box dim', afterClass: 'box done', injectorClass: 'box dim',
+    deps: ['done','done','done'], showTest: true
+  }
+];
+
+var idx = 0;
+
+function draw() {
+  var s = steps[idx];
+  document.getElementById('before-box').className = s.beforeClass;
+  document.getElementById('after-box').className = s.afterClass;
+  document.getElementById('injector-box').className = s.injectorClass;
+  ['dep0','dep1','dep2'].forEach(function(id, i) {
+    document.getElementById(id).className = 'dep-box' + (s.deps[i] ? ' ' + s.deps[i] : '');
+  });
+  document.getElementById('test-box').style.display = s.showTest ? '' : 'none';
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
+  document.getElementById('btn-step').disabled = idx === steps.length - 1;
+  document.getElementById('btn-back').disabled = idx === 0;
+}
+
+document.getElementById('btn-step').onclick = function() { if (idx < steps.length - 1) { idx++; draw(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+draw();
+</script>
+</body>
+</html>

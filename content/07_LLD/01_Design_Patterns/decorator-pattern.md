@@ -169,6 +169,8 @@ source.write("sensitive user data")
 print(source.read())  # "sensitive user data" - unwrapped automatically
 ```
 
+<iframe src="/static/visualizers/decorator-pattern.html" width="100%" height="460px" style="border:none;border-radius:6px;" title="Decorator Pattern Visualizer"></iframe>
+
 ---
 
 ## How It Connects

@@ -135,6 +135,12 @@ emitter.emit("user_created", name="Alice", email="alice@test.com")
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/design-patterns-overview.html" style="width:100%;height:460px;border:none;border-radius:8px;" title="Design Patterns Overview"></iframe>
+
+---
+
 ## How It Connects
 
 SOLID principles are the design philosophy. Design patterns are the practical toolkit that implements those principles in specific situations.

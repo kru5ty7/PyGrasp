@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Iterator Pattern — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618; color: #d4d4d4;
+    display: flex; align-items: flex-start; justify-content: center;
+    min-height: 100vh; padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 580px; }
+  h4 { font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; color: #646464; margin-bottom: .75rem; }
+  .box {
+    background: #2a2a2e; border: 1px solid #393639; border-radius: 4px;
+    padding: .4rem .7rem; margin-bottom: .5rem;
+  }
+  .box-header {
+    background: #284b63; color: #fff; font-weight: 700; font-size: .82rem;
+    padding: .25rem .5rem; border-radius: 3px 3px 0 0; margin: -.4rem -.7rem .4rem -.7rem;
+  }
+  .box.active { border: 2px solid #f0a500; }
+  .box.done   { border: 2px solid #28a745; }
+  .box.bad    { border: 2px solid #dc3545; }
+  .items-row { display: flex; gap: .4rem; margin: .3rem 0; }
+  .item {
+    background: #393639; border: 1px solid #555; border-radius: 3px;
+    padding: .25rem .5rem; font-family: monospace; font-size: .85rem;
+    min-width: 2.4rem; text-align: center; transition: all .2s;
+  }
+  .item.current { background: #2a2000; border: 2px solid #f0a500; color: #f0c050; font-weight: 700; }
+  .item.visited { background: #0d2010; border-color: #28a745; color: #5cdb5c; }
+  .pointer-row { display: flex; gap: .4rem; margin-bottom: .3rem; }
+  .ptr-cell {
+    min-width: 2.4rem; text-align: center; font-size: .7rem;
+    color: #f0a500; padding: 0 .5rem;
+  }
+  .ptr-cell.hidden { color: transparent; }
+  .iterator-info { font-family: monospace; font-size: .82rem; }
+  .seen-panel {
+    background: #1e1e22; border: 1px solid #393639; border-radius: 3px;
+    padding: .3rem .6rem; font-family: monospace; font-size: .82rem;
+    margin-bottom: .5rem; min-height: 1.6rem;
+  }
+  .seen-label { font-size: .72rem; color: #888; margin-bottom: .2rem; }
+  #stat {
+    padding: .5rem .75rem; background: #393639;
+    border-left: 3px solid #7b97aa; border-radius: 0 4px 4px 0;
+    font-size: .85rem; line-height: 1.5; min-height: 2.4rem; margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem; border: none; border-radius: 4px;
+    cursor: pointer; font-size: .82rem; background: #393639;
+    color: #d4d4d4; transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Iterator Pattern — Step-Through</h4>
+
+  <div class="box" id="coll-box">
+    <div class="box-header">NumberCollection</div>
+    <div class="items-row" id="items-row">
+      <div class="item" id="item0">10</div>
+      <div class="item" id="item1">20</div>
+      <div class="item" id="item2">30</div>
+      <div class="item" id="item3">40</div>
+      <div class="item" id="item4">50</div>
+    </div>
+    <div class="pointer-row" id="ptr-row">
+      <div class="ptr-cell hidden" id="ptr0">▲</div>
+      <div class="ptr-cell hidden" id="ptr1">▲</div>
+      <div class="ptr-cell hidden" id="ptr2">▲</div>
+      <div class="ptr-cell hidden" id="ptr3">▲</div>
+      <div class="ptr-cell hidden" id="ptr4">▲</div>
+    </div>
+  </div>
+
+  <div class="box" id="iter-box">
+    <div class="box-header">Iterator</div>
+    <div class="iterator-info" id="iter-info">index = —</div>
+  </div>
+
+  <div class="seen-label">Values seen so far:</div>
+  <div class="seen-panel" id="seen-panel">—</div>
+
+  <div id="stat">Press Step to begin.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>◀ Back</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var VALUES = [10, 20, 30, 40, 50];
+var steps = [
+  {
+    msg: 'it = collection.__iter__() — Iterator created, index = 0, pointing at first element.',
+    currentIdx: 0, visited: [], exhausted: false, iterIdx: 0
+  },
+  {
+    msg: 'next(it) → returns 10. Index advances to 1.',
+    currentIdx: 1, visited: [0], exhausted: false, iterIdx: 1
+  },
+  {
+    msg: 'next(it) → returns 20. Index advances to 2.',
+    currentIdx: 2, visited: [0,1], exhausted: false, iterIdx: 2
+  },
+  {
+    msg: 'next(it) → returns 30. Index advances to 3.',
+    currentIdx: 3, visited: [0,1,2], exhausted: false, iterIdx: 3
+  },
+  {
+    msg: 'next(it) → returns 40. Index advances to 4.',
+    currentIdx: 4, visited: [0,1,2,3], exhausted: false, iterIdx: 4
+  },
+  {
+    msg: 'next(it) → returns 50. Index advances to 5 (past end).',
+    currentIdx: -1, visited: [0,1,2,3,4], exhausted: false, iterIdx: 5
+  },
+  {
+    msg: 'next(it) → StopIteration raised. Iterator exhausted — no more elements.',
+    currentIdx: -1, visited: [0,1,2,3,4], exhausted: true, iterIdx: 5
+  }
+];
+
+var idx = 0;
+
+function draw() {
+  var s = steps[idx];
+  for (var i = 0; i < 5; i++) {
+    var el = document.getElementById('item' + i);
+    var pr = document.getElementById('ptr' + i);
+    var isCurrent = (i === s.currentIdx);
+    var isVisited = s.visited.indexOf(i) >= 0;
+    el.className = 'item' + (isCurrent ? ' current' : (isVisited ? ' visited' : ''));
+    pr.className = 'ptr-cell' + (isCurrent ? '' : ' hidden');
+  }
+
+  var iterBox = document.getElementById('iter-box');
+  iterBox.className = 'box' + (s.exhausted ? ' bad' : (s.iterIdx > 0 ? ' active' : ''));
+  document.getElementById('iter-info').textContent = 'index = ' + s.iterIdx + (s.exhausted ? '  ← StopIteration' : '');
+
+  var seen = s.visited.map(function(i) { return VALUES[i]; });
+  document.getElementById('seen-panel').textContent = seen.length ? seen.join(', ') : '—';
+
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
+  document.getElementById('btn-step').disabled = idx === steps.length - 1;
+  document.getElementById('btn-back').disabled = idx === 0;
+}
+
+document.getElementById('btn-step').onclick = function() { if (idx < steps.length - 1) { idx++; draw(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+draw();
+</script>
+</body>
+</html>

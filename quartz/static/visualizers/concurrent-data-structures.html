@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Concurrent Data Structures — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 680px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; margin-bottom: 1rem; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+
+  .cols { display: flex; gap: .7rem; }
+  .col { flex: 1; min-width: 0; }
+  .col-title {
+    font-size: .7rem;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    margin-bottom: .5rem;
+    padding: .2rem .45rem;
+    border-radius: 3px;
+    text-align: center;
+  }
+  .col-title.bad { background: #3a1a1a; color: #e07070; }
+  .col-title.safe { background: #1a2e1a; color: #6db86d; }
+  .col-title.alt { background: #1a2040; color: #7b97aa; }
+
+  .thread-box {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .35rem .55rem;
+    font-size: .75rem;
+    margin-bottom: .3rem;
+    transition: border-color .2s, background .2s, opacity .2s;
+  }
+  .thread-box .th-name { font-weight: 700; color: #9cdcfe; font-size: .77rem; }
+  .thread-box .th-op { color: #646464; font-size: .7rem; margin-top: .1rem; }
+  .thread-box.active { border-color: #007bff; border-width: 2px; background: #1a2040; }
+  .thread-box.blocked { opacity: .5; border-color: #f0a500; border-width: 2px; background: #2a2010; }
+  .thread-box.done { border-color: #28a745; background: #1a2e1a; }
+
+  .dict-box {
+    background: #111113;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .35rem .55rem;
+    font-size: .72rem;
+    font-family: "Consolas", monospace;
+    margin: .3rem 0;
+    min-height: 3rem;
+    transition: border-color .2s, background .2s;
+  }
+  .dict-box.error { border-color: #c0392b; background: #1a0808; }
+  .dict-box.success { border-color: #28a745; background: #0a1a0a; }
+  .dict-box .dk { color: #9cdcfe; }
+  .dict-box .dv { color: #ce9178; }
+  .dict-box .corrupt { color: #c0392b; font-style: italic; }
+
+  .badge {
+    display: inline-block;
+    font-size: .67rem;
+    padding: .06rem .3rem;
+    border-radius: 10px;
+    margin-top: .25rem;
+  }
+  .badge-red { background: #3a1a1a; color: #e07070; }
+  .badge-green { background: #1a2e1a; color: #6db86d; }
+  .badge-blue { background: #1a2040; color: #7b97aa; }
+
+  .lock-icon { color: #f0c040; }
+
+  .queue-vis {
+    background: #111113;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .35rem .55rem;
+    font-size: .72rem;
+    margin: .3rem 0;
+    color: #b5cea8;
+  }
+  .queue-vis .q-label { color: #646464; font-size: .67rem; margin-bottom: .2rem; }
+
+  .queue-slots {
+    display: flex;
+    gap: 3px;
+    margin-top: .2rem;
+  }
+  .qs {
+    width: 36px;
+    height: 28px;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .68rem;
+    font-weight: 600;
+    background: #28a745;
+    color: #fff;
+  }
+  .qs.empty { background: #2a2a2e; color: #393639; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Concurrent Data Structures — Step-Through</h4>
+  <div id="stat">Press Step to begin.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>◀ Back</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+  <div class="cols">
+    <div class="col">
+      <div class="col-title bad">dict — Unsafe ❌</div>
+      <div id="ua-box" class="thread-box"><div class="th-name">Thread A</div><div class="th-op" id="ua-op">idle</div></div>
+      <div id="ub-box" class="thread-box"><div class="th-name">Thread B</div><div class="th-op" id="ub-op">idle</div></div>
+      <div id="unsafe-dict" class="dict-box"><span style="color:#393639">{'key': ?}</span></div>
+      <div id="unsafe-badge"></div>
+    </div>
+    <div class="col">
+      <div class="col-title safe">Lock + dict — Safe ✓</div>
+      <div id="sa-box" class="thread-box"><div class="th-name">Thread A</div><div class="th-op" id="sa-op">idle</div></div>
+      <div id="sb-box" class="thread-box"><div class="th-name">Thread B</div><div class="th-op" id="sb-op">idle</div></div>
+      <div id="safe-dict" class="dict-box"><span style="color:#393639">{'key': ?}</span></div>
+      <div id="safe-badge"></div>
+    </div>
+    <div class="col">
+      <div class="col-title alt">queue.Queue — Built-in ✓</div>
+      <div class="thread-box"><div class="th-name">Any Thread</div><div class="th-op" style="color:#6db86d">thread-safe by design</div></div>
+      <div class="queue-vis">
+        <div class="q-label">queue.Queue() — internal lock handled automatically</div>
+        <div class="queue-slots">
+          <div class="qs">A</div><div class="qs">B</div><div class="qs">C</div><div class="qs empty"></div><div class="qs empty"></div>
+        </div>
+      </div>
+      <span class="badge badge-blue">No manual locking needed</span>
+    </div>
+  </div>
+</div>
+
+<script>
+var steps = [
+  { msg: 'Initial state. Both sides: dict is empty, threads idle. queue.Queue is always safe.',
+    ua:'normal', uaOp:'idle', ub:'normal', ubOp:'idle',
+    dictU:'<span style="color:#393639">{}</span>', dictUCls:'',
+    sa:'normal', saOp:'idle', sb:'normal', sbOp:'idle',
+    dictS:'<span style="color:#393639">{}</span>', dictSCls:'',
+    badgeU:'', badgeS:'' },
+  { msg: 'UNSAFE: Thread A and Thread B both call d["key"] = val simultaneously — data race possible.',
+    ua:'active', uaOp:'d["key"] = "A_val"', ub:'active', ubOp:'d["key"] = "B_val"',
+    dictU:'<span class="corrupt">⚠ concurrent write — undefined state</span>', dictUCls:'error',
+    sa:'normal', saOp:'idle', sb:'normal', sbOp:'idle',
+    dictS:'<span style="color:#393639">{}</span>', dictSCls:'',
+    badgeU:'<span class="badge badge-red">✗ corruption possible</span>', badgeS:'' },
+  { msg: 'SAFE: Thread A acquires the lock and writes. Thread B must wait. 🔒',
+    ua:'normal', uaOp:'idle', ub:'normal', ubOp:'idle',
+    dictU:'<span class="corrupt">⚠ corrupt / lost update</span>', dictUCls:'error',
+    sa:'done', saOp:'wrote d["key"]="A_val"', sb:'blocked', sbOp:'🔒 waiting for lock',
+    dictS:'<span class="dk">"key"</span>: <span class="dv">"A_val"</span>', dictSCls:'success',
+    badgeU:'<span class="badge badge-red">✗ lost update</span>',
+    badgeS:'<span class="badge badge-green">✓ Thread A wrote safely</span>' },
+  { msg: 'SAFE: Thread A releases lock. Thread B acquires it and writes safely.',
+    ua:'normal', uaOp:'idle', ub:'normal', ubOp:'idle',
+    dictU:'<span class="corrupt">⚠ corrupt / lost update</span>', dictUCls:'error',
+    sa:'done', saOp:'released lock', sb:'done', sbOp:'wrote d["key"]="B_val"',
+    dictS:'<span class="dk">"key"</span>: <span class="dv">"B_val"</span>', dictSCls:'success',
+    badgeU:'<span class="badge badge-red">✗ data race</span>',
+    badgeS:'<span class="badge badge-green">✓ both writes serialized correctly</span>' }
+];
+
+var idx = 0;
+
+function draw() {
+  var s = steps[idx];
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
+  document.getElementById('btn-step').disabled = idx >= steps.length - 1;
+  document.getElementById('btn-back').disabled = idx === 0;
+
+  document.getElementById('ua-box').className = 'thread-box' + (s.ua !== 'normal' ? ' ' + s.ua : '');
+  document.getElementById('ua-op').textContent = s.uaOp;
+  document.getElementById('ub-box').className = 'thread-box' + (s.ub !== 'normal' ? ' ' + s.ub : '');
+  document.getElementById('ub-op').textContent = s.ubOp;
+  document.getElementById('unsafe-dict').innerHTML = s.dictU;
+  document.getElementById('unsafe-dict').className = 'dict-box' + (s.dictUCls ? ' ' + s.dictUCls : '');
+  document.getElementById('unsafe-badge').innerHTML = s.badgeU;
+
+  document.getElementById('sa-box').className = 'thread-box' + (s.sa !== 'normal' ? ' ' + s.sa : '');
+  document.getElementById('sa-op').textContent = s.saOp;
+  document.getElementById('sb-box').className = 'thread-box' + (s.sb !== 'normal' ? ' ' + s.sb : '');
+  document.getElementById('sb-op').textContent = s.sbOp;
+  document.getElementById('safe-dict').innerHTML = s.dictS;
+  document.getElementById('safe-dict').className = 'dict-box' + (s.dictSCls ? ' ' + s.dictSCls : '');
+  document.getElementById('safe-badge').innerHTML = s.badgeS;
+}
+
+document.getElementById('btn-step').onclick = function() { if (idx < steps.length - 1) { idx++; draw(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+draw();
+</script>
+</body>
+</html>

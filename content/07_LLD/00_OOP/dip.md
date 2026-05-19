@@ -170,6 +170,12 @@ print("Test passed!")
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/dip.html" style="width:100%;height:440px;border:none;border-radius:8px;" title="Dependency Inversion Principle Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 DIP relies on abstractions to decouple modules. Python's ABCs and Protocols are the mechanisms for defining these abstractions.

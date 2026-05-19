@@ -210,6 +210,10 @@ while not pq.empty():
 
 ---
 
+<iframe src="/static/visualizers/concurrent-data-structures.html" width="100%" height="440px" style="border:none;border-radius:6px;"></iframe>
+
+---
+
 ## How It Connects
 
 Concurrent data structures build on locks and conditions. Understanding these primitives helps you build custom concurrent structures.

@@ -144,6 +144,12 @@ class ReportService:
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/srp.html" style="width:100%;height:440px;border:none;border-radius:8px;" title="Single Responsibility Principle Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 SRP is the first SOLID principle and the foundation for the others. If a class has multiple responsibilities, it is harder to keep it open for extension (OCP), harder to ensure subclasses are substitutable (LSP), and harder to segregate interfaces (ISP).

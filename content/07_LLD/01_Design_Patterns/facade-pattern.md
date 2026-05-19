@@ -142,6 +142,12 @@ email.send_email("user@example.com", "Hello", "Welcome aboard!")
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/facade-pattern.html" style="width:100%;height:460px;border:none;border-radius:8px;" title="Facade Pattern Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Facade simplifies complex subsystems. Adapter translates incompatible interfaces. Both are structural patterns but solve different problems.

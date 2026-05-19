@@ -175,6 +175,10 @@ processor.shutdown()
 
 ---
 
+<iframe src="/static/visualizers/producer-consumer-pattern.html" width="100%" height="440px" style="border:none;border-radius:6px;"></iframe>
+
+---
+
 ## How It Connects
 
 The Producer-Consumer pattern relies on thread-safe queues for synchronization. Understanding `queue.Queue`'s blocking behavior is essential.

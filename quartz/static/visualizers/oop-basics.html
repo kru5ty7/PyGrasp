@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OOP Basics — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  .class-box {
+    border: 1px solid #393639;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 1.2rem;
+    cursor: pointer;
+    transition: border-color .15s;
+  }
+  .class-box.active { border-color: #f0a500; }
+  .cb-header {
+    background: #284b63;
+    color: #fff;
+    font-weight: 700;
+    padding: .4rem .6rem;
+    font-size: .9rem;
+    user-select: none;
+    transition: background .15s;
+  }
+  .cb-header.active { background: #f0a500; color: #000; }
+  .cb-attrs, .cb-methods {
+    background: #2a2a2e;
+    padding: .4rem .6rem;
+    font-size: .85rem;
+    border-top: 1px solid #393639;
+    user-select: none;
+    transition: background .15s;
+  }
+  .cb-attrs.active, .cb-methods.active { background: #3a2e00; border-color: #f0a500; }
+  .cb-attrs div, .cb-methods div { line-height: 1.7; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.2rem;
+    margin-bottom: 1rem;
+  }
+  .instances-label {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .5rem;
+  }
+  .instances-row {
+    display: flex;
+    gap: .6rem;
+    flex-wrap: wrap;
+  }
+  .inst-box {
+    flex: 1;
+    min-width: 130px;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    overflow: hidden;
+    font-size: .82rem;
+  }
+  .inst-header {
+    background: #1e3a4a;
+    color: #a0c4d8;
+    font-weight: 700;
+    padding: .3rem .5rem;
+  }
+  .inst-body {
+    background: #222226;
+    padding: .3rem .5rem;
+    color: #9aaa8a;
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>OOP Basics — Class &amp; Instances</h4>
+
+  <div class="class-box" id="box">
+    <div class="cb-header" id="sect-header">Dog</div>
+    <div class="cb-attrs" id="sect-attrs">
+      <div>+ name: str</div>
+      <div>- age: int</div>
+      <div>- breed: str</div>
+    </div>
+    <div class="cb-methods" id="sect-methods">
+      <div>+ bark(): void</div>
+      <div>+ fetch(): void</div>
+      <div>+ __init__(): void</div>
+    </div>
+  </div>
+
+  <div id="stat">Click any section of the class box to learn about it.</div>
+
+  <div class="instances-label">Instances &rarr;</div>
+  <div class="instances-row">
+    <div class="inst-box">
+      <div class="inst-header">dog1: Dog</div>
+      <div class="inst-body">
+        <div>name = "Buddy"</div>
+        <div>age = 3</div>
+      </div>
+    </div>
+    <div class="inst-box">
+      <div class="inst-header">dog2: Dog</div>
+      <div class="inst-body">
+        <div>name = "Max"</div>
+        <div>age = 5</div>
+      </div>
+    </div>
+    <div class="inst-box">
+      <div class="inst-header">dog3: Dog</div>
+      <div class="inst-body">
+        <div>name = "Luna"</div>
+        <div>age = 2</div>
+      </div>
+    </div>
+  </div>
+</div>
+<script>
+var msgs = {
+  header:  'Class: a blueprint. All Dog objects share this structure.',
+  attrs:   'Instance variables — each dog object holds its own copy of these values.',
+  methods: 'Behaviours — functions that operate on the object’s own data.'
+};
+
+function clearAll() {
+  document.getElementById('sect-header').classList.remove('active');
+  document.getElementById('sect-attrs').classList.remove('active');
+  document.getElementById('sect-methods').classList.remove('active');
+  document.getElementById('box').classList.remove('active');
+}
+
+function activate(sect) {
+  clearAll();
+  document.getElementById('sect-' + sect).classList.add('active');
+  document.getElementById('box').classList.add('active');
+  document.getElementById('stat').textContent = msgs[sect];
+}
+
+document.getElementById('sect-header').onclick  = function() { activate('header'); };
+document.getElementById('sect-attrs').onclick   = function() { activate('attrs'); };
+document.getElementById('sect-methods').onclick = function() { activate('methods'); };
+</script>
+</body>
+</html>

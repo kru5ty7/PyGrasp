@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Decorator Pattern — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 580px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: 1rem;
+  }
+  .stack-area {
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0;
+  }
+  .layer {
+    width: 100%;
+    border-radius: 4px;
+    overflow: hidden;
+    transition: opacity .3s, border .2s;
+    position: relative;
+  }
+  .layer.hidden { display: none; }
+  /* Decorator nesting via padding */
+  .layer-sugar   { border: 2px solid #393639; background: #1e1a28; }
+  .layer-milk    { border: 2px solid #393639; background: #1a1e28; margin: 4px; }
+  .layer-base    { border: 2px solid #393639; background: #2a2a2e; margin: 4px; }
+  .layer-sugar.active   { border-color: #f0a500; }
+  .layer-milk.active    { border-color: #f0a500; }
+  .layer-base.active    { border-color: #28a745; }
+  .layer-sugar.done     { border-color: #28a745; }
+  .layer-milk.done      { border-color: #28a745; }
+  .layer-base.done      { border-color: #28a745; }
+  .layer-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: .3rem .7rem;
+    font-weight: 700;
+    font-size: .82rem;
+  }
+  .layer-sugar .layer-head { background: #2e1a3a; color: #c9a0dc; }
+  .layer-milk  .layer-head { background: #1a2e3a; color: #a0c8dc; }
+  .layer-base  .layer-head { background: #284b63; color: #fff; }
+  .layer-body { padding: .35rem .7rem; font-size: .78rem; color: #b0b0b0; }
+  .cost-tag {
+    font-size: .75rem;
+    font-weight: 400;
+    background: rgba(0,0,0,.25);
+    border-radius: 3px;
+    padding: .1rem .4rem;
+  }
+  .wrap-label {
+    font-size: .68rem;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    margin: .15rem 0 .1rem 0;
+    text-align: center;
+  }
+  .total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: .4rem .7rem;
+    background: #393639;
+    border-radius: 4px;
+    margin-top: .6rem;
+    font-size: .85rem;
+    transition: border .2s;
+    border: 1px solid transparent;
+  }
+  .total-row.highlight { border-color: #28a745; }
+  .total-amount { font-weight: 700; color: #28a745; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Decorator Pattern — Step-Through</h4>
+
+  <div class="stack-area">
+    <!-- Sugar wrapper (outermost) -->
+    <div class="layer layer-sugar hidden" id="sugar-layer">
+      <div class="layer-head">
+        SugarDecorator
+        <span class="cost-tag">+$0.25</span>
+      </div>
+      <div class="layer-body" id="sugar-body">wraps &#8594;</div>
+      <div class="wrap-label" id="sugar-label"></div>
+      <!-- Milk wrapper (middle) -->
+      <div class="layer layer-milk hidden" id="milk-layer">
+        <div class="layer-head">
+          MilkDecorator
+          <span class="cost-tag">+$0.50</span>
+        </div>
+        <div class="layer-body" id="milk-body">wraps &#8594;</div>
+        <div class="wrap-label" id="milk-label"></div>
+        <!-- Base coffee (innermost) -->
+        <div class="layer layer-base" id="base-layer">
+          <div class="layer-head">
+            SimpleCoffee
+            <span class="cost-tag">$1.00</span>
+          </div>
+          <div class="layer-body">get_cost() &#8594; 1.00</div>
+        </div>
+      </div>
+    </div>
+    <!-- When sugar hidden, milk is top-level -->
+    <div class="layer layer-milk hidden" id="milk-layer-top">
+      <div class="layer-head">
+        MilkDecorator
+        <span class="cost-tag">+$0.50</span>
+      </div>
+      <div class="layer-body">wraps &#8594;</div>
+      <div class="wrap-label"></div>
+      <div class="layer layer-base" id="base-layer-mid">
+        <div class="layer-head">
+          SimpleCoffee
+          <span class="cost-tag">$1.00</span>
+        </div>
+        <div class="layer-body">get_cost() &#8594; 1.00</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="total-row" id="total-row">
+    <span>coffee.get_cost()</span>
+    <span class="total-amount" id="total-amount">—</span>
+  </div>
+
+  <div id="stat">Press Step to begin. We will stack decorators onto SimpleCoffee.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+// Display states
+// 0: only base (just SimpleCoffee standalone)
+// 1: base active, cost $1.00
+// 2: milk-top wrapping base, cost $1.50
+// 3: sugar wrapping (milk+base), cost $1.75
+// 4: trace — highlight all + total
+
+var steps = [
+  {
+    showBase: true, showMilkTop: false, showSugar: false,
+    baseState: 'active', milkTopState: '', sugarState: '',
+    total: '$1.00', totalHL: false,
+    msg: 'coffee = SimpleCoffee() — base object. Cost: $1.00. No decorators yet.'
+  },
+  {
+    showBase: false, showMilkTop: true, showSugar: false,
+    baseState: 'done', milkTopState: 'active', sugarState: '',
+    total: '$1.50', totalHL: false,
+    msg: 'coffee = MilkDecorator(coffee) — MilkDecorator wraps SimpleCoffee. Adds $0.50. Cost now: $1.50.'
+  },
+  {
+    showBase: false, showMilkTop: false, showSugar: true,
+    baseState: 'done', milkTopState: 'done', sugarState: 'active',
+    total: '$1.75', totalHL: false,
+    msg: 'coffee = SugarDecorator(coffee) — SugarDecorator wraps MilkDecorator(SimpleCoffee). Adds $0.25. Cost now: $1.75.'
+  },
+  {
+    showBase: false, showMilkTop: false, showSugar: true,
+    baseState: 'done', milkTopState: 'done', sugarState: 'done',
+    total: '$1.75', totalHL: true,
+    msg: 'coffee.get_cost() → Sugar.get_cost() calls Milk.get_cost() calls Simple.get_cost(). Each layer adds its cost. Final: $1.75.'
+  }
+];
+var idx = 0;
+
+function stateClass(layer, baseClass, state) {
+  return baseClass + (state ? ' ' + state : '');
+}
+
+function draw() {
+  var s = steps[idx];
+
+  // Base standalone
+  var baseEl = document.getElementById('base-layer');
+  // We only show base-layer when sugar is visible (it's nested inside sugar>milk)
+  // For step 0 we need a standalone base — handle via showing/hiding layers
+
+  document.getElementById('milk-layer-top').style.display = s.showMilkTop ? '' : 'none';
+  document.getElementById('sugar-layer').style.display = s.showSugar ? '' : 'none';
+
+  // Step 0: show standalone base
+  if (!s.showMilkTop && !s.showSugar) {
+    baseEl.style.display = '';
+    baseEl.className = stateClass('base', 'layer layer-base', s.baseState);
+  } else {
+    baseEl.style.display = '';
+  }
+
+  if (s.showMilkTop) {
+    document.getElementById('milk-layer-top').className = stateClass('milk', 'layer layer-milk', s.milkTopState);
+    document.getElementById('base-layer-mid').className = stateClass('base', 'layer layer-base', s.baseState);
+  }
+  if (s.showSugar) {
+    document.getElementById('sugar-layer').className = stateClass('sugar', 'layer layer-sugar', s.sugarState);
+    document.getElementById('milk-layer').className = stateClass('milk', 'layer layer-milk', s.milkTopState);
+    document.getElementById('base-layer').className = stateClass('base', 'layer layer-base', s.baseState);
+  }
+
+  document.getElementById('total-amount').textContent = s.total;
+  document.getElementById('total-row').className = 'total-row' + (s.totalHL ? ' highlight' : '');
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
+  document.getElementById('btn-step').disabled = idx === steps.length - 1;
+  document.getElementById('btn-back').disabled = idx === 0;
+}
+
+document.getElementById('btn-step').onclick = function() { if (idx < steps.length - 1) { idx++; draw(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+draw();
+</script>
+</body>
+</html>

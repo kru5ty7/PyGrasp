@@ -138,6 +138,10 @@ def transfer(from_account, to_account, amount):
 
 ---
 
+<iframe src="/static/visualizers/thread-safety-basics.html" width="100%" height="460px" style="border:none;border-radius:6px;"></iframe>
+
+---
+
 ## How It Connects
 
 Thread safety is about managing shared state in concurrent execution. Understanding Python's threading model and the GIL is prerequisite.

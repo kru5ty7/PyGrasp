@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prototype Pattern — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618; color: #d4d4d4;
+    display: flex; align-items: flex-start; justify-content: center;
+    min-height: 100vh; padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 600px; }
+  h4 { font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; color: #646464; margin-bottom: .75rem; }
+  .docs-row { display: flex; gap: .6rem; margin-bottom: .5rem; }
+  .box {
+    background: #2a2a2e; border: 1px solid #393639; border-radius: 4px;
+    padding: .4rem .7rem; flex: 1;
+  }
+  .box.hidden { opacity: 0; pointer-events: none; }
+  .box-header {
+    background: #284b63; color: #fff; font-weight: 700; font-size: .82rem;
+    padding: .25rem .5rem; border-radius: 3px 3px 0 0; margin: -.4rem -.7rem .4rem -.7rem;
+  }
+  .box-header.copy { background: #1a3d1a; }
+  .box.active { border: 2px solid #f0a500; }
+  .box.done   { border: 2px solid #28a745; }
+  .box.bad    { border: 2px solid #dc3545; }
+  .field { font-family: monospace; font-size: .78rem; margin-bottom: .15rem; }
+  .field .key { color: #888; }
+  .field .val { color: #d4d4d4; }
+  .field .val.changed { color: #f0a500; font-weight: 700; }
+  .field .val.danger  { color: #dc3545; }
+  .field .val.safe    { color: #28a745; }
+  .nested { margin-left: .8rem; font-size: .75rem; color: #aaa; }
+  .copy-note { font-size: .7rem; text-align: center; margin-top: .25rem; color: #888; }
+  .copy-note.bad  { color: #dc3545; }
+  .copy-note.good { color: #28a745; }
+  .deep-row { display: flex; gap: .6rem; margin-bottom: .5rem; }
+  .deep-section { flex: 1; background: #1e1e22; border: 1px solid #393639; border-radius: 4px; padding: .4rem .6rem; }
+  .deep-label { font-size: .72rem; font-weight: 700; margin-bottom: .3rem; }
+  .deep-label.bad  { color: #dc3545; }
+  .deep-label.good { color: #28a745; }
+  #stat {
+    padding: .5rem .75rem; background: #393639;
+    border-left: 3px solid #7b97aa; border-radius: 0 4px 4px 0;
+    font-size: .85rem; line-height: 1.5; min-height: 2.4rem; margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem; border: none; border-radius: 4px;
+    cursor: pointer; font-size: .82rem; background: #393639;
+    color: #d4d4d4; transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Prototype Pattern — Step-Through</h4>
+
+  <div class="docs-row">
+    <div class="box" id="doc1">
+      <div class="box-header">Document — doc1</div>
+      <div class="field"><span class="key">title: </span><span class="val" id="d1-title">"Report Q1"</span></div>
+      <div class="field"><span class="key">content: </span><span class="val">"Revenue: $1M"</span></div>
+      <div class="field"><span class="key">styles: </span><span class="val">{font: Arial, color: blue}</span></div>
+    </div>
+    <div class="box hidden" id="doc2">
+      <div class="box-header copy">Document — doc2 (copy)</div>
+      <div class="field"><span class="key">title: </span><span class="val" id="d2-title">"Report Q1"</span></div>
+      <div class="field"><span class="key">content: </span><span class="val">"Revenue: $1M"</span></div>
+      <div class="field"><span class="key">styles: </span><span class="val" id="d2-styles">{font: Arial, color: blue}</span></div>
+      <div class="copy-note" id="copy-note"></div>
+    </div>
+  </div>
+
+  <div class="deep-row" id="deep-row" style="display:none">
+    <div class="deep-section">
+      <div class="deep-label bad">✗ Shallow copy — shared styles</div>
+      <div class="field" style="font-size:.75rem"><span class="key">doc2.styles["color"] = "red"</span></div>
+      <div class="field" style="font-size:.75rem"><span class="val danger">doc1.styles → {font: Arial, color: red}</span></div>
+      <div class="field" style="font-size:.75rem;color:#888">Same dict object in memory</div>
+    </div>
+    <div class="deep-section">
+      <div class="deep-label good">✓ Deep copy — independent styles</div>
+      <div class="field" style="font-size:.75rem"><span class="key">doc2.styles["color"] = "red"</span></div>
+      <div class="field" style="font-size:.75rem"><span class="val safe">doc1.styles → {font: Arial, color: blue}</span></div>
+      <div class="field" style="font-size:.75rem;color:#888">copy.deepcopy() duplicates nested objects</div>
+    </div>
+  </div>
+
+  <div id="stat">Press Step to begin.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>◀ Back</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var steps = [
+  {
+    msg: 'Original Document created: title="Report Q1", content="Revenue: $1M", styles={font: Arial, color: blue}.',
+    doc1Class: '', doc2Hidden: true, showDeep: false,
+    d1Title: '"Report Q1"', d1TitleClass: '',
+    d2Title: '"Report Q1"', d2TitleClass: '', d2Styles: '{font: Arial, color: blue}',
+    copyNote: '', copyNoteClass: ''
+  },
+  {
+    msg: 'doc2 = doc1.clone() — new Document object created via shallow copy. All top-level attributes copied.',
+    doc1Class: '', doc2Hidden: false, showDeep: false,
+    d1Title: '"Report Q1"', d1TitleClass: '',
+    d2Title: '"Report Q1"', d2TitleClass: '', d2Styles: '{font: Arial, color: blue}',
+    copyNote: 'shallow copy of all attributes', copyNoteClass: ''
+  },
+  {
+    msg: 'doc2.title = "Report Q2" — only doc2 title changes. Strings are immutable so doc1.title stays "Report Q1". Independent copies.',
+    doc1Class: 'done', doc2Hidden: false, showDeep: false,
+    d1Title: '"Report Q1"', d1TitleClass: '',
+    d2Title: '"Report Q2"', d2TitleClass: 'changed', d2Styles: '{font: Arial, color: blue}',
+    copyNote: 'title changed — doc1 unaffected', copyNoteClass: 'good'
+  },
+  {
+    msg: 'Nested objects (styles dict) are shared in a shallow copy — mutating doc2.styles also changes doc1.styles (✗). Use copy.deepcopy() to avoid this (✓).',
+    doc1Class: '', doc2Hidden: false, showDeep: true,
+    d1Title: '"Report Q1"', d1TitleClass: '',
+    d2Title: '"Report Q2"', d2TitleClass: 'changed', d2Styles: '{font: Arial, color: blue}',
+    copyNote: '', copyNoteClass: ''
+  }
+];
+
+var idx = 0;
+
+function draw() {
+  var s = steps[idx];
+  document.getElementById('doc1').className = 'box ' + s.doc1Class;
+  document.getElementById('doc2').className = 'box' + (s.doc2Hidden ? ' hidden' : ' done');
+  document.getElementById('d1-title').textContent = s.d1Title;
+  document.getElementById('d1-title').className = 'val' + (s.d1TitleClass ? ' ' + s.d1TitleClass : '');
+  document.getElementById('d2-title').textContent = s.d2Title;
+  document.getElementById('d2-title').className = 'val' + (s.d2TitleClass ? ' ' + s.d2TitleClass : '');
+  document.getElementById('copy-note').textContent = s.copyNote;
+  document.getElementById('copy-note').className = 'copy-note ' + s.copyNoteClass;
+  document.getElementById('deep-row').style.display = s.showDeep ? 'flex' : 'none';
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
+  document.getElementById('btn-step').disabled = idx === steps.length - 1;
+  document.getElementById('btn-back').disabled = idx === 0;
+}
+
+document.getElementById('btn-step').onclick = function() { if (idx < steps.length - 1) { idx++; draw(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+draw();
+</script>
+</body>
+</html>

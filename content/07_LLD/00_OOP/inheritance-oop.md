@@ -139,6 +139,12 @@ print(User.__mro__)
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/inheritance-oop.html" style="width:100%;height:480px;border:none;border-radius:8px;" title="Inheritance Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Python resolves method calls in multiple inheritance using C3 linearization. Understanding the MRO is essential for predicting which method gets called when classes share method names.

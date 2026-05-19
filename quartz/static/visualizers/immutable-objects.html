@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Immutable Objects — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 640px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  .cols { display: flex; gap: 1rem; }
+  .col { flex: 1; min-width: 0; }
+  .col-title {
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    margin-bottom: .6rem;
+    padding: .25rem .5rem;
+    border-radius: 3px;
+    text-align: center;
+  }
+  .col-title.bad { background: #3a1a1a; color: #e07070; }
+  .col-title.good { background: #1a2e1a; color: #6db86d; }
+
+  .thread-box {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .4rem .6rem;
+    font-size: .78rem;
+    margin-bottom: .4rem;
+  }
+  .thread-box .th-name { font-weight: 700; font-size: .8rem; color: #9cdcfe; margin-bottom: .15rem; }
+  .thread-box .th-ref { font-size: .7rem; color: #646464; }
+  .thread-box .th-ref span { color: #ce9178; }
+
+  .arrow { text-align: center; color: #646464; font-size: .8rem; margin: .2rem 0; }
+
+  .obj-box {
+    border-radius: 4px;
+    padding: .45rem .65rem;
+    font-size: .78rem;
+    margin-bottom: .35rem;
+  }
+  .obj-box.mutable { background: #2a1a1a; border: 2px solid #c0392b; }
+  .obj-box.immutable { background: #1a2e1a; border: 2px solid #28a745; }
+  .obj-box .obj-name { font-weight: 700; font-size: .8rem; margin-bottom: .25rem; }
+  .obj-box.mutable .obj-name { color: #e07070; }
+  .obj-box.immutable .obj-name { color: #6db86d; }
+  .obj-box .field { font-size: .73rem; margin: .1rem 0; }
+  .obj-box .field .fk { color: #9cdcfe; }
+  .obj-box .field .fv { color: #ce9178; }
+  .obj-box .field .fv.changed { color: #c0392b; text-decoration: line-through; }
+  .obj-box .field .fv.new-val { color: #c0392b; font-weight: 700; }
+
+  .badge {
+    display: inline-block;
+    font-size: .68rem;
+    padding: .06rem .35rem;
+    border-radius: 10px;
+    margin-top: .3rem;
+  }
+  .badge-red { background: #3a1a1a; color: #e07070; }
+  .badge-green { background: #1a2e1a; color: #6db86d; }
+
+  .note {
+    font-size: .72rem;
+    color: #646464;
+    padding: .3rem .55rem;
+    border-left: 2px solid #393639;
+    margin-top: .4rem;
+    line-height: 1.5;
+  }
+  .note.bad { border-color: #c0392b; color: #e07070; }
+  .note.good { border-color: #28a745; color: #6db86d; }
+
+  .shared-label {
+    text-align: center;
+    font-size: .67rem;
+    color: #646464;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin: .15rem 0 .1rem;
+  }
+  .lock-badge {
+    text-align: center;
+    font-size: .7rem;
+    padding: .2rem;
+    border-radius: 3px;
+    margin-top: .3rem;
+    background: #1a2e1a;
+    color: #6db86d;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Immutable Objects — Thread Safety Comparison</h4>
+  <div class="cols">
+    <div class="col">
+      <div class="col-title bad">Mutable ❌ Unsafe</div>
+
+      <div class="thread-box">
+        <div class="th-name">Thread A</div>
+        <div class="th-ref">ref: <span>config</span> (same object)</div>
+      </div>
+      <div class="arrow">↘</div>
+      <div class="shared-label">shared object</div>
+      <div class="obj-box mutable">
+        <div class="obj-name">Config (mutable)</div>
+        <div class="field"><span class="fk">host</span> = <span class="fv changed">"db1"</span> <span class="fv new-val">"evil.com"</span></div>
+        <div class="field"><span class="fk">port</span> = <span class="fv">5432</span></div>
+        <div class="badge badge-red">Thread A wrote host = "evil.com"</div>
+      </div>
+      <div class="arrow">↗</div>
+      <div class="thread-box">
+        <div class="th-name">Thread B</div>
+        <div class="th-ref">ref: <span>config</span> (same object)</div>
+      </div>
+
+      <div class="note bad">Thread B reads config.host = "evil.com" — wrong value! ❌ Needs locks to be safe.</div>
+    </div>
+
+    <div class="col">
+      <div class="col-title good">Immutable ✓ Safe</div>
+
+      <div class="thread-box">
+        <div class="th-name">Thread A</div>
+        <div class="th-ref">ref: <span>config</span> (frozen)</div>
+      </div>
+      <div class="arrow">↘</div>
+      <div class="shared-label">shared object</div>
+      <div class="obj-box immutable">
+        <div class="obj-name">Config (frozen)</div>
+        <div class="field"><span class="fk">host</span> = <span class="fv">"db1"</span></div>
+        <div class="field"><span class="fk">port</span> = <span class="fv">5432</span></div>
+        <div class="badge badge-green">🔒 FrozenDataclass — read-only</div>
+      </div>
+      <div class="arrow">↗</div>
+      <div class="thread-box">
+        <div class="th-name">Thread B</div>
+        <div class="th-ref">ref: <span>config</span> (frozen)</div>
+      </div>
+
+      <div class="lock-badge">No synchronization needed. Both threads always read "db1". ✓</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>

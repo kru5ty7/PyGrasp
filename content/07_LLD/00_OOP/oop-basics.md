@@ -94,6 +94,12 @@ print(a1.deposit.__self__ is a1)        # True - self is bound to a1
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/oop-basics.html" style="width:100%;height:460px;border:none;border-radius:8px;" title="OOP Basics Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 OOP in Python is not a separate system bolted on - it is built directly on top of the object model and class creation machinery that Python uses for everything. Understanding how classes are created gives you the foundation.

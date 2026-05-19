@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Factory Method Pattern — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 620px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: 1rem;
+  }
+  .diagram {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  .col { display: flex; flex-direction: column; gap: .5rem; }
+  .col-label {
+    font-size: .7rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #646464;
+    margin-bottom: .2rem;
+  }
+  .box {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    overflow: hidden;
+    font-size: .82rem;
+    transition: border .2s;
+  }
+  .box.amber { border: 2px solid #f0a500; }
+  .box.green { border: 2px solid #28a745; }
+  .box.dim { opacity: .35; }
+  .box-head {
+    background: #284b63;
+    color: #fff;
+    font-weight: 700;
+    padding: .3rem .6rem;
+    font-size: .8rem;
+  }
+  .box-head.abstract { background: #3a3060; font-style: italic; }
+  .box-body { padding: .4rem .7rem; color: #b0b0b0; font-size: .78rem; line-height: 1.5; }
+  .arrow-down {
+    text-align: center;
+    font-size: .9rem;
+    color: #646464;
+    margin: .1rem 0;
+  }
+  .arrow-right {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .8rem;
+    color: #646464;
+    gap: .3rem;
+  }
+  .creates-arrow {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    font-size: .72rem;
+    color: #7b97aa;
+    padding: .2rem .7rem;
+  }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Factory Method Pattern — Step-Through</h4>
+
+  <div class="diagram">
+    <div class="col">
+      <div class="col-label">Creators</div>
+      <div class="box" id="creator-abs">
+        <div class="box-head abstract">Creator (abstract)</div>
+        <div class="box-body">+ create_product(): Product<br>+ some_operation()</div>
+      </div>
+      <div class="arrow-down">&#8595; extends</div>
+      <div class="box" id="creator-a">
+        <div class="box-head">ConcreteCreatorA</div>
+        <div class="box-body">+ create_product() &#8594; ProductA</div>
+      </div>
+      <div class="box" id="creator-b">
+        <div class="box-head">ConcreteCreatorB</div>
+        <div class="box-body">+ create_product() &#8594; ProductB</div>
+      </div>
+    </div>
+
+    <div class="col">
+      <div class="col-label">Products</div>
+      <div class="box" id="product-abs">
+        <div class="box-head abstract">Product (abstract)</div>
+        <div class="box-body">+ use(): void</div>
+      </div>
+      <div class="arrow-down">&#8595; extends</div>
+      <div class="box" id="product-a">
+        <div class="box-head">ProductA</div>
+        <div class="box-body">+ use() &#8594; "Using ProductA."</div>
+      </div>
+      <div class="box" id="product-b">
+        <div class="box-head">ProductB</div>
+        <div class="box-body">+ use() &#8594; "Using ProductB."</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="stat">Press Step to begin. Full class hierarchy shown above.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var steps = [
+  {
+    ca: '', cb: '', pa: '', pb: '',
+    msg: 'Full hierarchy: abstract Creator defines the factory method create_product(). Concrete subclasses decide which Product to instantiate.'
+  },
+  {
+    ca: 'amber', cb: 'dim', pa: '', pb: 'dim',
+    msg: 'creator = ConcreteCreatorA() — ConcreteCreatorA is selected. It will produce ProductA objects.'
+  },
+  {
+    ca: 'amber', cb: 'dim', pa: 'amber', pb: 'dim',
+    msg: 'product = creator.create_product() — factory method called. ProductA instantiated (amber). The creator decided the concrete type.'
+  },
+  {
+    ca: 'green', cb: 'amber', pa: 'green', pb: 'amber',
+    msg: 'product.use() → "Using ProductA." Switch to ConcreteCreatorB → "Using ProductB." Client code unchanged — only creator changes.'
+  }
+];
+var idx = 0;
+
+function applyClass(id, cls) {
+  var el = document.getElementById(id);
+  el.className = 'box' + (cls ? ' ' + cls : '');
+}
+
+function draw() {
+  var s = steps[idx];
+  applyClass('creator-a', s.ca);
+  applyClass('creator-b', s.cb);
+  applyClass('product-a', s.pa);
+  applyClass('product-b', s.pb);
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
+  document.getElementById('btn-step').disabled = idx === steps.length - 1;
+  document.getElementById('btn-back').disabled = idx === 0;
+}
+
+document.getElementById('btn-step').onclick = function() { if (idx < steps.length - 1) { idx++; draw(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+draw();
+</script>
+</body>
+</html>

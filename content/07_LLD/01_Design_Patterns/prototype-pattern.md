@@ -148,6 +148,12 @@ new_server = ConfigRegistry.create("production", port=7443, host="custom.interna
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/prototype-pattern.html" style="width:100%;height:440px;border:none;border-radius:8px;" title="Prototype Pattern Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 The Prototype pattern uses Python's `copy` module, which relies on `__copy__` and `__deepcopy__` dunder methods. Understanding shallow vs deep copy is foundational.

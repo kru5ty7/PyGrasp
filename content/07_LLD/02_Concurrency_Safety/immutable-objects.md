@@ -153,6 +153,10 @@ good = GoodConfig(tags=("a", "b"))
 
 ---
 
+<iframe src="/static/visualizers/immutable-objects.html" width="100%" height="400px" style="border:none;border-radius:6px;"></iframe>
+
+---
+
 ## How It Connects
 
 Immutability eliminates the root cause of race conditions. Understanding mutability and its risks is prerequisite.

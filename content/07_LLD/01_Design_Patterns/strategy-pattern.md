@@ -148,6 +148,12 @@ by_age_desc = sorted(users, key=lambda u: u["age"], reverse=True)
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/strategy-pattern.html" style="width:100%;height:440px;border:none;border-radius:8px;" title="Strategy Pattern Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Strategy is the most direct implementation of the Open/Closed Principle. New strategies are new classes or functions. The context never changes.

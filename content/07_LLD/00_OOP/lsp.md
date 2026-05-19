@@ -166,6 +166,12 @@ class RedisCache(Cache):
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/lsp.html" style="width:100%;height:460px;border:none;border-radius:8px;" title="Liskov Substitution Principle Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 LSP is the principle that makes inheritance safe. Without it, polymorphic code that accepts a parent type cannot trust that child types will behave correctly.

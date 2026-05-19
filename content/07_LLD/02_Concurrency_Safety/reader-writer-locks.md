@@ -174,6 +174,10 @@ print(f"Final cache_ttl: {cache.get('cache_ttl')}")
 
 ---
 
+<iframe src="/static/visualizers/reader-writer-locks.html" width="100%" height="460px" style="border:none;border-radius:6px;"></iframe>
+
+---
+
 ## How It Connects
 
 Reader-Writer locks build on basic locking primitives. Understanding `threading.Lock`, `threading.Condition`, and context managers is prerequisite.

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Polymorphism — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  .class-box {
+    border: 1px solid #393639;
+    border-radius: 4px;
+    overflow: hidden;
+    transition: border-color .2s;
+  }
+  .class-box.highlight { border-color: #f0a500; }
+  .cb-header {
+    background: #284b63;
+    color: #fff;
+    font-weight: 700;
+    padding: .4rem .6rem;
+    font-size: .9rem;
+  }
+  .cb-methods {
+    background: #2a2a2e;
+    padding: .4rem .6rem;
+    font-size: .85rem;
+    border-top: 1px solid #393639;
+  }
+  .cb-methods div { line-height: 1.7; }
+  .highlight-method { color: #f0a500; font-weight: 700; }
+  .box-wrap {
+    opacity: 0;
+    transition: opacity .3s;
+  }
+  .box-wrap.visible { opacity: 1; }
+  .connector {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    opacity: 0;
+    transition: opacity .3s;
+  }
+  .connector.visible { opacity: 1; }
+  .conn-line { width: 2px; height: 14px; background: #555; }
+  .conn-arrow {
+    width: 0; height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 9px solid #555;
+  }
+  .sub-row {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    width: 100%;
+    opacity: 0;
+    transition: opacity .3s;
+  }
+  .sub-row.visible { opacity: 1; }
+  .sub-box { flex: 1; max-width: 220px; }
+  .split-conn {
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+    opacity: 0;
+    transition: opacity .3s;
+  }
+  .split-conn.visible { opacity: 1; }
+  .split-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 220px;
+  }
+  .shapes-list {
+    margin-top: .7rem;
+    opacity: 0;
+    transition: opacity .3s;
+  }
+  .shapes-list.visible { opacity: 1; }
+  .list-label {
+    font-size: .75rem;
+    color: #646464;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: .3rem;
+  }
+  .list-box {
+    background: #1e1e22;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .3rem .6rem;
+    font-family: "Cascadia Code", "Fira Code", monospace;
+    font-size: .82rem;
+    color: #d4d4d4;
+  }
+  .call-row {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    flex-wrap: wrap;
+    margin-top: .5rem;
+    opacity: 0;
+    transition: opacity .3s;
+    min-height: 2rem;
+  }
+  .call-row.visible { opacity: 1; }
+  .call-box {
+    background: #1e1e22;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .25rem .5rem;
+    font-family: "Cascadia Code", "Fira Code", monospace;
+    font-size: .82rem;
+    color: #f0a500;
+  }
+  .result-box {
+    padding: .25rem .5rem;
+    border-radius: 4px;
+    font-size: .82rem;
+    font-weight: 600;
+    background: #1a3a1a;
+    border: 1px solid #28a745;
+    color: #28a745;
+    font-family: "Cascadia Code", "Fira Code", monospace;
+    opacity: 0;
+    transition: opacity .3s;
+  }
+  .result-box.visible { opacity: 1; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.2rem;
+    margin-bottom: .75rem;
+    margin-top: .9rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Polymorphism — Step-Through</h4>
+
+  <div style="display:flex;flex-direction:column;align-items:center;">
+
+    <!-- Shape base -->
+    <div class="box-wrap visible" style="width:220px">
+      <div class="class-box" id="shape-box">
+        <div class="cb-header">Shape</div>
+        <div class="cb-methods">
+          <div>+ area(): float</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- split connectors -->
+    <div class="split-conn" id="split-conn">
+      <div class="split-col">
+        <div class="conn-line"></div>
+        <div class="conn-arrow"></div>
+      </div>
+      <div class="split-col">
+        <div class="conn-line"></div>
+        <div class="conn-arrow"></div>
+      </div>
+    </div>
+
+    <!-- subclasses row -->
+    <div class="sub-row" id="sub-row">
+      <div class="sub-box">
+        <div class="class-box" id="circle-box">
+          <div class="cb-header">Circle &nbsp;<span style="font-weight:400;font-size:.8rem;color:#a0c4d8">radius=5</span></div>
+          <div class="cb-methods">
+            <div id="circle-area">+ area(): float</div>
+          </div>
+        </div>
+      </div>
+      <div class="sub-box">
+        <div class="class-box" id="rect-box">
+          <div class="cb-header">Rectangle &nbsp;<span style="font-weight:400;font-size:.8rem;color:#a0c4d8">w=3,h=4</span></div>
+          <div class="cb-methods">
+            <div id="rect-area">+ area(): float</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- shapes list -->
+    <div class="shapes-list" id="shapes-list" style="width:100%">
+      <div class="list-label">List of shapes</div>
+      <div class="list-box">shapes = [Circle(5), Rectangle(3, 4)]</div>
+    </div>
+
+    <!-- call rows -->
+    <div class="call-row" id="call1" style="width:100%">
+      <div class="call-box">shapes[0].area()</div>
+      <span style="color:#646464">&rarr;</span>
+      <span style="color:#d4d4d4;font-size:.82rem">Circle.area()</span>
+      <span style="color:#646464">&rarr;</span>
+      <div class="result-box" id="res1">78.54</div>
+    </div>
+
+    <div class="call-row" id="call2" style="width:100%">
+      <div class="call-box">shapes[1].area()</div>
+      <span style="color:#646464">&rarr;</span>
+      <span style="color:#d4d4d4;font-size:.82rem">Rectangle.area()</span>
+      <span style="color:#646464">&rarr;</span>
+      <div class="result-box" id="res2">12</div>
+    </div>
+
+  </div>
+
+  <div id="stat">Press Step to begin.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &rarr;</button>
+    <button id="btn-reset">&#8634; Reset</button>
+    <span id="counter">Step 0 / 4</span>
+  </div>
+</div>
+<script>
+var step = 0;
+var MSGS = [
+  'Press Step to begin.',
+  'Same method name area() in different classes — each class provides its own implementation.',
+  'shapes[0].area() dispatches to Circle.area() at runtime — returns 78.54.',
+  'shapes[1].area() dispatches to Rectangle.area() at runtime — returns 12.',
+  'Same call syntax, different behaviour at runtime. No isinstance checks needed — this is polymorphism.'
+];
+
+function render() {
+  document.getElementById('stat').textContent = MSGS[step];
+  document.getElementById('counter').textContent = 'Step ' + step + ' / 4';
+  document.getElementById('btn-back').disabled = step === 0;
+  document.getElementById('btn-step').disabled = step === 4;
+
+  document.getElementById('split-conn').classList.toggle('visible', step >= 1);
+  document.getElementById('sub-row').classList.toggle('visible', step >= 1);
+  document.getElementById('shapes-list').classList.toggle('visible', step >= 1);
+
+  document.getElementById('call1').classList.toggle('visible', step >= 2);
+  document.getElementById('res1').classList.toggle('visible', step >= 2);
+
+  document.getElementById('call2').classList.toggle('visible', step >= 3);
+  document.getElementById('res2').classList.toggle('visible', step >= 3);
+
+  // highlight active box
+  document.getElementById('circle-box').classList.toggle('highlight', step === 2);
+  document.getElementById('rect-box').classList.toggle('highlight', step === 3);
+
+  document.getElementById('circle-area').className = (step === 2) ? 'highlight-method' : '';
+  document.getElementById('rect-area').className   = (step === 3) ? 'highlight-method' : '';
+}
+
+document.getElementById('btn-step').onclick  = function() { if (step < 4) { step++; render(); } };
+document.getElementById('btn-back').onclick  = function() { if (step > 0) { step--; render(); } };
+document.getElementById('btn-reset').onclick = function() { step = 0; render(); };
+
+render();
+</script>
+</body>
+</html>

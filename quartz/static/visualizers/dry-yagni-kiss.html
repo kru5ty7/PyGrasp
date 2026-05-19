@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DRY, YAGNI, KISS — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 640px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  .panel {
+    background: #1e1e22;
+    border: 1px solid #2e2e32;
+    border-radius: 6px;
+    margin-bottom: .9rem;
+    overflow: hidden;
+  }
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: .45rem .75rem;
+    background: #252528;
+    border-bottom: 1px solid #2e2e32;
+  }
+  .panel-title {
+    font-size: .8rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+  }
+  .panel-title.dry { color: #7b97aa; }
+  .panel-title.yagni { color: #c586c0; }
+  .panel-title.kiss { color: #b5cea8; }
+  .toggle-btn {
+    padding: .2rem .55rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .75rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  .toggle-btn:hover { opacity: .75; }
+  .toggle-btn.showing-after { background: #1a2e1a; color: #6db86d; }
+
+  .panel-body { padding: .6rem .75rem; }
+
+  .code-block {
+    background: #111113;
+    border-radius: 4px;
+    padding: .5rem .7rem;
+    font-family: "Consolas", "Fira Code", monospace;
+    font-size: .72rem;
+    line-height: 1.55;
+    color: #d4d4d4;
+    white-space: pre;
+    overflow-x: auto;
+    margin-bottom: .4rem;
+  }
+  .code-block .kw { color: #569cd6; }
+  .code-block .fn { color: #dcdcaa; }
+  .code-block .str { color: #ce9178; }
+  .code-block .cm { color: #6a9955; }
+  .code-block .hi-bad { background: rgba(192,57,43,.22); border-left: 2px solid #c0392b; padding-left: 2px; display: block; }
+  .code-block .hi-good { background: rgba(40,167,69,.15); border-left: 2px solid #28a745; padding-left: 2px; display: block; }
+
+  .label-row {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    font-size: .7rem;
+    margin-bottom: .35rem;
+  }
+  .lbl-bad { color: #e07070; }
+  .lbl-good { color: #6db86d; }
+  .badge {
+    font-size: .68rem;
+    padding: .06rem .3rem;
+    border-radius: 10px;
+  }
+  .badge-red { background: #3a1a1a; color: #e07070; }
+  .badge-green { background: #1a2e1a; color: #6db86d; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>DRY · YAGNI · KISS — Toggle Each Principle</h4>
+
+  <!-- DRY Panel -->
+  <div class="panel" id="panel-dry">
+    <div class="panel-header">
+      <span class="panel-title dry">DRY — Don't Repeat Yourself</span>
+      <button class="toggle-btn" id="btn-dry" onclick="toggle('dry')">Show After ✓</button>
+    </div>
+    <div class="panel-body">
+      <div id="dry-content"></div>
+    </div>
+  </div>
+
+  <!-- YAGNI Panel -->
+  <div class="panel" id="panel-yagni">
+    <div class="panel-header">
+      <span class="panel-title yagni">YAGNI — You Aren't Gonna Need It</span>
+      <button class="toggle-btn" id="btn-yagni" onclick="toggle('yagni')">Show After ✓</button>
+    </div>
+    <div class="panel-body">
+      <div id="yagni-content"></div>
+    </div>
+  </div>
+
+  <!-- KISS Panel -->
+  <div class="panel" id="panel-kiss">
+    <div class="panel-header">
+      <span class="panel-title kiss">KISS — Keep It Simple, Stupid</span>
+      <button class="toggle-btn" id="btn-kiss" onclick="toggle('kiss')">Show After ✓</button>
+    </div>
+    <div class="panel-body">
+      <div id="kiss-content"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+var state = { dry: false, yagni: false, kiss: false };
+
+var DRY_BEFORE = '<span class="label-row"><span class="lbl-bad">Before</span><span class="badge badge-red">✗ duplicated logic</span></span>' +
+'<div class="code-block">' +
+'<span class="kw">def</span> <span class="fn">validate_username</span>(value):\n' +
+'<span class="hi-bad">    <span class="kw">if</span> len(value) &lt; 3:\n' +
+'        <span class="kw">raise</span> ValueError(<span class="str">"too short"</span>)</span>' +
+'    ...\n\n' +
+'<span class="kw">def</span> <span class="fn">validate_email</span>(value):\n' +
+'<span class="hi-bad">    <span class="kw">if</span> len(value) &lt; 3:\n' +
+'        <span class="kw">raise</span> ValueError(<span class="str">"too short"</span>)</span>' +
+'    ...\n\n' +
+'<span class="kw">def</span> <span class="fn">validate_password</span>(value):\n' +
+'<span class="hi-bad">    <span class="kw">if</span> len(value) &lt; 3:\n' +
+'        <span class="kw">raise</span> ValueError(<span class="str">"too short"</span>)</span>' +
+'    ...' +
+'</div>';
+
+var DRY_AFTER = '<span class="label-row"><span class="lbl-good">After</span><span class="badge badge-green">✓ single source of truth</span></span>' +
+'<div class="code-block">' +
+'<span class="hi-good"><span class="kw">def</span> <span class="fn">validate_length</span>(value, min_len=3):\n' +
+'    <span class="kw">if</span> len(value) &lt; min_len:\n' +
+'        <span class="kw">raise</span> ValueError(<span class="str">f"min length {min_len}"</span>)</span>\n\n' +
+'<span class="kw">def</span> <span class="fn">validate_username</span>(value):\n' +
+'    validate_length(value)  <span class="cm"># delegates</span>\n    ...\n\n' +
+'<span class="kw">def</span> <span class="fn">validate_email</span>(value):\n' +
+'    validate_length(value)\n    ...\n\n' +
+'<span class="kw">def</span> <span class="fn">validate_password</span>(value):\n' +
+'    validate_length(value, min_len=8)\n    ...' +
+'</div>';
+
+var YAGNI_BEFORE = '<span class="label-row"><span class="lbl-bad">Before</span><span class="badge badge-red">✗ over-engineered for "save a name"</span></span>' +
+'<div class="code-block">' +
+'<span class="kw">class</span> <span class="fn">NameService</span>:\n' +
+'<span class="hi-bad">    plugin_system = PluginSystem()     <span class="cm"># never used</span></span>' +
+'<span class="hi-bad">    observer_registry = ObserverRegistry()  <span class="cm"># never used</span></span>' +
+'<span class="hi-bad">    abstract_factory = AbstractFactory()    <span class="cm"># never used</span></span>' +
+'<span class="hi-bad">    cache_layer = CacheLayer()         <span class="cm"># never used</span></span>' +
+'\n    <span class="kw">def</span> <span class="fn">save</span>(self, name): ...' +
+'</div>';
+
+var YAGNI_AFTER = '<span class="label-row"><span class="lbl-good">After</span><span class="badge badge-green">✓ build what you need today</span></span>' +
+'<div class="code-block">' +
+'<span class="hi-good">names = []\n\n' +
+'<span class="kw">def</span> <span class="fn">save_name</span>(name):\n' +
+'    names.append(name)</span>' +
+'</div>';
+
+var KISS_BEFORE = '<span class="label-row"><span class="lbl-bad">Before</span><span class="badge badge-red">✗ needlessly clever</span></span>' +
+'<div class="code-block">' +
+'<span class="kw">def</span> <span class="fn">is_even</span>(n):\n' +
+'<span class="hi-bad">    <span class="kw">return</span> <span class="kw">not</span> bool(</span>' +
+'<span class="hi-bad">        int(bin(abs(n))[<span class="str">-1</span>])</span>' +
+'<span class="hi-bad">        <span class="kw">if</span> isinstance(n, int)</span>' +
+'<span class="hi-bad">        <span class="kw">else</span> int(<span class="str">str</span>(n).split(<span class="str">"."</span>)[0])[<span class="str">-1</span>] % 2</span>' +
+'<span class="hi-bad">    )</span>' +
+'</div>';
+
+var KISS_AFTER = '<span class="label-row"><span class="lbl-good">After</span><span class="badge badge-green">✓ simple and obvious</span></span>' +
+'<div class="code-block">' +
+'<span class="kw">def</span> <span class="fn">is_even</span>(n):\n' +
+'<span class="hi-good">    <span class="kw">return</span> n % 2 == 0</span>' +
+'</div>';
+
+function toggle(key) {
+  state[key] = !state[key];
+  var btn = document.getElementById('btn-' + key);
+  btn.textContent = state[key] ? 'Show Before ✗' : 'Show After ✓';
+  if (state[key]) btn.classList.add('showing-after'); else btn.classList.remove('showing-after');
+  render(key);
+}
+
+function render(key) {
+  var el = document.getElementById(key + '-content');
+  if (key === 'dry') el.innerHTML = state.dry ? DRY_AFTER : DRY_BEFORE;
+  if (key === 'yagni') el.innerHTML = state.yagni ? YAGNI_AFTER : YAGNI_BEFORE;
+  if (key === 'kiss') el.innerHTML = state.kiss ? KISS_AFTER : KISS_BEFORE;
+}
+
+render('dry'); render('yagni'); render('kiss');
+</script>
+</body>
+</html>

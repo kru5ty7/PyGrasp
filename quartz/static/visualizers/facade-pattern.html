@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Facade Pattern — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618; color: #d4d4d4;
+    display: flex; align-items: flex-start; justify-content: center;
+    min-height: 100vh; padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 640px; }
+  h4 { font-size: .78rem; text-transform: uppercase; letter-spacing: .08em; color: #646464; margin-bottom: .75rem; }
+  .panel {
+    background: #2a2a2e; border: 1px solid #393639; border-radius: 4px;
+    padding: .4rem .7rem; margin-bottom: .5rem;
+  }
+  .panel-header {
+    background: #284b63; color: #fff; font-weight: 700; font-size: .82rem;
+    padding: .25rem .5rem; border-radius: 3px 3px 0 0; margin: -.4rem -.7rem .4rem -.7rem;
+  }
+  .box {
+    background: #2a2a2e; border: 1px solid #393639; border-radius: 4px;
+    padding: .3rem .6rem; font-size: .8rem; text-align: center;
+  }
+  .box.active { border: 2px solid #f0a500; background: #2a2000; }
+  .box.done   { border: 2px solid #28a745; background: #0d2010; }
+  .box.bad    { border: 2px solid #dc3545; }
+  .services-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: .35rem; margin: .4rem 0; }
+  .client-row { display: flex; justify-content: center; margin-bottom: .3rem; }
+  .client-box {
+    background: #284b63; color: #fff; border-radius: 4px;
+    padding: .3rem .9rem; font-size: .82rem; font-weight: 700;
+    border: 1px solid #3a6a8a;
+  }
+  .client-box.active { border: 2px solid #f0a500; }
+  .arrows-bad { display: flex; justify-content: space-around; font-size: .65rem; color: #dc3545; margin: .15rem 0; }
+  .arrow-center { text-align: center; color: #28a745; font-size: .75rem; margin: .15rem 0; }
+  .facade-row { display: flex; justify-content: center; margin: .2rem 0; }
+  .facade-box {
+    background: #3a2a00; border: 1px solid #f0a500; border-radius: 4px;
+    padding: .3rem 1rem; font-size: .82rem; font-weight: 700; color: #f0c050;
+  }
+  .facade-box.done { background: #1a3a1a; border-color: #28a745; color: #5cdb5c; }
+  .section { margin-bottom: .6rem; }
+  .section-label { font-size: .72rem; color: #888; margin-bottom: .3rem; }
+  #stat {
+    padding: .5rem .75rem; background: #393639;
+    border-left: 3px solid #7b97aa; border-radius: 0 4px 4px 0;
+    font-size: .85rem; line-height: 1.5; min-height: 2.4rem; margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem; border: none; border-radius: 4px;
+    cursor: pointer; font-size: .82rem; background: #393639;
+    color: #d4d4d4; transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Facade Pattern — Step-Through</h4>
+
+  <div class="panel" id="before-panel">
+    <div class="panel-header">BEFORE ✗ — Direct coupling</div>
+    <div class="client-row"><div class="client-box" id="client-before">Client</div></div>
+    <div class="arrows-bad">
+      <span>↓</span><span>↓</span><span>↓</span><span>↓</span><span>↓</span>
+    </div>
+    <div class="services-grid" id="before-services">
+      <div class="box" id="b0">VideoEncoder</div>
+      <div class="box" id="b1">AudioMixer</div>
+      <div class="box" id="b2">FileConverter</div>
+      <div class="box" id="b3">MetadataParser</div>
+      <div class="box" id="b4">NetworkUploader</div>
+    </div>
+    <div style="font-size:.72rem;color:#dc3545;text-align:center;margin-top:.3rem">Client must know all subsystems</div>
+  </div>
+
+  <div class="panel" id="after-panel">
+    <div class="panel-header">AFTER ✓ — Via Facade</div>
+    <div class="client-row"><div class="client-box" id="client-after">Client</div></div>
+    <div class="arrow-center">↓ facade.upload_video(file)</div>
+    <div class="facade-row"><div class="facade-box" id="facade-box">VideoFacade</div></div>
+    <div class="arrows-bad" style="color:#555">
+      <span>↓</span><span>↓</span><span>↓</span><span>↓</span><span>↓</span>
+    </div>
+    <div class="services-grid" id="after-services">
+      <div class="box" id="a0">VideoEncoder</div>
+      <div class="box" id="a1">AudioMixer</div>
+      <div class="box" id="a2">FileConverter</div>
+      <div class="box" id="a3">MetadataParser</div>
+      <div class="box" id="a4">NetworkUploader</div>
+    </div>
+  </div>
+
+  <div id="stat">Press Step to begin.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>◀ Back</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var SUBS = ['VideoEncoder','AudioMixer','FileConverter','MetadataParser','NetworkUploader'];
+
+var steps = [
+  {
+    msg: 'BEFORE: Client directly calls all 5 subsystems. Must know VideoEncoder, AudioMixer, FileConverter, MetadataParser, and NetworkUploader APIs.',
+    beforeActive: true, afterActive: false,
+    activeAfterSubs: [], facadeDone: false
+  },
+  {
+    msg: 'AFTER: Client calls facade.upload_video(file) — one method. VideoFacade owns the orchestration logic.',
+    beforeActive: false, afterActive: true,
+    activeAfterSubs: [], facadeDone: false
+  },
+  {
+    msg: 'facade.upload_video(file) → step 1: VideoEncoder.encode() … AudioMixer.mix() … FileConverter.convert() …',
+    beforeActive: false, afterActive: true,
+    activeAfterSubs: [0, 1, 2], facadeDone: false
+  },
+  {
+    msg: 'Continuing … MetadataParser.parse() … NetworkUploader.upload() — all 5 subsystems called in sequence. Client untouched.',
+    beforeActive: false, afterActive: true,
+    activeAfterSubs: [3, 4], facadeDone: true
+  }
+];
+
+var idx = 0;
+
+function draw() {
+  var s = steps[idx];
+  document.getElementById('before-panel').style.opacity = s.beforeActive ? '1' : '.45';
+  document.getElementById('after-panel').style.opacity = s.afterActive ? '1' : '.45';
+
+  for (var i = 0; i < 5; i++) {
+    document.getElementById('a' + i).className = 'box' +
+      (s.activeAfterSubs.indexOf(i) >= 0 ? ' active' : (s.facadeDone ? ' done' : ''));
+  }
+  var fb = document.getElementById('facade-box');
+  fb.className = 'facade-box' + (s.facadeDone ? ' done' : '');
+
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
+  document.getElementById('btn-step').disabled = idx === steps.length - 1;
+  document.getElementById('btn-back').disabled = idx === 0;
+}
+
+document.getElementById('btn-step').onclick = function() { if (idx < steps.length - 1) { idx++; draw(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+draw();
+</script>
+</body>
+</html>

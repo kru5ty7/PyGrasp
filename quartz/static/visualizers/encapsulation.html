@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Encapsulation — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  .class-box {
+    border: 1px solid #393639;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 1.2rem;
+  }
+  .cb-header {
+    background: #284b63;
+    color: #fff;
+    font-weight: 700;
+    padding: .4rem .6rem;
+    font-size: .9rem;
+  }
+  .cb-attrs, .cb-methods {
+    background: #2a2a2e;
+    padding: .4rem .6rem;
+    font-size: .85rem;
+    border-top: 1px solid #393639;
+  }
+  .cb-attrs div, .cb-methods div { line-height: 1.7; }
+  .lock { color: #c0392b; margin-right: .2rem; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.2rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; margin-bottom: 1rem; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+  .demo-section { margin-top: .8rem; }
+  .demo-label {
+    font-size: .75rem;
+    color: #646464;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: .35rem;
+  }
+  .demo-row {
+    display: flex;
+    align-items: center;
+    gap: .6rem;
+    flex-wrap: wrap;
+    margin-bottom: .6rem;
+    opacity: 0;
+    transition: opacity .3s;
+  }
+  .demo-row.visible { opacity: 1; }
+  .code-box {
+    background: #1e1e22;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .3rem .6rem;
+    font-family: "Cascadia Code", "Fira Code", monospace;
+    font-size: .82rem;
+    color: #d4d4d4;
+    white-space: nowrap;
+  }
+  .arrow { color: #646464; font-size: 1rem; }
+  .result-box {
+    padding: .3rem .6rem;
+    border-radius: 4px;
+    font-size: .82rem;
+    font-weight: 600;
+    white-space: nowrap;
+    opacity: 0;
+    transition: opacity .3s;
+  }
+  .result-box.visible { opacity: 1; }
+  .result-err { background: #3a1a1a; border: 1px solid #dc3545; color: #dc3545; }
+  .result-ok  { background: #1a3a1a; border: 1px solid #28a745; color: #28a745; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Encapsulation — Step-Through</h4>
+
+  <div class="class-box" id="class-box">
+    <div class="cb-header">BankAccount</div>
+    <div class="cb-attrs">
+      <div><span class="lock">&#128274;</span>- balance: float</div>
+      <div><span class="lock">&#128274;</span>- pin: int</div>
+    </div>
+    <div class="cb-methods">
+      <div>+ deposit(amount)</div>
+      <div>+ withdraw(amount)</div>
+      <div>+ get_balance()</div>
+    </div>
+  </div>
+
+  <div id="stat">Press Step to begin.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &rarr;</button>
+    <button id="btn-reset">&#8634; Reset</button>
+    <span id="counter">Step 0 / 3</span>
+  </div>
+
+  <div class="demo-section">
+    <div id="row1" class="demo-row">
+      <div class="demo-label" style="width:100%">Direct access (blocked)</div>
+      <div class="code-box">account.balance = -999</div>
+      <span class="arrow">&rarr;</span>
+      <div class="result-box result-err" id="res1">AttributeError: can't set attribute &#10060;</div>
+    </div>
+    <div id="row2" class="demo-row">
+      <div class="demo-label" style="width:100%">Via method (allowed)</div>
+      <div class="code-box">account.deposit(100)</div>
+      <span class="arrow">&rarr;</span>
+      <div class="result-box result-ok" id="res2">Balance updated: $100 &#10003;</div>
+    </div>
+  </div>
+</div>
+<script>
+var step = 0;
+var MSGS = [
+  'The BankAccount class. Sensitive fields are private — external code cannot touch them directly.',
+  'Direct access attempt: account.balance = -999. Python raises AttributeError — the invariant is protected.',
+  'Method call: account.deposit(100). The method validates input, updates balance safely, and confirms success.',
+  'Encapsulation in action: private state + public methods = controlled, safe interface.'
+];
+
+function render() {
+  document.getElementById('stat').textContent = MSGS[step];
+  document.getElementById('counter').textContent = 'Step ' + step + ' / 3';
+  document.getElementById('btn-back').disabled = step === 0;
+  document.getElementById('btn-step').disabled = step === 3;
+
+  var row1 = document.getElementById('row1');
+  var row2 = document.getElementById('row2');
+  var res1 = document.getElementById('res1');
+  var res2 = document.getElementById('res2');
+
+  row1.classList.toggle('visible', step >= 2);
+  res1.classList.toggle('visible', step >= 2);
+  row2.classList.toggle('visible', step >= 3);
+  res2.classList.toggle('visible', step >= 3);
+}
+
+document.getElementById('btn-step').onclick  = function() { if (step < 3) { step++; render(); } };
+document.getElementById('btn-back').onclick  = function() { if (step > 0) { step--; render(); } };
+document.getElementById('btn-reset').onclick = function() { step = 0; render(); };
+
+render();
+</script>
+</body>
+</html>

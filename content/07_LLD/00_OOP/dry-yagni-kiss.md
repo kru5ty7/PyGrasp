@@ -152,6 +152,10 @@ def calculate_total_simple(items: list[dict]) -> float:
 
 ---
 
+<iframe src="/static/visualizers/dry-yagni-kiss.html" width="100%" height="420px" style="border:none;border-radius:6px;"></iframe>
+
+---
+
 ## How It Connects
 
 DRY, YAGNI, and KISS calibrate how you apply the SOLID principles. SOLID tells you to create abstractions, segregate interfaces, and invert dependencies. DRY/YAGNI/KISS tell you when those techniques are worth the complexity and when they are premature.

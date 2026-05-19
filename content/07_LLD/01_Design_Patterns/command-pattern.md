@@ -182,6 +182,12 @@ results = queue.run_all()  # ["Hello!", 1024]
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/command-pattern.html" style="width:100%;height:460px;border:none;border-radius:8px;" title="Command Pattern Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Command encapsulates requests as objects, enabling undo/redo, queuing, and logging. It is a behavioral pattern that uses composition.

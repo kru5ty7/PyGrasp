@@ -182,6 +182,12 @@ print(serialize([1, "two"]))   # [1, "two"]
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/polymorphism.html" style="width:100%;height:440px;border:none;border-radius:8px;" title="Polymorphism Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Duck typing is the most Pythonic form of polymorphism. It requires no class hierarchy and no explicit interface - just compatible method signatures. Protocols formalize duck typing for static type checkers.

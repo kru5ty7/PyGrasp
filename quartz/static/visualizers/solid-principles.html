@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SOLID Principles — Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 700px; margin: 0 auto; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: .5rem;
+    margin-bottom: .75rem;
+  }
+  .card {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 6px;
+    padding: .75rem .6rem;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+    text-align: center;
+    user-select: none;
+  }
+  .card:hover { background: #33333a; border-color: #7b97aa; }
+  .card.active { border: 2px solid #f0a500; background: #2e2c1a; }
+  .card .letter {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #f0a500;
+    line-height: 1;
+    margin-bottom: .3rem;
+  }
+  .card .full-name {
+    font-size: .75rem;
+    font-weight: 700;
+    color: #d4d4d4;
+    margin-bottom: .2rem;
+  }
+  .card .summary {
+    font-size: .68rem;
+    color: #888;
+    line-height: 1.35;
+  }
+  .detail {
+    display: none;
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 6px;
+    padding: .75rem;
+    margin-bottom: .75rem;
+  }
+  .detail.visible { display: block; }
+  .detail-title {
+    font-size: .78rem;
+    font-weight: 700;
+    color: #f0a500;
+    margin-bottom: .6rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .examples {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: .5rem;
+  }
+  .example-box {
+    border-radius: 5px;
+    padding: .6rem;
+    font-size: .78rem;
+  }
+  .example-box.bad {
+    background: #3a1a1a;
+    border: 2px solid #dc3545;
+  }
+  .example-box.good {
+    background: #1a3a1a;
+    border: 2px solid #28a745;
+  }
+  .ex-label {
+    font-size: .7rem;
+    font-weight: 700;
+    margin-bottom: .35rem;
+  }
+  .bad .ex-label { color: #dc3545; }
+  .good .ex-label { color: #28a745; }
+  .cls-box {
+    border: 1px solid #393639;
+    border-radius: 4px;
+    overflow: hidden;
+    margin-top: .35rem;
+    font-size: .72rem;
+  }
+  .cls-hdr {
+    background: #284b63;
+    color: #fff;
+    font-weight: 700;
+    padding: .2rem .4rem;
+  }
+  .cls-body {
+    background: #2a2a2e;
+    padding: .2rem .4rem;
+    color: #aaa;
+    line-height: 1.5;
+  }
+  .cls-body .method { color: #569cd6; }
+  .cls-body .attr { color: #9cdcfe; }
+  .snippet {
+    background: #1e1e20;
+    border-radius: 3px;
+    padding: .3rem .4rem;
+    font-family: "Consolas", monospace;
+    font-size: .7rem;
+    color: #d4d4d4;
+    margin-top: .35rem;
+    line-height: 1.5;
+    white-space: pre;
+  }
+  .snippet .kw { color: #c586c0; }
+  .snippet .fn { color: #dcdcaa; }
+  .snippet .cm { color: #6a9955; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2rem;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>SOLID Principles — Click a card to expand</h4>
+
+  <div class="grid">
+    <div class="card" onclick="toggle('S')">
+      <div class="letter">S</div>
+      <div class="full-name">Single Responsibility</div>
+      <div class="summary">One class, one reason to change</div>
+    </div>
+    <div class="card" onclick="toggle('O')">
+      <div class="letter">O</div>
+      <div class="full-name">Open / Closed</div>
+      <div class="summary">Extend without modifying</div>
+    </div>
+    <div class="card" onclick="toggle('L')">
+      <div class="letter">L</div>
+      <div class="full-name">Liskov Substitution</div>
+      <div class="summary">Subclass can replace parent</div>
+    </div>
+    <div class="card" onclick="toggle('I')">
+      <div class="letter">I</div>
+      <div class="full-name">Interface Segregation</div>
+      <div class="summary">No forced unused methods</div>
+    </div>
+    <div class="card" onclick="toggle('D')">
+      <div class="letter">D</div>
+      <div class="full-name">Dependency Inversion</div>
+      <div class="summary">Depend on abstractions</div>
+    </div>
+  </div>
+
+  <!-- S detail -->
+  <div class="detail" id="detail-S">
+    <div class="detail-title">S — Single Responsibility Principle</div>
+    <div class="examples">
+      <div class="example-box bad">
+        <div class="ex-label">❌ BAD — Fat class</div>
+        <div class="cls-box">
+          <div class="cls-hdr">UserManager</div>
+          <div class="cls-body">
+            <div class="attr">- user_data</div>
+            <div class="attr">- email_config</div>
+            <div class="attr">- db_conn</div>
+            <div class="method">+ save_user()</div>
+            <div class="method">+ send_email()</div>
+            <div class="method">+ hash_password()</div>
+            <div class="method">+ log_activity()</div>
+          </div>
+        </div>
+        <div style="font-size:.68rem;color:#dc3545;margin-top:.3rem;">4 responsibilities — every concern coupled together</div>
+      </div>
+      <div class="example-box good">
+        <div class="ex-label">✓ GOOD — Split classes</div>
+        <div class="cls-box">
+          <div class="cls-hdr">User</div>
+          <div class="cls-body"><div class="method">+ hash_password()</div></div>
+        </div>
+        <div class="cls-box" style="margin-top:.25rem;">
+          <div class="cls-hdr">EmailService</div>
+          <div class="cls-body"><div class="method">+ send_email()</div></div>
+        </div>
+        <div class="cls-box" style="margin-top:.25rem;">
+          <div class="cls-hdr">UserRepository</div>
+          <div class="cls-body"><div class="method">+ save()</div></div>
+        </div>
+        <div style="font-size:.68rem;color:#28a745;margin-top:.3rem;">Each class changes for exactly one reason</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- O detail -->
+  <div class="detail" id="detail-O">
+    <div class="detail-title">O — Open/Closed Principle</div>
+    <div class="examples">
+      <div class="example-box bad">
+        <div class="ex-label">❌ BAD — if/elif chain</div>
+        <div class="snippet"><span class="kw">def</span> <span class="fn">area</span>(shape):
+  <span class="kw">if</span> shape == <span style="color:#ce9178">'circle'</span>:
+    ...
+  <span class="kw">elif</span> shape == <span style="color:#ce9178">'rect'</span>:
+    ...
+  <span class="cm"># new shape = edit this!</span></div>
+        <div style="font-size:.68rem;color:#dc3545;margin-top:.3rem;">Every new shape requires modifying existing code</div>
+      </div>
+      <div class="example-box good">
+        <div class="ex-label">✓ GOOD — Polymorphism</div>
+        <div class="cls-box">
+          <div class="cls-hdr" style="background:#1a3a4a;font-style:italic;">Shape (abstract)</div>
+          <div class="cls-body"><div class="method">+ area(): float</div></div>
+        </div>
+        <div style="font-size:.68rem;color:#888;margin-top:.3rem;margin-bottom:.2rem;">Circle, Rectangle, Triangle all extend Shape</div>
+        <div class="snippet"><span class="cm"># AreaCalculator never changes</span>
+<span class="kw">def</span> <span class="fn">total</span>(shapes):
+  <span class="kw">return</span> sum(s.area() <span class="kw">for</span> s <span class="kw">in</span> shapes)</div>
+        <div style="font-size:.68rem;color:#28a745;margin-top:.3rem;">New shape = new subclass only</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- L detail -->
+  <div class="detail" id="detail-L">
+    <div class="detail-title">L — Liskov Substitution Principle</div>
+    <div class="examples">
+      <div class="example-box bad">
+        <div class="ex-label">❌ BAD — Broken subtype</div>
+        <div class="cls-box">
+          <div class="cls-hdr">Bird</div>
+          <div class="cls-body"><div class="method">+ fly()</div></div>
+        </div>
+        <div style="font-size:.68rem;color:#888;margin:.25rem 0;">extends ↓</div>
+        <div class="cls-box" style="border-color:#dc3545;">
+          <div class="cls-hdr">Penguin</div>
+          <div class="cls-body">
+            <div class="method">+ fly()</div>
+            <div style="color:#dc3545;font-size:.68rem;">raise NotImplementedError!</div>
+          </div>
+        </div>
+        <div style="font-size:.68rem;color:#dc3545;margin-top:.3rem;">Subclass breaks parent contract</div>
+      </div>
+      <div class="example-box good">
+        <div class="ex-label">✓ GOOD — Correct hierarchy</div>
+        <div class="cls-box">
+          <div class="cls-hdr">Bird</div>
+          <div class="cls-body"><div class="attr">+ name</div></div>
+        </div>
+        <div style="font-size:.68rem;color:#888;margin:.2rem 0;">FlyingBird extends Bird &nbsp;|&nbsp; NonFlyingBird extends Bird</div>
+        <div class="cls-box" style="border-color:#28a745;">
+          <div class="cls-hdr">FlyingBird</div>
+          <div class="cls-body"><div class="method">+ fly()</div></div>
+        </div>
+        <div style="font-size:.68rem;color:#28a745;margin-top:.3rem;">Penguin extends NonFlyingBird — no fly() needed</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- I detail -->
+  <div class="detail" id="detail-I">
+    <div class="detail-title">I — Interface Segregation Principle</div>
+    <div class="examples">
+      <div class="example-box bad">
+        <div class="ex-label">❌ BAD — Fat interface</div>
+        <div class="cls-box">
+          <div class="cls-hdr" style="background:#1a3a4a;font-style:italic;">IWorker</div>
+          <div class="cls-body">
+            <div class="method">+ work()</div>
+            <div class="method">+ eat()</div>
+            <div class="method">+ sleep()</div>
+            <div class="method">+ charge_battery()</div>
+          </div>
+        </div>
+        <div style="font-size:.68rem;color:#dc3545;margin-top:.3rem;">Robot must implement eat() and sleep() — makes no sense</div>
+      </div>
+      <div class="example-box good">
+        <div class="ex-label">✓ GOOD — Segregated</div>
+        <div style="display:flex;gap:.25rem;flex-wrap:wrap;">
+          <div class="cls-box" style="flex:1;min-width:70px;">
+            <div class="cls-hdr" style="background:#1a3a4a;font-style:italic;font-size:.65rem;">IWorkable</div>
+            <div class="cls-body"><div class="method">+ work()</div></div>
+          </div>
+          <div class="cls-box" style="flex:1;min-width:70px;">
+            <div class="cls-hdr" style="background:#1a3a4a;font-style:italic;font-size:.65rem;">IHuman</div>
+            <div class="cls-body"><div class="method">+ eat()</div><div class="method">+ sleep()</div></div>
+          </div>
+          <div class="cls-box" style="flex:1;min-width:70px;">
+            <div class="cls-hdr" style="background:#1a3a4a;font-style:italic;font-size:.65rem;">IChargeable</div>
+            <div class="cls-body"><div class="method">+ charge()</div></div>
+          </div>
+        </div>
+        <div style="font-size:.68rem;color:#28a745;margin-top:.3rem;">Each class implements only what it needs</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- D detail -->
+  <div class="detail" id="detail-D">
+    <div class="detail-title">D — Dependency Inversion Principle</div>
+    <div class="examples">
+      <div class="example-box bad">
+        <div class="ex-label">❌ BAD — Concrete dependency</div>
+        <div class="cls-box">
+          <div class="cls-hdr">OrderService</div>
+          <div class="cls-body"><div class="method">+ place_order()</div></div>
+        </div>
+        <div style="font-size:.68rem;color:#dc3545;text-align:center;margin:.25rem 0;">— depends on concrete ↓</div>
+        <div class="cls-box" style="border-color:#dc3545;">
+          <div class="cls-hdr">MySQLDatabase</div>
+          <div class="cls-body"><div class="method">+ save()</div></div>
+        </div>
+        <div style="font-size:.68rem;color:#dc3545;margin-top:.3rem;">Swap DB = modify OrderService</div>
+      </div>
+      <div class="example-box good">
+        <div class="ex-label">✓ GOOD — Abstraction layer</div>
+        <div class="cls-box">
+          <div class="cls-hdr">OrderService</div>
+          <div class="cls-body"><div class="method">+ place_order()</div></div>
+        </div>
+        <div style="font-size:.68rem;color:#888;text-align:center;margin:.2rem 0;">— depends on abstraction ↓</div>
+        <div class="cls-box" style="border-color:#28a745;">
+          <div class="cls-hdr" style="background:#1a3a4a;font-style:italic;">DatabaseInterface</div>
+          <div class="cls-body"><div class="method">+ save()</div></div>
+        </div>
+        <div style="font-size:.68rem;color:#888;text-align:center;margin:.2rem 0;">MySQL / Postgres both implement it</div>
+        <div style="font-size:.68rem;color:#28a745;margin-top:.1rem;">Swap DB = just swap the implementation</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="stat">Click any principle card to see a BAD vs GOOD example.</div>
+</div>
+<script>
+var current = null;
+function toggle(key) {
+  var cards = document.querySelectorAll('.card');
+  var detail = document.getElementById('detail-' + key);
+  var stat = document.getElementById('stat');
+  var msgs = {
+    S: 'S — Single Responsibility: each class should have one reason to change.',
+    O: 'O — Open/Closed: add new behaviour by writing new code, not editing existing code.',
+    L: 'L — Liskov Substitution: any subclass must work wherever its parent is expected.',
+    I: 'I — Interface Segregation: never force a class to implement methods it does not use.',
+    D: 'D — Dependency Inversion: business logic should depend on abstractions, not concrete details.'
+  };
+  if (current === key) {
+    detail.classList.remove('visible');
+    cards.forEach(function(c) { c.classList.remove('active'); });
+    stat.textContent = 'Click any principle card to see a BAD vs GOOD example.';
+    current = null;
+  } else {
+    document.querySelectorAll('.detail').forEach(function(d) { d.classList.remove('visible'); });
+    cards.forEach(function(c) { c.classList.remove('active'); });
+    detail.classList.add('visible');
+    cards[['S','O','L','I','D'].indexOf(key)].classList.add('active');
+    stat.textContent = msgs[key];
+    current = key;
+  }
+}
+</script>
+</body>
+</html>

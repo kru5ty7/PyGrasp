@@ -167,6 +167,8 @@ user = adapter.get_user("123")
 print(f"{user.full_name} <{user.email}>")  # Alice Smith <alice@example.com>
 ```
 
+<iframe src="/static/visualizers/adapter-pattern.html" width="100%" height="440px" style="border:none;border-radius:6px;" title="Adapter Pattern Visualizer"></iframe>
+
 ---
 
 ## How It Connects
