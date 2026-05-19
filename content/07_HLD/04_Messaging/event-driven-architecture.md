@@ -125,6 +125,12 @@ Distributed tracing becomes essential in EDA. When a request flows through five 
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/event-driven-architecture.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Event-Driven Architecture Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Kafka is the most common event bus for high-throughput EDA. Understanding Kafka's partition model and consumer groups explains how EDA scales.

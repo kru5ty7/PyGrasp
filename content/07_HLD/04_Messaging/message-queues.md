@@ -106,6 +106,12 @@ Queue depth  -  the number of messages waiting to be processed  -  is a critical
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/message-queues.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Message Queues Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 The pub/sub pattern extends message queues by allowing a single message to be delivered to multiple independent consumers, each receiving their own copy.

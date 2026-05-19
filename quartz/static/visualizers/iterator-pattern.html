@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Iterator Pattern — Visualizer</title>
+<title>Iterator Pattern - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -65,7 +65,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Iterator Pattern — Step-Through</h4>
+  <h4>Iterator Pattern - Step-Through</h4>
 
   <div class="box" id="coll-box">
     <div class="box-header">NumberCollection</div>
@@ -87,11 +87,11 @@
 
   <div class="box" id="iter-box">
     <div class="box-header">Iterator</div>
-    <div class="iterator-info" id="iter-info">index = —</div>
+    <div class="iterator-info" id="iter-info">index = -</div>
   </div>
 
   <div class="seen-label">Values seen so far:</div>
-  <div class="seen-panel" id="seen-panel">—</div>
+  <div class="seen-panel" id="seen-panel">-</div>
 
   <div id="stat">Press Step to begin.</div>
   <div id="ctrl">
@@ -105,7 +105,7 @@
 var VALUES = [10, 20, 30, 40, 50];
 var steps = [
   {
-    msg: 'it = collection.__iter__() — Iterator created, index = 0, pointing at first element.',
+    msg: 'it = collection.__iter__() - Iterator created, index = 0, pointing at first element.',
     currentIdx: 0, visited: [], exhausted: false, iterIdx: 0
   },
   {
@@ -129,7 +129,7 @@ var steps = [
     currentIdx: -1, visited: [0,1,2,3,4], exhausted: false, iterIdx: 5
   },
   {
-    msg: 'next(it) → StopIteration raised. Iterator exhausted — no more elements.',
+    msg: 'next(it) → StopIteration raised. Iterator exhausted - no more elements.',
     currentIdx: -1, visited: [0,1,2,3,4], exhausted: true, iterIdx: 5
   }
 ];
@@ -152,7 +152,7 @@ function draw() {
   document.getElementById('iter-info').textContent = 'index = ' + s.iterIdx + (s.exhausted ? '  ← StopIteration' : '');
 
   var seen = s.visited.map(function(i) { return VALUES[i]; });
-  document.getElementById('seen-panel').textContent = seen.length ? seen.join(', ') : '—';
+  document.getElementById('seen-panel').textContent = seen.length ? seen.join(', ') : '-';
 
   document.getElementById('stat').textContent = s.msg;
   document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);

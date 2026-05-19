@@ -77,6 +77,12 @@ print(f"Available IPs: {ips}")  # may return several for different servers
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/dns.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="DNS Resolution Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 DNS-based routing is one of the first techniques used to direct traffic across multiple servers or regions. But for real load distribution within a region, a proper load balancer is needed.

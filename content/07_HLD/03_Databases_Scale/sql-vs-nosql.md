@@ -83,6 +83,12 @@ Schema migration is often cited as a SQL disadvantage. Adding a column or changi
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/sql-vs-nosql.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="SQL vs NoSQL Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 The consistency guarantees of SQL vs NoSQL connect directly to the ACID vs BASE distinction. SQL databases are ACID; most NoSQL databases are BASE.

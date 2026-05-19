@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Consistency Models - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #sel-row {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: 1rem;
+    align-items: center;
+  }
+  #sel-row label { font-size: .78rem; color: #646464; white-space: nowrap; }
+  select {
+    flex: 1;
+    background: #222224;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    color: #d4d4d4;
+    font-size: .85rem;
+    padding: .3rem .6rem;
+    outline: none;
+  }
+  select:focus { border-color: #7b97aa; }
+  #timeline {
+    margin-bottom: .75rem;
+    position: relative;
+  }
+  .actor-row {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin-bottom: .5rem;
+  }
+  .actor-label {
+    min-width: 80px;
+    font-size: .78rem;
+    color: #888;
+    text-align: right;
+  }
+  .actor-line {
+    flex: 1;
+    height: 2px;
+    background: #393639;
+    position: relative;
+    border-radius: 1px;
+  }
+  .event-box {
+    position: absolute;
+    top: -14px;
+    transform: translateX(-50%);
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .2rem .45rem;
+    font-size: .72rem;
+    white-space: nowrap;
+    transition: all .25s;
+  }
+  .event-box.ev-write { border-color: #f0a500; color: #f0a500; }
+  .event-box.ev-read-ok { border-color: #28a745; color: #28a745; }
+  .event-box.ev-read-stale { border-color: #dc3545; color: #dc3545; }
+  .event-box.ev-read-pending { border-color: #7b97aa; color: #7b97aa; }
+  .event-box.ev-hidden { opacity: 0; }
+  .sync-arrow {
+    position: absolute;
+    font-size: .7rem;
+    color: #28a745;
+  }
+  .dashed-arrow {
+    position: absolute;
+    font-size: .7rem;
+    color: #dc3545;
+    border-top: 1px dashed #dc3545;
+  }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+  .db-box {
+    display: flex;
+    justify-content: center;
+    margin-bottom: .6rem;
+  }
+  .db-inner {
+    background: #2a2a2e;
+    border: 1px solid #7b97aa;
+    border-radius: 4px;
+    padding: .3rem .9rem;
+    font-size: .8rem;
+    text-align: center;
+  }
+  .db-val { font-size: .72rem; color: #7b97aa; margin-top: .15rem; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Consistency Models - Timeline</h4>
+  <div id="sel-row">
+    <label for="model-sel">Model:</label>
+    <select id="model-sel" onchange="setModel(this.value)">
+      <option value="strong">Strong Consistency</option>
+      <option value="eventual">Eventual Consistency</option>
+      <option value="ryw">Read-Your-Writes</option>
+    </select>
+  </div>
+  <div class="db-box"><div class="db-inner">Database<div class="db-val" id="db-val">X = 0</div></div></div>
+  <div id="timeline"></div>
+  <div id="stat"></div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>◀ Back</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+// Each step: array of events per actor (clientA, clientB), db value, and message
+var models = {
+  strong: [
+    {
+      a: [], b: [],
+      db: 'X = 0',
+      msg: 'Initial state: X = 0 in database. Both clients see X = 0.'
+    },
+    {
+      a: [{pos: 15, label: 'Write X=1', cls: 'ev-write'}], b: [],
+      db: 'X = 1',
+      msg: 'Client A writes X = 1. Database updates immediately.'
+    },
+    {
+      a: [{pos: 15, label: 'Write X=1', cls: 'ev-write'}, {pos: 55, label: 'Read X=1 ✓', cls: 'ev-read-ok'}],
+      b: [{pos: 55, label: 'Read X=1 ✓', cls: 'ev-read-ok'}],
+      db: 'X = 1',
+      msg: 'Strong Consistency: Client B reads X = 1 immediately. All reads reflect latest write - no stale data possible.'
+    }
+  ],
+  eventual: [
+    {
+      a: [], b: [],
+      db: 'X = 0',
+      msg: 'Initial state: X = 0. Both clients see X = 0.'
+    },
+    {
+      a: [{pos: 10, label: 'Write X=1', cls: 'ev-write'}], b: [],
+      db: 'X = 1 (propagating...)',
+      msg: 'Client A writes X = 1. Write accepted - but replica sync is asynchronous.'
+    },
+    {
+      a: [{pos: 10, label: 'Write X=1', cls: 'ev-write'}],
+      b: [{pos: 30, label: 'Read X=0 (stale)', cls: 'ev-read-stale'}],
+      db: 'X = 1 (propagating...)',
+      msg: 'Client B reads X = 0 - stale replica not yet updated. This is expected under eventual consistency.'
+    },
+    {
+      a: [{pos: 10, label: 'Write X=1', cls: 'ev-write'}],
+      b: [{pos: 30, label: 'Read X=0 (stale)', cls: 'ev-read-stale'}, {pos: 72, label: 'Read X=1 ✓', cls: 'ev-read-ok'}],
+      db: 'X = 1 (converged)',
+      msg: 'Eventually: X = 1 propagates to all replicas. Client B now reads X = 1. All replicas converge - but with a time delay.'
+    }
+  ],
+  ryw: [
+    {
+      a: [], b: [],
+      db: 'X = 0',
+      msg: 'Initial state: X = 0. Read-your-writes guarantees you always see your own writes.'
+    },
+    {
+      a: [{pos: 10, label: 'Write X=1', cls: 'ev-write'}], b: [],
+      db: 'X = 1',
+      msg: 'Client A writes X = 1. Write is acknowledged.'
+    },
+    {
+      a: [{pos: 10, label: 'Write X=1', cls: 'ev-write'}, {pos: 50, label: 'Read X=1 ✓', cls: 'ev-read-ok'}],
+      b: [],
+      db: 'X = 1',
+      msg: 'Client A reads X = 1 immediately - read-your-writes ensures your own writes are always visible to you.'
+    },
+    {
+      a: [{pos: 10, label: 'Write X=1', cls: 'ev-write'}, {pos: 50, label: 'Read X=1 ✓', cls: 'ev-read-ok'}],
+      b: [{pos: 50, label: 'Read X=0 (stale)', cls: 'ev-read-stale'}],
+      db: 'X = 1',
+      msg: 'Client B may still read X = 0 briefly - read-your-writes only guarantees the writing client sees its own writes, not all clients.'
+    }
+  ]
+};
+
+var currentModel = 'strong';
+var idx = 0;
+
+function renderTimeline(step) {
+  function makeRow(label, events) {
+    var evHtml = events.map(function(ev) {
+      return '<div class="event-box ' + ev.cls + '" style="left:' + ev.pos + '%">' + ev.label + '</div>';
+    }).join('');
+    return '<div class="actor-row">' +
+      '<div class="actor-label">' + label + '</div>' +
+      '<div class="actor-line">' + evHtml + '</div>' +
+    '</div>';
+  }
+  document.getElementById('timeline').innerHTML =
+    makeRow('Client A', step.a) +
+    makeRow('Client B', step.b);
+  document.getElementById('db-val').textContent = step.db;
+}
+
+function render() {
+  var steps = models[currentModel];
+  var s = steps[idx];
+  renderTimeline(s);
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('btn-step').disabled = idx >= steps.length - 1;
+  document.getElementById('btn-back').disabled = idx === 0;
+  document.getElementById('counter').textContent = 'Step ' + (idx + 1) + ' / ' + steps.length;
+}
+
+function setModel(m) {
+  currentModel = m;
+  idx = 0;
+  render();
+}
+
+document.getElementById('btn-step').onclick = function() {
+  if (idx < models[currentModel].length - 1) { idx++; render(); }
+};
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; render(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; render(); };
+
+render();
+</script>
+</body>
+</html>

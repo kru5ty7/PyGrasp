@@ -103,6 +103,12 @@ Change Data Capture (CDC) decouples the write path from cache invalidation. Inst
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/cache-invalidation.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Cache Invalidation Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Cache invalidation is the hardest part of the broader cache strategy problem. The write strategy determines when invalidation should happen; invalidation determines how.

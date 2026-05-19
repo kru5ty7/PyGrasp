@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Database Sharding - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  /* App + Router row */
+  #top-row {
+    display: flex;
+    gap: .5rem;
+    margin-bottom: .4rem;
+    align-items: stretch;
+  }
+  .top-box {
+    flex: 1;
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 6px;
+    overflow: hidden;
+    transition: border .2s;
+  }
+  .top-box .box-header {
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    padding: .3rem .55rem;
+    background: #284b63;
+  }
+  .top-box .box-body {
+    padding: .4rem .55rem;
+    font-size: .73rem;
+    color: #999;
+    min-height: 2.6rem;
+    line-height: 1.5;
+  }
+  .top-box.active { border: 2px solid #f0a500; }
+  /* Down arrow */
+  .down-arrow {
+    text-align: center;
+    font-size: .8rem;
+    color: #555;
+    margin: .2rem 0;
+    transition: color .2s;
+  }
+  .down-arrow.active { color: #f0a500; }
+  .down-arrow.done   { color: #28a745; }
+  /* Shard row */
+  #shard-row {
+    display: flex;
+    gap: .5rem;
+    margin-bottom: .75rem;
+  }
+  .shard-node {
+    flex: 1;
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 6px;
+    overflow: hidden;
+    transition: border .2s;
+  }
+  .shard-node .shard-header {
+    font-size: .68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    padding: .28rem .5rem;
+    background: #1a3a2a;
+  }
+  .shard-node .shard-body {
+    padding: .4rem .5rem;
+    font-size: .7rem;
+    color: #999;
+    min-height: 2.8rem;
+    line-height: 1.5;
+  }
+  .shard-node.active  { border: 2px solid #f0a500; }
+  .shard-node.matched { border: 2px solid #28a745; }
+  .shard-node.scatter { border: 2px solid #dc3545; }
+  .shard-node.migrate { border: 2px solid #f0a500; }
+  /* Input row */
+  #lookup-row {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: .5rem;
+    align-items: center;
+  }
+  #lookup-row label { font-size: .78rem; color: #646464; white-space: nowrap; }
+  #user-input {
+    flex: 1;
+    background: #222224;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    color: #d4d4d4;
+    font-size: .85rem;
+    padding: .3rem .6rem;
+    outline: none;
+  }
+  #user-input:focus { border-color: #7b97aa; }
+  #lookup-result {
+    font-size: .75rem;
+    color: #28a745;
+    min-height: 1.1rem;
+    margin-bottom: .5rem;
+    padding: 0 .2rem;
+  }
+  /* Status */
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #btn-cross { background: #3a2020; }
+  #btn-reshard { background: #2a2a1a; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+  /* Shard 4 (hidden until reshard) */
+  #shard4-wrap { display: none; }
+  #shard4-wrap.show { display: flex; margin-top: .4rem; }
+  #shard4-wrap .shard-node { flex: 1; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Database Sharding - Step-Through</h4>
+
+  <div id="top-row">
+    <div class="top-box" id="box-app">
+      <div class="box-header">Application</div>
+      <div class="box-body" id="body-app">Sending queries to the Shard Router.</div>
+    </div>
+    <div class="top-box" id="box-router">
+      <div class="box-header">Shard Router</div>
+      <div class="box-body" id="body-router">hash(key) % num_shards → routes to correct shard.</div>
+    </div>
+  </div>
+
+  <div class="down-arrow" id="darr-router">▼</div>
+
+  <div id="shard-row">
+    <div class="shard-node" id="shard1">
+      <div class="shard-header">Shard 1 - A to H</div>
+      <div class="shard-body" id="body-shard1">Users: Alice, Bob, Charlie, Dave, Eve, Frank, Grace, Hannah</div>
+    </div>
+    <div class="shard-node" id="shard2">
+      <div class="shard-header">Shard 2 - I to P</div>
+      <div class="shard-body" id="body-shard2">Users: Ivan, Jane, Kevin, Liam, Mia, Nora, Oscar, Paul</div>
+    </div>
+    <div class="shard-node" id="shard3">
+      <div class="shard-header">Shard 3 - Q to Z</div>
+      <div class="shard-body" id="body-shard3">Users: Quinn, Rachel, Sam, Tina, Uma, Victor, Wendy, Zoe</div>
+    </div>
+  </div>
+
+  <div id="shard4-wrap" id="shard4-outer">
+    <div class="shard-node" id="shard4" style="border: 2px solid #f0a500;">
+      <div class="shard-header">Shard 4 - NEW</div>
+      <div class="shard-body" id="body-shard4">Receiving migrated data from Shards 1-3...</div>
+    </div>
+  </div>
+
+  <div style="margin-top:.75rem; margin-bottom:.3rem;">
+    <label style="font-size:.78rem; color:#646464;">Live lookup - type a username:</label>
+  </div>
+  <div id="lookup-row">
+    <input id="user-input" type="text" placeholder="e.g. Alice, Sam, Zoe..." spellcheck="false">
+  </div>
+  <div id="lookup-result"></div>
+
+  <div id="stat">Press Step to walk through a query trace, or type a username above for instant shard routing.</div>
+
+  <div id="ctrl">
+    <button id="btn-back" disabled>◀ Back</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+    <button id="btn-cross" onclick="showCrossQuery()">Cross-Shard Query</button>
+    <button id="btn-reshard" onclick="showReshard()">Add Shard 4</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var stepIdx = 0;
+var extraMode = null;
+
+var STEPS = [
+  {
+    app: 'Application: querying user "Alice".',
+    router: 'Idle - waiting for query.',
+    s1: '', s2: '', s3: '',
+    appActive: false, routerActive: false,
+    darr: '',
+    msg: 'Step 1 - App queries user "Alice". The query is sent to the Shard Router.'
+  },
+  {
+    app: 'Sent query: SELECT * FROM users WHERE name="Alice"',
+    router: 'Computing: hash("Alice") % 3 = 0 → Shard 1 (A-H range).',
+    s1: 'active', s2: '', s3: '',
+    appActive: true, routerActive: true,
+    darr: 'active',
+    msg: 'Step 2 - Shard Router computes hash("Alice") % 3 = 0 → routes to Shard 1 (covers A-H).'
+  },
+  {
+    app: 'Received result: Alice found in Shard 1.',
+    router: 'Forwarded query to Shard 1. Got result.',
+    s1: 'matched', s2: '', s3: '',
+    appActive: false, routerActive: false,
+    darr: 'done',
+    msg: 'Step 3 - Query hits Shard 1. Alice is found and returned. Only 1 shard was queried. Efficient!'
+  },
+  {
+    app: 'Application: querying user "Sam".',
+    router: 'Idle - waiting for next query.',
+    s1: '', s2: '', s3: '',
+    appActive: false, routerActive: false,
+    darr: '',
+    msg: 'Step 4 - App queries user "Sam". New query sent to Shard Router.'
+  },
+  {
+    app: 'Sent query: SELECT * FROM users WHERE name="Sam"',
+    router: 'Computing: hash("Sam") % 3 = 2 → Shard 3 (Q-Z range).',
+    s1: '', s2: '', s3: 'active',
+    appActive: true, routerActive: true,
+    darr: 'active',
+    msg: 'Step 5 - Shard Router computes hash("Sam") % 3 = 2 → routes to Shard 3 (covers Q-Z).'
+  },
+  {
+    app: 'Received result: Sam found in Shard 3.',
+    router: 'Forwarded query to Shard 3. Got result.',
+    s1: '', s2: '', s3: 'matched',
+    appActive: false, routerActive: false,
+    darr: 'done',
+    msg: 'Step 6 - Query hits Shard 3. Sam is found and returned. Each query touches exactly one shard - O(1) routing.'
+  }
+];
+
+function hashName(name) {
+  // Simple deterministic hash for display
+  var h = 0;
+  for (var i = 0; i < name.length; i++) {
+    h = (h * 31 + name.charCodeAt(i)) >>> 0;
+  }
+  return h % 3;
+}
+
+function applyStep(s) {
+  document.getElementById('body-app').textContent = s.app;
+  document.getElementById('body-router').textContent = s.router;
+  document.getElementById('box-app').className = 'top-box' + (s.appActive ? ' active' : '');
+  document.getElementById('box-router').className = 'top-box' + (s.routerActive ? ' active' : '');
+  setShard('shard1', s.s1);
+  setShard('shard2', s.s2);
+  setShard('shard3', s.s3);
+  document.getElementById('darr-router').className = 'down-arrow' + (s.darr ? ' ' + s.darr : '');
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + stepIdx + ' / ' + (STEPS.length - 1);
+  document.getElementById('btn-step').disabled = (stepIdx >= STEPS.length - 1);
+  document.getElementById('btn-back').disabled = (stepIdx === 0);
+}
+
+function setShard(id, cls) {
+  var el = document.getElementById(id);
+  el.className = 'shard-node' + (cls ? ' ' + cls : '');
+}
+
+function draw() {
+  if (extraMode) return;
+  applyStep(STEPS[stepIdx]);
+}
+
+function showCrossQuery() {
+  extraMode = 'cross';
+  document.getElementById('box-app').className = 'top-box active';
+  document.getElementById('body-app').textContent = 'SELECT * FROM users WHERE age > 25 - must fan out to all shards!';
+  document.getElementById('box-router').className = 'top-box active';
+  document.getElementById('body-router').textContent = 'No shard key in query. Must scatter to ALL shards. Scatter-gather pattern.';
+  document.getElementById('darr-router').className = 'down-arrow active';
+  setShard('shard1', 'scatter');
+  setShard('shard2', 'scatter');
+  setShard('shard3', 'scatter');
+  document.getElementById('body-shard1').textContent = 'Querying... partial result: Alice(28), Bob(31)...';
+  document.getElementById('body-shard2').textContent = 'Querying... partial result: Kevin(27), Nora(33)...';
+  document.getElementById('body-shard3').textContent = 'Querying... partial result: Sam(29), Victor(41)...';
+  document.getElementById('stat').textContent = 'CROSS-SHARD QUERY - SELECT * WHERE age > 25 has no shard key, so ALL 3 shards must be queried in parallel (scatter), results merged in the router (gather). Expensive at scale!';
+  document.getElementById('btn-step').disabled = true;
+  document.getElementById('btn-back').disabled = true;
+  document.getElementById('counter').textContent = '';
+}
+
+function showReshard() {
+  extraMode = 'reshard';
+  document.getElementById('shard4-wrap').className = 'show';
+  setShard('shard1', 'migrate');
+  setShard('shard2', 'migrate');
+  setShard('shard3', 'migrate');
+  document.getElementById('body-shard1').textContent = 'Migrating ~25% of data to Shard 4...';
+  document.getElementById('body-shard2').textContent = 'Migrating ~25% of data to Shard 4...';
+  document.getElementById('body-shard3').textContent = 'Migrating ~25% of data to Shard 4...';
+  document.getElementById('body-router').textContent = 'Updating routing table: now hash(key) % 4. Many keys change shard!';
+  document.getElementById('stat').textContent = 'RESHARDING: Adding Shard 4 means hash(key) % 4 instead of % 3. ~75% of all data must migrate to new locations. This is the hot resharding problem - high I/O, potential downtime, careful coordination needed.';
+  document.getElementById('btn-step').disabled = true;
+  document.getElementById('btn-back').disabled = true;
+  document.getElementById('counter').textContent = '';
+}
+
+document.getElementById('btn-step').onclick = function() {
+  if (stepIdx < STEPS.length - 1) { stepIdx++; draw(); }
+};
+document.getElementById('btn-back').onclick = function() {
+  if (stepIdx > 0) { stepIdx--; draw(); }
+};
+document.getElementById('btn-reset').onclick = function() {
+  stepIdx = 0;
+  extraMode = null;
+  document.getElementById('shard4-wrap').className = '';
+  document.getElementById('body-shard1').textContent = 'Users: Alice, Bob, Charlie, Dave, Eve, Frank, Grace, Hannah';
+  document.getElementById('body-shard2').textContent = 'Users: Ivan, Jane, Kevin, Liam, Mia, Nora, Oscar, Paul';
+  document.getElementById('body-shard3').textContent = 'Users: Quinn, Rachel, Sam, Tina, Uma, Victor, Wendy, Zoe';
+  document.getElementById('lookup-result').textContent = '';
+  document.getElementById('user-input').value = '';
+  draw();
+};
+
+document.getElementById('user-input').oninput = function() {
+  var val = this.value.trim();
+  var result = document.getElementById('lookup-result');
+  if (!val) { result.textContent = ''; return; }
+  var shard = hashName(val) + 1;
+  var ranges = ['A–H', 'I–P', 'Q–Z'];
+  var range = ranges[shard - 1];
+  result.textContent = 'hash("' + val + '") % 3 = ' + (shard - 1) + ' → Shard ' + shard + ' (' + range + ')';
+};
+
+draw();
+</script>
+</body>
+</html>

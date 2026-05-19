@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dijkstra — Visualizer</title>
+<title>Dijkstra - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -72,7 +72,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Dijkstra's Algorithm — Shortest Paths</h4>
+  <h4>Dijkstra's Algorithm - Shortest Paths</h4>
   <div id="input-row">
     <label for="start-sel">Start node:</label>
     <select id="start-sel">
@@ -124,8 +124,8 @@
     <span class="leg"><span class="dot" style="background:#28a745"></span>Finalised</span>
   </div>
   <div id="panels">
-    <div class="panel"><strong>Priority Queue</strong><span id="p-pq">—</span></div>
-    <div class="panel"><strong>Finalised</strong><span id="p-done">—</span></div>
+    <div class="panel"><strong>Priority Queue</strong><span id="p-pq">-</span></div>
+    <div class="panel"><strong>Finalised</strong><span id="p-done">-</span></div>
   </div>
   <div id="stat">Press Step to begin.</div>
   <div id="ctrl">
@@ -232,7 +232,7 @@ function draw() {
   });
   var pqStr = s.pq.length ? s.pq.map(function(x){return x[1]+'='+fmtDist(x[0]);}).join(', ') : '(empty)';
   document.getElementById('p-pq').textContent = pqStr;
-  document.getElementById('p-done').textContent = s.fin.length ? s.fin.join(' → ') : '—';
+  document.getElementById('p-done').textContent = s.fin.length ? s.fin.join(' → ') : '-';
   document.getElementById('stat').textContent = s.msg;
   document.getElementById('counter').textContent = 'Step '+idx+' / '+(steps.length-1);
   document.getElementById('btn-step').disabled = s.done;

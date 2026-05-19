@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Deque — Visualizer</title>
+<title>Deque - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -137,7 +137,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Deque (Double-Ended Queue) — Interactive</h4>
+  <h4>Deque (Double-Ended Queue) - Interactive</h4>
   <div class="dir-hint">← HEAD (front)&nbsp;&nbsp;&nbsp;&nbsp;TAIL (back) →</div>
   <div id="input-row">
     <label for="val-input">Value:</label>
@@ -225,27 +225,27 @@ document.getElementById('btn-push-back').onclick = function() {
 };
 
 document.getElementById('btn-pop-front').onclick = function() {
-  if (dq.length === 0) { status('Deque is empty — nothing to pop.'); return; }
+  if (dq.length === 0) { status('Deque is empty - nothing to pop.'); return; }
   var v = dq.shift();
   render(-1);
   status('Pop Front: removed "' + v + '" from HEAD. New HEAD = ' + (dq.length > 0 ? '"' + dq[0] + '"' : '(deque empty)') + '.');
 };
 
 document.getElementById('btn-pop-back').onclick = function() {
-  if (dq.length === 0) { status('Deque is empty — nothing to pop.'); return; }
+  if (dq.length === 0) { status('Deque is empty - nothing to pop.'); return; }
   var v = dq.pop();
   render(-1);
   status('Pop Back: removed "' + v + '" from TAIL. New TAIL = ' + (dq.length > 0 ? '"' + dq[dq.length - 1] + '"' : '(deque empty)') + '.');
 };
 
 document.getElementById('btn-peek-front').onclick = function() {
-  if (dq.length === 0) { status('Deque is empty — nothing to peek.'); return; }
+  if (dq.length === 0) { status('Deque is empty - nothing to peek.'); return; }
   render(0);
   status('Peek Front: HEAD = "' + dq[0] + '" (not removed).');
 };
 
 document.getElementById('btn-peek-back').onclick = function() {
-  if (dq.length === 0) { status('Deque is empty — nothing to peek.'); return; }
+  if (dq.length === 0) { status('Deque is empty - nothing to peek.'); return; }
   render(dq.length - 1);
   status('Peek Back: TAIL = "' + dq[dq.length - 1] + '" (not removed).');
 };

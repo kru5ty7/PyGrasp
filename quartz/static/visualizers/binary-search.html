@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Binary Search — Visualizer</title>
+<title>Binary Search - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -130,7 +130,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Binary Search — Step-Through</h4>
+  <h4>Binary Search - Step-Through</h4>
   <div class="input-row">
     <label for="arr-input">Array:</label>
     <input id="arr-input" type="text" value="1, 3, 5, 7, 9, 11, 13, 15, 17, 19" placeholder="sorted integers, comma-separated" spellcheck="false">
@@ -163,7 +163,7 @@ function buildSteps(arr, t) {
     var m = lo + Math.floor((hi - lo) / 2);
     if (arr[m] === t) {
       s.push({ lo: lo, hi: hi, mid: m, found: true, done: true,
-        msg: 'arr[' + m + '] = ' + arr[m] + ' equals target ' + t + ' — found at index ' + m + '!' });
+        msg: 'arr[' + m + '] = ' + arr[m] + ' equals target ' + t + ' - found at index ' + m + '!' });
       break;
     } else if (arr[m] < t) {
       s.push({ lo: lo, hi: hi, mid: m, found: false, done: false,
@@ -177,7 +177,7 @@ function buildSteps(arr, t) {
   }
   if (lo > hi) {
     s.push({ lo: lo, hi: hi, mid: null, found: false, done: true,
-      msg: 'lo (' + lo + ') > hi (' + hi + ') — search window empty. ' + t + ' is not in the array.' });
+      msg: 'lo (' + lo + ') > hi (' + hi + ') - search window empty. ' + t + ' is not in the array.' });
   }
   return s;
 }

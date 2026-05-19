@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Factory Method Pattern — Visualizer</title>
+<title>Factory Method Pattern - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -109,7 +109,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Factory Method Pattern — Step-Through</h4>
+  <h4>Factory Method Pattern - Step-Through</h4>
 
   <div class="diagram">
     <div class="col">
@@ -163,15 +163,15 @@ var steps = [
   },
   {
     ca: 'amber', cb: 'dim', pa: '', pb: 'dim',
-    msg: 'creator = ConcreteCreatorA() — ConcreteCreatorA is selected. It will produce ProductA objects.'
+    msg: 'creator = ConcreteCreatorA() - ConcreteCreatorA is selected. It will produce ProductA objects.'
   },
   {
     ca: 'amber', cb: 'dim', pa: 'amber', pb: 'dim',
-    msg: 'product = creator.create_product() — factory method called. ProductA instantiated (amber). The creator decided the concrete type.'
+    msg: 'product = creator.create_product() - factory method called. ProductA instantiated (amber). The creator decided the concrete type.'
   },
   {
     ca: 'green', cb: 'amber', pa: 'green', pb: 'amber',
-    msg: 'product.use() → "Using ProductA." Switch to ConcreteCreatorB → "Using ProductB." Client code unchanged — only creator changes.'
+    msg: 'product.use() → "Using ProductA." Switch to ConcreteCreatorB → "Using ProductB." Client code unchanged - only creator changes.'
   }
 ];
 var idx = 0;

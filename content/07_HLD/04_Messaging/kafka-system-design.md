@@ -117,6 +117,12 @@ Log compaction is an alternative to time-based retention. Instead of deleting ol
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/kafka-system-design.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Kafka System Design Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 The at-least-once delivery guarantee in Kafka (with offset management) connects to the idempotency requirement discussed for message queues. The same pattern applies.

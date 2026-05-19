@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Divide and Conquer — Merge Sort Visualizer</title>
+<title>Divide and Conquer - Merge Sort Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -68,7 +68,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Divide and Conquer — Merge Sort Tree</h4>
+  <h4>Divide and Conquer - Merge Sort Tree</h4>
   <div class="input-row">
     <label for="arr-input">Array:</label>
     <input id="arr-input" type="text" value="5,3,8,1,4,2" placeholder="e.g. 5,3,8,1 (max 8 elements)">
@@ -146,7 +146,7 @@ function buildSteps(rootNode, nodes) {
   var nodeStates = {}; /* id → state */
   var nodeSorted = {}; /* id → sortedArr */
 
-  /* Phase 1: Divide — BFS level by level, expose each node */
+  /* Phase 1: Divide - BFS level by level, expose each node */
   var queue = [rootNode.id];
   while (queue.length) {
     var next = [];
@@ -171,10 +171,10 @@ function buildSteps(rootNode, nodes) {
     queue = next;
   }
 
-  /* Phase 2: Conquer — post-order merge from leaves up */
+  /* Phase 2: Conquer - post-order merge from leaves up */
   function postOrderMerge(node) {
     if (!node.left || !node.right) {
-      /* leaf — already sorted */
+      /* leaf - already sorted */
       nodeSorted[node.id] = node.arr.slice();
       return;
     }

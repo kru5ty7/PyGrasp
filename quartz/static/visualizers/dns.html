@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DNS Resolution - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #diagram { margin-bottom: .75rem; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>DNS Resolution (Recursive)</h4>
+  <div id="diagram"></div>
+  <div id="stat"></div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var C = {
+  bg: '#2a2a2e', border: '#393639', header: '#284b63',
+  amber: '#f0a500', green: '#28a745', red: '#dc3545',
+  blue: '#007bff', text: '#d4d4d4', dim: '#444', panelBg: '#393639'
+};
+
+// Vertical flow layout (SVG 520 x 360)
+// Each node is a row: Browser, Resolver, Root, TLD, Auth
+var nodeH = 40, nodeW = 220, svgW = 520, svgH = 360;
+var colX = (svgW - nodeW) / 2; // centered column x
+
+var nodeRows = [
+  { key: 'browser',   y: 10,  label: 'Browser / Client',               sub: 'example.com → ?' },
+  { key: 'resolver',  y: 80,  label: 'Recursive Resolver (ISP)',        sub: '8.8.8.8 / 1.1.1.1' },
+  { key: 'root',      y: 150, label: 'Root Name Server',                sub: '13 logical roots (anycast)' },
+  { key: 'tld',       y: 220, label: 'TLD Name Server (.com)',           sub: 'Authoritative for .com' },
+  { key: 'auth',      y: 290, label: 'Authoritative NS (example.com)',   sub: 'Knows IPs for *.example.com' }
+];
+
+// steps: hi[nodeKey] -> 'active'|'done'|'cache'|'error'
+// arrow: {from, to, color, label, side} side='right'|'left' offset for parallel arrows
+var steps = [
+  {
+    msg: 'DNS Recursive Resolution for example.com. Browser wants the IP. Press Step to begin.',
+    hi: {}, arrows: [], ip: null
+  },
+  {
+    msg: 'Step 1/10: Browser checks local DNS cache → MISS (first visit or TTL expired).',
+    hi: { browser: 'active' },
+    arrows: [],
+    cache: { browser: 'MISS' }, ip: null
+  },
+  {
+    msg: 'Step 2/10: Browser sends recursive query to Recursive Resolver: "What is the IP of example.com?"',
+    hi: { browser: 'active', resolver: 'active' },
+    arrows: [{ from: 'browser', to: 'resolver', color: C.amber, label: 'query: example.com?', dx: -10 }],
+    cache: { browser: 'MISS' }, ip: null
+  },
+  {
+    msg: 'Step 3/10: Resolver checks its own cache → MISS. Must walk the DNS hierarchy.',
+    hi: { resolver: 'active' },
+    arrows: [],
+    cache: { browser: 'MISS', resolver: 'MISS' }, ip: null
+  },
+  {
+    msg: 'Step 4/10: Resolver asks Root NS: "Where is .com?" Root replies with TLD NS addresses.',
+    hi: { resolver: 'active', root: 'active' },
+    arrows: [
+      { from: 'resolver', to: 'root',     color: C.amber, label: 'Who handles .com?', dx: -10 },
+      { from: 'root',     to: 'resolver', color: C.blue,  label: '.com NS: 192.5.6.30', dx: 10 }
+    ],
+    cache: { browser: 'MISS', resolver: 'MISS' }, ip: null
+  },
+  {
+    msg: 'Step 5/10: Resolver asks .com TLD NS: "Where is example.com?" TLD replies with Authoritative NS.',
+    hi: { resolver: 'active', tld: 'active' },
+    arrows: [
+      { from: 'resolver', to: 'tld',      color: C.amber, label: 'NS for example.com?', dx: -10 },
+      { from: 'tld',      to: 'resolver', color: C.blue,  label: 'Auth NS: ns1.example.com', dx: 10 }
+    ],
+    cache: { browser: 'MISS', resolver: 'MISS' }, ip: null
+  },
+  {
+    msg: 'Step 6/10: Resolver now knows the Authoritative NS for example.com.',
+    hi: { resolver: 'active', tld: 'done' },
+    arrows: [],
+    cache: { browser: 'MISS', resolver: 'MISS' }, ip: null
+  },
+  {
+    msg: 'Step 7/10: Resolver asks Authoritative NS: "What is the A record for example.com?"',
+    hi: { resolver: 'active', auth: 'active' },
+    arrows: [
+      { from: 'resolver', to: 'auth',     color: C.amber, label: 'A record: example.com?', dx: -10 }
+    ],
+    cache: { browser: 'MISS', resolver: 'MISS' }, ip: null
+  },
+  {
+    msg: 'Step 8/10: Authoritative NS returns the A record: 93.184.216.34 (TTL: 3600s).',
+    hi: { resolver: 'active', auth: 'done' },
+    arrows: [
+      { from: 'auth',     to: 'resolver', color: C.green, label: '93.184.216.34 TTL=3600', dx: 10 }
+    ],
+    cache: { browser: 'MISS', resolver: 'MISS' }, ip: '93.184.216.34'
+  },
+  {
+    msg: 'Step 9/10: Resolver caches the result (TTL 3600s) and returns the IP to the browser.',
+    hi: { browser: 'active', resolver: 'done' },
+    arrows: [
+      { from: 'resolver', to: 'browser',  color: C.green, label: '93.184.216.34', dx: 10 }
+    ],
+    cache: { browser: 'MISS', resolver: 'HIT' }, ip: '93.184.216.34'
+  },
+  {
+    msg: 'Step 10/10: Browser connects directly to 93.184.216.34. DNS resolution complete in ~50-200ms. Result cached locally for TTL duration.',
+    hi: { browser: 'done' },
+    arrows: [],
+    cache: { browser: 'HIT', resolver: 'HIT' }, ip: '93.184.216.34',
+    connect: true
+  }
+];
+
+var idx = 0;
+
+function nodeByKey(key) {
+  return nodeRows.find(function(n) { return n.key === key; });
+}
+
+function nodeCenterY(key) {
+  var n = nodeByKey(key);
+  return n.y + nodeH / 2;
+}
+
+function edgeY(key, toKey) {
+  var ny = nodeCenterY(key), ty = nodeCenterY(toKey);
+  if (ty > ny) return ny + nodeH / 2;
+  return ny - nodeH / 2;
+}
+
+function hiBorder(key, hi) {
+  var s = (hi || {})[key];
+  if (s === 'active') return C.amber;
+  if (s === 'done')   return C.green;
+  if (s === 'cache')  return C.blue;
+  if (s === 'error')  return C.red;
+  return C.border;
+}
+
+function hiFill(key, hi) {
+  var s = (hi || {})[key];
+  if (s === 'active') return '#2e2810';
+  if (s === 'done')   return '#0e2018';
+  if (s === 'cache')  return '#0e1020';
+  if (s === 'error')  return '#2e1010';
+  return C.bg;
+}
+
+function renderSVG(step) {
+  var hi = step.hi || {};
+  var cache = step.cache || {};
+  var out = '<svg viewBox="0 0 ' + svgW + ' ' + svgH + '" xmlns="http://www.w3.org/2000/svg">';
+
+  // Arrow defs
+  ['amber','green','red','blue'].forEach(function(name) {
+    var col = C[name];
+    out += '<defs><marker id="a-' + name + '" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">'
+         + '<polygon points="0 0, 8 3, 0 6" fill="' + col + '"/></marker></defs>';
+  });
+
+  function colorKey(hex) {
+    if (hex === C.amber) return 'amber';
+    if (hex === C.green) return 'green';
+    if (hex === C.red)   return 'red';
+    return 'blue';
+  }
+
+  // Draw connection lines between nodes (grey)
+  nodeRows.forEach(function(n, i) {
+    if (i < nodeRows.length - 1) {
+      var y1 = n.y + nodeH;
+      var y2 = nodeRows[i+1].y;
+      var mx = colX + nodeW / 2;
+      out += '<line x1="' + mx + '" y1="' + y1 + '" x2="' + mx + '" y2="' + y2 + '" stroke="' + C.dim + '" stroke-width="1" stroke-dasharray="4,3"/>';
+    }
+  });
+
+  // Draw arrows (offset left/right of center line)
+  step.arrows.forEach(function(arr) {
+    var fromNode = nodeByKey(arr.from);
+    var toNode   = nodeByKey(arr.to);
+    var going_down = toNode.y > fromNode.y;
+    var y1 = going_down ? (fromNode.y + nodeH) : fromNode.y;
+    var y2 = going_down ? toNode.y : (toNode.y + nodeH);
+    var dx = arr.dx || 0;
+    var mx = colX + nodeW / 2 + dx;
+    var ck = colorKey(arr.color);
+    out += '<line x1="' + mx + '" y1="' + y1 + '" x2="' + mx + '" y2="' + (going_down ? y2 - 2 : y2 + 2)
+         + '" stroke="' + arr.color + '" stroke-width="2" marker-end="url(#a-' + ck + ')"/>';
+    if (arr.label) {
+      var ly = (y1 + y2) / 2;
+      var lx = mx + (dx < 0 ? -4 : 4);
+      var anchor = dx < 0 ? 'end' : 'start';
+      var lw = arr.label.length * 5.5 + 10;
+      var rectX = anchor === 'end' ? lx - lw : lx;
+      out += '<rect x="' + rectX + '" y="' + (ly - 8) + '" width="' + lw + '" height="13" rx="3" fill="#161618" opacity="0.9"/>';
+      out += '<text x="' + (rectX + lw/2) + '" y="' + (ly + 3) + '" text-anchor="middle" font-size="8" fill="' + arr.color + '">' + arr.label + '</text>';
+    }
+  });
+
+  // Draw nodes
+  nodeRows.forEach(function(n) {
+    var bc = hiBorder(n.key, hi);
+    var bf = hiFill(n.key, hi);
+    var sw = hi[n.key] ? 2 : 1;
+    out += '<rect x="' + colX + '" y="' + n.y + '" width="' + nodeW + '" height="' + nodeH + '" rx="4" fill="' + bf + '" stroke="' + bc + '" stroke-width="' + sw + '"/>';
+    // Header strip
+    out += '<rect x="' + colX + '" y="' + n.y + '" width="' + nodeW + '" height="15" rx="4" fill="' + C.panelBg + '"/>';
+    out += '<rect x="' + colX + '" y="' + (n.y + 11) + '" width="' + nodeW + '" height="4" fill="' + C.panelBg + '"/>';
+    out += '<text x="' + (colX + nodeW/2) + '" y="' + (n.y + 10) + '" text-anchor="middle" font-size="8.5" fill="#aaa">' + n.label + '</text>';
+    out += '<text x="' + (colX + nodeW/2) + '" y="' + (n.y + 30) + '" text-anchor="middle" font-size="8" fill="#666">' + n.sub + '</text>';
+
+    // Cache badge
+    if (cache[n.key]) {
+      var cval = cache[n.key];
+      var ccolor = cval === 'HIT' ? C.green : C.amber;
+      var cx2 = colX + nodeW - 42;
+      out += '<rect x="' + cx2 + '" y="' + (n.y + 14) + '" width="36" height="11" rx="2" fill="' + (cval === 'HIT' ? '#0a1a0a' : '#1e1a0a') + '"/>';
+      out += '<text x="' + (cx2 + 18) + '" y="' + (n.y + 22) + '" text-anchor="middle" font-size="7.5" fill="' + ccolor + '">cache ' + cval + '</text>';
+    }
+  });
+
+  // IP result box
+  if (step.ip) {
+    var iy = svgH - 30;
+    out += '<rect x="' + colX + '" y="' + iy + '" width="' + nodeW + '" height="20" rx="4" fill="#0a1a0a" stroke="' + C.green + '" stroke-width="1"/>';
+    out += '<text x="' + (colX + nodeW/2) + '" y="' + (iy + 13) + '" text-anchor="middle" font-size="9" fill="' + C.green + '">Resolved IP: ' + step.ip + (step.connect ? ' — connecting...' : '') + '</text>';
+  }
+
+  out += '</svg>';
+  return out;
+}
+
+function render() {
+  var step = steps[idx];
+  document.getElementById('diagram').innerHTML = renderSVG(step);
+  document.getElementById('stat').textContent = step.msg;
+  var isLast = idx >= steps.length - 1;
+  document.getElementById('btn-step').disabled = isLast;
+  document.getElementById('btn-step').textContent = isLast ? 'Done ✓' : 'Step →';
+  document.getElementById('btn-back').disabled = idx === 0;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
+}
+
+document.getElementById('btn-step').onclick = function() { if (idx < steps.length - 1) { idx++; render(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; render(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; render(); };
+
+render();
+</script>
+</body>
+</html>

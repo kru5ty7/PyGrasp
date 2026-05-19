@@ -99,6 +99,12 @@ Team structure follows service structure. Conway's Law states that the communica
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/microservices-basics.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Microservices Basics Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Service discovery is the mechanism by which one microservice finds the network address of another. This is a fundamental operational requirement in any non-trivial microservice deployment.

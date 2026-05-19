@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Cycle Detection — Visualizer</title>
+<title>Cycle Detection - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -68,7 +68,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Cycle Detection — DFS</h4>
+  <h4>Cycle Detection - DFS</h4>
   <div id="mode-row">
     <button class="mode-btn active" id="btn-undirected">Undirected</button>
     <button class="mode-btn" id="btn-directed">Directed</button>
@@ -82,7 +82,7 @@
         <path d="M 0 0 L 10 5 L 0 10 z" fill="#646464" id="darr-path"/>
       </marker>
     </defs>
-    <!-- edges — undirected by default, reused for directed -->
+    <!-- edges - undirected by default, reused for directed -->
     <line id="e-AB" x1="60" y1="120" x2="180" y2="60" stroke="#646464" stroke-width="2"/>
     <line id="e-BC" x1="180" y1="60" x2="300" y2="60" stroke="#646464" stroke-width="2"/>
     <line id="e-CD" x1="300" y1="60" x2="300" y2="180" stroke="#646464" stroke-width="2"/>
@@ -107,8 +107,8 @@
     <span class="leg"><span class="dot" style="background:#dc3545"></span>Cycle node</span>
   </div>
   <div id="panels">
-    <div class="panel"><strong>DFS Stack</strong><span id="p-stack">—</span></div>
-    <div class="panel"><strong>Visited</strong><span id="p-visited">—</span></div>
+    <div class="panel"><strong>DFS Stack</strong><span id="p-stack">-</span></div>
+    <div class="panel"><strong>Visited</strong><span id="p-visited">-</span></div>
   </div>
   <div id="stat">Press Step to begin.</div>
   <div id="ctrl">
@@ -245,7 +245,7 @@ function draw() {
   });
   document.getElementById('p-stack').textContent = s.stk.length ? s.stk.join(' → ') : '(empty)';
   var vis = Object.keys(s.st).filter(function(n){ return s.st[n]!=='u'; });
-  document.getElementById('p-visited').textContent = vis.length ? vis.join(', ') : '—';
+  document.getElementById('p-visited').textContent = vis.length ? vis.join(', ') : '-';
   document.getElementById('stat').textContent = s.msg;
   document.getElementById('counter').textContent = 'Step '+idx+' / '+(steps.length-1);
   document.getElementById('btn-step').disabled = s.done;

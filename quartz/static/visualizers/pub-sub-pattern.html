@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pub/Sub Pattern - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 600px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  /* Diagram */
+  .diagram {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: .75rem;
+  }
+  .box {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .45rem .6rem;
+    text-align: center;
+    font-size: .78rem;
+  }
+  .box .label { color: #646464; font-size: .62rem; text-transform: uppercase; letter-spacing: .05em; margin-bottom: .2rem; }
+  .box .name { font-weight: 600; font-size: .82rem; }
+  .box .sub { font-size: .65rem; color: #888; margin-top: .2rem; min-height: .85rem; }
+  .box.pub-active { border-color: #7b97aa; }
+  .box.topic-active { border-color: #f0a500; }
+  .box.sub-active { border-color: #28a745; }
+  .box.sub-inactive { opacity: .35; border-style: dashed; }
+  .sub-col {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  /* arrows */
+  .arrows-col {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    align-items: center;
+    flex-shrink: 0;
+    width: 28px;
+  }
+  .arr-line {
+    font-size: .9rem;
+    color: #646464;
+    text-align: center;
+    line-height: 1;
+    transition: color .2s;
+  }
+  .arr-line.active { color: #f0a500; }
+  .arr-line.delivered { color: #28a745; }
+  .arr-line.inactive { opacity: .2; }
+  /* Compare note */
+  .compare {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .4rem .6rem;
+    font-size: .75rem;
+    color: #888;
+    margin-bottom: .75rem;
+    line-height: 1.5;
+  }
+  .compare strong { color: #d4d4d4; }
+  /* unsub row */
+  .unsub-row {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin-bottom: .75rem;
+    flex-wrap: wrap;
+  }
+  .unsub-row span { font-size: .78rem; color: #646464; }
+  .unsub-btn {
+    padding: .25rem .55rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .75rem;
+    background: #3a2a2e;
+    color: #d4d4d4;
+    border: 1px solid #dc3545;
+    transition: opacity .15s;
+  }
+  .unsub-btn:hover { opacity: .75; }
+  .unsub-btn.resubscribe { border-color: #28a745; background: #1e3a2a; }
+  /* stat */
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .82rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Pub/Sub Pattern - Step-Through</h4>
+
+  <div class="diagram">
+    <div class="box" id="pub-box" style="min-width:80px">
+      <div class="label">Publisher</div>
+      <div class="name">OrderSvc</div>
+      <div class="sub" id="pub-sub"></div>
+    </div>
+    <div style="color:#646464;font-size:1.1rem;flex-shrink:0">→</div>
+    <div class="box" id="topic-box" style="min-width:90px">
+      <div class="label">Topic</div>
+      <div class="name">"orders"</div>
+      <div class="sub" id="topic-sub"></div>
+    </div>
+    <div class="arrows-col" id="arr-col">
+      <div class="arr-line" id="arr0">→</div>
+      <div class="arr-line" id="arr1">→</div>
+      <div class="arr-line" id="arr2">→</div>
+    </div>
+    <div class="sub-col">
+      <div class="box" id="s1-box" style="min-width:96px">
+        <div class="label">Subscriber 1</div>
+        <div class="name">S1</div>
+        <div class="sub" id="s1-sub"></div>
+      </div>
+      <div class="box" id="s2-box" style="min-width:96px">
+        <div class="label">Subscriber 2</div>
+        <div class="name">S2</div>
+        <div class="sub" id="s2-sub"></div>
+      </div>
+      <div class="box" id="s3-box" style="min-width:96px">
+        <div class="label">Subscriber 3</div>
+        <div class="name">S3</div>
+        <div class="sub" id="s3-sub"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="unsub-row">
+    <span>S2:</span>
+    <button id="btn-unsub" class="unsub-btn">Unsubscribe S2</button>
+  </div>
+
+  <div class="compare">
+    <strong>Queue vs Topic:</strong> Queue = one consumer gets the message (work distribution). Topic = <em>all</em> subscribers get the message (fan-out broadcast).
+  </div>
+
+  <div id="stat">Press Step to begin.</div>
+
+  <div id="ctrl">
+    <button id="btn-back" disabled>◀ Back</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+// s2subscribed is a global toggle
+var s2subscribed = true;
+
+var STEPS_TEMPLATE = [
+  {
+    pub: '', pubState: '',
+    topic: '', topicState: '',
+    arr: ['', '', ''],
+    s: ['', '', ''], sState: ['', '', ''],
+    msg: 'Initial state. No subscriptions yet. Publisher and topic are idle.'
+  },
+  {
+    pub: '', pubState: '',
+    topic: 'Receiving subs', topicState: 'topic-active',
+    arr: ['active', 'active', 'active'],
+    s: ['Subscribed ✓', 'Subscribed ✓', 'Subscribed ✓'], sState: ['sub-active', 'sub-active', 'sub-active'],
+    msg: 'S1, S2, S3 all subscribe to "orders" topic. Subscription lines form (shown as arrows). Topic is now aware of 3 subscribers.'
+  },
+  {
+    pub: 'Publishing event', pubState: 'pub-active',
+    topic: '', topicState: '',
+    arr: ['', '', ''],
+    s: ['', '', ''], sState: ['', '', ''],
+    msg: 'Publisher publishes event: OrderCreated{id:42}. Sent to topic - publisher does not know who subscribes.'
+  },
+  {
+    pub: '', pubState: 'pub-active',
+    topic: 'OrderCreated{id:42}', topicState: 'topic-active',
+    arr: ['', '', ''],
+    s: ['', '', ''], sState: ['', '', ''],
+    msg: 'Topic receives event (amber). Preparing to fan-out to all active subscribers simultaneously.'
+  },
+  {
+    pub: '', pubState: '',
+    topic: 'Fan-out →', topicState: 'topic-active',
+    arr: ['active', 'active', 'active'],
+    s: ['Received ✓', 'Received ✓', 'Received ✓'], sState: ['sub-active', 'sub-active', 'sub-active'],
+    msg: 'Topic fans out → all 3 subscribers receive OrderCreated{id:42} simultaneously (green). Each gets their own independent copy.'
+  },
+  {
+    pub: '', pubState: '',
+    topic: '', topicState: '',
+    arr: ['', '', ''],
+    s: ['Send email ✓', 'Update inventory ✓', 'Notify warehouse ✓'], sState: ['sub-active', 'sub-active', 'sub-active'],
+    msg: 'Each subscriber processes independently: S1=send email, S2=update inventory, S3=notify warehouse. No coordination needed.'
+  },
+  {
+    pub: 'Publishing again', pubState: 'pub-active',
+    topic: 'Fan-out →', topicState: 'topic-active',
+    arr: ['delivered', '', 'delivered'],
+    s: ['Received ✓', '', 'Received ✓'], sState: ['sub-active', 'sub-inactive', 'sub-active'],
+    msg: 'Publisher doesn\'t know about subscribers. Decoupled. (After S2 unsubscribes, next publish only reaches S1 and S3.)'
+  }
+];
+
+var idx = 0;
+
+function getSteps() {
+  return STEPS_TEMPLATE;
+}
+
+function draw() {
+  var s = STEPS_TEMPLATE[idx];
+
+  // Pub
+  var pb = document.getElementById('pub-box');
+  pb.className = 'box' + (s.pubState ? ' ' + s.pubState : '');
+  document.getElementById('pub-sub').textContent = s.pub;
+
+  // Topic
+  var tb = document.getElementById('topic-box');
+  tb.className = 'box' + (s.topicState ? ' ' + s.topicState : '');
+  document.getElementById('topic-sub').textContent = s.topic;
+
+  // Arrows - override with s2subscribed state on step 6
+  var arrStates = s.arr.slice();
+  var subSubs = s.s.slice();
+  var subStates = s.sState.slice();
+
+  if (!s2subscribed) {
+    // If S2 unsubscribed, grey it out (unless step 1 subscribing)
+    if (idx >= 2) {
+      subStates[1] = 'sub-inactive';
+      subSubs[1] = 'Unsubscribed';
+      if (arrStates[1] !== '') arrStates[1] = 'inactive';
+    }
+  } else {
+    // Re-subscribed: override step 6 which has s2inactive baked in
+    if (idx === 6) {
+      arrStates[1] = 'active';
+      subSubs[1] = 'Received ✓';
+      subStates[1] = 'sub-active';
+    }
+  }
+
+  for (var i = 0; i < 3; i++) {
+    var aEl = document.getElementById('arr' + i);
+    aEl.className = 'arr-line' + (arrStates[i] ? ' ' + arrStates[i] : '');
+    aEl.textContent = '→';
+  }
+
+  var sIds = ['s1', 's2', 's3'];
+  for (var j = 0; j < 3; j++) {
+    var bEl = document.getElementById(sIds[j] + '-box');
+    bEl.className = 'box' + (subStates[j] ? ' ' + subStates[j] : '');
+    document.getElementById(sIds[j] + '-sub').textContent = subSubs[j];
+  }
+
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (STEPS_TEMPLATE.length - 1);
+  document.getElementById('btn-step').disabled = idx === STEPS_TEMPLATE.length - 1;
+  document.getElementById('btn-back').disabled = idx === 0;
+}
+
+document.getElementById('btn-step').onclick = function() { if (idx < STEPS_TEMPLATE.length - 1) { idx++; draw(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+document.getElementById('btn-unsub').onclick = function() {
+  s2subscribed = !s2subscribed;
+  var btn = document.getElementById('btn-unsub');
+  if (s2subscribed) {
+    btn.textContent = 'Unsubscribe S2';
+    btn.className = 'unsub-btn';
+  } else {
+    btn.textContent = 'Re-subscribe S2';
+    btn.className = 'unsub-btn resubscribe';
+  }
+  draw();
+};
+
+draw();
+</script>
+</body>
+</html>

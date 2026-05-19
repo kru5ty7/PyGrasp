@@ -95,6 +95,12 @@ Index maintenance during large batch operations (bulk inserts, migrations) is a 
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/database-indexes.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Database Indexes Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Indexes directly affect query cost, which in turn affects both the latency of individual queries and the total throughput the database can support. Understanding the latency-throughput relationship helps calibrate when index optimization is worth pursuing.

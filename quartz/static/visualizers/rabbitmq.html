@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RabbitMQ - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .5rem;
+  }
+  /* Exchange type selector */
+  .type-selector {
+    display: flex;
+    gap: 5px;
+    margin-bottom: .75rem;
+  }
+  .type-btn {
+    flex: 1;
+    padding: .3rem .5rem;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    background: #2a2a2e;
+    color: #888;
+    font-size: .75rem;
+    cursor: pointer;
+    text-align: center;
+    transition: background .15s, border-color .15s, color .15s;
+    font-family: inherit;
+  }
+  .type-btn:hover { opacity: .8; }
+  .type-btn.selected { background: #284b63; border-color: #007bff; color: #fff; font-weight: 600; }
+  /* Diagram */
+  .box {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .4rem .6rem;
+    text-align: center;
+    font-size: .75rem;
+    transition: border-color .25s, opacity .25s;
+  }
+  .box .lbl  { color: #646464; font-size: .6rem; text-transform: uppercase; letter-spacing: .05em; margin-bottom: .2rem; }
+  .box .name { font-weight: 600; font-size: .8rem; }
+  .box .sub  { font-size: .62rem; color: #888; margin-top: .2rem; min-height: .85rem; }
+  .box.active { border-color: #f0a500; }
+  .box.done   { border-color: #28a745; }
+  .box.skip   { opacity: .3; border-style: dashed; }
+  /* Exchange special box */
+  .exchange-box {
+    background: #2a2a2e;
+    border: 2px solid #393639;
+    border-radius: 5px;
+    padding: .45rem .65rem;
+    text-align: center;
+    transition: border-color .25s;
+  }
+  .exchange-box .lbl  { color: #646464; font-size: .6rem; text-transform: uppercase; letter-spacing: .05em; margin-bottom: .2rem; }
+  .exchange-box .name { font-weight: 700; font-size: .82rem; }
+  .exchange-box .type-tag {
+    display: inline-block;
+    font-size: .58rem;
+    padding: .1rem .3rem;
+    border-radius: 2px;
+    margin-top: .2rem;
+    background: #393639;
+    color: #888;
+    border: 1px solid #505050;
+  }
+  .exchange-box.active { border-color: #f0a500; }
+  .exchange-box.done   { border-color: #28a745; }
+  /* Top row */
+  .top-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  /* Binding key label */
+  .binding-label {
+    font-size: .6rem;
+    color: #888;
+    text-align: center;
+    margin-bottom: 2px;
+  }
+  .binding-label.active { color: #f0a500; }
+  .binding-label.match  { color: #28a745; }
+  .binding-label.no-match { color: #dc3545; }
+  /* Queue columns */
+  .queues-section {
+    margin-bottom: .5rem;
+  }
+  .queue-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: 5px;
+  }
+  .arrow-cell {
+    font-size: .9rem;
+    width: 24px;
+    text-align: center;
+    flex-shrink: 0;
+    transition: color .25s;
+  }
+  .arrow-cell.active   { color: #f0a500; }
+  .arrow-cell.done     { color: #28a745; }
+  .arrow-cell.inactive { color: #393639; }
+  .queue-box {
+    flex: 1;
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .3rem .5rem;
+    transition: border-color .25s, opacity .25s;
+  }
+  .queue-box .q-label { font-size: .58rem; text-transform: uppercase; color: #646464; letter-spacing: .04em; }
+  .queue-box .q-name  { font-size: .75rem; font-weight: 600; }
+  .queue-box .q-bind  { font-size: .58rem; color: #888; margin-top: .1rem; }
+  .queue-box .q-msg   { font-size: .6rem; color: #888; margin-top: .15rem; min-height: .75rem; }
+  .queue-box.active   { border-color: #f0a500; }
+  .queue-box.done     { border-color: #28a745; }
+  .queue-box.skip     { opacity: .3; border-style: dashed; }
+  .consumer-cell {
+    font-size: .62rem;
+    color: #888;
+    min-width: 64px;
+    text-align: center;
+    transition: color .25s;
+  }
+  .consumer-cell.done  { color: #28a745; font-weight: 600; }
+  .consumer-cell.skip  { opacity: .3; }
+  /* Routing key display */
+  .rk-display {
+    font-size: .68rem;
+    color: #f0a500;
+    text-align: center;
+    background: #2a2018;
+    border: 1px solid #f0a500;
+    border-radius: 3px;
+    padding: .2rem .5rem;
+    margin-bottom: 6px;
+    display: none;
+  }
+  /* Status */
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #284b63;
+    border-radius: 0 4px 4px 0;
+    font-size: .8rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+    font-family: inherit;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter  { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>RabbitMQ Exchange Routing - Step-Through</h4>
+
+  <div class="type-selector">
+    <button class="type-btn selected" id="btn-direct" onclick="switchMode('direct')">Direct</button>
+    <button class="type-btn"          id="btn-fanout" onclick="switchMode('fanout')">Fanout</button>
+    <button class="type-btn"          id="btn-topic"  onclick="switchMode('topic')">Topic</button>
+  </div>
+
+  <!-- Producer + Exchange -->
+  <div class="top-row">
+    <div class="box" id="producer" style="min-width:88px">
+      <div class="lbl">Producer</div>
+      <div class="name">App Service</div>
+      <div class="sub" id="prod-sub"></div>
+    </div>
+    <div style="color:#646464;font-size:1rem;flex-shrink:0" id="arr-prod">→</div>
+    <div class="exchange-box" id="exchange" style="flex:1">
+      <div class="lbl">Exchange</div>
+      <div class="name" id="exch-name">logs</div>
+      <div class="type-tag" id="exch-type">direct</div>
+    </div>
+  </div>
+
+  <!-- Routing key display -->
+  <div class="rk-display" id="rk-display"></div>
+
+  <!-- Queues section -->
+  <div class="queues-section" id="queues-section">
+    <!-- rendered by JS -->
+  </div>
+
+  <div id="stat">Press Step to begin.</div>
+
+  <div id="ctrl">
+    <button id="btn-back" disabled>◀ Back</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+// ─── MODES ────────────────────────────────────────────────────────────────────
+
+var MODES = {
+  direct: {
+    exchName: 'logs',
+    exchType: 'direct',
+    queues: [
+      { id: 'q1', name: 'Queue 1', binding: 'binding: "error"',  consumer: 'Consumer 1' },
+      { id: 'q2', name: 'Queue 2', binding: 'binding: "info"',   consumer: 'Consumer 2' }
+    ],
+    steps: [
+      {
+        prod: '', prodS: '',
+        exchS: '',
+        rk: '',
+        qs: [
+          { state: '', msg: '' },
+          { state: '', msg: '' }
+        ],
+        cs: ['', ''],
+        msg: 'Direct Exchange: routes to the queue whose binding key exactly matches the message routing key. Queue 1 is bound to "error", Queue 2 to "info".'
+      },
+      {
+        prod: 'active', prodS: 'key="error"',
+        exchS: 'active',
+        rk: 'routing key: "error"',
+        qs: [
+          { state: '', msg: '' },
+          { state: '', msg: '' }
+        ],
+        cs: ['', ''],
+        msg: 'Producer publishes message with routing key "error". Message arrives at the Direct Exchange. Exchange checks all bindings for a match.'
+      },
+      {
+        prod: 'done', prodS: 'Published ✓',
+        exchS: 'active',
+        rk: 'routing key: "error"',
+        qs: [
+          { state: 'active', msg: 'binding match!' },
+          { state: 'skip', msg: 'no match' }
+        ],
+        cs: ['', ''],
+        msg: 'Exchange compares routing key "error" against bindings. Queue 1 binding "error" matches. Queue 2 binding "info" does NOT match — message is not routed there.'
+      },
+      {
+        prod: '', prodS: '',
+        exchS: 'done',
+        rk: 'routing key: "error"',
+        qs: [
+          { state: 'done', msg: 'M1 received ✓' },
+          { state: 'skip', msg: '' }
+        ],
+        cs: ['done', 'skip'],
+        msg: 'Message delivered ONLY to Queue 1. Consumer 1 receives and processes it. Consumer 2 receives nothing — exact key match controls routing.'
+      }
+    ]
+  },
+
+  fanout: {
+    exchName: 'events',
+    exchType: 'fanout',
+    queues: [
+      { id: 'q1', name: 'Queue 1', binding: 'binding: (any)',  consumer: 'Consumer 1' },
+      { id: 'q2', name: 'Queue 2', binding: 'binding: (any)',  consumer: 'Consumer 2' },
+      { id: 'q3', name: 'Queue 3', binding: 'binding: (any)',  consumer: 'Consumer 3' }
+    ],
+    steps: [
+      {
+        prod: '', prodS: '',
+        exchS: '',
+        rk: '',
+        qs: [
+          { state: '', msg: '' },
+          { state: '', msg: '' },
+          { state: '', msg: '' }
+        ],
+        cs: ['', '', ''],
+        msg: 'Fanout Exchange: broadcasts every message to ALL bound queues, regardless of routing key. Routing key is completely ignored.'
+      },
+      {
+        prod: 'active', prodS: 'any key',
+        exchS: 'active',
+        rk: 'routing key: ignored',
+        qs: [
+          { state: '', msg: '' },
+          { state: '', msg: '' },
+          { state: '', msg: '' }
+        ],
+        cs: ['', '', ''],
+        msg: 'Producer publishes a message. The fanout exchange ignores the routing key entirely and will deliver to all 3 bound queues simultaneously.'
+      },
+      {
+        prod: 'done', prodS: 'Published ✓',
+        exchS: 'active',
+        rk: 'routing key: ignored',
+        qs: [
+          { state: 'active', msg: 'fan-out →' },
+          { state: 'active', msg: 'fan-out →' },
+          { state: 'active', msg: 'fan-out →' }
+        ],
+        cs: ['', '', ''],
+        msg: 'Exchange fans out to ALL 3 queues simultaneously. Each queue receives its own independent copy. This is pub/sub broadcast behavior.'
+      },
+      {
+        prod: '', prodS: '',
+        exchS: 'done',
+        rk: '',
+        qs: [
+          { state: 'done', msg: 'M1 received ✓' },
+          { state: 'done', msg: 'M1 received ✓' },
+          { state: 'done', msg: 'M1 received ✓' }
+        ],
+        cs: ['done', 'done', 'done'],
+        msg: 'All 3 consumers receive the same message independently. Adding a 4th queue just requires a new binding — no producer change needed.'
+      }
+    ]
+  },
+
+  topic: {
+    exchName: 'user_events',
+    exchType: 'topic',
+    queues: [
+      { id: 'q1', name: 'Queue 1', binding: 'pattern: "order.#"',  consumer: 'Consumer 1' },
+      { id: 'q2', name: 'Queue 2', binding: 'pattern: "*.placed"', consumer: 'Consumer 2' },
+      { id: 'q3', name: 'Queue 3', binding: 'pattern: "user.#"',   consumer: 'Consumer 3' }
+    ],
+    steps: [
+      {
+        prod: '', prodS: '',
+        exchS: '',
+        rk: '',
+        qs: [
+          { state: '', msg: '' },
+          { state: '', msg: '' },
+          { state: '', msg: '' }
+        ],
+        cs: ['', '', ''],
+        msg: 'Topic Exchange: routes by wildcard pattern matching on the routing key. "#" matches zero or more words. "*" matches exactly one word.'
+      },
+      {
+        prod: 'active', prodS: 'key="order.placed"',
+        exchS: 'active',
+        rk: 'routing key: "order.placed"',
+        qs: [
+          { state: '', msg: '' },
+          { state: '', msg: '' },
+          { state: '', msg: '' }
+        ],
+        cs: ['', '', ''],
+        msg: 'Producer sends message with routing key "order.placed". Exchange will test this key against each queue\'s binding pattern.'
+      },
+      {
+        prod: 'done', prodS: 'Published ✓',
+        exchS: 'active',
+        rk: 'routing key: "order.placed"',
+        qs: [
+          { state: 'done', msg: '"order.#" matches ✓' },
+          { state: 'done', msg: '"*.placed" matches ✓' },
+          { state: 'skip', msg: '"user.#" no match' }
+        ],
+        cs: ['done', 'done', 'skip'],
+        msg: '"order.placed" matches "order.#" (order + anything) and "*.placed" (anything + placed). Does NOT match "user.#". Queues 1 and 2 receive the message; Queue 3 does not.'
+      }
+    ]
+  }
+};
+
+var currentMode = 'direct';
+var idx = 0;
+
+function switchMode(mode) {
+  currentMode = mode;
+  idx = 0;
+  ['direct','fanout','topic'].forEach(function(m) {
+    document.getElementById('btn-' + m).className = 'type-btn' + (m === mode ? ' selected' : '');
+  });
+  renderQueuesHTML();
+  draw();
+}
+
+function renderQueuesHTML() {
+  var mode = MODES[currentMode];
+  var html = '';
+  mode.queues.forEach(function(q, i) {
+    html += '<div class="queue-row">';
+    html += '<div class="arrow-cell" id="arr-q' + i + '">→</div>';
+    html += '<div class="queue-box" id="qbox' + i + '">';
+    html += '<div class="q-label">Queue ' + (i+1) + '</div>';
+    html += '<div class="q-name">' + q.name + '</div>';
+    html += '<div class="q-bind">' + q.binding + '</div>';
+    html += '<div class="q-msg" id="qmsg' + i + '"></div>';
+    html += '</div>';
+    html += '<div class="consumer-cell" id="cons' + i + '">' + q.consumer + '</div>';
+    html += '</div>';
+  });
+  document.getElementById('queues-section').innerHTML = html;
+}
+
+function draw() {
+  var mode = MODES[currentMode];
+  var s = mode.steps[idx];
+
+  // Exchange meta
+  document.getElementById('exch-name').textContent = mode.exchName;
+  document.getElementById('exch-type').textContent = mode.exchType;
+
+  // Producer
+  document.getElementById('producer').className = 'box' + (s.prod ? ' ' + s.prod : '');
+  document.getElementById('prod-sub').textContent = s.prodS;
+
+  // Arrow to exchange
+  var arrProd = document.getElementById('arr-prod');
+  if (s.prod === 'active') arrProd.style.color = '#f0a500';
+  else if (s.prod === 'done') arrProd.style.color = '#28a745';
+  else arrProd.style.color = '#646464';
+
+  // Exchange
+  document.getElementById('exchange').className = 'exchange-box' + (s.exchS ? ' ' + s.exchS : '');
+
+  // Routing key display
+  var rkEl = document.getElementById('rk-display');
+  if (s.rk) {
+    rkEl.style.display = 'block';
+    rkEl.textContent = s.rk;
+  } else {
+    rkEl.style.display = 'none';
+  }
+
+  // Queues
+  s.qs.forEach(function(q, i) {
+    var qbox = document.getElementById('qbox' + i);
+    var arrq = document.getElementById('arr-q' + i);
+    var cons = document.getElementById('cons' + i);
+    if (!qbox) return;
+
+    qbox.className = 'queue-box' + (q.state ? ' ' + q.state : '');
+    document.getElementById('qmsg' + i).textContent = q.msg;
+
+    if (q.state === 'active') { arrq.className = 'arrow-cell active'; }
+    else if (q.state === 'done') { arrq.className = 'arrow-cell done'; }
+    else if (q.state === 'skip') { arrq.className = 'arrow-cell inactive'; }
+    else { arrq.className = 'arrow-cell'; }
+
+    var consState = s.cs[i] || '';
+    if (consState === 'done') { cons.className = 'consumer-cell done'; }
+    else if (consState === 'skip') { cons.className = 'consumer-cell skip'; }
+    else { cons.className = 'consumer-cell'; }
+  });
+
+  var total = mode.steps.length - 1;
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + total;
+  var isLast = idx === total;
+  document.getElementById('btn-step').disabled = isLast;
+  document.getElementById('btn-step').textContent = isLast ? 'Done ✓' : 'Step →';
+  document.getElementById('btn-back').disabled = idx === 0;
+}
+
+document.getElementById('btn-step').onclick = function() {
+  var total = MODES[currentMode].steps.length - 1;
+  if (idx < total) { idx++; draw(); }
+};
+document.getElementById('btn-back').onclick = function() {
+  if (idx > 0) { idx--; draw(); }
+};
+document.getElementById('btn-reset').onclick = function() {
+  idx = 0; draw();
+};
+
+// Init
+renderQueuesHTML();
+draw();
+</script>
+</body>
+</html>

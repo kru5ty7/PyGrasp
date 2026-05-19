@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hash Collisions — Visualizer</title>
+<title>Hash Collisions - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -156,7 +156,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Hash Collisions — mod 7</h4>
+  <h4>Hash Collisions - mod 7</h4>
   <div id="toggle-row">
     <button class="toggle-btn active" id="btn-chain">Chaining</button>
     <button class="toggle-btn" id="btn-lp">Linear Probing</button>
@@ -225,7 +225,7 @@ function insertChain(key) {
     },
     function() {
       if (chainTable[h].includes(key)) {
-        setStatus('"' + key + '" already in bucket ' + h + ' — skip.');
+        setStatus('"' + key + '" already in bucket ' + h + ' - skip.');
         renderChain({[h]: 'done'});
       } else {
         chainTable[h].push(key);
@@ -250,7 +250,7 @@ function renderLP(probes, inserted) {
     var isProbe = probes.indexOf(i) !== -1;
     var isInserted = inserted === i;
     var cls = 'lp-cell' + (val === null ? ' empty' : '') + (isProbe && !isInserted ? ' probe' : '') + (isInserted ? ' inserted' : '');
-    html += '<div class="' + cls + '"><div class="lp-idx">' + i + '</div><div class="lp-val">' + (val || '—') + '</div></div>';
+    html += '<div class="' + cls + '"><div class="lp-idx">' + i + '</div><div class="lp-val">' + (val || '-') + '</div></div>';
   }
   document.getElementById('lp-cells').innerHTML = html;
 }
@@ -273,7 +273,7 @@ function insertLP(key) {
     return;
   }
   if (target === -1) {
-    setStatus('Table is full — cannot insert "' + key + '".');
+    setStatus('Table is full - cannot insert "' + key + '".');
     return;
   }
 
@@ -285,8 +285,8 @@ function insertLP(key) {
         shownProbes.push(pSeq[ii]);
         var isLast = ii === pSeq.length - 1;
         var msg = 'key "' + key + '" → hash = ' + h + '. Probe bucket ' + pSeq[ii];
-        if (!isLast) msg += ' — occupied by "' + lpTable[pSeq[ii]] + '", step right.';
-        else msg += ' — empty, inserting here.';
+        if (!isLast) msg += ' - occupied by "' + lpTable[pSeq[ii]] + '", step right.';
+        else msg += ' - empty, inserting here.';
         document.getElementById('probe-log').textContent = 'Probe sequence: [' + shownProbes.join(' → ') + ']';
         setStatus(msg);
         renderLP(shownProbes.slice(0, isLast ? -1 : shownProbes.length), isLast ? pSeq[ii] : -1);

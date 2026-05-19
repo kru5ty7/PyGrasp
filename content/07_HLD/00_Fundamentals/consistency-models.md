@@ -85,6 +85,12 @@ def read_user_profile(user_id: str, write_token: str = None) -> dict:
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/consistency-models.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Consistency Models Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 The CAP theorem is what makes consistency tradeoffs unavoidable in distributed systems. Consistency models describe the available options within that constraint.

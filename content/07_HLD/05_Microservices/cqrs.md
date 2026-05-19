@@ -140,6 +140,12 @@ CQRS with event sourcing is the more powerful combination. The write side stores
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/cqrs.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="CQRS Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 CQRS and event sourcing are commonly combined. Event sourcing provides the immutable event log; CQRS provides the projection mechanism for efficient reads.

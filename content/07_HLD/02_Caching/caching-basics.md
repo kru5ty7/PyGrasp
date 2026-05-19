@@ -89,6 +89,12 @@ The cache stampede (also called thundering herd or dog-piling) is a failure mode
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/caching-basics.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Caching Basics Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Different caching strategies determine when data is loaded into the cache, when it is written back, and who is responsible for keeping cache and database in sync. Choosing the wrong strategy causes stale reads or write performance problems.

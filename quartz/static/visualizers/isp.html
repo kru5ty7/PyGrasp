@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ISP — Interface Segregation Principle Visualizer</title>
+<title>ISP - Interface Segregation Principle Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -118,7 +118,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Interface Segregation Principle — Toggle View</h4>
+  <h4>Interface Segregation Principle - Toggle View</h4>
 
   <div id="ctrl">
     <button id="btn-toggle" onclick="toggle()">Show After ISP ▶</button>
@@ -128,7 +128,7 @@
 
   <!-- BEFORE -->
   <div class="panel visible" id="panel-before">
-    <div class="label bad">Before ISP ❌ — Fat interface</div>
+    <div class="label bad">Before ISP ❌ - Fat interface</div>
     <div class="row">
       <div class="col">
         <div class="cls-box" style="border-color:#dc3545;min-width:200px;">
@@ -171,12 +171,12 @@
         </div>
       </div>
     </div>
-    <div class="note bad">Robot forced to implement human methods it cannot use — violates ISP.</div>
+    <div class="note bad">Robot forced to implement human methods it cannot use - violates ISP.</div>
   </div>
 
   <!-- AFTER -->
   <div class="panel" id="panel-after">
-    <div class="label good">After ISP ✓ — Segregated interfaces</div>
+    <div class="label good">After ISP ✓ - Segregated interfaces</div>
     <div class="iface-group">
       <div class="cls-box" style="border-color:#28a745;">
         <div class="cls-hdr iface">IWorkable</div>

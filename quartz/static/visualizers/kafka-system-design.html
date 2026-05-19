@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kafka System Design - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  /* Producers row */
+  .row {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-bottom: 6px;
+  }
+  .box {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .4rem .6rem;
+    text-align: center;
+    font-size: .75rem;
+    min-width: 88px;
+    transition: border-color .25s;
+  }
+  .box .lbl { color: #646464; font-size: .6rem; text-transform: uppercase; letter-spacing: .05em; margin-bottom: .2rem; }
+  .box .name { font-weight: 600; font-size: .8rem; }
+  .box .sub { font-size: .62rem; color: #888; margin-top: .2rem; min-height: .85rem; }
+  .box.active  { border-color: #f0a500; }
+  .box.done    { border-color: #28a745; }
+  .box.error   { border-color: #dc3545; }
+  .box.blue    { border-color: #007bff; }
+  /* Arrow row */
+  .arrow-row {
+    display: flex;
+    justify-content: center;
+    gap: 36px;
+    margin-bottom: 6px;
+    color: #646464;
+    font-size: .9rem;
+  }
+  .arrow-row .arr { transition: color .25s; }
+  .arrow-row .arr.active { color: #f0a500; }
+  .arrow-row .arr.done   { color: #28a745; }
+  /* Broker panel */
+  .broker {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 6px;
+    padding: .5rem .75rem;
+    margin-bottom: 6px;
+    transition: border-color .25s;
+  }
+  .broker.active { border-color: #f0a500; }
+  .broker-title {
+    font-size: .65rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #646464;
+    margin-bottom: .4rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .broker-title span { color: #d4d4d4; font-size: .7rem; font-weight: 600; }
+  .partitions {
+    display: flex;
+    gap: 6px;
+    justify-content: center;
+  }
+  .partition {
+    flex: 1;
+    background: #393639;
+    border-radius: 4px;
+    padding: .35rem .4rem;
+    text-align: center;
+    border: 1px solid #505050;
+    transition: border-color .25s, background .25s;
+  }
+  .partition .p-label { font-size: .65rem; text-transform: uppercase; color: #888; margin-bottom: .25rem; }
+  .partition .p-offset { font-size: .7rem; font-weight: 700; color: #d4d4d4; margin-bottom: .2rem; }
+  .partition .p-msg { font-size: .6rem; color: #888; min-height: .75rem; }
+  .partition.active  { border-color: #f0a500; background: #302a1e; }
+  .partition.done    { border-color: #28a745; background: #1e3020; }
+  .partition.blue    { border-color: #007bff; background: #1a2535; }
+  /* Consumer groups */
+  .cg-row {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .cg {
+    flex: 1;
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 5px;
+    padding: .4rem .5rem;
+    transition: border-color .25s;
+  }
+  .cg.active { border-color: #28a745; }
+  .cg.blue   { border-color: #007bff; }
+  .cg-title { font-size: .62rem; text-transform: uppercase; letter-spacing: .05em; color: #646464; margin-bottom: .3rem; font-weight: 600; }
+  .cg-consumers { display: flex; gap: 5px; }
+  .consumer {
+    flex: 1;
+    background: #393639;
+    border: 1px solid #505050;
+    border-radius: 3px;
+    padding: .25rem .3rem;
+    font-size: .6rem;
+    text-align: center;
+    transition: border-color .25s, background .25s;
+  }
+  .consumer .c-name { font-weight: 600; color: #d4d4d4; }
+  .consumer .c-sub  { color: #888; margin-top: .1rem; min-height: .7rem; }
+  .consumer.active  { border-color: #28a745; background: #1e3020; }
+  .consumer.blue    { border-color: #007bff; background: #1a2535; }
+  .consumer.error   { border-color: #dc3545; background: #2a1e1e; }
+  .consumer.idle    { opacity: .4; }
+  /* Labels bar */
+  .labels-bar {
+    display: flex;
+    gap: 6px;
+    margin-bottom: .6rem;
+    flex-wrap: wrap;
+  }
+  .badge {
+    font-size: .6rem;
+    padding: .15rem .45rem;
+    border-radius: 3px;
+    font-weight: 600;
+    letter-spacing: .04em;
+  }
+  .badge-amber { background: #2a2018; color: #f0a500; border: 1px solid #f0a500; }
+  .badge-green { background: #1a2a1a; color: #28a745; border: 1px solid #28a745; }
+  .badge-blue  { background: #1a2030; color: #007bff; border: 1px solid #007bff; }
+  /* Status */
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #284b63;
+    border-radius: 0 4px 4px 0;
+    font-size: .8rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Kafka System Design - Step-Through</h4>
+
+  <!-- Producers -->
+  <div class="row">
+    <div class="box" id="prod1">
+      <div class="lbl">Producer 1</div>
+      <div class="name">OrderSvc</div>
+      <div class="sub" id="prod1-sub"></div>
+    </div>
+    <div class="box" id="prod2">
+      <div class="lbl">Producer 2</div>
+      <div class="name">PaymentSvc</div>
+      <div class="sub" id="prod2-sub"></div>
+    </div>
+  </div>
+
+  <!-- Arrows to broker -->
+  <div class="arrow-row">
+    <span class="arr" id="arr-p1">↓</span>
+    <span class="arr" id="arr-p2">↓</span>
+  </div>
+
+  <!-- Broker -->
+  <div class="broker" id="broker">
+    <div class="broker-title">
+      <span>Kafka Broker</span>
+      <span style="font-size:.62rem;color:#646464">Topic: "orders"</span>
+    </div>
+    <div class="partitions">
+      <div class="partition" id="p0">
+        <div class="p-label">P0</div>
+        <div class="p-offset" id="p0-off">offset: 0</div>
+        <div class="p-msg" id="p0-msg"></div>
+      </div>
+      <div class="partition" id="p1">
+        <div class="p-label">P1</div>
+        <div class="p-offset" id="p1-off">offset: 0</div>
+        <div class="p-msg" id="p1-msg"></div>
+      </div>
+      <div class="partition" id="p2">
+        <div class="p-label">P2</div>
+        <div class="p-offset" id="p2-off">offset: 0</div>
+        <div class="p-msg" id="p2-msg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Arrows to consumer groups -->
+  <div class="arrow-row" style="gap:80px">
+    <span class="arr" id="arr-cga">↓</span>
+    <span class="arr" id="arr-cgb">↓</span>
+  </div>
+
+  <!-- Consumer Groups -->
+  <div class="cg-row">
+    <div class="cg" id="cga">
+      <div class="cg-title">Consumer Group A</div>
+      <div class="cg-consumers">
+        <div class="consumer" id="cga-c1">
+          <div class="c-name">C1</div>
+          <div class="c-sub" id="cga-c1-sub"></div>
+        </div>
+        <div class="consumer" id="cga-c2">
+          <div class="c-name">C2</div>
+          <div class="c-sub" id="cga-c2-sub"></div>
+        </div>
+      </div>
+    </div>
+    <div class="cg" id="cgb">
+      <div class="cg-title">Consumer Group B</div>
+      <div class="cg-consumers">
+        <div class="consumer" id="cgb-c1">
+          <div class="c-name">C1</div>
+          <div class="c-sub" id="cgb-c1-sub"></div>
+        </div>
+        <div class="consumer" id="cgb-c2">
+          <div class="c-name">C2</div>
+          <div class="c-sub" id="cgb-c2-sub"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="labels-bar">
+    <span class="badge badge-amber" id="badge-partition" style="display:none">Partition Assignment</span>
+    <span class="badge badge-green" id="badge-offset" style="display:none">Offset Tracking</span>
+    <span class="badge badge-blue" id="badge-isolation" style="display:none">Group Isolation</span>
+  </div>
+
+  <div id="stat">Press Step to begin.</div>
+
+  <div id="ctrl">
+    <button id="btn-back" disabled>◀ Back</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var STEPS = [
+  {
+    prod1: '', prod1s: '', prod2: '', prod2s: '',
+    arrP1: '', arrP2: '',
+    broker: '',
+    p0: '', p0off: 'offset: 0', p0msg: '',
+    p1: '', p1off: 'offset: 0', p1msg: '',
+    p2: '', p2off: 'offset: 0', p2msg: '',
+    arrCGA: '', arrCGB: '',
+    cga: '', cgb: '',
+    cgaC1: '', cgaC1s: '', cgaC2: '', cgaC2s: '',
+    cgbC1: '', cgbC1s: '', cgbC2: '', cgbC2s: '',
+    badges: [],
+    msg: 'Initial state. Topic "orders" has 3 partitions (P0, P1, P2). Two Consumer Groups are subscribed. All offsets at 0.'
+  },
+  {
+    prod1: 'active', prod1s: 'Sending key="user-123"', prod2: '', prod2s: '',
+    arrP1: 'active', arrP2: '',
+    broker: 'active',
+    p0: 'active', p0off: 'offset: 0', p0msg: 'hash("user-123") → P0',
+    p1: '', p1off: 'offset: 0', p1msg: '',
+    p2: '', p2off: 'offset: 0', p2msg: '',
+    arrCGA: '', arrCGB: '',
+    cga: '', cgb: '',
+    cgaC1: '', cgaC1s: '', cgaC2: '', cgaC2s: '',
+    cgbC1: '', cgbC1s: '', cgbC2: '', cgbC2s: '',
+    badges: ['partition'],
+    msg: 'Producer 1 sends message with key="user-123". Kafka hashes the key: hash("user-123") % 3 → P0. Message is routed to Partition 0.'
+  },
+  {
+    prod1: 'done', prod1s: 'Sent ✓', prod2: '', prod2s: '',
+    arrP1: 'done', arrP2: '',
+    broker: '',
+    p0: 'done', p0off: 'offset: 1', p0msg: 'M1 appended',
+    p1: '', p1off: 'offset: 0', p1msg: '',
+    p2: '', p2off: 'offset: 0', p2msg: '',
+    arrCGA: '', arrCGB: '',
+    cga: '', cgb: '',
+    cgaC1: '', cgaC1s: '', cgaC2: '', cgaC2s: '',
+    cgbC1: '', cgbC1s: '', cgbC2: '', cgbC2s: '',
+    badges: ['offset'],
+    msg: 'Message M1 appended to P0 at offset 0. P0 offset counter advances to 1. The log is append-only — messages are never overwritten.'
+  },
+  {
+    prod1: '', prod1s: '', prod2: 'active', prod2s: 'Sending key="tx-456"',
+    arrP1: '', arrP2: 'active',
+    broker: 'active',
+    p0: 'done', p0off: 'offset: 1', p0msg: 'M1 appended',
+    p1: 'active', p1off: 'offset: 0', p1msg: 'hash("tx-456") → P1',
+    p2: '', p2off: 'offset: 0', p2msg: '',
+    arrCGA: '', arrCGB: '',
+    cga: '', cgb: '',
+    cgaC1: '', cgaC1s: '', cgaC2: '', cgaC2s: '',
+    cgbC1: '', cgbC1s: '', cgbC2: '', cgbC2s: '',
+    badges: ['partition'],
+    msg: 'Producer 2 sends message with key="tx-456". Different key hashes to P1. Each unique key is consistently routed to the same partition, preserving per-key ordering.'
+  },
+  {
+    prod1: '', prod1s: '', prod2: 'done', prod2s: 'Sent ✓',
+    arrP1: '', arrP2: 'done',
+    broker: '',
+    p0: 'done', p0off: 'offset: 1', p0msg: 'M1',
+    p1: 'done', p1off: 'offset: 1', p1msg: 'M2 appended',
+    p2: '', p2off: 'offset: 0', p2msg: '(idle)',
+    arrCGA: 'active', arrCGB: '',
+    cga: 'active', cgb: '',
+    cgaC1: 'active', cgaC1s: 'reads P0', cgaC2: 'active', cgaC2s: 'reads P1',
+    cgbC1: '', cgbC1s: '', cgbC2: '', cgbC2s: '',
+    badges: ['partition', 'offset'],
+    msg: 'Consumer Group A starts reading. C1 is assigned P0, C2 is assigned P1. P2 is idle (no consumer assigned — only 2 consumers for 3 partitions).'
+  },
+  {
+    prod1: '', prod1s: '', prod2: '', prod2s: '',
+    arrP1: '', arrP2: '',
+    broker: '',
+    p0: 'done', p0off: 'offset: 1', p0msg: 'M1',
+    p1: 'done', p1off: 'offset: 1', p1msg: 'M2',
+    p2: '', p2off: 'offset: 0', p2msg: '(idle)',
+    arrCGA: 'done', arrCGB: '',
+    cga: 'active', cgb: '',
+    cgaC1: 'active', cgaC1s: 'committed off:1', cgaC2: 'active', cgaC2s: 'committed off:1',
+    cgbC1: '', cgbC1s: '', cgbC2: '', cgbC2s: '',
+    badges: ['offset'],
+    msg: 'Consumer Group A commits offsets. C1 commits offset 1 for P0, C2 commits offset 1 for P1. The broker stores these in __consumer_offsets topic. Progress is tracked per group.'
+  },
+  {
+    prod1: '', prod1s: '', prod2: '', prod2s: '',
+    arrP1: '', arrP2: '',
+    broker: '',
+    p0: 'blue', p0off: 'offset: 1', p0msg: 'M1',
+    p1: 'blue', p1off: 'offset: 1', p1msg: 'M2',
+    p2: '', p2off: 'offset: 0', p2msg: '(idle)',
+    arrCGA: '', arrCGB: 'active',
+    cga: '', cgb: 'blue',
+    cgaC1: '', cgaC1s: '', cgaC2: '', cgaC2s: '',
+    cgbC1: 'blue', cgbC1s: 'reads P0 off:0', cgbC2: 'blue', cgbC2s: 'reads P1 off:0',
+    badges: ['isolation'],
+    msg: 'Consumer Group B independently reads the SAME partitions from offset 0. Group B has its own offset tracking — it has not yet read any messages. This is consumer group isolation.'
+  },
+  {
+    prod1: 'active', prod1s: 'Sending M3', prod2: '', prod2s: '',
+    arrP1: 'active', arrP2: '',
+    broker: 'active',
+    p0: 'active', p0off: 'offset: 2', p0msg: 'M3 appended',
+    p1: 'blue', p1off: 'offset: 1', p1msg: 'M2',
+    p2: '', p2off: 'offset: 0', p2msg: '(idle)',
+    arrCGA: '', arrCGB: '',
+    cga: '', cgb: '',
+    cgaC1: '', cgaC1s: '', cgaC2: '', cgaC2s: '',
+    cgbC1: '', cgbC1s: '', cgbC2: '', cgbC2s: '',
+    badges: ['offset'],
+    msg: 'New message M3 arrives on P0 (same key "user-123"). P0 offset advances to 2. Both consumer groups will read this new message independently from their current positions.'
+  },
+  {
+    prod1: '', prod1s: '', prod2: '', prod2s: '',
+    arrP1: '', arrP2: '',
+    broker: '',
+    p0: 'active', p0off: 'offset: 2', p0msg: 'M3',
+    p1: '', p1off: 'offset: 1', p1msg: 'M2',
+    p2: '', p2off: 'offset: 0', p2msg: '(idle)',
+    arrCGA: 'active', arrCGB: '',
+    cga: 'active', cgb: '',
+    cgaC1: 'error', cgaC1s: 'CRASHED!', cgaC2: 'active', cgaC2s: 'reads P1 ✓',
+    cgbC1: '', cgbC1s: '', cgbC2: '', cgbC2s: '',
+    badges: ['partition'],
+    msg: 'Failure scenario: C1 in Group A crashes before committing offset. Kafka detects the consumer left (heartbeat timeout). A rebalance is triggered within Group A.'
+  }
+];
+
+var STEPS_LAST = {
+    prod1: '', prod1s: '', prod2: '', prod2s: '',
+    arrP1: '', arrP2: '',
+    broker: '',
+    p0: 'done', p0off: 'offset: 2', p0msg: 'M3',
+    p1: 'done', p1off: 'offset: 1', p1msg: 'M2',
+    p2: '', p2off: 'offset: 0', p2msg: '(idle)',
+    arrCGA: 'done', arrCGB: '',
+    cga: 'active', cgb: '',
+    cgaC1: '', cgaC1s: 'removed', cgaC2: 'active', cgaC2s: 'P0 + P1',
+    cgbC1: '', cgbC1s: '', cgbC2: '', cgbC2s: '',
+    badges: ['partition', 'offset'],
+    msg: 'Rebalance complete: P0 is re-assigned to C2 (which now handles both P0 and P1). C1 is removed from the group. Kafka guarantees at-least-once delivery — uncommitted messages on P0 will be redelivered.'
+};
+STEPS.push(STEPS_LAST);
+
+var idx = 0;
+
+function cls(el, state) {
+  var base = el.getAttribute('data-base') || el.id.replace(/-[a-z]+$/, '');
+  if (state) el.className = el.getAttribute('data-cls') + ' ' + state;
+  else el.className = el.getAttribute('data-cls');
+}
+
+function setBox(id, state) {
+  var el = document.getElementById(id);
+  if (!el) return;
+  var base = el.getAttribute('data-base-cls') || 'box';
+  el.className = base + (state ? ' ' + state : '');
+}
+
+function draw() {
+  var s = STEPS[idx];
+
+  // Producers
+  setBox('prod1', s.prod1); document.getElementById('prod1-sub').textContent = s.prod1s;
+  setBox('prod2', s.prod2); document.getElementById('prod2-sub').textContent = s.prod2s;
+
+  // Arrows to broker
+  document.getElementById('arr-p1').className = 'arr' + (s.arrP1 ? ' ' + s.arrP1 : '');
+  document.getElementById('arr-p2').className = 'arr' + (s.arrP2 ? ' ' + s.arrP2 : '');
+
+  // Broker
+  document.getElementById('broker').className = 'broker' + (s.broker ? ' ' + s.broker : '');
+
+  // Partitions
+  ['p0','p1','p2'].forEach(function(pid) {
+    document.getElementById(pid).className = 'partition' + (s[pid] ? ' ' + s[pid] : '');
+    document.getElementById(pid + '-off').textContent = s[pid + 'off'];
+    document.getElementById(pid + '-msg').textContent = s[pid + 'msg'];
+  });
+
+  // Arrows to CGs
+  document.getElementById('arr-cga').className = 'arr' + (s.arrCGA ? ' ' + s.arrCGA : '');
+  document.getElementById('arr-cgb').className = 'arr' + (s.arrCGB ? ' ' + s.arrCGB : '');
+
+  // Consumer Groups
+  document.getElementById('cga').className = 'cg' + (s.cga ? ' ' + s.cga : '');
+  document.getElementById('cgb').className = 'cg' + (s.cgb ? ' ' + s.cgb : '');
+
+  // Consumers
+  document.getElementById('cga-c1').className = 'consumer' + (s.cgaC1 ? ' ' + s.cgaC1 : '');
+  document.getElementById('cga-c1-sub').textContent = s.cgaC1s;
+  document.getElementById('cga-c2').className = 'consumer' + (s.cgaC2 ? ' ' + s.cgaC2 : '');
+  document.getElementById('cga-c2-sub').textContent = s.cgaC2s;
+  document.getElementById('cgb-c1').className = 'consumer' + (s.cgbC1 ? ' ' + s.cgbC1 : '');
+  document.getElementById('cgb-c1-sub').textContent = s.cgbC1s;
+  document.getElementById('cgb-c2').className = 'consumer' + (s.cgbC2 ? ' ' + s.cgbC2 : '');
+  document.getElementById('cgb-c2-sub').textContent = s.cgbC2s;
+
+  // Badges
+  ['partition','offset','isolation'].forEach(function(b) {
+    document.getElementById('badge-' + b).style.display = s.badges.indexOf(b) >= 0 ? 'inline-block' : 'none';
+  });
+
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (STEPS.length - 1);
+  document.getElementById('btn-step').disabled = idx === STEPS.length - 1;
+  if (idx === STEPS.length - 1) {
+    document.getElementById('btn-step').textContent = 'Done ✓';
+  } else {
+    document.getElementById('btn-step').textContent = 'Step →';
+  }
+  document.getElementById('btn-back').disabled = idx === 0;
+}
+
+// Patch setBox to use correct base classes
+document.getElementById('prod1').setAttribute('data-base-cls', 'box');
+document.getElementById('prod2').setAttribute('data-base-cls', 'box');
+
+document.getElementById('btn-step').onclick = function() { if (idx < STEPS.length - 1) { idx++; draw(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+draw();
+</script>
+</body>
+</html>

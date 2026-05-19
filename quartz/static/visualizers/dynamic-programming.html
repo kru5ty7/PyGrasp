@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dynamic Programming — Visualizer</title>
+<title>Dynamic Programming - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -107,7 +107,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Dynamic Programming — Step-Through</h4>
+  <h4>Dynamic Programming - Step-Through</h4>
   <div class="input-row">
     <label for="prob-sel">Problem:</label>
     <select id="prob-sel">
@@ -137,7 +137,7 @@ function buildFibSteps(n) {
   var dp = new Array(n + 1).fill(null);
   var s = [];
   s.push({ dp: dp.slice(), reading: [], current: -1, problem: 'fib', n: n,
-    msg: 'Initial table — all cells empty. Base cases come next.' });
+    msg: 'Initial table - all cells empty. Base cases come next.' });
   dp[0] = 0; dp[1] = (n >= 1 ? 1 : null);
   s.push({ dp: dp.slice(), reading: [], current: -1, problem: 'fib', n: n,
     msg: 'Base cases set: F(0) = 0' + (n >= 1 ? ', F(1) = 1.' : '.') });
@@ -158,7 +158,7 @@ function buildStairsSteps(n) {
   var dp = new Array(n + 1).fill(null);
   var s = [];
   s.push({ dp: dp.slice(), reading: [], current: -1, problem: 'stairs', n: n,
-    msg: 'Initial table — dp[i] = number of ways to climb i stairs.' });
+    msg: 'Initial table - dp[i] = number of ways to climb i stairs.' });
   dp[0] = 1; if (n >= 1) dp[1] = 1;
   s.push({ dp: dp.slice(), reading: [], current: -1, problem: 'stairs', n: n,
     msg: 'Base cases: dp[0] = 1 (empty path), dp[1] = 1 (one step).' });
@@ -181,7 +181,7 @@ function buildCoinSteps(amount) {
   dp[0] = 0;
   var s = [];
   s.push({ dp: dp.slice(), reading: [], current: -1, problem: 'coin', amount: amount,
-    msg: 'Initial table — dp[0]=0, all others = INF. Coins: [1, 2, 5].' });
+    msg: 'Initial table - dp[0]=0, all others = INF. Coins: [1, 2, 5].' });
   for (var a = 1; a <= amount; a++) {
     var readSet = [];
     var parts = [];

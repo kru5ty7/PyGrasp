@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Thread Safety Basics — Visualizer</title>
+<title>Thread Safety Basics - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -135,7 +135,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Thread Safety — Race Condition Step-Through</h4>
+  <h4>Thread Safety - Race Condition Step-Through</h4>
   <div id="mode-row" style="margin-bottom:.5rem"></div>
   <div id="stat">Press Step to begin.</div>
   <div id="ctrl">
@@ -148,7 +148,7 @@
   <div class="arena">
     <div id="thread-a" class="thread-box">
       <div class="th-name">Thread A</div>
-      <div class="th-local" id="ta-local">local: —</div>
+      <div class="th-local" id="ta-local">local: -</div>
     </div>
     <div class="center-col">
       <div id="arrow-a" class="arrow"></div>
@@ -161,7 +161,7 @@
     </div>
     <div id="thread-b" class="thread-box">
       <div class="th-name">Thread B</div>
-      <div class="th-local" id="tb-local">local: —</div>
+      <div class="th-local" id="tb-local">local: -</div>
     </div>
   </div>
 </div>
@@ -169,10 +169,10 @@
 <script>
 var UNSAFE_STEPS = [
   { msg: 'Initial state: counter = 0. Both threads ready to increment.',
-    ctrVal: '0', ctrCls: '', ta: 'normal', taLocal: '—', tb: 'normal', tbLocal: '—', arrowA: '', arrowB: '', lockNote: '' },
+    ctrVal: '0', ctrCls: '', ta: 'normal', taLocal: '-', tb: 'normal', tbLocal: '-', arrowA: '', arrowB: '', lockNote: '' },
   { msg: 'Thread A reads counter (value = 0).',
-    ctrVal: '0', ctrCls: '', ta: 'active', taLocal: '0', tb: 'normal', tbLocal: '—', arrowA: '← read', arrowB: '', lockNote: '' },
-  { msg: 'Thread B also reads counter (value = 0) — interleaved before A writes.',
+    ctrVal: '0', ctrCls: '', ta: 'active', taLocal: '0', tb: 'normal', tbLocal: '-', arrowA: '← read', arrowB: '', lockNote: '' },
+  { msg: 'Thread B also reads counter (value = 0) - interleaved before A writes.',
     ctrVal: '0', ctrCls: '', ta: 'normal', taLocal: '0', tb: 'active', tbLocal: '0', arrowA: '', arrowB: 'read →', lockNote: '' },
   { msg: 'Thread A increments its local copy: 0 + 1 = 1.',
     ctrVal: '0', ctrCls: '', ta: 'active', taLocal: '1', tb: 'normal', tbLocal: '0', arrowA: '', arrowB: '', lockNote: '' },
@@ -180,7 +180,7 @@ var UNSAFE_STEPS = [
     ctrVal: '0', ctrCls: '', ta: 'normal', taLocal: '1', tb: 'active', tbLocal: '1', arrowA: '', arrowB: '', lockNote: '' },
   { msg: 'Thread A writes its local value (1) back to counter.',
     ctrVal: '1', ctrCls: '', ta: 'active', taLocal: '1', tb: 'normal', tbLocal: '1', arrowA: '1 →', arrowB: '', lockNote: '' },
-  { msg: 'Thread B writes its local value (1) back to counter — overwrites A\'s result! ❌',
+  { msg: 'Thread B writes its local value (1) back to counter - overwrites A\'s result! ❌',
     ctrVal: '1', ctrCls: 'error', ta: 'normal', taLocal: '1', tb: 'active', tbLocal: '1', arrowA: '', arrowB: '← 1', lockNote: '' },
   { msg: 'Race condition: lost update. Expected counter = 2, got counter = 1. ❌',
     ctrVal: '1', ctrCls: 'error', ta: 'done', taLocal: '1', tb: 'done', tbLocal: '1', arrowA: '', arrowB: '', lockNote: '' }
@@ -188,15 +188,15 @@ var UNSAFE_STEPS = [
 
 var SAFE_STEPS = [
   { msg: 'Initial state: counter = 0. Both threads ready. Lock is free.',
-    ctrVal: '0', ctrCls: '', ta: 'normal', taLocal: '—', tb: 'normal', tbLocal: '—', arrowA: '', arrowB: '', lockNote: 'Lock: free' },
+    ctrVal: '0', ctrCls: '', ta: 'normal', taLocal: '-', tb: 'normal', tbLocal: '-', arrowA: '', arrowB: '', lockNote: 'Lock: free' },
   { msg: 'Thread A acquires the lock 🔒. Thread B must wait.',
-    ctrVal: '0', ctrCls: '', ta: 'locked', taLocal: '—', tb: 'blocked', tbLocal: '—', arrowA: '', arrowB: '', lockNote: '🔒 Lock held by A' },
+    ctrVal: '0', ctrCls: '', ta: 'locked', taLocal: '-', tb: 'blocked', tbLocal: '-', arrowA: '', arrowB: '', lockNote: '🔒 Lock held by A' },
   { msg: 'Thread A reads counter (0), increments to 1, writes 1.',
-    ctrVal: '1', ctrCls: '', ta: 'locked', taLocal: '1', tb: 'blocked', tbLocal: '—', arrowA: '← r/w →', arrowB: '', lockNote: '🔒 Lock held by A' },
+    ctrVal: '1', ctrCls: '', ta: 'locked', taLocal: '1', tb: 'blocked', tbLocal: '-', arrowA: '← r/w →', arrowB: '', lockNote: '🔒 Lock held by A' },
   { msg: 'Thread A releases the lock. Thread B unblocked.',
-    ctrVal: '1', ctrCls: '', ta: 'done', taLocal: '1', tb: 'normal', tbLocal: '—', arrowA: '', arrowB: '', lockNote: 'Lock: free' },
+    ctrVal: '1', ctrCls: '', ta: 'done', taLocal: '1', tb: 'normal', tbLocal: '-', arrowA: '', arrowB: '', lockNote: 'Lock: free' },
   { msg: 'Thread B acquires the lock 🔒.',
-    ctrVal: '1', ctrCls: '', ta: 'done', taLocal: '1', tb: 'locked', tbLocal: '—', arrowA: '', arrowB: '', lockNote: '🔒 Lock held by B' },
+    ctrVal: '1', ctrCls: '', ta: 'done', taLocal: '1', tb: 'locked', tbLocal: '-', arrowA: '', arrowB: '', lockNote: '🔒 Lock held by B' },
   { msg: 'Thread B reads counter (1), increments to 2, writes 2.',
     ctrVal: '2', ctrCls: '', ta: 'done', taLocal: '1', tb: 'locked', tbLocal: '2', arrowA: '', arrowB: 'r/w', lockNote: '🔒 Lock held by B' },
   { msg: 'Thread B releases lock. counter = 2. ✓ Correct result!',
@@ -232,7 +232,7 @@ function draw() {
   ln.textContent = s.lockNote;
   ln.className = 'lock-note' + (s.lockNote && s.lockNote.indexOf('Lock: free') === -1 ? ' active' : '');
   document.getElementById('mode-row').innerHTML = '<span class="mode-badge ' + (safeMode ? 'safe' : 'unsafe') + '">' +
-    (safeMode ? '🔒 With Lock — safe' : '⚠ No Lock — race condition') + '</span>';
+    (safeMode ? '🔒 With Lock - safe' : '⚠ No Lock - race condition') + '</span>';
 }
 
 document.getElementById('btn-step').onclick = function() { if (idx < steps.length - 1) { idx++; draw(); } };

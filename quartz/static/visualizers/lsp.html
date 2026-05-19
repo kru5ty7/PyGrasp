@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>LSP — Liskov Substitution Principle Visualizer</title>
+<title>LSP - Liskov Substitution Principle Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -127,7 +127,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Liskov Substitution Principle — Step Through</h4>
+  <h4>Liskov Substitution Principle - Step Through</h4>
 
   <div id="ctrl">
     <button id="btn-back" disabled onclick="step(-1)">◀ Back</button>
@@ -140,7 +140,7 @@
 
   <!-- Step 1: Show hierarchy with Penguin violation -->
   <div class="panel visible" id="p1">
-    <div class="label neutral">Bird hierarchy — Penguin inherits fly() from Bird</div>
+    <div class="label neutral">Bird hierarchy - Penguin inherits fly() from Bird</div>
     <div class="row">
       <div class="col">
         <div class="cls-box">
@@ -166,7 +166,7 @@
         </div>
       </div>
     </div>
-    <div class="note bad">Penguin inherits fly() from Bird but cannot actually fly — it raises an error.</div>
+    <div class="note bad">Penguin inherits fly() from Bird but cannot actually fly - it raises an error.</div>
   </div>
 
   <!-- Step 2: Call with Duck works -->
@@ -177,7 +177,7 @@
 
 make_it_fly(Duck())     <span class="ok"># works fine ✓</span></div>
     <div class="call-box call-ok">
-      <strong style="color:#28a745;">Duck.fly()</strong> — flies successfully. LSP satisfied for Duck.
+      <strong style="color:#28a745;">Duck.fly()</strong> - flies successfully. LSP satisfied for Duck.
     </div>
   </div>
 
@@ -189,14 +189,14 @@ make_it_fly(Duck())     <span class="ok"># works fine ✓</span></div>
 
 make_it_fly(Penguin())  <span class="err"># raises NotImplementedError!</span></div>
     <div class="call-box call-err">
-      <strong style="color:#dc3545;">Penguin.fly()</strong> raises NotImplementedError — caller's assumption broken!
+      <strong style="color:#dc3545;">Penguin.fly()</strong> raises NotImplementedError - caller's assumption broken!
     </div>
-    <div class="note bad">Penguin cannot substitute Bird. This violates LSP — the subtype breaks the parent's contract.</div>
+    <div class="note bad">Penguin cannot substitute Bird. This violates LSP - the subtype breaks the parent's contract.</div>
   </div>
 
-  <!-- Step 4: Fix — split hierarchy -->
+  <!-- Step 4: Fix - split hierarchy -->
   <div class="panel" id="p4">
-    <div class="label good">Fix ✓ — Split into FlyingBird and NonFlyingBird</div>
+    <div class="label good">Fix ✓ - Split into FlyingBird and NonFlyingBird</div>
     <div class="row">
       <div class="cls-box">
         <div class="cls-hdr">Bird</div>
@@ -236,17 +236,17 @@ make_it_fly(Penguin())  <span class="err"># raises NotImplementedError!</span></
         </div>
       </div>
     </div>
-    <div class="note good">Now make_it_fly() only accepts FlyingBird — Penguin is never passed in. LSP preserved.</div>
+    <div class="note good">Now make_it_fly() only accepts FlyingBird - Penguin is never passed in. LSP preserved.</div>
   </div>
 
 </div>
 <script>
 var cur = 1;
 var msgs = [
-  'Step 1: Bird has fly(). Duck extends Bird — works fine. Penguin extends Bird but raises NotImplementedError in fly().',
-  'Step 2: make_it_fly(Duck()) works correctly — Duck honours the Bird contract.',
-  'Step 3: make_it_fly(Penguin()) raises NotImplementedError. Penguin cannot substitute Bird — LSP violated.',
-  'Step 4 (Fix): Split into FlyingBird and NonFlyingBird. Duck extends FlyingBird. Penguin extends NonFlyingBird. make_it_fly() only accepts FlyingBird — LSP preserved.'
+  'Step 1: Bird has fly(). Duck extends Bird - works fine. Penguin extends Bird but raises NotImplementedError in fly().',
+  'Step 2: make_it_fly(Duck()) works correctly - Duck honours the Bird contract.',
+  'Step 3: make_it_fly(Penguin()) raises NotImplementedError. Penguin cannot substitute Bird - LSP violated.',
+  'Step 4 (Fix): Split into FlyingBird and NonFlyingBird. Duck extends FlyingBird. Penguin extends NonFlyingBird. make_it_fly() only accepts FlyingBird - LSP preserved.'
 ];
 
 function render() {

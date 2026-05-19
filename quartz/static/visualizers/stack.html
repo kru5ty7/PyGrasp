@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Stack — Visualizer</title>
+<title>Stack - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -126,7 +126,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Stack (LIFO) — Interactive</h4>
+  <h4>Stack (LIFO) - Interactive</h4>
   <div id="input-row">
     <label for="val-input">Value:</label>
     <input id="val-input" type="text" placeholder="e.g. 42" spellcheck="false" maxlength="6">
@@ -203,14 +203,14 @@ document.getElementById('btn-push').onclick = function() {
 };
 
 document.getElementById('btn-pop').onclick = function() {
-  if (stack.length === 0) { status('Stack is empty — nothing to pop.'); return; }
+  if (stack.length === 0) { status('Stack is empty - nothing to pop.'); return; }
   var v = stack.pop();
   render(false);
   status('Popped "' + v + '" from TOP. New TOP = ' + (stack.length > 0 ? '"' + stack[stack.length - 1] + '"' : '(stack empty)') + '.');
 };
 
 document.getElementById('btn-peek').onclick = function() {
-  if (stack.length === 0) { status('Stack is empty — nothing to peek.'); return; }
+  if (stack.length === 0) { status('Stack is empty - nothing to peek.'); return; }
   render(true);
   status('Peek: TOP = "' + stack[stack.length - 1] + '" (not removed).');
 };

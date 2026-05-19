@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Linked List — Visualizer</title>
+<title>Linked List - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -125,7 +125,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Singly Linked List — Interactive</h4>
+  <h4>Singly Linked List - Interactive</h4>
   <div id="input-row">
     <label for="val-input">Value:</label>
     <input id="val-input" type="text" placeholder="e.g. 42" spellcheck="false" maxlength="6">
@@ -197,7 +197,7 @@ document.getElementById('btn-push-back').onclick = function() {
 };
 
 document.getElementById('btn-pop-front').onclick = function() {
-  if (list.length === 0) { status('List is empty — nothing to pop.'); return; }
+  if (list.length === 0) { status('List is empty - nothing to pop.'); return; }
   var v = list.shift();
   render(-1);
   status('Popped "' + v + '" from front. HEAD now points to ' + (list.length > 0 ? '"' + list[0] + '"' : 'NULL') + '.');

@@ -103,6 +103,12 @@ Long-running analytics queries on a replica can cause "replication lag amplifica
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/read-replicas.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Read Replicas Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Read replicas are built on top of database replication. Understanding how the replication log is streamed and applied is foundational to understanding why lag exists and how large it can grow.

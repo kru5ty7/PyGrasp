@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Merge Sort — Visualizer</title>
+<title>Merge Sort - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -127,7 +127,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Merge Sort — Step-Through (Bottom-Up)</h4>
+  <h4>Merge Sort - Step-Through (Bottom-Up)</h4>
   <div id="input-row">
     <label for="arr-input">Array:</label>
     <input id="arr-input" type="text" value="5, 3, 8, 4, 2, 7, 1, 6" placeholder="e.g. 5, 3, 8, 4, 2" spellcheck="false">
@@ -168,7 +168,7 @@ function mergeSegment(a, lo, mid, hi) {
 
 function buildSteps(arr) {
   var s = [], a = arr.slice(), n = a.length;
-  s.push({ arr: a.slice(), left: [], right: [], merged: [], msg: 'Initial array — bottom-up merge sort. Press Step to begin pass 1 (merge size-1 pairs).' });
+  s.push({ arr: a.slice(), left: [], right: [], merged: [], msg: 'Initial array - bottom-up merge sort. Press Step to begin pass 1 (merge size-1 pairs).' });
   for (var size = 1; size < n; size *= 2) {
     for (var lo = 0; lo < n - 1; lo += 2 * size) {
       var mid = Math.min(lo + size - 1, n - 1);

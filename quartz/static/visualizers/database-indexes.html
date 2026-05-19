@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Database Indexes - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  /* Mode toggle */
+  #mode-row {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: .85rem;
+  }
+  .mode-btn {
+    padding: .28rem .65rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .78rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  .mode-btn.active { background: #284b63; color: #fff; }
+  .mode-btn:not(.active):hover { opacity: .75; }
+  /* Query banner */
+  #query-banner {
+    background: #222224;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .3rem .65rem;
+    font-size: .72rem;
+    color: #7b97aa;
+    margin-bottom: .65rem;
+    font-family: monospace;
+  }
+  /* Content row: table + optional btree */
+  #content-row {
+    display: flex;
+    gap: .5rem;
+    margin-bottom: .65rem;
+    align-items: flex-start;
+  }
+  /* Table */
+  #tbl-wrap { flex: 1; }
+  .tbl {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: .7rem;
+  }
+  .tbl th {
+    background: #284b63;
+    padding: .22rem .4rem;
+    text-align: left;
+    font-weight: 700;
+    font-size: .65rem;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #a0bfd4;
+  }
+  .tbl td {
+    padding: .2rem .4rem;
+    border-bottom: 1px solid #2e2e32;
+    color: #999;
+    transition: background .2s, color .2s;
+  }
+  .tbl tr.scanning td { background: #f0a50012; color: #f0a500; }
+  .tbl tr.match td    { background: #28a74522; color: #28a745; }
+  .tbl tr.skip td     { background: #393639; color: #555; }
+  .tbl tr.fetched td  { background: #28a74522; color: #28a745; }
+  /* Cost label */
+  #cost-label {
+    text-align: center;
+    font-size: .68rem;
+    margin-top: .3rem;
+    color: #646464;
+    padding: .2rem .4rem;
+    border-radius: 3px;
+    background: #2a2a2e;
+    border: 1px solid #393639;
+  }
+  /* B-Tree panel */
+  #btree-panel {
+    width: 160px;
+    display: none;
+    flex-direction: column;
+    gap: .3rem;
+  }
+  #btree-panel.show { display: flex; }
+  .btree-title {
+    font-size: .65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    color: #646464;
+    text-align: center;
+  }
+  .btree-node {
+    border-radius: 4px;
+    padding: .25rem .4rem;
+    font-size: .68rem;
+    text-align: center;
+    border: 1px solid #393639;
+    background: #2a2a2e;
+    color: #999;
+    transition: border .2s, background .2s, color .2s;
+    line-height: 1.4;
+  }
+  .btree-node.active  { border: 1px solid #f0a500; background: #f0a50018; color: #f0a500; }
+  .btree-node.found   { border: 1px solid #28a745; background: #28a74518; color: #28a745; }
+  .btree-node.dim     { opacity: .35; }
+  .btree-arrow { text-align: center; font-size: .65rem; color: #393639; }
+  .btree-arrow.active { color: #f0a500; }
+  /* Status */
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .82rem;
+    line-height: 1.55;
+    min-height: 2.6rem;
+    margin-bottom: .75rem;
+  }
+  /* Controls */
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Database Indexes - B-Tree vs Full Scan</h4>
+
+  <div id="mode-row">
+    <button class="mode-btn active" onclick="setMode('scan')">Full Table Scan</button>
+    <button class="mode-btn" onclick="setMode('index')">Index Scan (B-Tree)</button>
+  </div>
+
+  <div id="query-banner">SELECT * FROM users WHERE age = 32</div>
+
+  <div id="content-row">
+    <div id="tbl-wrap">
+      <table class="tbl" id="the-table">
+        <thead>
+          <tr><th>id</th><th>name</th><th>age</th></tr>
+        </thead>
+        <tbody id="tbl-body"></tbody>
+      </table>
+      <div id="cost-label">Cost: O(N) — scans all rows</div>
+    </div>
+    <div id="btree-panel">
+      <div class="btree-title">B-Tree Index</div>
+      <div class="btree-node" id="bt-root">Root: age &lt; 30 → left<br>age ≥ 30 → right</div>
+      <div class="btree-arrow" id="bt-arr1">▼</div>
+      <div class="btree-node" id="bt-inner">Internal: 30–35<br>→ check leaf</div>
+      <div class="btree-arrow" id="bt-arr2">▼</div>
+      <div class="btree-node" id="bt-leaf">Leaf: age=32<br>→ rows #2, #6</div>
+    </div>
+  </div>
+
+  <div id="stat">Choose a mode above, then press Step.</div>
+
+  <div id="ctrl">
+    <button id="btn-back" disabled>◀ Back</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var ROWS = [
+  { id: 1, name: 'Alice',   age: 25 },
+  { id: 2, name: 'Bob',     age: 32 },
+  { id: 3, name: 'Charlie', age: 41 },
+  { id: 4, name: 'Diana',   age: 19 },
+  { id: 5, name: 'Eve',     age: 55 },
+  { id: 6, name: 'Frank',   age: 32 },
+  { id: 7, name: 'Grace',   age: 28 },
+  { id: 8, name: 'Hank',    age: 47 }
+];
+
+var mode = 'scan';
+var stepIdx = 0;
+
+// Each step: array of row class overrides + cost label + stat text + btree state
+// rowClasses: array of 8 strings (one per row), '' = normal
+var SCAN_STEPS = [
+  {
+    rows: ['','','','','','','',''],
+    cost: 'Cost: O(N) — must check every row',
+    msg: 'Full Table Scan: no index exists. The engine reads every row and checks if age = 32. 8 comparisons for 8 rows.',
+    bt: null
+  },
+  {
+    rows: ['scanning','','','','','','',''],
+    cost: 'Checked 1 / 8',
+    msg: 'Row 1 — id=1, age=25. Not 32. No match. Continue scanning.',
+    bt: null
+  },
+  {
+    rows: ['skip','scanning','','','','','',''],
+    cost: 'Checked 2 / 8',
+    msg: 'Row 2 — id=2, age=32. MATCH! Returned to result set. Must still scan remaining rows (there may be more matches).',
+    bt: null
+  },
+  {
+    rows: ['skip','match','scanning','','','','',''],
+    cost: 'Checked 3 / 8',
+    msg: 'Row 3 — id=3, age=41. No match. Keep scanning.',
+    bt: null
+  },
+  {
+    rows: ['skip','match','skip','scanning','scanning','scanning','scanning','scanning'],
+    cost: 'Checked 4–8 / 8',
+    msg: 'Rows 4–8: checking age=19, 55, 32, 28, 47. Row 6 (Frank, age=32) also matches. Rows 4,5,7,8 do not.',
+    bt: null
+  },
+  {
+    rows: ['skip','match','skip','skip','skip','match','skip','skip'],
+    cost: 'Done — O(N) = 8 comparisons',
+    msg: 'Full Scan complete. 8 rows scanned. 2 matches found (rows 2 and 6). Every row was read even though only 2 matched.',
+    bt: null
+  }
+];
+
+var INDEX_STEPS = [
+  {
+    rows: ['','','','','','','',''],
+    cost: 'Cost: O(log N) — B-tree navigation',
+    msg: 'Index Scan: a B-tree index on "age" exists. The engine navigates the tree instead of scanning every row.',
+    bt: { root: '', inner: 'dim', leaf: 'dim', arr1: '', arr2: '' }
+  },
+  {
+    rows: ['','','','','','','',''],
+    cost: 'B-Tree: checking root node',
+    msg: 'Step 1 — Visit root node. age = 32 ≥ 30, so follow the right subtree. Skipped left subtree entirely (ages < 30).',
+    bt: { root: 'active', inner: 'dim', leaf: 'dim', arr1: 'active', arr2: '' }
+  },
+  {
+    rows: ['','','','','','','',''],
+    cost: 'B-Tree: narrowing range',
+    msg: 'Step 2 — Visit internal node (range 30–35). age=32 falls within this range. Follow pointer to leaf node.',
+    bt: { root: 'found', inner: 'active', leaf: 'dim', arr1: 'active', arr2: 'active' }
+  },
+  {
+    rows: ['','','','','','','',''],
+    cost: 'B-Tree: leaf found — row pointers',
+    msg: 'Step 3 — Leaf node found: age=32 maps to row IDs #2 and #6. Only 2 heap fetches needed. No full scan required.',
+    bt: { root: 'found', inner: 'found', leaf: 'active', arr1: 'active', arr2: 'active' }
+  },
+  {
+    rows: ['skip','fetched','skip','skip','skip','fetched','skip','skip'],
+    cost: 'Done — O(log N) = 3 comparisons',
+    msg: 'Step 4 — Direct fetch of rows #2 (Bob, 32) and #6 (Frank, 32). Rows 1,3,4,5,7,8 never read. 3 tree steps vs 8 row scans.',
+    bt: { root: 'found', inner: 'found', leaf: 'found', arr1: 'active', arr2: 'active' }
+  }
+];
+
+function buildTable() {
+  var tbody = document.getElementById('tbl-body');
+  tbody.innerHTML = '';
+  ROWS.forEach(function(r, i) {
+    var tr = document.createElement('tr');
+    tr.id = 'row-' + i;
+    ['id', 'name', 'age'].forEach(function(col) {
+      var td = document.createElement('td');
+      td.textContent = r[col];
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+}
+
+function getSteps() {
+  return mode === 'scan' ? SCAN_STEPS : INDEX_STEPS;
+}
+
+function applyStep(s) {
+  // Row classes
+  s.rows.forEach(function(cls, i) {
+    var tr = document.getElementById('row-' + i);
+    tr.className = cls;
+  });
+  // Cost
+  document.getElementById('cost-label').textContent = s.cost;
+  // Stat
+  document.getElementById('stat').textContent = s.msg;
+  // B-tree
+  var panel = document.getElementById('btree-panel');
+  if (s.bt) {
+    panel.className = 'show';
+    setBt('bt-root',  s.bt.root);
+    setBt('bt-inner', s.bt.inner);
+    setBt('bt-leaf',  s.bt.leaf);
+    document.getElementById('bt-arr1').className = 'btree-arrow' + (s.bt.arr1 === 'active' ? ' active' : '');
+    document.getElementById('bt-arr2').className = 'btree-arrow' + (s.bt.arr2 === 'active' ? ' active' : '');
+  } else {
+    panel.className = '';
+  }
+  // Controls
+  var steps = getSteps();
+  var total = steps.length;
+  document.getElementById('counter').textContent = 'Step ' + stepIdx + ' / ' + (total - 1);
+  document.getElementById('btn-back').disabled = stepIdx === 0;
+  document.getElementById('btn-step').disabled = stepIdx >= total - 1;
+  document.getElementById('btn-step').textContent = stepIdx >= total - 1 ? 'Done ✓' : 'Step →';
+}
+
+function setBt(id, cls) {
+  document.getElementById(id).className = 'btree-node' + (cls ? ' ' + cls : '');
+}
+
+function draw() {
+  applyStep(getSteps()[stepIdx]);
+}
+
+function setMode(m) {
+  mode = m;
+  stepIdx = 0;
+  document.querySelectorAll('.mode-btn').forEach(function(b) {
+    b.classList.toggle('active', b.getAttribute('onclick').indexOf(m) > -1);
+  });
+  document.getElementById('cost-label').textContent = m === 'scan'
+    ? 'Cost: O(N) — scans all rows'
+    : 'Cost: O(log N) — index lookup';
+  draw();
+}
+
+document.getElementById('btn-step').onclick = function() {
+  var steps = getSteps();
+  if (stepIdx < steps.length - 1) { stepIdx++; draw(); }
+};
+document.getElementById('btn-back').onclick = function() {
+  if (stepIdx > 0) { stepIdx--; draw(); }
+};
+document.getElementById('btn-reset').onclick = function() {
+  stepIdx = 0; draw();
+};
+
+buildTable();
+draw();
+</script>
+</body>
+</html>

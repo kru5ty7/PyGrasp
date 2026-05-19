@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Load Balancing Algorithms - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  .panel {
+    background: #1e1e20;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .55rem .7rem;
+    margin-bottom: .55rem;
+  }
+  .panel-title {
+    font-size: .72rem;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: #646464;
+    margin-bottom: .45rem;
+  }
+  .server-grid {
+    display: flex;
+    gap: .4rem;
+  }
+  .sv {
+    flex: 1;
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .3rem .4rem;
+    text-align: center;
+    font-size: .8rem;
+    transition: border .2s, background .2s;
+  }
+  .sv.amber { border: 2px solid #f0a500; background: #2e2810; }
+  .sv.blue  { border: 2px solid #4a90d9; background: #0e1e2e; }
+  .sv.green { border: 2px solid #28a745; background: #0e2018; }
+  .sv-count { font-size: .68rem; color: #888; margin-top: .15rem; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .82rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+  .req-label { font-size: .72rem; color: #646464; margin-top: .3rem; text-align: center; }
+  .ip-row { display: flex; gap: .4rem; flex-wrap: wrap; margin-top: .3rem; }
+  .ip-chip {
+    font-size: .68rem;
+    padding: .1rem .35rem;
+    border-radius: 3px;
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    transition: border .2s, background .2s;
+  }
+  .ip-chip.blue { border-color: #4a90d9; background: #0e1e2e; color: #4a90d9; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Load Balancing Algorithms - Three-Panel</h4>
+
+  <div class="panel">
+    <div class="panel-title">Round Robin - cycles S1 → S2 → S3 → S1 ...</div>
+    <div class="server-grid" id="rr-grid"></div>
+    <div class="req-label" id="rr-req"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">Least Connections - picks server with fewest active connections</div>
+    <div class="server-grid" id="lc-grid"></div>
+    <div class="req-label" id="lc-req"></div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-title">IP Hash - same client IP always routes to same server</div>
+    <div class="server-grid" id="ih-grid"></div>
+    <div class="ip-row" id="ih-ips"></div>
+  </div>
+
+  <div id="stat">Press Step to send request 1 across all three algorithms.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>◀ Back</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var TOTAL = 6;
+
+// Pre-define request sequences
+var rrSeq = [0,1,2,0,1,2]; // S0,S1,S2 cycling
+
+// LC: starting conns, then pick min each step and increment
+function buildLC() {
+  var conns = [3,1,5];
+  var seq = [];
+  for (var i = 0; i < TOTAL; i++) {
+    var t = 0;
+    for (var j = 1; j < 3; j++) { if (conns[j] < conns[t]) t = j; }
+    seq.push({ target: t, conns: conns.slice() });
+    conns[t]++;
+    // simulate some completions
+    if (i === 1) conns[2] = Math.max(0, conns[2] - 2);
+    if (i === 3) conns[0] = Math.max(0, conns[0] - 1);
+  }
+  return seq;
+}
+var lcSeq = buildLC();
+
+// IP Hash
+var clientIPs = [
+  {ip: '10.0.1.1', sv: 1},
+  {ip: '10.0.1.2', sv: 2},
+  {ip: '10.0.1.1', sv: 1}, // same IP → same server
+  {ip: '10.0.1.3', sv: 0},
+  {ip: '10.0.1.2', sv: 2}, // same IP → same server
+  {ip: '10.0.1.1', sv: 1}  // same IP → same server
+];
+
+// Accumulate RR counts
+var rrCounts = [0,0,0];
+var rrHistory = [{counts: [0,0,0], active: -1}];
+var lcHistory = [];
+var ihHistory = [{active: -1, shown: []}];
+
+// Build full history up front
+(function() {
+  var rc = [0,0,0];
+  var ihShown = [];
+  for (var i = 0; i < TOTAL; i++) {
+    rc = rc.slice();
+    rc[rrSeq[i]]++;
+    rrHistory.push({ counts: rc.slice(), active: rrSeq[i] });
+    var lc = lcSeq[i];
+    lcHistory.push({ conns: lc.conns, active: lc.target });
+    var ih = clientIPs[i];
+    ihShown = ihShown.slice();
+    ihShown.push(i);
+    ihHistory.push({ active: ih.sv, shown: ihShown.slice(), currentIP: ih.ip });
+  }
+})();
+
+var idx = 0;
+
+function renderRR(state) {
+  var html = '';
+  ['S1','S2','S3'].forEach(function(label, i) {
+    var cls = 'sv' + (i === state.active ? ' amber' : '');
+    html += '<div class="' + cls + '">' + label + '<div class="sv-count">' + state.counts[i] + ' req</div></div>';
+  });
+  document.getElementById('rr-grid').innerHTML = html;
+  document.getElementById('rr-req').textContent = state.active >= 0
+    ? 'Request ' + idx + ' → ' + ['S1','S2','S3'][state.active] + ' (highlighted amber)'
+    : 'Waiting for requests...';
+}
+
+function renderLC(state) {
+  var html = '';
+  ['S1','S2','S3'].forEach(function(label, i) {
+    var cls = 'sv' + (i === state.active ? ' amber' : '');
+    html += '<div class="' + cls + '">' + label + '<div class="sv-count">' + state.conns[i] + ' conn</div></div>';
+  });
+  document.getElementById('lc-grid').innerHTML = html;
+  document.getElementById('lc-req').textContent = state.active >= 0
+    ? 'Least connections: ' + ['S1','S2','S3'][state.active] + ' (' + state.conns[state.active] + ' before)'
+    : 'Waiting for requests...';
+}
+
+function renderIH(state) {
+  var html = '';
+  ['S1','S2','S3'].forEach(function(label, i) {
+    var cls = 'sv' + (i === state.active ? ' blue' : '');
+    html += '<div class="' + cls + '">' + label + '</div>';
+  });
+  document.getElementById('ih-grid').innerHTML = html;
+  // show IPs
+  var ipHtml = '';
+  state.shown.forEach(function(reqIdx) {
+    var ip = clientIPs[reqIdx];
+    var active = ip.ip === (state.currentIP || '');
+    ipHtml += '<div class="ip-chip' + (active ? ' blue' : '') + '">' + ip.ip + '→S' + (ip.sv+1) + '</div>';
+  });
+  document.getElementById('ih-ips').innerHTML = ipHtml || '<span style="font-size:.72rem;color:#646464">IPs appear as requests arrive</span>';
+}
+
+function render() {
+  var rr = rrHistory[idx];
+  var lc = idx === 0 ? { conns: lcSeq[0].conns, active: -1 } : lcHistory[idx - 1];
+  var ih = ihHistory[idx];
+  renderRR(rr);
+  renderLC(lc);
+  renderIH(ih);
+
+  var msg = '';
+  if (idx === 0) {
+    msg = 'Press Step to send request 1 across all three algorithms simultaneously.';
+  } else {
+    var sNames = ['S1','S2','S3'];
+    var rrTarget = sNames[rrSeq[idx-1]];
+    var lcTarget = sNames[lcSeq[idx-1].target];
+    var ihTarget = sNames[clientIPs[idx-1].sv];
+    msg = 'Request ' + idx + ': Round Robin → ' + rrTarget + ' | Least Conn → ' + lcTarget + ' | IP Hash → ' + ihTarget + ' (sticky for ' + clientIPs[idx-1].ip + ')';
+  }
+  document.getElementById('stat').textContent = msg;
+  document.getElementById('btn-step').disabled = idx >= TOTAL;
+  document.getElementById('btn-back').disabled = idx === 0;
+  document.getElementById('counter').textContent = 'Request ' + idx + ' / ' + TOTAL;
+}
+
+document.getElementById('btn-step').onclick = function() { if (idx < TOTAL) { idx++; render(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; render(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; render(); };
+
+render();
+</script>
+</body>
+</html>

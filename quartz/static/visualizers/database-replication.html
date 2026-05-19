@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Database Replication - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  /* Toggle */
+  #mode-row {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+  .mode-btn {
+    padding: .28rem .65rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .78rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  .mode-btn.active { background: #284b63; color: #fff; }
+  .mode-btn:not(.active):hover { opacity: .75; }
+  /* DB Layout */
+  #db-layout {
+    display: flex;
+    gap: .5rem;
+    align-items: stretch;
+    margin-bottom: .75rem;
+    position: relative;
+  }
+  .db-node {
+    flex: 1;
+    border-radius: 6px;
+    border: 1px solid #393639;
+    background: #2a2a2e;
+    overflow: hidden;
+    transition: border .2s;
+  }
+  .db-node .db-header {
+    font-size: .72rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    padding: .35rem .6rem;
+  }
+  .db-node.primary .db-header { background: #284b63; }
+  .db-node.replica .db-header { background: #1a3a2a; }
+  .db-node .db-body {
+    padding: .5rem .6rem;
+    font-size: .75rem;
+    min-height: 3.2rem;
+    color: #999;
+    line-height: 1.5;
+  }
+  .db-node.writing { border: 2px solid #f0a500; }
+  .db-node.synced  { border: 2px solid #28a745; }
+  .db-node.lagging { border: 2px solid #dc3545; }
+  .db-node.promoted .db-header { background: #1a4a1a; }
+  /* Arrow row */
+  #arrow-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 .5rem;
+    margin-bottom: .5rem;
+    font-size: .7rem;
+    color: #555;
+    position: relative;
+  }
+  .arrow-seg {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .3rem;
+  }
+  .arrow-line {
+    height: 2px;
+    background: #393639;
+    flex: 1;
+    transition: background .2s;
+  }
+  .arrow-line.active { background: #f0a500; }
+  .arrow-line.done   { background: #28a745; }
+  .arrow-head { color: #555; font-size: .8rem; }
+  .arrow-head.active { color: #f0a500; }
+  .arrow-head.done   { color: #28a745; }
+  /* App box */
+  #app-box {
+    background: #222224;
+    border: 1px solid #393639;
+    border-radius: 6px;
+    padding: .4rem .75rem;
+    font-size: .75rem;
+    margin-bottom: .75rem;
+    min-height: 2rem;
+    color: #999;
+  }
+  /* Status */
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  /* Controls */
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #btn-failover { background: #3a2020; color: #d4d4d4; }
+  #btn-read-demo { background: #2e4a30; color: #d4d4d4; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+  /* Read arrows */
+  #read-row {
+    display: none;
+    margin-bottom: .5rem;
+    font-size: .72rem;
+    color: #28a745;
+    padding: .3rem .5rem;
+    background: #1a2e1a;
+    border-radius: 4px;
+    border: 1px solid #28a745;
+  }
+  #read-row.show { display: block; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Database Replication - Step-Through</h4>
+
+  <div id="mode-row">
+    <button class="mode-btn active" onclick="setMode('sync')">Synchronous</button>
+    <button class="mode-btn" onclick="setMode('async')">Asynchronous</button>
+  </div>
+
+  <div id="app-box">Application: idle</div>
+
+  <div id="db-layout">
+    <div class="db-node primary" id="node-primary">
+      <div class="db-header">Primary DB</div>
+      <div class="db-body" id="body-primary">Leader - accepts all writes.</div>
+    </div>
+    <div class="db-node replica" id="node-rep1">
+      <div class="db-header">Replica 1</div>
+      <div class="db-body" id="body-rep1">Follower - read-only.</div>
+    </div>
+    <div class="db-node replica" id="node-rep2">
+      <div class="db-header">Replica 2</div>
+      <div class="db-body" id="body-rep2">Follower - read-only.</div>
+    </div>
+  </div>
+
+  <div id="arrow-row">
+    <div class="arrow-seg">
+      <div class="arrow-line" id="arr-1"></div>
+      <span class="arrow-head" id="arr-1h">▶</span>
+    </div>
+    <div class="arrow-seg">
+      <div class="arrow-line" id="arr-2"></div>
+      <span class="arrow-head" id="arr-2h">▶</span>
+    </div>
+  </div>
+
+  <div id="read-row" id="read-info"></div>
+
+  <div id="stat">Press Step to begin.</div>
+
+  <div id="ctrl">
+    <button id="btn-back" disabled>◀ Back</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+    <button id="btn-read-demo" onclick="showReadDemo()">Show Reads</button>
+    <button id="btn-failover" onclick="triggerFailover()">Primary Fails</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var mode = 'sync';
+var stepIdx = 0;
+var failoverActive = false;
+var readDemoActive = false;
+
+var SYNC_STEPS = [
+  {
+    app: 'Application: idle - waiting to write.',
+    primary: 'Idle - accepting connections.', primaryCls: '',
+    rep1: 'Idle - replication stream open.', rep1Cls: '',
+    rep2: 'Idle - replication stream open.', rep2Cls: '',
+    arr1: '', arr2: '',
+    msg: 'Synchronous replication: the primary waits for ALL replicas to confirm before acknowledging the client.'
+  },
+  {
+    app: 'Application → sends WRITE: INSERT user=Alice',
+    primary: 'Received write request from app.', primaryCls: 'writing',
+    rep1: 'Waiting for replication data.', rep1Cls: '',
+    rep2: 'Waiting for replication data.', rep2Cls: '',
+    arr1: '', arr2: '',
+    msg: 'Step 1 - App sends WRITE (INSERT user=Alice) to Primary.'
+  },
+  {
+    app: 'Application → waiting for confirmation...',
+    primary: 'Wrote Alice to storage. Sending to Replica 1...', primaryCls: 'writing',
+    rep1: 'Receiving data from Primary...', rep1Cls: 'writing',
+    rep2: 'Waiting...', rep2Cls: '',
+    arr1: 'active', arr2: '',
+    msg: 'Step 2 - Primary writes to its storage, then sends the change to Replica 1. Waiting for ACK.'
+  },
+  {
+    app: 'Application → waiting...',
+    primary: 'Replica 1 ACK received. Sending to Replica 2...', primaryCls: 'writing',
+    rep1: 'Wrote Alice. Sent ACK to Primary.', rep1Cls: 'synced',
+    rep2: 'Receiving data from Primary...', rep2Cls: 'writing',
+    arr1: 'done', arr2: 'active',
+    msg: 'Step 3 - Replica 1 writes the data and sends ACK. Primary now sends to Replica 2.'
+  },
+  {
+    app: 'Application → waiting...',
+    primary: 'Replica 2 ACK received. All replicas confirmed.', primaryCls: 'writing',
+    rep1: 'Synced - has Alice.', rep1Cls: 'synced',
+    rep2: 'Wrote Alice. Sent ACK to Primary.', rep2Cls: 'synced',
+    arr1: 'done', arr2: 'done',
+    msg: 'Step 4 - Replica 2 ACKs. Primary has confirmed writes on all nodes.'
+  },
+  {
+    app: 'Application ← CONFIRMED: Write successful! (Alice inserted)',
+    primary: 'All replicas synced. Sending SUCCESS to app.', primaryCls: 'synced',
+    rep1: 'Fully synced - has Alice.', rep1Cls: 'synced',
+    rep2: 'Fully synced - has Alice.', rep2Cls: 'synced',
+    arr1: 'done', arr2: 'done',
+    msg: 'Step 5 - Primary confirms to App. All 3 nodes have Alice. Consistent but slower writes (client waited for 2x network round trips).'
+  }
+];
+
+var ASYNC_STEPS = [
+  {
+    app: 'Application: idle - waiting to write.',
+    primary: 'Idle - accepting connections.', primaryCls: '',
+    rep1: 'Idle - replication stream open.', rep1Cls: '',
+    rep2: 'Idle - replication stream open.', rep2Cls: '',
+    arr1: '', arr2: '',
+    msg: 'Asynchronous replication: the primary acknowledges the client immediately, then propagates to replicas in the background.'
+  },
+  {
+    app: 'Application → sends WRITE: INSERT user=Alice',
+    primary: 'Received write. Writing to storage...', primaryCls: 'writing',
+    rep1: 'Waiting for replication log.', rep1Cls: '',
+    rep2: 'Waiting for replication log.', rep2Cls: '',
+    arr1: '', arr2: '',
+    msg: 'Step 1 - App sends WRITE to Primary.'
+  },
+  {
+    app: 'Application ← CONFIRMED immediately! (fast write)',
+    primary: 'Wrote Alice. Sent SUCCESS to app immediately.', primaryCls: 'synced',
+    rep1: 'Replication lag - not yet updated.', rep1Cls: 'lagging',
+    rep2: 'Replication lag - not yet updated.', rep2Cls: 'lagging',
+    arr1: '', arr2: '',
+    msg: 'Step 2 - Primary confirms to App without waiting. Replicas are lagging (amber warning). Fast write - brief inconsistency window.'
+  },
+  {
+    app: 'Application received confirmation. Replicas catching up...',
+    primary: 'Streaming replication log to replicas.', primaryCls: 'synced',
+    rep1: 'Applying replication log - almost caught up.', rep1Cls: 'writing',
+    rep2: 'Applying replication log - almost caught up.', rep2Cls: 'writing',
+    arr1: 'active', arr2: 'active',
+    msg: 'Step 3 - Replication streams propagate the change. Replicas are applying the log in the background.'
+  },
+  {
+    app: 'All nodes eventually consistent.',
+    primary: 'All replicas caught up.', primaryCls: 'synced',
+    rep1: 'Synced - has Alice.', rep1Cls: 'synced',
+    rep2: 'Synced - has Alice.', rep2Cls: 'synced',
+    arr1: 'done', arr2: 'done',
+    msg: 'Step 4 - Eventually consistent. All nodes now have Alice. Faster writes - brief replication lag window during propagation.'
+  }
+];
+
+function getSteps() {
+  return mode === 'sync' ? SYNC_STEPS : ASYNC_STEPS;
+}
+
+function applyStep(s) {
+  document.getElementById('app-box').textContent = s.app;
+  setNode('primary', s.primaryCls, s.primary);
+  setNode('rep1', s.rep1Cls, s.rep1);
+  setNode('rep2', s.rep2Cls, s.rep2);
+  setArr('arr-1', 'arr-1h', s.arr1);
+  setArr('arr-2', 'arr-2h', s.arr2);
+  document.getElementById('stat').textContent = s.msg;
+  var steps = getSteps();
+  document.getElementById('counter').textContent = 'Step ' + stepIdx + ' / ' + (steps.length - 1);
+  document.getElementById('btn-step').disabled = (stepIdx >= steps.length - 1);
+  document.getElementById('btn-back').disabled = (stepIdx === 0);
+}
+
+function setNode(id, cls, body) {
+  var node = document.getElementById('node-' + id);
+  node.className = 'db-node ' + (id === 'primary' ? 'primary' : 'replica') + (cls ? ' ' + cls : '');
+  document.getElementById('body-' + id).textContent = body;
+}
+
+function setArr(lineId, headId, state) {
+  var line = document.getElementById(lineId);
+  var head = document.getElementById(headId);
+  line.className = 'arrow-line' + (state ? ' ' + state : '');
+  head.className = 'arrow-head' + (state ? ' ' + state : '');
+}
+
+function draw() {
+  if (failoverActive) return;
+  var steps = getSteps();
+  applyStep(steps[stepIdx]);
+}
+
+function setMode(m) {
+  mode = m;
+  stepIdx = 0;
+  failoverActive = false;
+  readDemoActive = false;
+  document.getElementById('read-row').className = '';
+  document.querySelectorAll('.mode-btn').forEach(function(b) {
+    b.classList.toggle('active', b.getAttribute('onclick').indexOf(m) > -1);
+  });
+  // Reset replica header
+  document.getElementById('node-rep1').querySelector('.db-header').textContent = 'Replica 1';
+  draw();
+}
+
+function showReadDemo() {
+  readDemoActive = true;
+  var row = document.getElementById('read-row');
+  row.className = 'show';
+  row.textContent = 'READ routing: queries go to Replica 1 or Replica 2 - never Primary. This frees Primary for writes only.';
+  setNode('rep1', 'synced', 'Serving READ queries from app.');
+  setNode('rep2', 'synced', 'Serving READ queries from app.');
+  document.getElementById('stat').textContent = 'Reads route to replicas. Primary handles writes only. 2x read throughput vs single-node setup.';
+}
+
+function triggerFailover() {
+  failoverActive = true;
+  document.getElementById('read-row').className = 'show';
+  document.getElementById('read-row').textContent = 'FAILOVER: Primary is down. Replica 1 promoted to new Primary.';
+  // Primary fails
+  var pNode = document.getElementById('node-primary');
+  pNode.className = 'db-node primary lagging';
+  document.getElementById('body-primary').textContent = 'FAILED - not responding.';
+  // Replica 1 promoted
+  var r1 = document.getElementById('node-rep1');
+  r1.className = 'db-node primary synced';
+  r1.querySelector('.db-header').textContent = 'Replica 1 → NEW PRIMARY';
+  document.getElementById('body-rep1').textContent = 'Promoted to Primary. Accepting writes.';
+  // Replica 2 now replicates from rep1
+  setNode('rep2', '', 'Now replicating from new Primary (Replica 1).');
+  setArr('arr-1', 'arr-1h', 'done');
+  setArr('arr-2', 'arr-2h', 'active');
+  document.getElementById('app-box').textContent = 'Application → writing to new Primary (was Replica 1).';
+  document.getElementById('stat').textContent = 'FAILOVER complete. Replica 1 is the new Primary. Replica 2 continues replicating. Any writes not yet replicated from the old Primary are lost (async mode).';
+  document.getElementById('btn-step').disabled = true;
+  document.getElementById('btn-back').disabled = true;
+  document.getElementById('counter').textContent = '';
+}
+
+document.getElementById('btn-step').onclick = function() {
+  var steps = getSteps();
+  if (stepIdx < steps.length - 1) { stepIdx++; draw(); }
+};
+document.getElementById('btn-back').onclick = function() {
+  if (stepIdx > 0) { stepIdx--; draw(); }
+};
+document.getElementById('btn-reset').onclick = function() {
+  stepIdx = 0;
+  failoverActive = false;
+  readDemoActive = false;
+  document.getElementById('read-row').className = '';
+  document.getElementById('node-rep1').querySelector('.db-header').textContent = 'Replica 1';
+  draw();
+};
+
+draw();
+</script>
+</body>
+</html>

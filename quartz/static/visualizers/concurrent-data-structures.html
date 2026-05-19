@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Concurrent Data Structures — Visualizer</title>
+<title>Concurrent Data Structures - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -143,7 +143,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Concurrent Data Structures — Step-Through</h4>
+  <h4>Concurrent Data Structures - Step-Through</h4>
   <div id="stat">Press Step to begin.</div>
   <div id="ctrl">
     <button id="btn-back" disabled>◀ Back</button>
@@ -153,24 +153,24 @@
   </div>
   <div class="cols">
     <div class="col">
-      <div class="col-title bad">dict — Unsafe ❌</div>
+      <div class="col-title bad">dict - Unsafe ❌</div>
       <div id="ua-box" class="thread-box"><div class="th-name">Thread A</div><div class="th-op" id="ua-op">idle</div></div>
       <div id="ub-box" class="thread-box"><div class="th-name">Thread B</div><div class="th-op" id="ub-op">idle</div></div>
       <div id="unsafe-dict" class="dict-box"><span style="color:#393639">{'key': ?}</span></div>
       <div id="unsafe-badge"></div>
     </div>
     <div class="col">
-      <div class="col-title safe">Lock + dict — Safe ✓</div>
+      <div class="col-title safe">Lock + dict - Safe ✓</div>
       <div id="sa-box" class="thread-box"><div class="th-name">Thread A</div><div class="th-op" id="sa-op">idle</div></div>
       <div id="sb-box" class="thread-box"><div class="th-name">Thread B</div><div class="th-op" id="sb-op">idle</div></div>
       <div id="safe-dict" class="dict-box"><span style="color:#393639">{'key': ?}</span></div>
       <div id="safe-badge"></div>
     </div>
     <div class="col">
-      <div class="col-title alt">queue.Queue — Built-in ✓</div>
+      <div class="col-title alt">queue.Queue - Built-in ✓</div>
       <div class="thread-box"><div class="th-name">Any Thread</div><div class="th-op" style="color:#6db86d">thread-safe by design</div></div>
       <div class="queue-vis">
-        <div class="q-label">queue.Queue() — internal lock handled automatically</div>
+        <div class="q-label">queue.Queue() - internal lock handled automatically</div>
         <div class="queue-slots">
           <div class="qs">A</div><div class="qs">B</div><div class="qs">C</div><div class="qs empty"></div><div class="qs empty"></div>
         </div>
@@ -188,9 +188,9 @@ var steps = [
     sa:'normal', saOp:'idle', sb:'normal', sbOp:'idle',
     dictS:'<span style="color:#393639">{}</span>', dictSCls:'',
     badgeU:'', badgeS:'' },
-  { msg: 'UNSAFE: Thread A and Thread B both call d["key"] = val simultaneously — data race possible.',
+  { msg: 'UNSAFE: Thread A and Thread B both call d["key"] = val simultaneously - data race possible.',
     ua:'active', uaOp:'d["key"] = "A_val"', ub:'active', ubOp:'d["key"] = "B_val"',
-    dictU:'<span class="corrupt">⚠ concurrent write — undefined state</span>', dictUCls:'error',
+    dictU:'<span class="corrupt">⚠ concurrent write - undefined state</span>', dictUCls:'error',
     sa:'normal', saOp:'idle', sb:'normal', sbOp:'idle',
     dictS:'<span style="color:#393639">{}</span>', dictSCls:'',
     badgeU:'<span class="badge badge-red">✗ corruption possible</span>', badgeS:'' },

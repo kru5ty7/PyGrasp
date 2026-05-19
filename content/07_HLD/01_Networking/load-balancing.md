@@ -82,6 +82,12 @@ server {
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/load-balancing.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Load Balancing Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 The algorithm a load balancer uses to select which server gets the next request is a separate concern from the load balancer's role as infrastructure. Different algorithms optimize for different goals.

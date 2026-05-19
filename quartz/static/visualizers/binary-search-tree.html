@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Binary Search Tree — Visualizer</title>
+<title>Binary Search Tree - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -87,7 +87,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Binary Search Tree — Insert &amp; Search</h4>
+  <h4>Binary Search Tree - Insert &amp; Search</h4>
   <div id="input-row">
     <label for="val-input">Value:</label>
     <input id="val-input" type="number" placeholder="e.g. 6" min="0" max="999">
@@ -204,7 +204,7 @@ function computeInsertSteps(val) {
   }
   if (path.length > 0 && path[path.length-1].compare === 'equal') {
     steps.push(function() {
-      setStatus('Value ' + val + ' already in BST — no duplicate inserted.');
+      setStatus('Value ' + val + ' already in BST - no duplicate inserted.');
     });
     return;
   }
@@ -229,7 +229,7 @@ function computeInsertSteps(val) {
     path.forEach(function(s) { nodeStates[s.node.id] = 'visited'; });
     // Find new node
     function findNode(nd, v) { if (!nd) return null; if (nd.val === v) return nd; return findNode(nd.left, v) || findNode(nd.right, v); }
-    // Actually we need the new node — search
+    // Actually we need the new node - search
     var newNd = null;
     function dfsFind(nd) {
       if (!nd) return;
@@ -277,7 +277,7 @@ function computeSearchSteps(val) {
   });
   if (!found) {
     steps.push(function() {
-      setStatus('Reached null — ' + val + ' not found in BST.');
+      setStatus('Reached null - ' + val + ' not found in BST.');
       document.getElementById('counter').textContent = 'Step ' + steps.length + ' / ' + steps.length;
       renderTree();
     });

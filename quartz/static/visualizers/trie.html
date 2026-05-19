@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Trie — Visualizer</title>
+<title>Trie - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -99,7 +99,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Trie (Prefix Tree) — Visualizer</h4>
+  <h4>Trie (Prefix Tree) - Visualizer</h4>
   <div id="input-row">
     <label for="word-input">Word/Prefix:</label>
     <input id="word-input" type="text" placeholder="e.g. car" maxlength="8" spellcheck="false">
@@ -330,7 +330,7 @@ function computeSearchSteps(word) {
     } else if (found) {
       path.forEach(function(s) { nodeStates[s.node.id] = 'existing'; });
       nodeStates[endNode.id] = 'notfound';
-      setStatus('NOT FOUND: "' + word + '" is only a prefix — no end-of-word marker.');
+      setStatus('NOT FOUND: "' + word + '" is only a prefix - no end-of-word marker.');
     } else {
       path.forEach(function(s) { nodeStates[s.node.id] = 'found'; });
       setStatus('NOT FOUND: path breaks at character ' + (path.length+1) + '.');

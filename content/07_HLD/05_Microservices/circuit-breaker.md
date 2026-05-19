@@ -145,6 +145,12 @@ Circuit breaker metrics  -  the number of calls in each state, current failure r
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/circuit-breaker.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Circuit Breaker Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Circuit breakers are one component of the broader resilience pattern. Service discovery, retries with exponential backoff, timeouts, and circuit breakers work together to make a microservices system fault-tolerant.

@@ -111,6 +111,12 @@ The stream type (Redis 5.0+) is an append-only log with consumer group semantics
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/redis-data-structures.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Redis Data Structures Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 The sorted set rate limiter pattern shown above requires atomic execution across multiple commands. Redis's single-threaded event loop ensures pipeline atomicity, but the combined ZREMRANGEBYSCORE + ZADD + ZCARD could also be a Lua script for absolute atomicity.

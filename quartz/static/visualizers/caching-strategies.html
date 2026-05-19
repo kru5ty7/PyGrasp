@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Caching Strategies - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #strategy-row {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: .9rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  #strategy-row span { font-size: .75rem; color: #646464; }
+  .st-btn {
+    padding: .28rem .65rem;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .78rem;
+    background: #2a2a2e;
+    color: #d4d4d4;
+    transition: opacity .15s, border-color .15s;
+  }
+  .st-btn.active { border-color: #f0a500; background: #2a2200; color: #f0a500; }
+  .st-btn:hover:not(.active) { opacity: .75; }
+  #flow {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    margin-bottom: .75rem;
+  }
+  .node {
+    flex: 1;
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .5rem .4rem;
+    text-align: center;
+    font-size: .75rem;
+    min-height: 78px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .22rem;
+    transition: border-color .3s, background .3s;
+  }
+  .node .node-title { font-weight: 700; font-size: .78rem; }
+  .node .node-sub { font-size: .68rem; color: #646464; }
+  .node .node-badge {
+    font-size: .63rem;
+    font-weight: 700;
+    padding: .1rem .32rem;
+    border-radius: 3px;
+    letter-spacing: .04em;
+  }
+  .node.active-amber { border-color: #f0a500; background: #2a2200; }
+  .node.active-green { border-color: #28a745; background: #0d2416; }
+  .node.active-blue  { border-color: #007bff; background: #001830; }
+  .node.active-red   { border-color: #dc3545; background: #2a0a0a; }
+  .badge-amber { background: #2a2200; color: #f0a500; border: 1px solid #f0a500; }
+  .badge-green { background: #0d2416; color: #28a745; border: 1px solid #28a745; }
+  .badge-blue  { background: #001830; color: #4da3ff; border: 1px solid #007bff; }
+  .badge-red   { background: #2a0a0a; color: #ff6b6b; border: 1px solid #dc3545; }
+  .arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 26px;
+    flex-shrink: 0;
+    font-size: .9rem;
+    color: #646464;
+    flex-direction: column;
+    gap: .1rem;
+  }
+  .arrow.a-fwd  { color: #7b97aa; }
+  .arrow.a-back { color: #d4a080; }
+  .arrow.a-async { color: #7b5ea7; }
+  .arrow .arr-lbl { font-size: .56rem; color: #888; white-space: nowrap; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #f0a500;
+    border-radius: 0 4px 4px 0;
+    font-size: .82rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .6rem;
+  }
+  #tradeoff {
+    padding: .35rem .65rem;
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    font-size: .74rem;
+    color: #888;
+    margin-bottom: .75rem;
+    min-height: 1.6rem;
+  }
+  #tradeoff strong { color: #f0a500; }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; margin-bottom: .5rem; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Caching Strategies — Write Path</h4>
+  <div id="strategy-row">
+    <span>Strategy:</span>
+    <button class="st-btn active" id="st-wt" onclick="selectStrategy('wt')">Write-Through</button>
+    <button class="st-btn" id="st-wa" onclick="selectStrategy('wa')">Write-Around</button>
+    <button class="st-btn" id="st-wb" onclick="selectStrategy('wb')">Write-Back</button>
+  </div>
+  <div id="flow">
+    <div class="node" id="n-app">
+      <div class="node-title">Application</div>
+      <div class="node-sub" id="app-sub">WRITE request</div>
+    </div>
+    <div class="arrow" id="arr1"><span id="arr1-sym">→</span><span class="arr-lbl" id="arr1-lbl"></span></div>
+    <div class="node" id="n-cache">
+      <div class="node-title">Cache</div>
+      <div class="node-sub" id="cache-sub">Redis</div>
+    </div>
+    <div class="arrow" id="arr2"><span id="arr2-sym">→</span><span class="arr-lbl" id="arr2-lbl"></span></div>
+    <div class="node" id="n-db">
+      <div class="node-title">Database</div>
+      <div class="node-sub" id="db-sub">PostgreSQL</div>
+    </div>
+  </div>
+  <div id="stat">Press Step to begin.</div>
+  <div id="tradeoff"></div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var strategy = 'wt';
+var idx = 0;
+var steps = [];
+
+// step shape: { msg, tradeoff, app, cache, db, arr1, arr2, arr1lbl, arr2lbl,
+//              appSub, cacheSub, dbSub, cacheBadge, dbBadge, appBadge }
+var STRATEGIES = {
+  wt: [
+    { msg: 'Application issues a WRITE for key="user:42" with new data.',
+      app:'blue', cache:'', db:'',
+      arr1:'', arr2:'', appSub:'WRITE user:42', cacheSub:'Redis', dbSub:'PostgreSQL', tradeoff:'' },
+    { msg: 'Write-Through: write goes to Cache first.',
+      app:'', cache:'amber', db:'',
+      arr1:'fwd', arr2:'', arr1lbl:'write',
+      appSub:'WRITE user:42', cacheSub:'Writing...', dbSub:'PostgreSQL',
+      cacheBadge:{ text:'WRITING', cls:'badge-amber' }, tradeoff:'' },
+    { msg: 'Cache write succeeds. Cache is now up-to-date.',
+      app:'', cache:'green', db:'',
+      arr1:'', arr2:'', appSub:'WRITE user:42', cacheSub:'user:42 updated', dbSub:'PostgreSQL',
+      cacheBadge:{ text:'UPDATED', cls:'badge-green' }, tradeoff:'' },
+    { msg: 'Synchronously write the same data to Database.',
+      app:'', cache:'', db:'amber',
+      arr1:'', arr2:'fwd', arr2lbl:'sync write',
+      appSub:'WRITE user:42', cacheSub:'user:42 ✓', dbSub:'Writing...',
+      dbBadge:{ text:'WRITING', cls:'badge-amber' }, tradeoff:'' },
+    { msg: 'Database write succeeds. Both cache and DB hold consistent data.',
+      app:'', cache:'green', db:'green',
+      arr1:'', arr2:'',
+      appSub:'WRITE user:42', cacheSub:'user:42 ✓', dbSub:'user:42 ✓',
+      cacheBadge:{ text:'SYNCED', cls:'badge-green' }, dbBadge:{ text:'SYNCED', cls:'badge-green' },
+      tradeoff:'<strong>Trade-off:</strong> Both cache &amp; DB updated before ACK — write latency doubles, but cache is always consistent.' },
+    { msg: 'ACK returned to Application. Cache hit guaranteed on next read.',
+      app:'green', cache:'green', db:'green',
+      arr1:'back', arr2:'', arr1lbl:'ACK',
+      appSub:'ACK received', cacheSub:'user:42 ✓', dbSub:'user:42 ✓',
+      appBadge:{ text:'DONE ✓', cls:'badge-green' },
+      tradeoff:'<strong>Trade-off:</strong> Write latency is the sum of cache write + DB write. Next read is always a cache hit.' }
+  ],
+  wa: [
+    { msg: 'Application issues a WRITE for key="user:42".',
+      app:'blue', cache:'', db:'',
+      arr1:'', arr2:'', appSub:'WRITE user:42', cacheSub:'Redis', dbSub:'PostgreSQL', tradeoff:'' },
+    { msg: 'Write-Around: write bypasses the Cache entirely, goes straight to DB.',
+      app:'', cache:'', db:'amber',
+      arr1:'', arr2:'fwd', arr2lbl:'direct write',
+      appSub:'WRITE user:42', cacheSub:'(bypassed)', dbSub:'Writing...',
+      dbBadge:{ text:'WRITING', cls:'badge-amber' }, tradeoff:'' },
+    { msg: 'Database write succeeds. Cache still holds the OLD value (or nothing).',
+      app:'', cache:'red', db:'green',
+      arr1:'', arr2:'',
+      appSub:'WRITE user:42', cacheSub:'user:42 STALE', dbSub:'user:42 ✓ (new)',
+      cacheBadge:{ text:'STALE', cls:'badge-red' }, dbBadge:{ text:'UPDATED', cls:'badge-green' },
+      tradeoff:'<strong>Trade-off:</strong> Write is fast (no cache overhead), but cache and DB are now out of sync.' },
+    { msg: 'ACK to Application. Cache NOT updated.',
+      app:'green', cache:'red', db:'green',
+      arr1:'back', arr2:'', arr1lbl:'ACK',
+      appSub:'ACK received', cacheSub:'user:42 STALE', dbSub:'user:42 ✓',
+      appBadge:{ text:'DONE ✓', cls:'badge-green' },
+      cacheBadge:{ text:'STALE', cls:'badge-red' },
+      tradeoff:'' },
+    { msg: 'Next READ for user:42 → Cache MISS. Cache does not have the new value.',
+      app:'', cache:'red', db:'',
+      arr1:'fwd', arr2:'', arr1lbl:'READ',
+      appSub:'READ user:42', cacheSub:'user:42 → MISS', dbSub:'PostgreSQL',
+      cacheBadge:{ text:'MISS', cls:'badge-red' },
+      tradeoff:'<strong>Trade-off:</strong> First read after every write is a cache miss — must fall through to DB.' },
+    { msg: 'DB returns new value. Cache is populated (warm again for future reads).',
+      app:'green', cache:'green', db:'green',
+      arr1:'', arr2:'',
+      appSub:'got user:42 (new)', cacheSub:'user:42 ✓ (re-cached)', dbSub:'user:42 ✓',
+      cacheBadge:{ text:'FILLED', cls:'badge-green' }, dbBadge:{ text:'SERVED', cls:'badge-green' },
+      tradeoff:'<strong>Best for:</strong> Write-heavy data rarely re-read (logs, large files). Avoids polluting cache with write traffic.' }
+  ],
+  wb: [
+    { msg: 'Application issues a WRITE for key="user:42".',
+      app:'blue', cache:'', db:'',
+      arr1:'', arr2:'', appSub:'WRITE user:42', cacheSub:'Redis', dbSub:'PostgreSQL', tradeoff:'' },
+    { msg: 'Write-Back: write goes to Cache immediately. DB write is deferred.',
+      app:'', cache:'amber', db:'',
+      arr1:'fwd', arr2:'', arr1lbl:'write',
+      appSub:'WRITE user:42', cacheSub:'Writing...', dbSub:'DB not updated yet',
+      cacheBadge:{ text:'WRITING', cls:'badge-amber' }, tradeoff:'' },
+    { msg: 'Cache write succeeds. ACK sent to Application immediately — fast!',
+      app:'green', cache:'green', db:'red',
+      arr1:'back', arr2:'', arr1lbl:'ACK fast',
+      appSub:'ACK received', cacheSub:'user:42 ✓ (dirty)', dbSub:'user:42 OLD',
+      appBadge:{ text:'DONE ✓', cls:'badge-green' },
+      cacheBadge:{ text:'DIRTY', cls:'badge-amber' },
+      dbBadge:{ text:'STALE', cls:'badge-red' },
+      tradeoff:'<strong>Trade-off:</strong> Excellent write latency — only one fast cache write before ACK. DB is now inconsistent.' },
+    { msg: 'Background async flush: dirty cache entry is written to DB.',
+      app:'', cache:'amber', db:'amber',
+      arr1:'', arr2:'async', arr2lbl:'async flush',
+      appSub:'WRITE user:42', cacheSub:'user:42 (flushing...)', dbSub:'Writing...',
+      cacheBadge:{ text:'FLUSHING', cls:'badge-amber' },
+      dbBadge:{ text:'WRITING', cls:'badge-amber' },
+      tradeoff:'<strong>Risk window:</strong> If cache crashes before flush, DB never gets the update — data loss!' },
+    { msg: 'Flush complete. Cache and DB are now consistent.',
+      app:'', cache:'green', db:'green',
+      arr1:'', arr2:'',
+      appSub:'', cacheSub:'user:42 ✓ (clean)', dbSub:'user:42 ✓',
+      cacheBadge:{ text:'CLEAN', cls:'badge-green' }, dbBadge:{ text:'SYNCED', cls:'badge-green' },
+      tradeoff:'<strong>Best for:</strong> High-write, loss-tolerant data (counters, analytics, leaderboards). Never for financial records.' }
+  ]
+};
+
+function selectStrategy(st) {
+  strategy = st;
+  ['wt','wa','wb'].forEach(function(s) {
+    document.getElementById('st-' + s).className = 'st-btn' + (s === st ? ' active' : '');
+  });
+  idx = 0;
+  steps = STRATEGIES[st];
+  clearBadges();
+  draw();
+}
+
+function clearBadges() {
+  ['n-app','n-cache','n-db'].forEach(function(id) {
+    var b = document.getElementById(id).querySelector('.node-badge');
+    if (b) b.remove();
+  });
+}
+
+function applyBadge(nodeId, badge) {
+  var node = document.getElementById(nodeId);
+  var old = node.querySelector('.node-badge');
+  if (old) old.remove();
+  if (badge) {
+    var el = document.createElement('div');
+    el.className = 'node-badge ' + badge.cls;
+    el.textContent = badge.text;
+    node.appendChild(el);
+  }
+}
+
+function colorClass(c) {
+  if (!c) return '';
+  if (c === 'amber')  return 'active-amber';
+  if (c === 'green')  return 'active-green';
+  if (c === 'blue')   return 'active-blue';
+  if (c === 'red')    return 'active-red';
+  return '';
+}
+
+function arrClass(a) {
+  if (a === 'fwd')   return 'a-fwd';
+  if (a === 'back')  return 'a-back';
+  if (a === 'async') return 'a-async';
+  return '';
+}
+
+function draw() {
+  var s = steps[idx];
+  document.getElementById('n-app').className   = 'node ' + colorClass(s.app);
+  document.getElementById('n-cache').className = 'node ' + colorClass(s.cache);
+  document.getElementById('n-db').className    = 'node ' + colorClass(s.db);
+
+  var a1 = s.arr1 || ''; var a2 = s.arr2 || '';
+  document.getElementById('arr1').className = 'arrow ' + arrClass(a1);
+  document.getElementById('arr2').className = 'arrow ' + arrClass(a2);
+  document.getElementById('arr1-sym').textContent = a1 === 'back' ? '←' : '→';
+  document.getElementById('arr2-sym').textContent = a2 === 'back' ? '←' : (a2 === 'async' ? '⇢' : '→');
+  document.getElementById('arr1-lbl').textContent = s.arr1lbl || '';
+  document.getElementById('arr2-lbl').textContent = s.arr2lbl || '';
+
+  document.getElementById('app-sub').textContent   = s.appSub   || '';
+  document.getElementById('cache-sub').textContent = s.cacheSub || '';
+  document.getElementById('db-sub').textContent    = s.dbSub    || '';
+
+  applyBadge('n-app',   s.appBadge   || null);
+  applyBadge('n-cache', s.cacheBadge || null);
+  applyBadge('n-db',    s.dbBadge    || null);
+
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('tradeoff').innerHTML = s.tradeoff || '';
+
+  var done = idx === steps.length - 1;
+  document.getElementById('btn-step').disabled = done;
+  document.getElementById('btn-step').textContent = done ? 'Done ✓' : 'Step →';
+  document.getElementById('btn-back').disabled = idx === 0;
+  document.getElementById('counter').textContent = 'Step ' + (idx + 1) + ' / ' + steps.length;
+}
+
+document.getElementById('btn-step').onclick = function() {
+  if (idx < steps.length - 1) { idx++; draw(); }
+};
+document.getElementById('btn-back').onclick = function() {
+  if (idx > 0) { idx--; clearBadges(); draw(); }
+};
+document.getElementById('btn-reset').onclick = function() {
+  idx = 0; clearBadges(); draw();
+};
+
+steps = STRATEGIES[strategy];
+draw();
+</script>
+</body>
+</html>

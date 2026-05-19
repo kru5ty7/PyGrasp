@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Event-Driven Architecture - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  .box {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .4rem .6rem;
+    text-align: center;
+    font-size: .75rem;
+    transition: border-color .25s, opacity .25s;
+  }
+  .box .lbl { color: #646464; font-size: .6rem; text-transform: uppercase; letter-spacing: .05em; margin-bottom: .2rem; }
+  .box .name { font-weight: 600; font-size: .8rem; }
+  .box .sub  { font-size: .62rem; color: #888; margin-top: .2rem; min-height: .85rem; }
+  .box.active   { border-color: #f0a500; }
+  .box.done     { border-color: #28a745; }
+  .box.error    { border-color: #dc3545; opacity: .6; }
+  .box.pending  { border-color: #f0a500; opacity: .7; }
+  /* Layout: source → bus → consumers */
+  .top-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 6px;
+  }
+  .bus {
+    flex: 1;
+    background: #2a2a2e;
+    border: 2px solid #393639;
+    border-radius: 6px;
+    padding: .45rem .7rem;
+    transition: border-color .25s;
+  }
+  .bus.active { border-color: #f0a500; }
+  .bus.done   { border-color: #28a745; }
+  .bus-title  { font-size: .62rem; text-transform: uppercase; letter-spacing: .06em; color: #646464; margin-bottom: .25rem; font-weight: 600; }
+  .bus-event  { font-size: .72rem; font-weight: 700; color: #d4d4d4; min-height: .9rem; }
+  .bus-note   { font-size: .58rem; color: #888; margin-top: .15rem; min-height: .7rem; }
+  /* Arrows col */
+  .arrows-down {
+    display: flex;
+    justify-content: space-around;
+    color: #646464;
+    font-size: .9rem;
+    margin-bottom: 6px;
+  }
+  .arrows-down .arr { transition: color .25s; }
+  .arrows-down .arr.active   { color: #f0a500; }
+  .arrows-down .arr.done     { color: #28a745; }
+  .arrows-down .arr.inactive { opacity: .2; }
+  /* Consumer row */
+  .consumer-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: .5rem;
+  }
+  .consumer-row .box { flex: 1; }
+  /* User response note */
+  .note-box {
+    background: #1e1e20;
+    border: 1px dashed #505050;
+    border-radius: 4px;
+    padding: .35rem .6rem;
+    font-size: .7rem;
+    color: #888;
+    margin-bottom: .5rem;
+    line-height: 1.4;
+  }
+  .note-box strong { color: #d4d4d4; }
+  /* Labels */
+  .labels-bar {
+    display: flex;
+    gap: 6px;
+    margin-bottom: .6rem;
+    flex-wrap: wrap;
+  }
+  .badge {
+    font-size: .6rem;
+    padding: .15rem .45rem;
+    border-radius: 3px;
+    font-weight: 600;
+    letter-spacing: .04em;
+  }
+  .badge-amber  { background: #2a2018; color: #f0a500; border: 1px solid #f0a500; }
+  .badge-green  { background: #1a2a1a; color: #28a745; border: 1px solid #28a745; }
+  .badge-blue   { background: #1a2030; color: #007bff; border: 1px solid #007bff; }
+  /* Status */
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #284b63;
+    border-radius: 0 4px 4px 0;
+    font-size: .8rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter  { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Event-Driven Architecture - Step-Through</h4>
+
+  <!-- Top row: source + arrow + bus -->
+  <div class="top-row">
+    <div class="box" id="src" style="min-width:92px">
+      <div class="lbl">Event Source</div>
+      <div class="name">Order Svc</div>
+      <div class="sub" id="src-sub"></div>
+    </div>
+    <div style="color:#646464;font-size:1rem;flex-shrink:0" id="arr-src">→</div>
+    <div class="bus" id="bus">
+      <div class="bus-title">Event Bus / Broker</div>
+      <div class="bus-event" id="bus-event">—</div>
+      <div class="bus-note"  id="bus-note"></div>
+    </div>
+  </div>
+
+  <!-- Arrows down to consumers -->
+  <div class="arrows-down">
+    <span class="arr" id="arr-inv">↓</span>
+    <span class="arr" id="arr-notif">↓</span>
+    <span class="arr" id="arr-anlyt">↓</span>
+  </div>
+
+  <!-- Consumers -->
+  <div class="consumer-row">
+    <div class="box" id="inv">
+      <div class="lbl">Consumer 1</div>
+      <div class="name">Inventory</div>
+      <div class="sub" id="inv-sub"></div>
+    </div>
+    <div class="box" id="notif">
+      <div class="lbl">Consumer 2</div>
+      <div class="name">Notification</div>
+      <div class="sub" id="notif-sub"></div>
+    </div>
+    <div class="box" id="anlyt">
+      <div class="lbl">Consumer 3</div>
+      <div class="name">Analytics</div>
+      <div class="sub" id="anlyt-sub"></div>
+    </div>
+  </div>
+
+  <div class="note-box" id="note-box" style="display:none">
+    <strong id="note-title"></strong><span id="note-body"></span>
+  </div>
+
+  <div class="labels-bar">
+    <span class="badge badge-amber" id="badge-async"    style="display:none">Async</span>
+    <span class="badge badge-green" id="badge-decouple" style="display:none">Decoupled</span>
+    <span class="badge badge-blue"  id="badge-durable"  style="display:none">Durable</span>
+  </div>
+
+  <div id="stat">Press Step to begin.</div>
+
+  <div id="ctrl">
+    <button id="btn-back" disabled>◀ Back</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var STEPS = [
+  {
+    src: '', srcS: '',
+    arrSrc: '',
+    bus: '', busE: '—', busN: '',
+    arrInv: '', arrNotif: '', arrAnlyt: '',
+    inv: '', invS: '',
+    notif: '', notifS: '',
+    anlyt: '', anlytS: '',
+    note: false, noteTitle: '', noteBody: '',
+    badges: [],
+    msg: 'Initial state. Order Service is ready. Event Bus is idle. Consumers are subscribed but waiting.'
+  },
+  {
+    src: 'active', srcS: 'User places order',
+    arrSrc: '',
+    bus: '', busE: '—', busN: '',
+    arrInv: '', arrNotif: '', arrAnlyt: '',
+    inv: '', invS: '',
+    notif: '', notifS: '',
+    anlyt: '', anlytS: '',
+    note: false, noteTitle: '', noteBody: '',
+    badges: ['decouple'],
+    msg: 'User places an order. Order Service processes the request, persists the order to its database, and prepares to emit an event.'
+  },
+  {
+    src: 'done', srcS: 'Emitted event ✓',
+    arrSrc: 'active',
+    bus: 'active', busE: 'order.placed', busN: '{id:42, user:101, total:$49}',
+    arrInv: '', arrNotif: '', arrAnlyt: '',
+    inv: '', invS: '',
+    notif: '', notifS: '',
+    anlyt: '', anlytS: '',
+    note: false, noteTitle: '', noteBody: '',
+    badges: ['decouple', 'async'],
+    msg: 'Order Service emits "order.placed" event to the Event Bus. The event is now persisted in the broker. Order Service does not know who will consume it.'
+  },
+  {
+    src: 'done', srcS: 'Event published ✓',
+    arrSrc: 'done',
+    bus: 'active', busE: 'order.placed', busN: 'delivering to subscribers…',
+    arrInv: 'active', arrNotif: '', arrAnlyt: '',
+    inv: 'active', invS: 'Received event',
+    notif: '', notifS: '',
+    anlyt: '', anlytS: '',
+    note: false, noteTitle: '', noteBody: '',
+    badges: ['decouple', 'async'],
+    msg: 'Inventory Service subscribes to "order.placed". It receives the event and starts decrementing stock for order items. Independent of other consumers.'
+  },
+  {
+    src: '', srcS: '',
+    arrSrc: '',
+    bus: 'active', busE: 'order.placed', busN: 'delivering to subscribers…',
+    arrInv: 'done', arrNotif: 'active', arrAnlyt: '',
+    inv: 'done', invS: 'Stock updated ✓',
+    notif: 'active', notifS: 'Received event',
+    anlyt: '', anlytS: '',
+    note: false, noteTitle: '', noteBody: '',
+    badges: ['decouple', 'async'],
+    msg: 'Notification Service receives the same event independently. It prepares and sends a confirmation email to the user. Inventory already responded — they run concurrently.'
+  },
+  {
+    src: '', srcS: '',
+    arrSrc: '',
+    bus: 'active', busE: 'order.placed', busN: 'delivering to subscribers…',
+    arrInv: 'done', arrNotif: 'done', arrAnlyt: 'active',
+    inv: 'done', invS: 'Stock updated ✓',
+    notif: 'done', notifS: 'Email sent ✓',
+    anlyt: 'active', anlytS: 'Received event',
+    note: false, noteTitle: '', noteBody: '',
+    badges: ['decouple', 'async'],
+    msg: 'Analytics Service receives the same event. It updates dashboard metrics and conversion funnels. All 3 consumers processed the same event independently and asynchronously.'
+  },
+  {
+    src: '', srcS: '',
+    arrSrc: '',
+    bus: 'done', busE: 'order.placed', busN: 'all consumers delivered',
+    arrInv: 'done', arrNotif: 'done', arrAnlyt: 'done',
+    inv: 'done', invS: 'Stock updated ✓',
+    notif: 'done', notifS: 'Email sent ✓',
+    anlyt: 'done', anlytS: 'Metrics updated ✓',
+    note: true, noteTitle: 'Decoupling in action: ', noteBody: 'Order Service already responded "200 OK" to the user before any consumer finished. The user experience is instant.',
+    badges: ['decouple', 'async'],
+    msg: 'Order Service already returned HTTP 200 to the user when it published the event — not after all consumers finished. This is the async decoupling benefit: producer is unblocked immediately.'
+  },
+  {
+    src: '', srcS: '',
+    arrSrc: '',
+    bus: 'active', busE: 'order.placed #2', busN: 'buffering for Notification…',
+    arrInv: 'done', arrNotif: 'inactive', arrAnlyt: 'done',
+    inv: 'done', invS: 'Stock updated ✓',
+    notif: 'error', notifS: 'DOWN',
+    anlyt: 'done', anlytS: 'Metrics updated ✓',
+    note: true, noteTitle: 'Durability: ', noteBody: 'Notification Service is down. The event stays in the broker — it will be delivered when the service comes back online.',
+    badges: ['durable', 'async'],
+    msg: 'Failure scenario: Notification Service goes down. The broker retains the event. Inventory and Analytics still process normally. The event is not lost — it waits in the broker.'
+  },
+  {
+    src: '', srcS: '',
+    arrSrc: '',
+    bus: 'done', busE: 'order.placed #2', busN: 'replayed on recovery',
+    arrInv: 'done', arrNotif: 'done', arrAnlyt: 'done',
+    inv: 'done', invS: 'Stock updated ✓',
+    notif: 'done', notifS: 'Recovered ✓ Email sent',
+    anlyt: 'done', anlytS: 'Metrics updated ✓',
+    note: true, noteTitle: 'Recovery: ', noteBody: 'Notification Service comes back online, reads the buffered event from the broker, and processes it. Zero message loss.',
+    badges: ['durable', 'decouple', 'async'],
+    msg: 'Notification Service recovers. The broker delivers the buffered event. All 3 consumers have now processed order #2. The system reached consistency without data loss.'
+  }
+];
+
+var idx = 0;
+
+function draw() {
+  var s = STEPS[idx];
+
+  document.getElementById('src').className = 'box' + (s.src ? ' ' + s.src : '');
+  document.getElementById('src-sub').textContent = s.srcS;
+
+  var arrSrcEl = document.getElementById('arr-src');
+  arrSrcEl.style.color = s.arrSrc === 'active' ? '#f0a500' : s.arrSrc === 'done' ? '#28a745' : '#646464';
+
+  document.getElementById('bus').className = 'bus' + (s.bus ? ' ' + s.bus : '');
+  document.getElementById('bus-event').textContent = s.busE;
+  document.getElementById('bus-note').textContent = s.busN;
+
+  ['inv','notif','anlyt'].forEach(function(k, i) {
+    var arrKeys = ['arr-inv','arr-notif','arr-anlyt'];
+    var arrEl = document.getElementById(arrKeys[i]);
+    var state = [s.arrInv, s.arrNotif, s.arrAnlyt][i];
+    arrEl.className = 'arr' + (state ? ' ' + state : '');
+
+    document.getElementById(k).className = 'box' + (s[k] ? ' ' + s[k] : '');
+    document.getElementById(k + '-sub').textContent = s[k + 'S'];
+  });
+
+  var noteBox = document.getElementById('note-box');
+  if (s.note) {
+    noteBox.style.display = 'block';
+    document.getElementById('note-title').textContent = s.noteTitle;
+    document.getElementById('note-body').textContent = s.noteBody;
+  } else {
+    noteBox.style.display = 'none';
+  }
+
+  ['async','decouple','durable'].forEach(function(b) {
+    document.getElementById('badge-' + b).style.display = s.badges.indexOf(b) >= 0 ? 'inline-block' : 'none';
+  });
+
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (STEPS.length - 1);
+  var isLast = idx === STEPS.length - 1;
+  document.getElementById('btn-step').disabled = isLast;
+  document.getElementById('btn-step').textContent = isLast ? 'Done ✓' : 'Step →';
+  document.getElementById('btn-back').disabled = idx === 0;
+}
+
+document.getElementById('btn-step').onclick  = function() { if (idx < STEPS.length - 1) { idx++; draw(); } };
+document.getElementById('btn-back').onclick  = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+draw();
+</script>
+</body>
+</html>

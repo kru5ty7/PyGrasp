@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>OCP — Open/Closed Principle Visualizer</title>
+<title>OCP - Open/Closed Principle Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -134,7 +134,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Open/Closed Principle — Step Through</h4>
+  <h4>Open/Closed Principle - Step Through</h4>
 
   <div id="ctrl">
     <button id="btn-back" disabled onclick="step(-1)">◀ Back</button>
@@ -147,7 +147,7 @@
 
   <!-- Step 1: BEFORE -->
   <div class="panel visible" id="p1">
-    <div class="col-label bad">Before OCP ❌ — Must modify existing code to add shapes</div>
+    <div class="col-label bad">Before OCP ❌ - Must modify existing code to add shapes</div>
     <div class="cls-box" style="max-width:280px;border-color:#dc3545;">
       <div class="cls-hdr">AreaCalculator</div>
       <div class="cls-section">
@@ -168,7 +168,7 @@
 
   <!-- Step 2: AFTER (no Triangle yet) -->
   <div class="panel" id="p2">
-    <div class="col-label good">After OCP ✓ — AreaCalculator never changes</div>
+    <div class="col-label good">After OCP ✓ - AreaCalculator never changes</div>
     <div class="cls-box" style="max-width:200px;margin-bottom:.4rem;">
       <div class="cls-hdr iface">Shape (abstract)</div>
       <div class="cls-section"><div class="method">+ area(): float</div></div>
@@ -192,12 +192,12 @@
              <span class="kw">for</span> s <span class="kw">in</span> shapes)</div>
       </div>
     </div>
-    <div class="note good" style="margin-top:.4rem;">AreaCalculator just calls shape.area() — it never needs to change.</div>
+    <div class="note good" style="margin-top:.4rem;">AreaCalculator just calls shape.area() - it never needs to change.</div>
   </div>
 
   <!-- Step 3: AFTER + Triangle (dashed) -->
   <div class="panel" id="p3">
-    <div class="col-label good">After OCP ✓ — Adding Triangle requires zero changes to AreaCalculator</div>
+    <div class="col-label good">After OCP ✓ - Adding Triangle requires zero changes to AreaCalculator</div>
     <div class="cls-box" style="max-width:200px;margin-bottom:.4rem;">
       <div class="cls-hdr iface">Shape (abstract)</div>
       <div class="cls-section"><div class="method">+ area(): float</div></div>
@@ -232,9 +232,9 @@
 <script>
 var cur = 1;
 var msgs = [
-  'Step 1: BEFORE — AreaCalculator checks shape type with if/elif. Every new shape means editing this method.',
-  'Step 2: AFTER — Shape is an abstraction. Circle and Rectangle extend it. AreaCalculator calls shape.area() — it never changes.',
-  'Step 3: Adding Triangle — just write a new subclass. AreaCalculator is untouched. Open for extension, closed for modification.'
+  'Step 1: BEFORE - AreaCalculator checks shape type with if/elif. Every new shape means editing this method.',
+  'Step 2: AFTER - Shape is an abstraction. Circle and Rectangle extend it. AreaCalculator calls shape.area() - it never changes.',
+  'Step 3: Adding Triangle - just write a new subclass. AreaCalculator is untouched. Open for extension, closed for modification.'
 ];
 
 function render() {

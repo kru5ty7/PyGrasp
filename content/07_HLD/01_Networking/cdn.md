@@ -90,6 +90,12 @@ CDNs determine cache key from the URL by default. Two requests to the same URL g
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/cdn.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="CDN Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 CDNs work because the content being served is the same for many users  -  it can be cached. Understanding what can and cannot be cached, and how cache control headers communicate this, is the foundation of caching strategy.

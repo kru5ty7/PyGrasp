@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AVL Tree — Visualizer</title>
+<title>AVL Tree - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -89,7 +89,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>AVL Tree — Self-Balancing BST</h4>
+  <h4>AVL Tree - Self-Balancing BST</h4>
   <div id="input-row">
     <label for="val-input">Value:</label>
     <input id="val-input" type="number" placeholder="e.g. 3" min="0" max="999">
@@ -290,7 +290,7 @@ function computeSteps(val) {
     document.getElementById('counter').textContent = 'Step '+(insertPath.length+1)+' / '+steps.length;
   });
 
-  // Step 3: after rotation — show final balanced state
+  // Step 3: after rotation - show final balanced state
   if (rotType) {
     steps.push(function() {
       var hl = {};

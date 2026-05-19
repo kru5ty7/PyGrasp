@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Saga Pattern - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .6rem;
+  }
+
+  /* Mode selector */
+  .mode-bar {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: .75rem;
+  }
+  .mode-btn {
+    flex: 1;
+    padding: .3rem .5rem;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    background: #2a2a2e;
+    color: #888;
+    cursor: pointer;
+    font-size: .78rem;
+    text-align: center;
+    transition: all .15s;
+  }
+  .mode-btn.active { background: #284b63; border-color: #284b63; color: #fff; }
+  .mode-btn:hover:not(.active) { border-color: #555; color: #d4d4d4; }
+
+  /* Diagram */
+  .diagram {
+    background: #1e1e20;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .65rem .6rem;
+    margin-bottom: .6rem;
+    min-height: 180px;
+  }
+
+  /* Event bus bar */
+  .event-bus {
+    border: 1px dashed #393639;
+    border-radius: 3px;
+    background: #222224;
+    padding: .2rem .5rem;
+    font-size: .62rem;
+    color: #555;
+    text-align: center;
+    margin-bottom: .4rem;
+    transition: all .2s;
+  }
+  .event-bus.active { border-color: #f0a500; color: #f0a500; background: #1a1500; }
+  .event-bus.compensate { border-color: #dc3545; color: #dc3545; background: #1a0a0a; }
+
+  /* Service rows */
+  .svc-row {
+    display: flex;
+    align-items: center;
+    gap: .3rem;
+    margin-bottom: .3rem;
+  }
+  .svc-row:last-child { margin-bottom: 0; }
+  .svc-box {
+    width: 88px;
+    flex-shrink: 0;
+    border-radius: 4px;
+    border: 1px solid #393639;
+    background: #2a2a2e;
+    padding: .25rem .3rem;
+    font-size: .66rem;
+    text-align: center;
+    transition: all .2s;
+  }
+  .svc-box .svc-name { font-weight: 700; }
+  .svc-box .svc-status { font-size: .56rem; color: #888; margin-top: .08rem; }
+  .svc-box.idle { opacity: .5; }
+  .svc-box.active { border-color: #f0a500; background: #2a2200; }
+  .svc-box.active .svc-name { color: #f0a500; }
+  .svc-box.done  { border-color: #28a745; background: #1a3a1a; }
+  .svc-box.done .svc-name { color: #28a745; }
+  .svc-box.fail  { border-color: #dc3545; background: #3a1a1a; }
+  .svc-box.fail .svc-name { color: #dc3545; }
+  .svc-box.compensating { border-color: #dc3545; background: #3a1a1a; border-style: dashed; }
+  .svc-box.compensating .svc-name { color: #dc3545; }
+  .svc-box.compensated { border-color: #888; background: #222224; }
+  .svc-box.compensated .svc-name { color: #888; text-decoration: line-through; }
+
+  /* Event badge */
+  .event-badge {
+    flex: 1;
+    font-size: .6rem;
+    padding: .12rem .3rem;
+    border-radius: 3px;
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    color: #888;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .event-badge.emitted { background: #1a2a00; border-color: #28a745; color: #28a745; }
+  .event-badge.failed  { background: #3a1a1a; border-color: #dc3545; color: #dc3545; }
+  .event-badge.comp    { background: #3a1a1a; border-color: #dc3545; color: #dc3545; font-style: italic; }
+  .event-badge.pending { background: #2a2200; border-color: #f0a500; color: #f0a500; }
+
+  /* Orchestrator layout */
+  .orch-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: .4rem;
+  }
+  .orch-box {
+    border-radius: 4px;
+    border: 2px solid #284b63;
+    background: #1a2a33;
+    padding: .3rem .7rem;
+    font-size: .7rem;
+    font-weight: 700;
+    color: #7b97aa;
+    text-align: center;
+  }
+  .orch-box.active { border-color: #f0a500; background: #2a2200; color: #f0a500; }
+  .orch-box.fail { border-color: #dc3545; background: #3a1a1a; color: #dc3545; }
+
+  .orch-row {
+    display: flex;
+    align-items: center;
+    gap: .3rem;
+    margin-bottom: .25rem;
+  }
+  .orch-arrow {
+    font-size: .65rem;
+    min-width: 28px;
+    text-align: center;
+    color: #555;
+  }
+  .orch-arrow.green { color: #28a745; }
+  .orch-arrow.red   { color: #dc3545; }
+  .orch-arrow.amber { color: #f0a500; }
+  .orch-arrow.blue  { color: #007bff; }
+
+  /* Stat */
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #284b63;
+    border-radius: 0 4px 4px 0;
+    font-size: .84rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+
+  /* Controls */
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Saga Pattern</h4>
+
+  <div class="mode-bar">
+    <div class="mode-btn active" id="mode-choreo" onclick="setMode('choreo')">Choreography</div>
+    <div class="mode-btn" id="mode-orch" onclick="setMode('orch')">Orchestration</div>
+  </div>
+
+  <div class="diagram" id="diagram"></div>
+
+  <div id="stat">Select a mode and press Step to begin.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>◀ Back</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var mode = 'choreo';
+var idx = 0;
+
+// ── CHOREOGRAPHY STEPS ────────────────────────────────────────────────────────
+// Each step: state for each service + event bus
+// svc states: 'idle','active','done','fail','compensating','compensated'
+var choreoSteps = [
+  {
+    stat: 'Initial state: 5 independent services. Each listens for events on the shared event bus.',
+    bus: { label: 'Event Bus (Kafka / RabbitMQ)', cls: '' },
+    svcs: [
+      { name: 'Order', status: '', cls: 'idle' },
+      { name: 'Payment', status: '', cls: 'idle' },
+      { name: 'Inventory', status: '', cls: 'idle' },
+      { name: 'Shipping', status: '', cls: 'idle' },
+      { name: 'Notification', status: '', cls: 'idle' }
+    ],
+    events: ['', '', '', '', '']
+  },
+  {
+    stat: 'Step 1: Order Service creates order and emits "OrderCreated" to the event bus.',
+    bus: { label: 'OrderCreated ⟶ event bus', cls: 'active' },
+    svcs: [
+      { name: 'Order', status: 'emitted event', cls: 'active' },
+      { name: 'Payment', status: 'waiting…', cls: 'idle' },
+      { name: 'Inventory', status: 'waiting…', cls: 'idle' },
+      { name: 'Shipping', status: 'waiting…', cls: 'idle' },
+      { name: 'Notification', status: 'waiting…', cls: 'idle' }
+    ],
+    events: ['OrderCreated →', '', '', '', '']
+  },
+  {
+    stat: 'Step 2: Payment Service listens → charges card → emits "PaymentProcessed".',
+    bus: { label: 'PaymentProcessed ⟶ event bus', cls: 'active' },
+    svcs: [
+      { name: 'Order', status: 'done', cls: 'done' },
+      { name: 'Payment', status: 'charged card', cls: 'active' },
+      { name: 'Inventory', status: 'waiting…', cls: 'idle' },
+      { name: 'Shipping', status: 'waiting…', cls: 'idle' },
+      { name: 'Notification', status: 'waiting…', cls: 'idle' }
+    ],
+    events: ['OrderCreated ✓', 'PaymentProcessed →', '', '', '']
+  },
+  {
+    stat: 'Step 3: Inventory Service listens → reserves items → emits "InventoryReserved".',
+    bus: { label: 'InventoryReserved ⟶ event bus', cls: 'active' },
+    svcs: [
+      { name: 'Order', status: 'done', cls: 'done' },
+      { name: 'Payment', status: 'done', cls: 'done' },
+      { name: 'Inventory', status: 'reserved items', cls: 'active' },
+      { name: 'Shipping', status: 'waiting…', cls: 'idle' },
+      { name: 'Notification', status: 'waiting…', cls: 'idle' }
+    ],
+    events: ['', 'PaymentProcessed ✓', 'InventoryReserved →', '', '']
+  },
+  {
+    stat: 'Step 4: Shipping Service listens → creates shipment → emits "ShipmentCreated".',
+    bus: { label: 'ShipmentCreated ⟶ event bus', cls: 'active' },
+    svcs: [
+      { name: 'Order', status: 'done', cls: 'done' },
+      { name: 'Payment', status: 'done', cls: 'done' },
+      { name: 'Inventory', status: 'done', cls: 'done' },
+      { name: 'Shipping', status: 'created shipment', cls: 'active' },
+      { name: 'Notification', status: 'waiting…', cls: 'idle' }
+    ],
+    events: ['', '', 'InventoryReserved ✓', 'ShipmentCreated →', '']
+  },
+  {
+    stat: 'Step 5: Notification Service listens → sends order confirmation. SAGA COMPLETE.',
+    bus: { label: 'Saga complete', cls: 'active' },
+    svcs: [
+      { name: 'Order', status: 'done', cls: 'done' },
+      { name: 'Payment', status: 'done', cls: 'done' },
+      { name: 'Inventory', status: 'done', cls: 'done' },
+      { name: 'Shipping', status: 'done', cls: 'done' },
+      { name: 'Notification', status: 'sent confirm', cls: 'done' }
+    ],
+    events: ['', '', '', 'ShipmentCreated ✓', 'confirmed ✓']
+  },
+  {
+    stat: 'COMPENSATING TX: Reset — Payment fails at Step 2. Payment Service emits "PaymentFailed".',
+    bus: { label: 'PaymentFailed ⟶ event bus (compensation trigger)', cls: 'compensate' },
+    svcs: [
+      { name: 'Order', status: 'done', cls: 'done' },
+      { name: 'Payment', status: 'FAILED', cls: 'fail' },
+      { name: 'Inventory', status: 'waiting…', cls: 'idle' },
+      { name: 'Shipping', status: 'waiting…', cls: 'idle' },
+      { name: 'Notification', status: 'waiting…', cls: 'idle' }
+    ],
+    events: ['OrderCreated ✓', 'PaymentFailed →', '', '', '']
+  },
+  {
+    stat: 'Compensation: Order Service listens for "PaymentFailed" → cancels order (compensating transaction).',
+    bus: { label: 'OrderCancelled ⟶ compensation event', cls: 'compensate' },
+    svcs: [
+      { name: 'Order', status: 'CANCELLED', cls: 'compensating' },
+      { name: 'Payment', status: 'FAILED', cls: 'fail' },
+      { name: 'Inventory', status: 'idle', cls: 'idle' },
+      { name: 'Shipping', status: 'idle', cls: 'idle' },
+      { name: 'Notification', status: 'idle', cls: 'idle' }
+    ],
+    events: ['CANCELLED ←', 'PaymentFailed ✓', '', '', '']
+  }
+];
+
+// ── ORCHESTRATION STEPS ───────────────────────────────────────────────────────
+var orchSteps = [
+  {
+    stat: 'Initial state: A central Saga Orchestrator coordinates all service calls and tracks state.',
+    orchCls: '',
+    orchLabel: 'Saga Orchestrator',
+    svcs: [
+      { name: 'Payment', cls: 'idle', arrow: '', arrowCls: '', badge: '' },
+      { name: 'Inventory', cls: 'idle', arrow: '', arrowCls: '', badge: '' },
+      { name: 'Shipping', cls: 'idle', arrow: '', arrowCls: '', badge: '' }
+    ]
+  },
+  {
+    stat: 'Step 1: Client sends CreateOrder command to the Orchestrator. Orchestrator persists saga state.',
+    orchCls: 'active',
+    orchLabel: 'Orchestrator — received CreateOrder',
+    svcs: [
+      { name: 'Payment', cls: 'idle', arrow: '', arrowCls: '', badge: '' },
+      { name: 'Inventory', cls: 'idle', arrow: '', arrowCls: '', badge: '' },
+      { name: 'Shipping', cls: 'idle', arrow: '', arrowCls: '', badge: '' }
+    ]
+  },
+  {
+    stat: 'Step 2: Orchestrator issues "charge payment" command to Payment Service → success.',
+    orchCls: 'active',
+    orchLabel: 'Orchestrator — calling Payment',
+    svcs: [
+      { name: 'Payment', cls: 'done', arrow: '→ charge', arrowCls: 'green', badge: '✓ success' },
+      { name: 'Inventory', cls: 'idle', arrow: '', arrowCls: '', badge: '' },
+      { name: 'Shipping', cls: 'idle', arrow: '', arrowCls: '', badge: '' }
+    ]
+  },
+  {
+    stat: 'Step 3: Orchestrator calls Inventory Service to reserve items → FAILS.',
+    orchCls: 'active',
+    orchLabel: 'Orchestrator — calling Inventory',
+    svcs: [
+      { name: 'Payment', cls: 'done', arrow: '', arrowCls: '', badge: '✓ charged' },
+      { name: 'Inventory', cls: 'fail', arrow: '→ reserve', arrowCls: 'red', badge: '✕ failed' },
+      { name: 'Shipping', cls: 'idle', arrow: '', arrowCls: '', badge: '' }
+    ]
+  },
+  {
+    stat: 'Step 4: Orchestrator detects failure → issues compensate command to Payment Service (refund).',
+    orchCls: 'fail',
+    orchLabel: 'Orchestrator — compensating',
+    svcs: [
+      { name: 'Payment', cls: 'compensating', arrow: '← refund', arrowCls: 'red', badge: 'COMPENSATE' },
+      { name: 'Inventory', cls: 'fail', arrow: '', arrowCls: '', badge: '✕ failed' },
+      { name: 'Shipping', cls: 'idle', arrow: '', arrowCls: '', badge: '' }
+    ]
+  },
+  {
+    stat: 'Step 5: Payment Service refunds. Orchestrator marks saga as FAILED. Compensation complete.',
+    orchCls: 'fail',
+    orchLabel: 'Orchestrator — SAGA FAILED',
+    svcs: [
+      { name: 'Payment', cls: 'compensated', arrow: '', arrowCls: '', badge: 'refunded' },
+      { name: 'Inventory', cls: 'fail', arrow: '', arrowCls: '', badge: 'rolled back' },
+      { name: 'Shipping', cls: 'idle', arrow: '', arrowCls: '', badge: 'not called' }
+    ]
+  }
+];
+
+function getSteps() { return mode === 'choreo' ? choreoSteps : orchSteps; }
+
+function renderChoreo(step) {
+  var html = '';
+  html += '<div class="event-bus ' + step.bus.cls + '">' + step.bus.label + '</div>';
+  step.svcs.forEach(function(s, i) {
+    html += '<div class="svc-row">';
+    html += '<div class="svc-box ' + s.cls + '"><div class="svc-name">' + s.name + '</div>';
+    if (s.status) html += '<div class="svc-status">' + s.status + '</div>';
+    html += '</div>';
+    var ev = step.events[i];
+    if (ev) {
+      var evCls = ev.indexOf('Failed') !== -1 || ev.indexOf('CANCELLED') !== -1 ? 'failed' :
+                  ev.indexOf('→') !== -1 ? 'pending' :
+                  ev.indexOf('✓') !== -1 ? 'emitted' : '';
+      html += '<div class="event-badge ' + evCls + '">' + ev + '</div>';
+    } else {
+      html += '<div class="event-badge"></div>';
+    }
+    html += '</div>';
+  });
+  return html;
+}
+
+function renderOrch(step) {
+  var html = '';
+  html += '<div class="orch-center"><div class="orch-box ' + step.orchCls + '">' + step.orchLabel + '</div></div>';
+  step.svcs.forEach(function(s) {
+    html += '<div class="orch-row">';
+    html += '<div class="orch-arrow ' + s.arrowCls + '" style="width:60px;text-align:right">' + s.arrow + '</div>';
+    html += '<div class="svc-box ' + s.cls + '" style="width:90px"><div class="svc-name">' + s.name + '</div></div>';
+    if (s.badge) {
+      var badgeCls = s.badge.indexOf('✕') !== -1 || s.badge.indexOf('COMPENSATE') !== -1 || s.badge.indexOf('refund') !== -1 ? 'failed' :
+                     s.badge.indexOf('✓') !== -1 ? 'emitted' :
+                     s.badge.indexOf('rolled') !== -1 || s.badge.indexOf('refunded') !== -1 ? 'comp' : '';
+      html += '<div class="event-badge ' + badgeCls + '" style="margin-left:.3rem">' + s.badge + '</div>';
+    }
+    html += '</div>';
+  });
+  return html;
+}
+
+function draw() {
+  var steps = getSteps();
+  var step = steps[idx];
+  document.getElementById('diagram').innerHTML = mode === 'choreo' ? renderChoreo(step) : renderOrch(step);
+  document.getElementById('stat').textContent = step.stat;
+  document.getElementById('counter').textContent = 'Step ' + (idx + 1) + ' / ' + steps.length;
+  document.getElementById('btn-step').disabled = (idx >= steps.length - 1);
+  document.getElementById('btn-step').textContent = idx >= steps.length - 1 ? 'Done ✓' : 'Step →';
+  document.getElementById('btn-back').disabled = (idx === 0);
+}
+
+function setMode(m) {
+  mode = m;
+  idx = 0;
+  document.getElementById('mode-choreo').className = 'mode-btn' + (m === 'choreo' ? ' active' : '');
+  document.getElementById('mode-orch').className = 'mode-btn' + (m === 'orch' ? ' active' : '');
+  draw();
+}
+
+document.getElementById('btn-step').onclick = function() {
+  if (idx < getSteps().length - 1) { idx++; draw(); }
+};
+document.getElementById('btn-back').onclick = function() {
+  if (idx > 0) { idx--; draw(); }
+};
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+draw();
+</script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SRP — Single Responsibility Principle Visualizer</title>
+<title>SRP - Single Responsibility Principle Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -107,13 +107,13 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Single Responsibility Principle — Toggle View</h4>
+  <h4>Single Responsibility Principle - Toggle View</h4>
 
   <div id="ctrl">
     <button id="btn-toggle" onclick="toggle()">Show After SRP ▶</button>
   </div>
 
-  <div id="stat">One fat class handles everything. Multiple responsibilities — harder to test, change, and understand.</div>
+  <div id="stat">One fat class handles everything. Multiple responsibilities - harder to test, change, and understand.</div>
 
   <!-- BEFORE -->
   <div id="panel-before" class="visible">
@@ -195,13 +195,13 @@ function toggle() {
     before.classList.remove('visible');
     after.classList.add('visible');
     btn.textContent = '◀ Show Before SRP';
-    stat.textContent = 'Responsibilities split into focused classes. Each class has one reason to change — test them independently, modify them in isolation.';
+    stat.textContent = 'Responsibilities split into focused classes. Each class has one reason to change - test them independently, modify them in isolation.';
     showing = 'after';
   } else {
     after.classList.remove('visible');
     before.classList.add('visible');
     btn.textContent = 'Show After SRP ▶';
-    stat.textContent = 'One fat class handles everything. Multiple responsibilities — harder to test, change, and understand.';
+    stat.textContent = 'One fat class handles everything. Multiple responsibilities - harder to test, change, and understand.';
     showing = 'before';
   }
 }

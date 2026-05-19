@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Service Discovery - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .6rem;
+  }
+
+  /* Mode selector */
+  .mode-bar {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: .75rem;
+  }
+  .mode-btn {
+    flex: 1;
+    padding: .3rem .5rem;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    background: #2a2a2e;
+    color: #888;
+    cursor: pointer;
+    font-size: .78rem;
+    text-align: center;
+    transition: all .15s;
+  }
+  .mode-btn.active {
+    background: #284b63;
+    border-color: #284b63;
+    color: #fff;
+  }
+  .mode-btn:hover:not(.active) { border-color: #555; color: #d4d4d4; }
+
+  /* Diagram area */
+  .diagram {
+    background: #1e1e20;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .75rem;
+    margin-bottom: .6rem;
+    min-height: 160px;
+  }
+
+  /* Nodes */
+  .nodes-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .4rem;
+    margin-bottom: .45rem;
+  }
+  .nodes-row:last-child { margin-bottom: 0; }
+  .node {
+    border-radius: 4px;
+    border: 1px solid #393639;
+    background: #2a2a2e;
+    padding: .3rem .45rem;
+    font-size: .7rem;
+    text-align: center;
+    white-space: nowrap;
+    transition: all .2s;
+  }
+  .node .node-title { font-weight: 700; font-size: .7rem; }
+  .node .node-sub { font-size: .58rem; color: #888; margin-top: .1rem; }
+  .node.registry { border-color: #f0a500; background: #2a2200; min-width: 110px; }
+  .node.registry .node-title { color: #f0a500; }
+  .node.client { border-color: #007bff; background: #001a3a; }
+  .node.client .node-title { color: #007bff; }
+  .node.lb { border-color: #7b97aa; background: #1a2a33; min-width: 110px; }
+  .node.lb .node-title { color: #7b97aa; }
+  .node.svc-up { border-color: #28a745; background: #1a3a1a; }
+  .node.svc-up .node-title { color: #28a745; }
+  .node.svc-down { border-color: #dc3545; background: #3a1a1a; }
+  .node.svc-down .node-title { color: #dc3545; text-decoration: line-through; }
+  .node.svc-dim { border-color: #393639; background: #222224; opacity: .45; }
+
+  /* Arrow row */
+  .arrow-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .35rem;
+    margin-bottom: .3rem;
+    flex-wrap: wrap;
+    min-height: 22px;
+  }
+  .arr {
+    font-size: .72rem;
+    color: #555;
+  }
+  .arr.blue { color: #007bff; }
+  .arr.green { color: #28a745; }
+  .arr.amber { color: #f0a500; }
+  .arr.red { color: #dc3545; }
+  .arr.gray { color: #7b97aa; }
+  .badge {
+    font-size: .62rem;
+    padding: .1rem .3rem;
+    border-radius: 3px;
+    background: #393639;
+    color: #d4d4d4;
+    white-space: nowrap;
+  }
+  .badge.ok { background: #1a3a1a; color: #28a745; border: 1px solid #28a745; }
+  .badge.fail { background: #3a1a1a; color: #dc3545; border: 1px solid #dc3545; }
+  .badge.info { background: #001a3a; color: #007bff; border: 1px solid #007bff; }
+  .badge.warn { background: #3a2a00; color: #f0a500; border: 1px solid #f0a500; }
+
+  /* Stat */
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #284b63;
+    border-radius: 0 4px 4px 0;
+    font-size: .84rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+
+  /* Controls */
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Service Discovery</h4>
+
+  <div class="mode-bar">
+    <div class="mode-btn active" id="mode-client" onclick="setMode('client')">Client-Side Discovery</div>
+    <div class="mode-btn" id="mode-server" onclick="setMode('server')">Server-Side Discovery</div>
+  </div>
+
+  <div class="diagram" id="diagram"></div>
+
+  <div id="stat">Select a mode and press Step to begin.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>◀ Back</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var mode = 'client';
+var idx = 0;
+
+// ── CLIENT-SIDE STEPS ────────────────────────────────────────────────────────
+var clientSteps = [
+  {
+    stat: 'Initial state: User-1, User-2, User-3 are running. They will register themselves with the Service Registry on startup.',
+    arrows: [],
+    client: 'normal', reg: 'normal',
+    svcs: [{id:'u1',label:'User-1',health:'up'},{id:'u2',label:'User-2',health:'up'},{id:'u3',label:'User-3',health:'up'}]
+  },
+  {
+    stat: 'Step 1: All service instances register themselves with the Registry at startup. Each sends its address and health endpoint.',
+    arrows: [
+      {from:'u1',to:'reg',color:'green',label:'register'},
+      {from:'u2',to:'reg',color:'green',label:'register'},
+      {from:'u3',to:'reg',color:'green',label:'register'}
+    ],
+    client: 'normal', reg: 'normal',
+    svcs: [{id:'u1',label:'User-1',health:'up'},{id:'u2',label:'User-2',health:'up'},{id:'u3',label:'User-3',health:'up'}]
+  },
+  {
+    stat: 'Step 2: Client queries the Registry — "give me healthy instances of user-service".',
+    arrows: [{from:'client',to:'reg',color:'blue',label:'lookup user-service'}],
+    client: 'normal', reg: 'normal',
+    svcs: [{id:'u1',label:'User-1',health:'up'},{id:'u2',label:'User-2',health:'up'},{id:'u3',label:'User-3',health:'up'}]
+  },
+  {
+    stat: 'Step 3: Registry returns list of all healthy instances — User-1, User-2, User-3 with their addresses.',
+    arrows: [{from:'reg',to:'client',color:'amber',label:'[User-1, User-2, User-3]'}],
+    client: 'normal', reg: 'normal',
+    svcs: [{id:'u1',label:'User-1',health:'up'},{id:'u2',label:'User-2',health:'up'},{id:'u3',label:'User-3',health:'up'}]
+  },
+  {
+    stat: 'Step 4: Client applies load-balancing (random/round-robin) and picks User-2.',
+    arrows: [{from:'client',to:'reg',color:'blue',label:'picked: User-2'}],
+    client: 'picked', reg: 'normal',
+    svcs: [{id:'u1',label:'User-1',health:'up'},{id:'u2',label:'User-2',health:'up',picked:true},{id:'u3',label:'User-3',health:'up'}]
+  },
+  {
+    stat: 'Step 5: Client calls User-2 directly — no intermediate hop through a load balancer.',
+    arrows: [{from:'client',to:'u2',color:'blue',label:'HTTP request'}],
+    client: 'normal', reg: 'normal',
+    svcs: [{id:'u1',label:'User-1',health:'up'},{id:'u2',label:'User-2',health:'up',active:true},{id:'u3',label:'User-3',health:'up'}]
+  },
+  {
+    stat: 'Step 6: User-1 goes down. The Registry health check detects the failure.',
+    arrows: [{from:'reg',to:'u1',color:'red',label:'health check FAIL'}],
+    client: 'normal', reg: 'normal',
+    svcs: [{id:'u1',label:'User-1',health:'down'},{id:'u2',label:'User-2',health:'up'},{id:'u3',label:'User-3',health:'up'}]
+  },
+  {
+    stat: 'Step 7: Registry removes User-1 from its healthy instances list. It will no longer be returned to clients.',
+    arrows: [{from:'reg',to:'u1',color:'red',label:'deregistered'}],
+    client: 'normal', reg: 'normal',
+    svcs: [{id:'u1',label:'User-1',health:'removed'},{id:'u2',label:'User-2',health:'up'},{id:'u3',label:'User-3',health:'up'}]
+  },
+  {
+    stat: 'Step 8: Next client lookup only returns User-2 and User-3. User-1 is gone from the healthy list — fault isolated.',
+    arrows: [{from:'reg',to:'client',color:'amber',label:'[User-2, User-3]'}],
+    client: 'normal', reg: 'normal',
+    svcs: [{id:'u1',label:'User-1',health:'removed'},{id:'u2',label:'User-2',health:'up'},{id:'u3',label:'User-3',health:'up'}]
+  }
+];
+
+// ── SERVER-SIDE STEPS ─────────────────────────────────────────────────────────
+var serverSteps = [
+  {
+    stat: 'Initial state: Load Balancer/Router sits in front of services. Registry tracks healthy instances. Client only knows the LB address.',
+    arrows: [],
+    svcs: [{id:'u1',label:'Svc-1',health:'up'},{id:'u2',label:'Svc-2',health:'up'},{id:'u3',label:'Svc-3',health:'up'}]
+  },
+  {
+    stat: 'Step 1: Services register themselves with the Registry at startup.',
+    arrows: [{from:'svcs',to:'reg',color:'green',label:'register'}],
+    svcs: [{id:'u1',label:'Svc-1',health:'up'},{id:'u2',label:'Svc-2',health:'up'},{id:'u3',label:'Svc-3',health:'up'}]
+  },
+  {
+    stat: 'Step 2: Load Balancer queries the Registry to build its routing table of healthy instances.',
+    arrows: [{from:'lb',to:'reg',color:'amber',label:'fetch healthy instances'}],
+    svcs: [{id:'u1',label:'Svc-1',health:'up'},{id:'u2',label:'Svc-2',health:'up'},{id:'u3',label:'Svc-3',health:'up'}]
+  },
+  {
+    stat: 'Step 3: Client sends request to the Load Balancer using a stable name (e.g. http://user-service). Client has no registry knowledge.',
+    arrows: [{from:'client',to:'lb',color:'blue',label:'request'}],
+    svcs: [{id:'u1',label:'Svc-1',health:'up'},{id:'u2',label:'Svc-2',health:'up'},{id:'u3',label:'Svc-3',health:'up'}]
+  },
+  {
+    stat: 'Step 4: Load Balancer picks Svc-2 from its routing table and forwards the request.',
+    arrows: [{from:'lb',to:'u2',color:'gray',label:'forward → Svc-2'}],
+    svcs: [{id:'u1',label:'Svc-1',health:'up'},{id:'u2',label:'Svc-2',health:'up',active:true},{id:'u3',label:'Svc-3',health:'up'}]
+  },
+  {
+    stat: 'Step 5: Response returns through LB to client. Client never touched the registry or knew about individual instances.',
+    arrows: [{from:'u2',to:'lb',color:'green',label:'200 OK'},{from:'lb',to:'client',color:'green',label:'response'}],
+    svcs: [{id:'u1',label:'Svc-1',health:'up'},{id:'u2',label:'Svc-2',health:'up'},{id:'u3',label:'Svc-3',health:'up'}]
+  }
+];
+
+function getSteps() {
+  return mode === 'client' ? clientSteps : serverSteps;
+}
+
+function renderClientDiagram(step) {
+  var svcs = step.svcs;
+  var arrows = step.arrows || [];
+
+  // Build svc map
+  var svcMap = {};
+  svcs.forEach(function(s){ svcMap[s.id] = s; });
+
+  function svcClass(s) {
+    if (s.health === 'down' || s.health === 'removed') return 'svc-down';
+    if (s.active) return 'svc-up';
+    if (s.picked) return 'svc-up';
+    return 'svc-up';
+  }
+  function svcExtra(s) {
+    if (s.health === 'removed') return ' (removed)';
+    if (s.health === 'down') return ' ✕';
+    if (s.active) return ' ←';
+    return '';
+  }
+  function svcSub(s) {
+    if (s.health === 'removed') return 'deregistered';
+    if (s.health === 'down') return 'failing';
+    return ':8080 ✓';
+  }
+
+  // Find arrows for each pair
+  function arrowBetween(from, to) {
+    return arrows.filter(function(a){ return a.from === from && a.to === to; });
+  }
+  function arrowFrom(from) {
+    return arrows.filter(function(a){ return a.from === from; });
+  }
+
+  var html = '';
+
+  // Row 1: Client | Registry
+  var clientClass = step.client === 'picked' ? 'client' : 'client';
+  html += '<div class="nodes-row">';
+  html += '<div class="node client"><div class="node-title">Client</div><div class="node-sub">caller</div></div>';
+  html += '<div style="flex:1;text-align:center;">';
+  var cr = arrowBetween('client','reg').concat(arrowBetween('reg','client'));
+  cr.forEach(function(a){
+    html += '<span class="arr '+a.color+'">'+
+      (a.from==='client'?'→ ':'← ')+'<span class="badge '+(a.color==='blue'?'info':a.color==='green'?'ok':a.color==='amber'?'warn':a.color==='red'?'fail':'')+'" style="font-size:.58rem">'+a.label+'</span></span> ';
+  });
+  html += '</div>';
+  html += '<div class="node registry"><div class="node-title">Registry</div><div class="node-sub">Consul / Eureka</div></div>';
+  html += '</div>';
+
+  // Arrows from registry to services & services to registry
+  var regSvcArrows = [];
+  svcs.forEach(function(s){
+    arrowBetween(s.id,'reg').concat(arrowBetween('reg',s.id)).forEach(function(a){ regSvcArrows.push({svc:s,a:a}); });
+    arrowBetween('client',s.id).forEach(function(a){ regSvcArrows.push({svc:s,a:a}); });
+  });
+
+  // Arrows row (register / health-check)
+  if (regSvcArrows.length > 0) {
+    html += '<div class="arrow-row">';
+    regSvcArrows.forEach(function(x){
+      var dir = x.a.from === x.svc.id ? '↑' : '↓';
+      if (x.a.from === 'client') dir = '→';
+      html += '<span class="arr '+x.a.color+'">'+dir+' '+x.a.label+'</span> ';
+    });
+    html += '</div>';
+  }
+
+  // Row 2: Services
+  html += '<div class="nodes-row" style="justify-content:flex-end;gap:.5rem;">';
+  svcs.forEach(function(s){
+    var cls = svcClass(s);
+    if (s.health === 'removed') cls = 'svc-dim';
+    html += '<div class="node '+cls+'"><div class="node-title">'+s.label+svcExtra(s)+'</div><div class="node-sub">'+svcSub(s)+'</div></div>';
+  });
+  html += '</div>';
+
+  return html;
+}
+
+function renderServerDiagram(step) {
+  var svcs = step.svcs;
+  var arrows = step.arrows || [];
+
+  function findArrow(from, to) {
+    return arrows.filter(function(a){ return a.from === from && a.to === to; });
+  }
+  function findArrowFrom(from) {
+    return arrows.filter(function(a){ return a.from === from && ['u1','u2','u3'].indexOf(a.to) === -1; });
+  }
+
+  function renderArrowBadge(a) {
+    var cls = a.color === 'blue'?'info':a.color==='green'?'ok':a.color==='amber'?'warn':a.color==='red'?'fail':'';
+    return '<span class="badge '+cls+'" style="font-size:.58rem">'+a.label+'</span>';
+  }
+
+  var html = '';
+
+  // Row 1: Client | LB | Registry
+  html += '<div class="nodes-row">';
+  html += '<div class="node client"><div class="node-title">Client</div><div class="node-sub">stable name only</div></div>';
+
+  // client → lb arrow
+  html += '<div style="text-align:center;flex:1;">';
+  findArrow('client','lb').forEach(function(a){
+    html += '<span class="arr '+a.color+'">→ '+renderArrowBadge(a)+'</span> ';
+  });
+  findArrow('lb','client').forEach(function(a){
+    html += '<span class="arr '+a.color+'">← '+renderArrowBadge(a)+'</span> ';
+  });
+  html += '</div>';
+
+  html += '<div class="node lb"><div class="node-title">Load Balancer</div><div class="node-sub">Router / kube-proxy</div></div>';
+
+  // lb ↔ registry arrow
+  html += '<div style="text-align:center;flex:1;">';
+  findArrow('lb','reg').forEach(function(a){
+    html += '<span class="arr '+a.color+'">→ '+renderArrowBadge(a)+'</span> ';
+  });
+  findArrow('reg','lb').forEach(function(a){
+    html += '<span class="arr '+a.color+'">← '+renderArrowBadge(a)+'</span> ';
+  });
+  html += '</div>';
+
+  html += '<div class="node registry"><div class="node-title">Registry</div><div class="node-sub">Consul / K8s DNS</div></div>';
+  html += '</div>';
+
+  // services register arrows
+  var regArrows = arrows.filter(function(a){ return a.from === 'svcs' && a.to === 'reg'; });
+  if (regArrows.length > 0) {
+    html += '<div class="arrow-row">';
+    regArrows.forEach(function(a){
+      html += '<span class="arr '+a.color+'">↑ '+renderArrowBadge(a)+'</span> ';
+    });
+    html += '</div>';
+  }
+
+  // LB → service arrows
+  var lbSvcArrows = [];
+  svcs.forEach(function(s){
+    findArrow('lb',s.id).forEach(function(a){ lbSvcArrows.push({svc:s,a:a}); });
+    findArrow(s.id,'lb').forEach(function(a){ lbSvcArrows.push({svc:s,a:a,rev:true}); });
+  });
+  if (lbSvcArrows.length > 0) {
+    html += '<div class="arrow-row">';
+    lbSvcArrows.forEach(function(x){
+      var dir = x.rev ? '↑' : '↓';
+      html += '<span class="arr '+x.a.color+'">'+dir+' '+x.a.label+'</span> ';
+    });
+    html += '</div>';
+  }
+
+  // Row 2: Services
+  html += '<div class="nodes-row" style="justify-content:flex-end;gap:.5rem;">';
+  svcs.forEach(function(s){
+    var cls = s.active ? 'svc-up' : 'svc-up';
+    html += '<div class="node '+cls+'"><div class="node-title">'+s.label+'</div><div class="node-sub">instance</div></div>';
+  });
+  html += '</div>';
+
+  return html;
+}
+
+function draw() {
+  var steps = getSteps();
+  var step = steps[idx];
+  var html = mode === 'client' ? renderClientDiagram(step) : renderServerDiagram(step);
+  document.getElementById('diagram').innerHTML = html;
+  document.getElementById('stat').textContent = step.stat;
+  document.getElementById('counter').textContent = 'Step ' + (idx + 1) + ' / ' + steps.length;
+  document.getElementById('btn-step').disabled = (idx >= steps.length - 1);
+  if (idx >= steps.length - 1) {
+    document.getElementById('btn-step').textContent = 'Done ✓';
+  } else {
+    document.getElementById('btn-step').textContent = 'Step →';
+  }
+  document.getElementById('btn-back').disabled = (idx === 0);
+}
+
+function setMode(m) {
+  mode = m;
+  idx = 0;
+  document.getElementById('mode-client').className = 'mode-btn' + (m === 'client' ? ' active' : '');
+  document.getElementById('mode-server').className = 'mode-btn' + (m === 'server' ? ' active' : '');
+  draw();
+}
+
+document.getElementById('btn-step').onclick = function() {
+  if (idx < getSteps().length - 1) { idx++; draw(); }
+};
+document.getElementById('btn-back').onclick = function() {
+  if (idx > 0) { idx--; draw(); }
+};
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+draw();
+</script>
+</body>
+</html>

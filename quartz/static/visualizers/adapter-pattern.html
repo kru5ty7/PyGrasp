@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Adapter Pattern — Visualizer</title>
+<title>Adapter Pattern - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -123,7 +123,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Adapter Pattern — Step-Through</h4>
+  <h4>Adapter Pattern - Step-Through</h4>
 
   <div class="pipeline">
     <div class="box" id="client-box">
@@ -164,22 +164,22 @@ var steps = [
   {
     client:'', target:'', adapter:'', adaptee:'',
     a1:'', a2:'', a3:'', translate: false,
-    msg: 'Client wants to call play_audio(file). Adaptee only knows play_mp3(). They are incompatible — the Adapter bridges them.'
+    msg: 'Client wants to call play_audio(file). Adaptee only knows play_mp3(). They are incompatible - the Adapter bridges them.'
   },
   {
     client:'amber', target:'amber', adapter:'', adaptee:'',
     a1:'amber', a2:'', a3:'', translate: false,
-    msg: 'Client calls adapter.play_audio("song.mp3") — call arrives at the Target interface (amber). Adapter receives it.'
+    msg: 'Client calls adapter.play_audio("song.mp3") - call arrives at the Target interface (amber). Adapter receives it.'
   },
   {
     client:'amber', target:'amber', adapter:'amber', adaptee:'',
     a1:'amber', a2:'amber', a3:'', translate: false,
-    msg: 'Adapter translates: internally calls adaptee.play_mp3("song.mp3") — forwarding to the Adaptee (amber).'
+    msg: 'Adapter translates: internally calls adaptee.play_mp3("song.mp3") - forwarding to the Adaptee (amber).'
   },
   {
     client:'green', target:'green', adapter:'green', adaptee:'green',
     a1:'green', a2:'green', a3:'green', translate: true,
-    msg: 'Adaptee plays the file. Result flows back through Adapter to Client. Incompatible interface made compatible. play_audio() → play_mp3() — Adapter bridges the gap.'
+    msg: 'Adaptee plays the file. Result flows back through Adapter to Client. Incompatible interface made compatible. play_audio() → play_mp3() - Adapter bridges the gap.'
   }
 ];
 var idx = 0;

@@ -77,6 +77,12 @@ fast_read = SimpleStatement(
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/cap-theorem.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="CAP Theorem Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 The CAP theorem describes what happens during network partitions, but in normal operation, relational databases provide stronger guarantees through ACID properties. Understanding the distinction between ACID consistency and CAP consistency is essential.

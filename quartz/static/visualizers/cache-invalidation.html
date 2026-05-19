@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cache Invalidation - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #strat-row {
+    display: flex; gap: .4rem; margin-bottom: .9rem; flex-wrap: wrap; align-items: center;
+  }
+  #strat-row span { font-size: .75rem; color: #646464; }
+  .st-btn {
+    padding: .28rem .65rem; border: 1px solid #393639; border-radius: 4px; cursor: pointer;
+    font-size: .78rem; background: #2a2a2e; color: #d4d4d4; transition: opacity .15s, border-color .15s;
+  }
+  .st-btn.active { border-color: #007bff; background: #001830; color: #4da3ff; }
+  .st-btn:hover:not(.active) { opacity: .75; }
+
+  #arena {
+    display: flex; gap: .5rem; margin-bottom: .75rem; align-items: flex-start;
+  }
+  .panel {
+    flex: 1; background: #2a2a2e; border: 1px solid #393639; border-radius: 5px;
+    padding: .5rem; font-size: .74rem;
+    transition: border-color .3s, background .3s;
+  }
+  .panel-title {
+    font-weight: 700; font-size: .76rem; text-align: center;
+    margin-bottom: .45rem; padding-bottom: .3rem; border-bottom: 1px solid #393639;
+  }
+  .item {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: .22rem .3rem; border-radius: 3px; margin-bottom: .2rem;
+    background: #393639; font-size: .72rem; transition: background .3s, opacity .3s;
+  }
+  .item .key { font-weight: 600; }
+  .item .ver { color: #888; font-size: .67rem; }
+  .item .badge {
+    font-size: .6rem; font-weight: 700; padding: .08rem .28rem;
+    border-radius: 3px; letter-spacing: .04em; flex-shrink: 0;
+  }
+  .item.fresh  { background: #0d2416; }
+  .item.stale  { background: #2a1500; opacity: .75; }
+  .item.expired { background: #1e0e10; opacity: .6; }
+  .item.absent { background: #1a1a1c; opacity: .45; font-style: italic; }
+  .item.miss  { background: #2a1500; }
+  .badge-green { background: #0d2416; color: #28a745; border: 1px solid #28a745; }
+  .badge-amber { background: #2a1a00; color: #f0a500; border: 1px solid #f0a500; }
+  .badge-red   { background: #2a0a0a; color: #ff6b6b; border: 1px solid #dc3545; }
+  .badge-blue  { background: #001830; color: #4da3ff; border: 1px solid #007bff; }
+  .badge-grey  { background: #1a1a1c; color: #646464; border: 1px solid #393639; }
+
+  .arrow-mid {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    width: 26px; flex-shrink: 0; padding-top: 1.2rem;
+    font-size: 1rem; color: #646464;
+    gap: .15rem;
+  }
+  .arrow-mid .albl { font-size: .6rem; color: #888; white-space: nowrap; writing-mode: vertical-rl; }
+  .arrow-mid.a-fwd  { color: #7b97aa; }
+  .arrow-mid.a-back { color: #d4a080; }
+  .arrow-mid.a-event { color: #7b5ea7; }
+
+  #ttl-bar-wrap {
+    margin-bottom: .5rem; display: none;
+  }
+  #ttl-bar-label { font-size: .7rem; color: #888; margin-bottom: .2rem; }
+  #ttl-track {
+    height: 8px; background: #393639; border-radius: 4px; overflow: hidden;
+  }
+  #ttl-fill {
+    height: 100%; background: #28a745; border-radius: 4px;
+    transition: width .4s, background .4s;
+  }
+  #ttl-val { font-size: .67rem; color: #888; margin-top: .15rem; }
+
+  #stat {
+    padding: .5rem .75rem; background: #393639;
+    border-left: 3px solid #007bff;
+    border-radius: 0 4px 4px 0; font-size: .82rem;
+    line-height: 1.5; min-height: 2.4rem; margin-bottom: .6rem;
+  }
+  #note {
+    padding: .35rem .65rem; background: #2a2a2e; border: 1px solid #393639;
+    border-radius: 4px; font-size: .74rem; color: #888;
+    margin-bottom: .75rem; min-height: 1.6rem;
+  }
+  #note strong { color: #007bff; }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem; border: none; border-radius: 4px; cursor: pointer;
+    font-size: .82rem; background: #393639; color: #d4d4d4; transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Cache Invalidation Strategies</h4>
+  <div id="strat-row">
+    <span>Strategy:</span>
+    <button class="st-btn active" id="st-ttl"   onclick="selectStrat('ttl')">TTL Expiry</button>
+    <button class="st-btn"        id="st-event" onclick="selectStrat('event')">Event-Based</button>
+    <button class="st-btn"        id="st-purge" onclick="selectStrat('purge')">Manual Purge</button>
+  </div>
+  <div id="ttl-bar-wrap">
+    <div id="ttl-bar-label">TTL Remaining</div>
+    <div id="ttl-track"><div id="ttl-fill" style="width:100%"></div></div>
+    <div id="ttl-val">300s / 300s</div>
+  </div>
+  <div id="arena">
+    <div class="panel" id="panel-cache">
+      <div class="panel-title">Cache (Redis)</div>
+      <div id="cache-items"></div>
+    </div>
+    <div class="arrow-mid" id="arr-mid"><span id="arr-sym">⇄</span><span class="albl" id="arr-lbl"></span></div>
+    <div class="panel" id="panel-db">
+      <div class="panel-title">Database</div>
+      <div id="db-items"></div>
+    </div>
+  </div>
+  <div id="stat">Press Step to begin.</div>
+  <div id="note"></div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var strat = 'ttl';
+var idx = 0;
+var steps = [];
+
+// item state: { key, ver, state:'fresh'|'stale'|'expired'|'absent'|'miss', badge }
+// state for panel: array of items
+// ttl: 0-100 (%)
+
+var STRATEGIES = {
+  ttl: [
+    { msg: 'Cache holds 3 items, each with a TTL. Items are currently fresh.',
+      cache: [
+        { key:'user:42', ver:'v3', state:'fresh', badge:{ text:'TTL 300s', cls:'badge-green' } },
+        { key:'product:7', ver:'v1', state:'fresh', badge:{ text:'TTL 300s', cls:'badge-green' } },
+        { key:'session:x', ver:'v2', state:'fresh', badge:{ text:'TTL 300s', cls:'badge-green' } }
+      ],
+      db: [
+        { key:'user:42', ver:'v3', state:'fresh', badge:null },
+        { key:'product:7', ver:'v1', state:'fresh', badge:null },
+        { key:'session:x', ver:'v2', state:'fresh', badge:null }
+      ],
+      ttl: 100, ttlLabel:'300s / 300s',
+      arr:'', arrLbl:'', note:'' },
+    { msg: 'Time passes — TTL is counting down. Items approaching expiry.',
+      cache: [
+        { key:'user:42', ver:'v3', state:'fresh', badge:{ text:'TTL 60s', cls:'badge-amber' } },
+        { key:'product:7', ver:'v1', state:'fresh', badge:{ text:'TTL 60s', cls:'badge-amber' } },
+        { key:'session:x', ver:'v2', state:'fresh', badge:{ text:'TTL 60s', cls:'badge-amber' } }
+      ],
+      db: [
+        { key:'user:42', ver:'v3', state:'fresh', badge:null },
+        { key:'product:7', ver:'v1', state:'fresh', badge:null },
+        { key:'session:x', ver:'v2', state:'fresh', badge:null }
+      ],
+      ttl: 20, ttlLabel:'60s / 300s',
+      arr:'', arrLbl:'', note:'' },
+    { msg: 'TTL reaches 0 — all items expire. Cache evicts them automatically.',
+      cache: [
+        { key:'user:42', ver:'v3', state:'expired', badge:{ text:'EXPIRED', cls:'badge-red' } },
+        { key:'product:7', ver:'v1', state:'expired', badge:{ text:'EXPIRED', cls:'badge-red' } },
+        { key:'session:x', ver:'v2', state:'expired', badge:{ text:'EXPIRED', cls:'badge-red' } }
+      ],
+      db: [
+        { key:'user:42', ver:'v3', state:'fresh', badge:null },
+        { key:'product:7', ver:'v1', state:'fresh', badge:null },
+        { key:'session:x', ver:'v2', state:'fresh', badge:null }
+      ],
+      ttl: 0, ttlLabel:'0s / 300s',
+      arr:'', arrLbl:'', note:'<strong>Note:</strong> Redis automatically removes expired keys on access or via background sweep.' },
+    { msg: 'Next READ for user:42 → cache MISS. Key has expired.',
+      cache: [
+        { key:'user:42', ver:'—', state:'miss', badge:{ text:'MISS', cls:'badge-red' } },
+        { key:'product:7', ver:'v1', state:'absent', badge:{ text:'EXPIRED', cls:'badge-grey' } },
+        { key:'session:x', ver:'v2', state:'absent', badge:{ text:'EXPIRED', cls:'badge-grey' } }
+      ],
+      db: [
+        { key:'user:42', ver:'v3', state:'fresh', badge:null },
+        { key:'product:7', ver:'v1', state:'fresh', badge:null },
+        { key:'session:x', ver:'v2', state:'fresh', badge:null }
+      ],
+      ttl: 0, ttlLabel:'0s / 300s',
+      arr:'fwd', arrLbl:'READ miss', note:'' },
+    { msg: 'DB returns user:42. Cache re-populated with new TTL.',
+      cache: [
+        { key:'user:42', ver:'v3', state:'fresh', badge:{ text:'TTL 300s', cls:'badge-green' } },
+        { key:'product:7', ver:'v1', state:'absent', badge:{ text:'EXPIRED', cls:'badge-grey' } },
+        { key:'session:x', ver:'v2', state:'absent', badge:{ text:'EXPIRED', cls:'badge-grey' } }
+      ],
+      db: [
+        { key:'user:42', ver:'v3', state:'fresh', badge:null },
+        { key:'product:7', ver:'v1', state:'fresh', badge:null },
+        { key:'session:x', ver:'v2', state:'fresh', badge:null }
+      ],
+      ttl: 100, ttlLabel:'300s / 300s',
+      arr:'back', arrLbl:'re-cache',
+      note:'<strong>Trade-off:</strong> Simple — no write-path coupling. But data can be stale up to TTL seconds. Risk: stampede on mass expiry.' }
+  ],
+  event: [
+    { msg: 'Cache holds user:42 v3. DB also has v3. Everything consistent.',
+      cache: [
+        { key:'user:42', ver:'v3', state:'fresh', badge:{ text:'CACHED', cls:'badge-green' } },
+        { key:'product:7', ver:'v1', state:'fresh', badge:{ text:'CACHED', cls:'badge-green' } }
+      ],
+      db: [
+        { key:'user:42', ver:'v3', state:'fresh', badge:null },
+        { key:'product:7', ver:'v1', state:'fresh', badge:null }
+      ],
+      arr:'', arrLbl:'', note:'' },
+    { msg: 'A WRITE event fires: user:42 is updated to v4 in the database.',
+      cache: [
+        { key:'user:42', ver:'v3', state:'stale', badge:{ text:'STALE', cls:'badge-amber' } },
+        { key:'product:7', ver:'v1', state:'fresh', badge:{ text:'CACHED', cls:'badge-green' } }
+      ],
+      db: [
+        { key:'user:42', ver:'v4 ✦', state:'fresh', badge:{ text:'UPDATED', cls:'badge-blue' } },
+        { key:'product:7', ver:'v1', state:'fresh', badge:null }
+      ],
+      arr:'event', arrLbl:'WRITE event',
+      note:'<strong>Event source:</strong> Application write path, or CDC (Change Data Capture) reading the DB replication log.' },
+    { msg: 'Write event triggers cache DELETE for key user:42.',
+      cache: [
+        { key:'user:42', ver:'—', state:'absent', badge:{ text:'DELETED', cls:'badge-red' } },
+        { key:'product:7', ver:'v1', state:'fresh', badge:{ text:'CACHED', cls:'badge-green' } }
+      ],
+      db: [
+        { key:'user:42', ver:'v4', state:'fresh', badge:{ text:'UPDATED', cls:'badge-blue' } },
+        { key:'product:7', ver:'v1', state:'fresh', badge:null }
+      ],
+      arr:'', arrLbl:'',
+      note:'<strong>Why DELETE not UPDATE?</strong> Deleting is always safe. Updating risks race conditions under concurrent writes.' },
+    { msg: 'Next READ for user:42 → cache MISS. Fetches from DB.',
+      cache: [
+        { key:'user:42', ver:'—', state:'miss', badge:{ text:'MISS', cls:'badge-red' } },
+        { key:'product:7', ver:'v1', state:'fresh', badge:{ text:'CACHED', cls:'badge-green' } }
+      ],
+      db: [
+        { key:'user:42', ver:'v4', state:'fresh', badge:null },
+        { key:'product:7', ver:'v1', state:'fresh', badge:null }
+      ],
+      arr:'fwd', arrLbl:'READ miss', note:'' },
+    { msg: 'DB returns v4. Cache re-populated. Cache now consistent with DB.',
+      cache: [
+        { key:'user:42', ver:'v4 ✦', state:'fresh', badge:{ text:'FRESH', cls:'badge-green' } },
+        { key:'product:7', ver:'v1', state:'fresh', badge:{ text:'CACHED', cls:'badge-green' } }
+      ],
+      db: [
+        { key:'user:42', ver:'v4', state:'fresh', badge:null },
+        { key:'product:7', ver:'v1', state:'fresh', badge:null }
+      ],
+      arr:'back', arrLbl:'re-cache',
+      note:'<strong>Trade-off:</strong> Precise invalidation — cache only misses after an actual change. Write path must know which keys to invalidate.' }
+  ],
+  purge: [
+    { msg: 'Cache holds several keys. Admin wants to purge specific stale entries.',
+      cache: [
+        { key:'user:42', ver:'v3', state:'stale', badge:{ text:'STALE', cls:'badge-amber' } },
+        { key:'product:7', ver:'v1', state:'fresh', badge:{ text:'OK', cls:'badge-green' } },
+        { key:'config:flags', ver:'old', state:'stale', badge:{ text:'STALE', cls:'badge-amber' } }
+      ],
+      db: [
+        { key:'user:42', ver:'v5', state:'fresh', badge:{ text:'NEWER', cls:'badge-blue' } },
+        { key:'product:7', ver:'v1', state:'fresh', badge:null },
+        { key:'config:flags', ver:'new', state:'fresh', badge:{ text:'NEWER', cls:'badge-blue' } }
+      ],
+      arr:'', arrLbl:'', note:'' },
+    { msg: 'Admin selects user:42 and config:flags for manual purge.',
+      cache: [
+        { key:'user:42', ver:'v3', state:'stale', badge:{ text:'SELECTED', cls:'badge-red' } },
+        { key:'product:7', ver:'v1', state:'fresh', badge:{ text:'OK', cls:'badge-green' } },
+        { key:'config:flags', ver:'old', state:'stale', badge:{ text:'SELECTED', cls:'badge-red' } }
+      ],
+      db: [
+        { key:'user:42', ver:'v5', state:'fresh', badge:{ text:'NEWER', cls:'badge-blue' } },
+        { key:'product:7', ver:'v1', state:'fresh', badge:null },
+        { key:'config:flags', ver:'new', state:'fresh', badge:{ text:'NEWER', cls:'badge-blue' } }
+      ],
+      arr:'', arrLbl:'',
+      note:'<strong>Trigger:</strong> Admin dashboard, deployment script, or a dedicated cache management API (e.g. CDN purge API).' },
+    { msg: 'DEL user:42 and DEL config:flags executed. Keys removed from cache.',
+      cache: [
+        { key:'user:42', ver:'—', state:'absent', badge:{ text:'PURGED', cls:'badge-red' } },
+        { key:'product:7', ver:'v1', state:'fresh', badge:{ text:'OK', cls:'badge-green' } },
+        { key:'config:flags', ver:'—', state:'absent', badge:{ text:'PURGED', cls:'badge-red' } }
+      ],
+      db: [
+        { key:'user:42', ver:'v5', state:'fresh', badge:null },
+        { key:'product:7', ver:'v1', state:'fresh', badge:null },
+        { key:'config:flags', ver:'new', state:'fresh', badge:null }
+      ],
+      arr:'', arrLbl:'', note:'' },
+    { msg: 'Reads for purged keys → MISS → DB serves fresh values → cache re-filled.',
+      cache: [
+        { key:'user:42', ver:'v5 ✦', state:'fresh', badge:{ text:'FRESH', cls:'badge-green' } },
+        { key:'product:7', ver:'v1', state:'fresh', badge:{ text:'OK', cls:'badge-green' } },
+        { key:'config:flags', ver:'new ✦', state:'fresh', badge:{ text:'FRESH', cls:'badge-green' } }
+      ],
+      db: [
+        { key:'user:42', ver:'v5', state:'fresh', badge:null },
+        { key:'product:7', ver:'v1', state:'fresh', badge:null },
+        { key:'config:flags', ver:'new', state:'fresh', badge:null }
+      ],
+      arr:'', arrLbl:'',
+      note:'<strong>Best for:</strong> Post-deploy cache warming, ad-hoc stale data fixes, CDN asset invalidation after a release.' }
+  ]
+};
+
+function buildItem(item) {
+  var cls = 'item ' + (item.state || '');
+  var badgeHtml = '';
+  if (item.badge) {
+    badgeHtml = '<span class="badge ' + item.badge.cls + '">' + item.badge.text + '</span>';
+  }
+  return '<div class="' + cls + '">' +
+    '<span class="key">' + item.key + '</span>' +
+    '<span class="ver">' + item.ver + '</span>' +
+    badgeHtml + '</div>';
+}
+
+function draw() {
+  var s = steps[idx];
+
+  var cacheHtml = s.cache.map(buildItem).join('');
+  var dbHtml    = s.db.map(buildItem).join('');
+  document.getElementById('cache-items').innerHTML = cacheHtml;
+  document.getElementById('db-items').innerHTML    = dbHtml;
+
+  // TTL bar
+  var ttlWrap = document.getElementById('ttl-bar-wrap');
+  if (strat === 'ttl') {
+    ttlWrap.style.display = 'block';
+    var fill = document.getElementById('ttl-fill');
+    fill.style.width = (s.ttl || 0) + '%';
+    fill.style.background = s.ttl > 50 ? '#28a745' : s.ttl > 15 ? '#f0a500' : '#dc3545';
+    document.getElementById('ttl-val').textContent = s.ttlLabel || '';
+  } else {
+    ttlWrap.style.display = 'none';
+  }
+
+  // Arrow
+  var arrMid = document.getElementById('arr-mid');
+  var arrMap = { fwd: 'a-fwd', back: 'a-back', event: 'a-event' };
+  arrMid.className = 'arrow-mid ' + (arrMap[s.arr] || '');
+  document.getElementById('arr-sym').textContent =
+    s.arr === 'back' ? '←' : s.arr === 'event' ? '⚡' : s.arr === 'fwd' ? '→' : '⇄';
+  document.getElementById('arr-lbl').textContent = s.arrLbl || '';
+
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('note').innerHTML   = s.note || '';
+
+  var done = idx === steps.length - 1;
+  document.getElementById('btn-step').disabled = done;
+  document.getElementById('btn-step').textContent = done ? 'Done ✓' : 'Step →';
+  document.getElementById('btn-back').disabled = idx === 0;
+  document.getElementById('counter').textContent = 'Step ' + (idx + 1) + ' / ' + steps.length;
+}
+
+function selectStrat(s) {
+  strat = s;
+  ['ttl','event','purge'].forEach(function(id) {
+    document.getElementById('st-' + id).className = 'st-btn' + (id === s ? ' active' : '');
+  });
+  idx = 0;
+  steps = STRATEGIES[s];
+  draw();
+}
+
+document.getElementById('btn-step').onclick = function() {
+  if (idx < steps.length - 1) { idx++; draw(); }
+};
+document.getElementById('btn-back').onclick = function() {
+  if (idx > 0) { idx--; draw(); }
+};
+document.getElementById('btn-reset').onclick = function() {
+  idx = 0; draw();
+};
+
+steps = STRATEGIES[strat];
+draw();
+</script>
+</body>
+</html>

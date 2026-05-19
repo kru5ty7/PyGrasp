@@ -102,6 +102,12 @@ To minimize cross-shard queries, the shard key should match the most common quer
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/database-sharding.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Database Sharding Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Before sharding, the standard progression is: single database -> add read replicas -> add a caching layer -> optimize indexes -> then consider sharding. Read replicas handle most read scaling; sharding is for write scaling and storage.

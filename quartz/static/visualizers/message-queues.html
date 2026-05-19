@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Message Queues - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 600px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  /* Main diagram */
+  .diagram {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: .75rem;
+    min-height: 100px;
+  }
+  .box {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .5rem .7rem;
+    text-align: center;
+    font-size: .78rem;
+    min-width: 80px;
+  }
+  .box .label { color: #646464; font-size: .65rem; text-transform: uppercase; letter-spacing: .06em; margin-bottom: .3rem; }
+  .box .name { font-weight: 600; color: #d4d4d4; font-size: .82rem; }
+  .box .sub { font-size: .68rem; color: #888; margin-top: .2rem; min-height: .9rem; }
+  .box.active-prod { border-color: #f0a500; }
+  .box.active-cons { border-color: #28a745; }
+  .box.blocked { border-color: #dc3545; }
+  .arrow { color: #646464; font-size: 1.1rem; flex-shrink: 0; }
+  /* Queue slots */
+  .queue-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .queue-label { font-size: .65rem; text-transform: uppercase; letter-spacing: .06em; color: #646464; }
+  .queue-slots {
+    display: flex;
+    gap: 4px;
+  }
+  .slot {
+    width: 44px;
+    height: 36px;
+    border-radius: 3px;
+    border: 1px solid #393639;
+    background: #2a2a2e;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .62rem;
+    font-weight: 600;
+    color: #d4d4d4;
+    transition: background .3s, border-color .3s;
+    position: relative;
+  }
+  .slot.filled  { background: #28a745; border-color: #28a745; }
+  .slot.consumed { background: #f0a500; border-color: #f0a500; color: #000; }
+  .slot.requeued { background: #f0a500; border-color: #f0a500; color: #000; }
+  .slot.blocked-slot { background: #dc3545; border-color: #dc3545; }
+  /* Counters panel */
+  .counters {
+    display: flex;
+    gap: 6px;
+    margin-bottom: .75rem;
+  }
+  .counter-box {
+    flex: 1;
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .3rem .5rem;
+    text-align: center;
+  }
+  .counter-box .clabel { font-size: .6rem; color: #646464; text-transform: uppercase; letter-spacing: .05em; }
+  .counter-box .cval { font-size: 1.1rem; font-weight: 700; color: #d4d4d4; }
+  .counter-box.cprod .cval { color: #7b97aa; }
+  .counter-box.ccons .cval { color: #28a745; }
+  .counter-box.cqueue .cval { color: #f0a500; }
+  /* Status */
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .82rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Message Queues - Step-Through</h4>
+
+  <div class="diagram">
+    <div class="box" id="prod-box">
+      <div class="label">Producer</div>
+      <div class="name">Service A</div>
+      <div class="sub" id="prod-sub"></div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="queue-wrap">
+      <div class="queue-label">Queue (6 slots)</div>
+      <div class="queue-slots" id="slots"></div>
+    </div>
+    <div class="arrow">→</div>
+    <div class="box" id="cons-box">
+      <div class="label">Consumer</div>
+      <div class="name">Service B</div>
+      <div class="sub" id="cons-sub"></div>
+    </div>
+  </div>
+
+  <div class="counters">
+    <div class="counter-box cprod">
+      <div class="clabel">Produced</div>
+      <div class="cval" id="cnt-prod">0</div>
+    </div>
+    <div class="counter-box cqueue">
+      <div class="clabel">In Queue</div>
+      <div class="cval" id="cnt-queue">0</div>
+    </div>
+    <div class="counter-box ccons">
+      <div class="clabel">Consumed</div>
+      <div class="cval" id="cnt-cons">0</div>
+    </div>
+  </div>
+
+  <div id="stat">Press Step to begin.</div>
+
+  <div id="ctrl">
+    <button id="btn-back" disabled>◀ Back</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+// slots[i]: null = empty, "M1".."M7" = filled, "consumed" = amber, "blocked" = red
+var STEPS = [
+  {
+    slots: [null, null, null, null, null, null],
+    prod: '', cons: '', prodState: '', consState: '',
+    produced: 0, consumed: 0,
+    msg: 'Initial state. Queue is empty. Producer and consumer are ready.'
+  },
+  {
+    slots: ['M1', null, null, null, null, null],
+    prod: 'Sent M1', cons: '', prodState: 'active-prod', consState: '',
+    produced: 1, consumed: 0,
+    msg: 'Producer sends M1 → slot 1 fills (green). Consumer has not yet read any message.'
+  },
+  {
+    slots: ['M1', 'M2', null, null, null, null],
+    prod: 'Sent M2', cons: '', prodState: 'active-prod', consState: '',
+    produced: 2, consumed: 0,
+    msg: 'Producer sends M2 → slot 2 fills. Two messages now buffered in the queue.'
+  },
+  {
+    slots: ['consumed', 'M2', null, null, null, null],
+    prod: '', cons: 'Read M1', prodState: '', consState: 'active-cons',
+    produced: 2, consumed: 0,
+    msg: 'Consumer reads M1 → slot 1 flashes amber (in-flight: awaiting ACK). Processing...'
+  },
+  {
+    slots: [null, 'M2', null, null, null, null],
+    prod: '', cons: 'ACK M1 ✓', prodState: '', consState: 'active-cons',
+    produced: 2, consumed: 1,
+    msg: 'Consumer sends ACK for M1 → permanently removed from queue. Slot 1 now empty.'
+  },
+  {
+    slots: [null, 'M2', 'M3', 'M4', 'M5', null],
+    prod: 'Sent M3–M5', cons: '', prodState: 'active-prod', consState: '',
+    produced: 5, consumed: 1,
+    msg: 'Producer sends M3, M4, M5 → slots 3–5 fill. Queue now holds M2, M3, M4, M5.'
+  },
+  {
+    slots: [null, null, null, 'M4', 'M5', null],
+    prod: '', cons: 'ACK M2, M3', prodState: '', consState: 'active-cons',
+    produced: 5, consumed: 3,
+    msg: 'Consumer processes M2 and M3, sends ACKs → both removed. Queue now holds M4, M5.'
+  },
+  {
+    slots: [null, null, null, 'M4', 'M5', 'M6'],
+    prod: 'Sent M6', cons: '', prodState: 'active-prod', consState: '',
+    produced: 6, consumed: 3,
+    msg: 'Producer sends M6 → slot 6 fills. Queue is now FULL (6/6 slots occupied).'
+  },
+  {
+    slots: [null, null, null, 'M4', 'M5', 'M6'],
+    prod: 'BLOCKED: M7', cons: '', prodState: 'blocked', consState: '',
+    produced: 6, consumed: 3,
+    msg: 'Producer tries to send M7 but queue is full → BLOCKED (red). Producer must wait.'
+  },
+  {
+    slots: [null, null, null, null, 'M5', 'M6'],
+    prod: 'M7 unblocked', cons: 'ACK M4', prodState: 'active-prod', consState: 'active-cons',
+    produced: 7, consumed: 4,
+    msg: 'Consumer reads M4, sends ACK → frees slot 4. Producer unblocks and sends M7.'
+  },
+  {
+    slots: ['requeued', null, null, null, 'M5', 'M6'],
+    prod: '', cons: 'CRASHED!', prodState: '', consState: 'blocked',
+    produced: 7, consumed: 4,
+    msg: 'FAILURE scenario: consumer crashes before sending ACK for a message → message re-queued (amber "requeued"). At-least-once delivery: messages survive consumer failures.'
+  }
+];
+
+var idx = 0;
+
+function renderSlots(slots) {
+  var html = '';
+  for (var i = 0; i < 6; i++) {
+    var val = slots[i];
+    var cls = 'slot';
+    var text = '';
+    if (val === null) { cls = 'slot'; text = ''; }
+    else if (val === 'consumed') { cls = 'slot consumed'; text = 'ACK'; }
+    else if (val === 'requeued') { cls = 'slot requeued'; text = '↺'; }
+    else if (val === 'blocked') { cls = 'slot blocked-slot'; text = '!'; }
+    else { cls = 'slot filled'; text = val; }
+    html += '<div class="' + cls + '">' + text + '</div>';
+  }
+  document.getElementById('slots').innerHTML = html;
+}
+
+function draw() {
+  var s = STEPS[idx];
+  renderSlots(s.slots);
+
+  var prodBox = document.getElementById('prod-box');
+  var consBox = document.getElementById('cons-box');
+  prodBox.className = 'box' + (s.prodState ? ' ' + s.prodState : '');
+  consBox.className = 'box' + (s.consState ? ' ' + s.consState : '');
+
+  document.getElementById('prod-sub').textContent = s.prod;
+  document.getElementById('cons-sub').textContent = s.cons;
+  document.getElementById('cnt-prod').textContent = s.produced;
+  document.getElementById('cnt-queue').textContent = s.slots.filter(function(x) { return x && x !== 'consumed'; }).length;
+  document.getElementById('cnt-cons').textContent = s.consumed;
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (STEPS.length - 1);
+  document.getElementById('btn-step').disabled = idx === STEPS.length - 1;
+  document.getElementById('btn-back').disabled = idx === 0;
+}
+
+document.getElementById('btn-step').onclick = function() { if (idx < STEPS.length - 1) { idx++; draw(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+draw();
+</script>
+</body>
+</html>

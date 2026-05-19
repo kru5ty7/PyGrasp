@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Insertion Sort — Visualizer</title>
+<title>Insertion Sort - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -127,7 +127,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Insertion Sort — Step-Through</h4>
+  <h4>Insertion Sort - Step-Through</h4>
   <div id="input-row">
     <label for="arr-input">Array:</label>
     <input id="arr-input" type="text" value="5, 3, 8, 4, 2, 7, 1" placeholder="e.g. 5, 3, 8, 4, 2" spellcheck="false">
@@ -156,7 +156,7 @@ var steps, idx, MAX;
 
 function buildSteps(arr) {
   var s = [], a = arr.slice(), n = a.length;
-  s.push({ arr: a.slice(), keyIdx: -1, shiftSet: [], placedIdx: -1, msg: 'Initial array — press Step to begin inserting.' });
+  s.push({ arr: a.slice(), keyIdx: -1, shiftSet: [], placedIdx: -1, msg: 'Initial array - press Step to begin inserting.' });
   for (var i = 1; i < n; i++) {
     var key = a[i];
     s.push({ arr: a.slice(), keyIdx: i, shiftSet: [], placedIdx: -1, msg: 'Inserting key=' + key + ' from index ' + i + ' into sorted prefix arr[0..' + (i - 1) + '].' });

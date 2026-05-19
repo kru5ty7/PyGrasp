@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Immutable Objects — Visualizer</title>
+<title>Immutable Objects - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -111,7 +111,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Immutable Objects — Thread Safety Comparison</h4>
+  <h4>Immutable Objects - Thread Safety Comparison</h4>
   <div class="cols">
     <div class="col">
       <div class="col-title bad">Mutable ❌ Unsafe</div>
@@ -134,7 +134,7 @@
         <div class="th-ref">ref: <span>config</span> (same object)</div>
       </div>
 
-      <div class="note bad">Thread B reads config.host = "evil.com" — wrong value! ❌ Needs locks to be safe.</div>
+      <div class="note bad">Thread B reads config.host = "evil.com" - wrong value! ❌ Needs locks to be safe.</div>
     </div>
 
     <div class="col">
@@ -150,7 +150,7 @@
         <div class="obj-name">Config (frozen)</div>
         <div class="field"><span class="fk">host</span> = <span class="fv">"db1"</span></div>
         <div class="field"><span class="fk">port</span> = <span class="fv">5432</span></div>
-        <div class="badge badge-green">🔒 FrozenDataclass — read-only</div>
+        <div class="badge badge-green">🔒 FrozenDataclass - read-only</div>
       </div>
       <div class="arrow">↗</div>
       <div class="thread-box">

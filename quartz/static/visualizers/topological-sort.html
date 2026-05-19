@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Topological Sort — Visualizer</title>
+<title>Topological Sort - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -73,9 +73,9 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Topological Sort — Kahn's Algorithm (BFS)</h4>
+  <h4>Topological Sort - Kahn's Algorithm (BFS)</h4>
   <!-- DAG: A→B, A→C, B→D, C→D, D→E, B→E -->
-  <!-- Nodes: A(70,120) B(200,60) C(200,180) D(330,120) E(420,120) — but fit in 440x240 -->
+  <!-- Nodes: A(70,120) B(200,60) C(200,180) D(330,120) E(420,120) - but fit in 440x240 -->
   <div id="main">
     <div id="graph-col">
       <svg id="graph-svg" viewBox="0 0 440 240" height="215">
@@ -122,11 +122,11 @@
       </div>
       <div class="side-panel">
         <strong>Queue</strong>
-        <span id="p-queue">—</span>
+        <span id="p-queue">-</span>
       </div>
       <div id="result-panel">
         <strong>Topo Order</strong>
-        <span id="p-result">—</span>
+        <span id="p-result">-</span>
       </div>
     </div>
   </div>
@@ -218,7 +218,7 @@ function draw() {
     row.className = 'deg-row' + (s.indeg[n]===0 && s.st[n]!=='p' ? ' zero':'');
   });
   document.getElementById('p-queue').textContent = s.queue.length ? '['+s.queue.join(', ')+']' : '(empty)';
-  document.getElementById('p-result').textContent = s.result.length ? s.result.join(' → ') : '—';
+  document.getElementById('p-result').textContent = s.result.length ? s.result.join(' → ') : '-';
   document.getElementById('stat').textContent = s.msg;
   document.getElementById('counter').textContent = 'Step '+idx+' / '+(steps.length-1);
   document.getElementById('btn-step').disabled = s.done;

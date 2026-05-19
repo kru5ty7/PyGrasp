@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Redis Data Structures - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #type-row {
+    display: flex; gap: .35rem; margin-bottom: .9rem; flex-wrap: wrap; align-items: center;
+  }
+  #type-row span { font-size: .75rem; color: #646464; }
+  .t-btn {
+    padding: .26rem .58rem; border: 1px solid #393639; border-radius: 4px; cursor: pointer;
+    font-size: .75rem; background: #2a2a2e; color: #d4d4d4; transition: opacity .15s, border-color .15s;
+  }
+  .t-btn.active { border-color: #f0a500; background: #2a1800; color: #f0a500; }
+  .t-btn:hover:not(.active) { opacity: .75; }
+
+  #viz-area {
+    background: #2a2a2e; border: 1px solid #393639; border-radius: 5px;
+    padding: .65rem .7rem; margin-bottom: .75rem; min-height: 80px;
+  }
+  .viz-title {
+    font-size: .7rem; color: #646464; margin-bottom: .5rem;
+    text-transform: uppercase; letter-spacing: .06em;
+  }
+
+  /* String viz */
+  .str-kv {
+    display: flex; align-items: center; gap: .4rem; flex-wrap: wrap;
+  }
+  .str-key {
+    background: #393639; border-radius: 3px; padding: .22rem .5rem;
+    font-size: .75rem; font-weight: 700; color: #f0a500;
+  }
+  .str-val {
+    background: #393639; border-radius: 3px; padding: .22rem .5rem;
+    font-size: .75rem; color: #d4d4d4; min-width: 60px; text-align: center;
+    transition: background .3s, color .3s;
+  }
+  .str-val.highlight { background: #2a3a00; color: #a0e060; border: 1px solid #28a745; }
+  .str-equals { color: #646464; }
+
+  /* List viz */
+  .list-wrap { display: flex; align-items: center; gap: .15rem; overflow-x: auto; padding-bottom: .1rem; }
+  .list-node {
+    background: #393639; border-radius: 3px; padding: .22rem .42rem;
+    font-size: .72rem; white-space: nowrap; border: 1px solid #555;
+    transition: background .3s, border-color .3s;
+    display: flex; flex-direction: column; align-items: center; gap: .1rem;
+  }
+  .list-node .ln-val { font-weight: 600; }
+  .list-node .ln-idx { font-size: .6rem; color: #646464; }
+  .list-node.hl { background: #2a3a00; border-color: #28a745; }
+  .list-node.new-node { background: #2a1800; border-color: #f0a500; }
+  .list-arrow { color: #555; font-size: .9rem; flex-shrink: 0; }
+  .list-lbl { font-size: .65rem; color: #888; margin: 0 .15rem; }
+
+  /* Hash viz */
+  .hash-table { width: 100%; border-collapse: collapse; font-size: .72rem; }
+  .hash-table th {
+    text-align: left; padding: .2rem .4rem; color: #646464; font-weight: 600;
+    border-bottom: 1px solid #393639; font-size: .68rem;
+  }
+  .hash-table td { padding: .2rem .4rem; border-bottom: 1px solid #2a2a2e; }
+  .hash-table tr.hl td { background: #2a1800; }
+  .hash-table tr.new-row td { background: #002a00; }
+  .hash-key  { color: #f0a500; font-weight: 600; }
+  .hash-val  { color: #a0c8a0; }
+
+  /* Set viz */
+  .set-wrap { display: flex; flex-wrap: wrap; gap: .35rem; }
+  .set-item {
+    background: #393639; border-radius: 50%; width: 44px; height: 44px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .7rem; font-weight: 600; border: 2px solid #555;
+    transition: background .3s, border-color .3s;
+  }
+  .set-item.hl  { background: #001830; border-color: #007bff; color: #4da3ff; }
+  .set-item.new { background: #2a1800; border-color: #f0a500; color: #f0a500; }
+  .set-item.rem { opacity: .3; text-decoration: line-through; }
+
+  /* Sorted Set viz */
+  .zset-wrap { display: flex; align-items: flex-end; gap: .4rem; min-height: 60px; }
+  .zset-bar-wrap { display: flex; flex-direction: column; align-items: center; gap: .2rem; }
+  .zset-bar {
+    width: 44px; background: #007bff; border-radius: 3px 3px 0 0;
+    transition: height .4s, background .3s; min-height: 4px;
+  }
+  .zset-bar.hl  { background: #f0a500; }
+  .zset-bar.new { background: #28a745; }
+  .zset-member { font-size: .62rem; color: #888; text-align: center; }
+  .zset-score  { font-size: .6rem; color: #646464; text-align: center; }
+
+  /* Command display */
+  #cmd-box {
+    background: #161618; border: 1px solid #393639; border-radius: 4px;
+    padding: .4rem .65rem; font-size: .78rem; font-family: monospace;
+    color: #a0c8ff; margin-bottom: .5rem; min-height: 1.8rem;
+  }
+  .cmd-kw  { color: #f0a500; font-weight: 700; }
+  .cmd-key { color: #d4a0a0; }
+  .cmd-val { color: #a0e060; }
+  .badge-complexity {
+    display: inline-block; font-size: .63rem; font-weight: 700;
+    padding: .08rem .3rem; border-radius: 3px;
+    background: #001830; color: #4da3ff; border: 1px solid #007bff;
+    margin-left: .4rem; font-family: monospace; vertical-align: middle;
+  }
+
+  #stat {
+    padding: .5rem .75rem; background: #393639;
+    border-left: 3px solid #f0a500;
+    border-radius: 0 4px 4px 0; font-size: .82rem;
+    line-height: 1.5; min-height: 2.4rem; margin-bottom: .6rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem; border: none; border-radius: 4px; cursor: pointer;
+    font-size: .82rem; background: #393639; color: #d4d4d4; transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Redis Data Structures</h4>
+  <div id="type-row">
+    <span>Type:</span>
+    <button class="t-btn active" id="t-string" onclick="selectType('string')">String</button>
+    <button class="t-btn" id="t-list"   onclick="selectType('list')">List</button>
+    <button class="t-btn" id="t-hash"   onclick="selectType('hash')">Hash</button>
+    <button class="t-btn" id="t-set"    onclick="selectType('set')">Set</button>
+    <button class="t-btn" id="t-zset"   onclick="selectType('zset')">Sorted Set</button>
+  </div>
+  <div id="viz-area"><div class="viz-title">Visual</div><div id="viz-content"></div></div>
+  <div id="cmd-box"></div>
+  <div id="stat">Press Step to begin.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var type = 'string';
+var idx = 0;
+var steps = [];
+
+// Each step: { msg, cmd, cmdHtml, viz } where viz is type-specific data
+
+var TYPES = {
+  string: [
+    { msg: 'A Redis String holds arbitrary bytes — text, numbers, or binary. Up to 512 MB.',
+      cmdHtml: '',
+      viz: { val: '(empty)', hl: false } },
+    { msg: 'SET counter 0 — store integer value.',
+      cmdHtml: '<span class="cmd-kw">SET</span> <span class="cmd-key">counter</span> <span class="cmd-val">0</span>  <span class="badge-complexity">O(1)</span>',
+      viz: { val: '0', hl: true } },
+    { msg: 'INCR counter — atomic increment. No race condition possible (single thread).',
+      cmdHtml: '<span class="cmd-kw">INCR</span> <span class="cmd-key">counter</span>  <span class="badge-complexity">O(1)</span>',
+      viz: { val: '1', hl: true } },
+    { msg: 'INCRBY counter 5 — increment by N atomically.',
+      cmdHtml: '<span class="cmd-kw">INCRBY</span> <span class="cmd-key">counter</span> <span class="cmd-val">5</span>  <span class="badge-complexity">O(1)</span>',
+      viz: { val: '6', hl: true } },
+    { msg: 'SETEX session:abc 1800 "tok_xyz" — store with TTL (session token). Auto-expires in 1800s.',
+      cmdHtml: '<span class="cmd-kw">SETEX</span> <span class="cmd-key">session:abc</span> <span class="cmd-val">1800 "tok_xyz"</span>  <span class="badge-complexity">O(1)</span>',
+      viz: { val: 'tok_xyz', hl: false, key: 'session:abc', ttl: 'TTL 1800s' } }
+  ],
+  list: [
+    { msg: 'Redis List: ordered sequence, push/pop from either end in O(1).',
+      cmdHtml: '',
+      viz: { items: [], highlights: [], labels: { left:'HEAD', right:'TAIL' } } },
+    { msg: 'RPUSH feed:user1 "post_a" — append to right (tail). Used for queues.',
+      cmdHtml: '<span class="cmd-kw">RPUSH</span> <span class="cmd-key">feed:user1</span> <span class="cmd-val">"post_a"</span>  <span class="badge-complexity">O(1)</span>',
+      viz: { items: ['post_a'], highlights: [0], labels: { left:'HEAD', right:'TAIL' } } },
+    { msg: 'RPUSH feed:user1 "post_b" "post_c" — append multiple elements.',
+      cmdHtml: '<span class="cmd-kw">RPUSH</span> <span class="cmd-key">feed:user1</span> <span class="cmd-val">"post_b" "post_c"</span>  <span class="badge-complexity">O(1)</span>',
+      viz: { items: ['post_a','post_b','post_c'], highlights: [1,2], labels: { left:'HEAD', right:'TAIL' } } },
+    { msg: 'LRANGE feed:user1 0 1 — get elements at index 0 and 1 (first two).',
+      cmdHtml: '<span class="cmd-kw">LRANGE</span> <span class="cmd-key">feed:user1</span> <span class="cmd-val">0 1</span>  <span class="badge-complexity">O(N)</span>',
+      viz: { items: ['post_a','post_b','post_c'], highlights: [0,1], labels: { left:'HEAD', right:'TAIL' } } },
+    { msg: 'LPOP feed:user1 — remove and return from left (head). FIFO queue behaviour.',
+      cmdHtml: '<span class="cmd-kw">LPOP</span> <span class="cmd-key">feed:user1</span>  → <span class="cmd-val">"post_a"</span>  <span class="badge-complexity">O(1)</span>',
+      viz: { items: ['post_b','post_c'], highlights: [], labels: { left:'HEAD', right:'TAIL' }, popped: 'post_a' } }
+  ],
+  hash: [
+    { msg: 'Redis Hash: field-value map on a single key. Ideal for storing objects.',
+      cmdHtml: '',
+      viz: { rows: [], hl: -1 } },
+    { msg: 'HSET user:1001 name "Alice" email "alice@example.com" — set multiple fields at once.',
+      cmdHtml: '<span class="cmd-kw">HSET</span> <span class="cmd-key">user:1001</span> <span class="cmd-val">name "Alice" email "alice@example.com"</span>  <span class="badge-complexity">O(N)</span>',
+      viz: { rows: [['name','Alice'],['email','alice@example.com']], hl: -1, newRows: [0,1] } },
+    { msg: 'HSET user:1001 plan "premium" — add a new field without fetching the whole object.',
+      cmdHtml: '<span class="cmd-kw">HSET</span> <span class="cmd-key">user:1001</span> <span class="cmd-val">plan "premium"</span>  <span class="badge-complexity">O(1)</span>',
+      viz: { rows: [['name','Alice'],['email','alice@example.com'],['plan','premium']], hl: 2, newRows: [2] } },
+    { msg: 'HGET user:1001 email — read a single field. No need to deserialize the whole object.',
+      cmdHtml: '<span class="cmd-kw">HGET</span> <span class="cmd-key">user:1001</span> <span class="cmd-val">email</span>  → "alice@example.com"  <span class="badge-complexity">O(1)</span>',
+      viz: { rows: [['name','Alice'],['email','alice@example.com'],['plan','premium']], hl: 1 } },
+    { msg: 'HSET user:1001 plan "free" — update single field. Only that field changes in memory.',
+      cmdHtml: '<span class="cmd-kw">HSET</span> <span class="cmd-key">user:1001</span> <span class="cmd-val">plan "free"</span>  <span class="badge-complexity">O(1)</span>',
+      viz: { rows: [['name','Alice'],['email','alice@example.com'],['plan','free']], hl: 2, newRows: [2] } }
+  ],
+  set: [
+    { msg: 'Redis Set: unordered collection of unique strings. Duplicate SADD is silently ignored.',
+      cmdHtml: '',
+      viz: { items: [], highlights: [] } },
+    { msg: 'SADD visitors:today "u1" "u2" "u3" — add three unique visitors.',
+      cmdHtml: '<span class="cmd-kw">SADD</span> <span class="cmd-key">visitors:today</span> <span class="cmd-val">"u1" "u2" "u3"</span>  <span class="badge-complexity">O(N)</span>',
+      viz: { items: ['u1','u2','u3'], highlights: [0,1,2] } },
+    { msg: 'SADD visitors:today "u1" — duplicate. SADD returns 0 (not added). Set unchanged.',
+      cmdHtml: '<span class="cmd-kw">SADD</span> <span class="cmd-key">visitors:today</span> <span class="cmd-val">"u1"</span>  → <span class="cmd-val">0</span>  <span class="badge-complexity">O(1)</span>',
+      viz: { items: ['u1','u2','u3'], highlights: [], dup: 0 } },
+    { msg: 'SADD visitors:yesterday "u1" "u4". SINTER — users who visited both days.',
+      cmdHtml: '<span class="cmd-kw">SINTER</span> <span class="cmd-key">visitors:today</span> <span class="cmd-val">visitors:yesterday</span>  → <span class="cmd-val">{"u1"}</span>  <span class="badge-complexity">O(N·M)</span>',
+      viz: { items: ['u1','u2','u3'], highlights: [0], secondary: ['u1','u4'] } },
+    { msg: 'SREM visitors:today "u2" — remove one member from the set.',
+      cmdHtml: '<span class="cmd-kw">SREM</span> <span class="cmd-key">visitors:today</span> <span class="cmd-val">"u2"</span>  <span class="badge-complexity">O(1)</span>',
+      viz: { items: ['u1','u3'], highlights: [], removed: 'u2' } }
+  ],
+  zset: [
+    { msg: 'Redis Sorted Set (ZSet): each member has a float score. Members stored in score order.',
+      cmdHtml: '',
+      viz: { members: [], scores: [], highlights: [] } },
+    { msg: 'ZADD leaderboard 1200 "bob" 1800 "carol" 1500 "alice" — add 3 players with scores.',
+      cmdHtml: '<span class="cmd-kw">ZADD</span> <span class="cmd-key">leaderboard</span> <span class="cmd-val">1200 "bob" 1800 "carol" 1500 "alice"</span>  <span class="badge-complexity">O(log N)</span>',
+      viz: { members: ['bob','alice','carol'], scores: [1200,1500,1800], highlights: [0,1,2] } },
+    { msg: 'ZREVRANGE leaderboard 0 2 WITHSCORES — top 3 players, highest score first.',
+      cmdHtml: '<span class="cmd-kw">ZREVRANGE</span> <span class="cmd-key">leaderboard</span> <span class="cmd-val">0 2 WITHSCORES</span>  <span class="badge-complexity">O(log N + M)</span>',
+      viz: { members: ['bob','alice','carol'], scores: [1200,1500,1800], highlights: [2,1,0] } },
+    { msg: 'ZADD leaderboard 2100 "dave" — new player with highest score. Sorted set re-orders instantly.',
+      cmdHtml: '<span class="cmd-kw">ZADD</span> <span class="cmd-key">leaderboard</span> <span class="cmd-val">2100 "dave"</span>  <span class="badge-complexity">O(log N)</span>',
+      viz: { members: ['bob','alice','carol','dave'], scores: [1200,1500,1800,2100], highlights: [3] } },
+    { msg: 'ZRANK leaderboard "bob" → 0 (0-based rank, lowest to highest). ZREVRANK "bob" → 3.',
+      cmdHtml: '<span class="cmd-kw">ZRANK</span> <span class="cmd-key">leaderboard</span> <span class="cmd-val">"bob"</span>  → <span class="cmd-val">0</span>  <span class="badge-complexity">O(log N)</span>',
+      viz: { members: ['bob','alice','carol','dave'], scores: [1200,1500,1800,2100], highlights: [0] } }
+  ]
+};
+
+function renderViz(step) {
+  var v = step.viz;
+  var html = '';
+  if (type === 'string') {
+    var key = v.key || 'counter';
+    var ttl = v.ttl ? '<span style="font-size:.65rem;color:#f0a500;margin-left:.4rem">(' + v.ttl + ')</span>' : '';
+    html = '<div class="viz-title">Key → Value</div>' +
+      '<div class="str-kv">' +
+      '<div class="str-key">' + key + '</div>' +
+      '<span class="str-equals">=</span>' +
+      '<div class="str-val' + (v.hl ? ' highlight' : '') + '">' + v.val + '</div>' +
+      ttl + '</div>';
+  } else if (type === 'list') {
+    html = '<div class="viz-title">Linked List (key: feed:user1)</div>';
+    if (v.items.length === 0) {
+      html += '<span style="color:#646464;font-size:.72rem">(empty list)</span>';
+    } else {
+      html += '<div class="list-wrap">';
+      if (v.labels) html += '<span class="list-lbl">' + v.labels.left + '</span>';
+      v.items.forEach(function(item, i) {
+        var cls = 'list-node';
+        if (v.highlights && v.highlights.indexOf(i) !== -1) cls += ' hl';
+        html += '<div class="' + cls + '"><span class="ln-val">' + item + '</span><span class="ln-idx">[' + i + ']</span></div>';
+        if (i < v.items.length - 1) html += '<div class="list-arrow">→</div>';
+      });
+      if (v.labels) html += '<span class="list-lbl">' + v.labels.right + '</span>';
+      html += '</div>';
+      if (v.popped) html += '<div style="font-size:.7rem;color:#f0a500;margin-top:.3rem">← popped: "' + v.popped + '"</div>';
+    }
+  } else if (type === 'hash') {
+    html = '<div class="viz-title">Hash (key: user:1001)</div>';
+    if (!v.rows || v.rows.length === 0) {
+      html += '<span style="color:#646464;font-size:.72rem">(empty hash)</span>';
+    } else {
+      html += '<table class="hash-table"><tr><th>field</th><th>value</th></tr>';
+      v.rows.forEach(function(row, i) {
+        var cls = '';
+        if (v.newRows && v.newRows.indexOf(i) !== -1) cls = ' new-row';
+        else if (v.hl === i) cls = ' hl';
+        html += '<tr class="' + cls + '"><td class="hash-key">' + row[0] + '</td><td class="hash-val">' + row[1] + '</td></tr>';
+      });
+      html += '</table>';
+    }
+  } else if (type === 'set') {
+    html = '<div class="viz-title">Set (key: visitors:today)</div>';
+    html += '<div class="set-wrap">';
+    if (!v.items || v.items.length === 0) {
+      html += '<span style="color:#646464;font-size:.72rem">(empty set)</span>';
+    } else {
+      v.items.forEach(function(item, i) {
+        var cls = 'set-item';
+        if (v.highlights && v.highlights.indexOf(i) !== -1) cls += ' hl';
+        html += '<div class="' + cls + '">' + item + '</div>';
+      });
+    }
+    if (v.removed) html += '<div class="set-item rem">' + v.removed + '</div>';
+    html += '</div>';
+    if (v.secondary) {
+      html += '<div style="font-size:.68rem;color:#646464;margin-top:.35rem">visitors:yesterday: ' +
+        v.secondary.map(function(m) { return '[' + m + ']'; }).join(' ') + '</div>';
+    }
+  } else if (type === 'zset') {
+    html = '<div class="viz-title">Sorted Set (key: leaderboard)</div>';
+    if (!v.members || v.members.length === 0) {
+      html += '<span style="color:#646464;font-size:.72rem">(empty sorted set)</span>';
+    } else {
+      html += '<div class="zset-wrap">';
+      var maxScore = Math.max.apply(null, v.scores);
+      v.members.forEach(function(m, i) {
+        var barPct = Math.round((v.scores[i] / (maxScore * 1.2)) * 100);
+        var barH = Math.max(8, barPct * 0.6);
+        var cls = 'zset-bar';
+        if (v.highlights && v.highlights.indexOf(i) !== -1) cls += ' hl';
+        html += '<div class="zset-bar-wrap">' +
+          '<div class="zset-member">' + m + '</div>' +
+          '<div class="zset-score">' + v.scores[i] + '</div>' +
+          '<div class="' + cls + '" style="height:' + barH + 'px"></div>' +
+          '</div>';
+      });
+      html += '</div>';
+    }
+  }
+  document.getElementById('viz-content').innerHTML = html;
+}
+
+function draw() {
+  var s = steps[idx];
+  renderViz(s);
+  document.getElementById('cmd-box').innerHTML = s.cmdHtml || '<span style="color:#646464">(no command yet)</span>';
+  document.getElementById('stat').textContent = s.msg;
+
+  var done = idx === steps.length - 1;
+  document.getElementById('btn-step').disabled = done;
+  document.getElementById('btn-step').textContent = done ? 'Done ✓' : 'Step →';
+  document.getElementById('btn-back').disabled = idx === 0;
+  document.getElementById('counter').textContent = 'Step ' + (idx + 1) + ' / ' + steps.length;
+}
+
+function selectType(t) {
+  type = t;
+  ['string','list','hash','set','zset'].forEach(function(id) {
+    document.getElementById('t-' + id).className = 't-btn' + (id === t ? ' active' : '');
+  });
+  idx = 0;
+  steps = TYPES[t];
+  draw();
+}
+
+document.getElementById('btn-step').onclick = function() {
+  if (idx < steps.length - 1) { idx++; draw(); }
+};
+document.getElementById('btn-back').onclick = function() {
+  if (idx > 0) { idx--; draw(); }
+};
+document.getElementById('btn-reset').onclick = function() {
+  idx = 0; draw();
+};
+
+steps = TYPES[type];
+draw();
+</script>
+</body>
+</html>

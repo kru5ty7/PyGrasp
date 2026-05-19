@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Memoization — Visualizer</title>
+<title>Memoization - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -84,7 +84,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Memoization — Fibonacci Call Tree</h4>
+  <h4>Memoization - Fibonacci Call Tree</h4>
   <div class="input-row">
     <label for="n-input">n (fib):</label>
     <input id="n-input" type="number" value="5" min="1" max="8">
@@ -95,11 +95,11 @@
   <div class="side-panels">
     <div class="panel" id="cache-panel">
       <div class="panel-title">Cache</div>
-      <div id="cache-list">—</div>
+      <div id="cache-list">-</div>
     </div>
     <div class="panel" id="calls-panel">
       <div class="panel-title">Call Counter</div>
-      <div id="calls-info">—</div>
+      <div id="calls-info">-</div>
     </div>
   </div>
   <div id="stat">Press Step to begin.</div>
@@ -130,7 +130,7 @@ function buildTree(N) {
     return id;
   }
 
-  /* DFS that respects memo — first encounter computes, second is cache hit */
+  /* DFS that respects memo - first encounter computes, second is cache hit */
   var memo = {};   /* n → first-computed nodeId */
   var stepsArr = [];
   var cache = {};  /* n → value, built up during sim */
@@ -180,7 +180,7 @@ function buildTree(N) {
     parent.children.push(e.to);
   }
 
-  /* Compute positions — BFS, spreading by level */
+  /* Compute positions - BFS, spreading by level */
   var W = 580, H_PER_LEVEL = 56, R = 18;
   var levels = [];
   var queue = [root.id];
@@ -298,7 +298,7 @@ function renderStep() {
 
   /* cache panel */
   var cacheKeys = Object.keys(result.cache).sort(function(a,b){return a-b;});
-  var cHtml = cacheKeys.length === 0 ? '—' : '';
+  var cHtml = cacheKeys.length === 0 ? '-' : '';
   for (var i = 0; i < cacheKeys.length; i++) {
     var k = cacheKeys[i];
     var isNew = (s.action === 'resolve' || s.action === 'hit') && s.newCacheKey !== undefined && String(s.newCacheKey) === k;
@@ -314,8 +314,8 @@ function renderStep() {
   /* status */
   var n = treeData.nodes[s.nodeId];
   var msg = '';
-  if (s.action === 'call' && !s.cacheHit) msg = 'Calling fib(' + n.n + ') — node added (amber = pending).';
-  else if (s.action === 'call' && s.cacheHit) msg = 'fib(' + n.n + ') already in cache — CACHE HIT! (blue, instant return).';
+  if (s.action === 'call' && !s.cacheHit) msg = 'Calling fib(' + n.n + ') - node added (amber = pending).';
+  else if (s.action === 'call' && s.cacheHit) msg = 'fib(' + n.n + ') already in cache - CACHE HIT! (blue, instant return).';
   else if (s.action === 'resolve') msg = 'fib(' + n.n + ') resolved = ' + s.value + '. Stored in cache (green).';
   else if (s.action === 'hit') msg = 'fib(' + n.n + ') = ' + s.value + ' returned from cache (blue ✓). No recomputation.';
   document.getElementById('stat').textContent = msg;

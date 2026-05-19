@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DIP — Dependency Inversion Principle Visualizer</title>
+<title>DIP - Dependency Inversion Principle Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -155,7 +155,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Dependency Inversion Principle — Step Through</h4>
+  <h4>Dependency Inversion Principle - Step Through</h4>
 
   <div id="ctrl">
     <button id="btn-back" disabled onclick="step(-1)">◀ Back</button>
@@ -168,7 +168,7 @@
 
   <!-- Step 1: BEFORE -->
   <div class="panel visible" id="p1">
-    <div class="label bad">Before DIP ❌ — High-level depends on low-level concrete</div>
+    <div class="label bad">Before DIP ❌ - High-level depends on low-level concrete</div>
     <div style="display:flex;flex-direction:column;gap:.1rem;max-width:320px;">
       <div class="cls-box" style="border-color:#dc3545;">
         <div class="cls-hdr">OrderService</div>
@@ -190,7 +190,7 @@
 
   <!-- Step 2: AFTER (no swap yet) -->
   <div class="panel" id="p2">
-    <div class="label good">After DIP ✓ — Both depend on the abstraction</div>
+    <div class="label good">After DIP ✓ - Both depend on the abstraction</div>
     <div style="display:flex;flex-direction:column;gap:.1rem;max-width:380px;">
       <div class="cls-box" style="border-color:#28a745;">
         <div class="cls-hdr">OrderService</div>
@@ -223,7 +223,7 @@
 
   <!-- Step 3: Swap animation -->
   <div class="panel" id="p3">
-    <div class="label good">Swapping implementation — OrderService unchanged ✓</div>
+    <div class="label good">Swapping implementation - OrderService unchanged ✓</div>
     <div style="display:flex;flex-direction:column;gap:.1rem;max-width:380px;">
       <div class="cls-box highlight-border" id="order-highlight">
         <div class="cls-hdr">OrderService</div>
@@ -251,16 +251,16 @@
         </div>
       </div>
     </div>
-    <div class="note good" style="margin-top:.4rem;">MySQL faded out, Postgres activated. OrderService required zero changes — it only knows the abstraction.</div>
+    <div class="note good" style="margin-top:.4rem;">MySQL faded out, Postgres activated. OrderService required zero changes - it only knows the abstraction.</div>
   </div>
 
 </div>
 <script>
 var cur = 1;
 var msgs = [
-  'Step 1: BEFORE — OrderService directly depends on MySQLDatabase (a concrete class). High-level policy coupled to low-level detail.',
-  'Step 2: AFTER — OrderService depends on DatabaseInterface (abstract). Both MySQL and Postgres implement it. OrderService does not know which.',
-  'Step 3: SWAP — Switching from MySQL to Postgres requires no changes to OrderService. Just inject the new implementation.'
+  'Step 1: BEFORE - OrderService directly depends on MySQLDatabase (a concrete class). High-level policy coupled to low-level detail.',
+  'Step 2: AFTER - OrderService depends on DatabaseInterface (abstract). Both MySQL and Postgres implement it. OrderService does not know which.',
+  'Step 3: SWAP - Switching from MySQL to Postgres requires no changes to OrderService. Just inject the new implementation.'
 ];
 
 function render() {

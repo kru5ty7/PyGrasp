@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CDN - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #diagram { margin-bottom: .75rem; }
+  svg { display: block; width: 100%; height: auto; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>CDN - Request Routing</h4>
+  <div id="diagram"></div>
+  <div id="stat"></div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+// SVG layout (560 wide, 320 tall viewBox)
+// Origin: center top area
+// Edge nodes: left (US), center-bottom (EU), right (APAC)
+// User: bottom-right (APAC zone)
+
+var C = {
+  bg: '#2a2a2e',
+  border: '#393639',
+  header: '#284b63',
+  amber: '#f0a500',
+  green: '#28a745',
+  red: '#dc3545',
+  blue: '#007bff',
+  text: '#d4d4d4',
+  dim: '#555',
+  panelBg: '#393639'
+};
+
+// Node definitions (cx, cy, w, h)
+var nodes = {
+  origin: { x: 240, y: 32, w: 100, h: 38, label: 'Origin Server' },
+  edgeUS: { x: 30,  y: 155, w: 88, h: 52, label: 'Edge US', zone: 'US' },
+  edgeEU: { x: 196, y: 155, w: 88, h: 52, label: 'Edge EU', zone: 'EU' },
+  edgeAP: { x: 362, y: 155, w: 88, h: 52, label: 'Edge APAC', zone: 'APAC' },
+  userAP: { x: 400, y: 272, w: 72, h: 32, label: 'User (APAC)' },
+  user2AP: { x: 310, y: 272, w: 72, h: 32, label: 'User 2 (APAC)' }
+};
+
+// Steps: each step specifies highlight states and an arrow to draw
+// highlight: node key -> 'active'|'done'|'error'|null
+// arrow: {from, to, color, label, dashed}
+var steps = [
+  {
+    msg: 'Scenario: User in APAC requests an asset. Three CDN edge nodes exist (US, EU, APAC). Press Step to begin.',
+    hi: {},
+    arrows: [],
+    cache: { edgeUS: null, edgeEU: null, edgeAP: null }
+  },
+  {
+    msg: 'Step 1/7: APAC user sends HTTP request for /assets/logo.png.',
+    hi: { userAP: 'active' },
+    arrows: [{ from: 'userAP', to: 'edgeAP', color: C.amber, label: 'GET /logo.png' }],
+    cache: { edgeUS: null, edgeEU: null, edgeAP: null }
+  },
+  {
+    msg: 'Step 2/7: DNS resolves hostname to nearest CDN edge node — APAC edge (anycast / GeoDNS).',
+    hi: { userAP: 'active', edgeAP: 'active' },
+    arrows: [{ from: 'userAP', to: 'edgeAP', color: C.amber, label: 'DNS → APAC edge' }],
+    cache: { edgeUS: null, edgeEU: null, edgeAP: null }
+  },
+  {
+    msg: 'Step 3/7: APAC edge checks its cache → MISS (first request for this asset).',
+    hi: { edgeAP: 'active' },
+    arrows: [],
+    cache: { edgeUS: null, edgeEU: null, edgeAP: 'MISS' }
+  },
+  {
+    msg: 'Step 4/7: Cache miss — APAC edge fetches the asset from the origin server.',
+    hi: { edgeAP: 'active', origin: 'active' },
+    arrows: [{ from: 'edgeAP', to: 'origin', color: C.amber, label: 'Fetch from origin' }],
+    cache: { edgeUS: null, edgeEU: null, edgeAP: 'MISS' }
+  },
+  {
+    msg: 'Step 5/7: Origin returns the asset. APAC edge caches it (Cache-Control: max-age=86400).',
+    hi: { origin: 'done', edgeAP: 'done' },
+    arrows: [{ from: 'origin', to: 'edgeAP', color: C.green, label: '200 OK + cache' }],
+    cache: { edgeUS: null, edgeEU: null, edgeAP: 'HIT' }
+  },
+  {
+    msg: 'Step 6/7: APAC edge serves the cached asset to the user. Origin was only called once.',
+    hi: { edgeAP: 'done', userAP: 'done' },
+    arrows: [{ from: 'edgeAP', to: 'userAP', color: C.green, label: '200 (from cache)' }],
+    cache: { edgeUS: null, edgeEU: null, edgeAP: 'HIT' }
+  },
+  {
+    msg: 'Step 7/7: Second APAC user requests the same asset → CACHE HIT. No origin call needed. Origin protected.',
+    hi: { edgeAP: 'done', user2AP: 'done' },
+    arrows: [
+      { from: 'user2AP', to: 'edgeAP', color: C.blue, label: 'GET /logo.png' },
+      { from: 'edgeAP', to: 'user2AP', color: C.green, label: 'HIT - instant' }
+    ],
+    cache: { edgeUS: null, edgeEU: null, edgeAP: 'HIT' }
+  }
+];
+
+var idx = 0;
+
+function nodeColor(key, hi) {
+  var state = hi[key];
+  if (state === 'active') return C.amber;
+  if (state === 'done')   return C.green;
+  if (state === 'error')  return C.red;
+  return C.border;
+}
+
+function nodeFill(key, hi) {
+  var state = hi[key];
+  if (state === 'active') return '#2e2810';
+  if (state === 'done')   return '#0e2018';
+  if (state === 'error')  return '#2e1010';
+  return C.bg;
+}
+
+function cacheBadge(val) {
+  if (!val) return '';
+  if (val === 'HIT')  return '<tspan fill="' + C.green + '">[HIT]</tspan>';
+  if (val === 'MISS') return '<tspan fill="' + C.amber + '">[MISS]</tspan>';
+  return '';
+}
+
+function midpoint(a, b) {
+  return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+}
+
+function nodeCenter(key) {
+  var n = nodes[key];
+  return { x: n.x + n.w / 2, y: n.y + n.h / 2 };
+}
+
+function edgePoint(key, toward) {
+  var nc = nodeCenter(key);
+  var tc = nodeCenter(toward);
+  var n = nodes[key];
+  var dx = tc.x - nc.x, dy = tc.y - nc.y;
+  var absDx = Math.abs(dx), absDy = Math.abs(dy);
+  var hw = n.w / 2, hh = n.h / 2;
+  if (absDx * hh > absDy * hw) {
+    var sx = dx > 0 ? 1 : -1;
+    return { x: nc.x + sx * hw, y: nc.y + dy * (hw / absDx) };
+  } else {
+    var sy = dy > 0 ? 1 : -1;
+    return { x: nc.x + dx * (hh / absDy), y: nc.y + sy * hh };
+  }
+}
+
+function renderSVG(step) {
+  var hi = step.hi;
+  var cache = step.cache;
+  var svgW = 520, svgH = 320;
+  var out = '<svg viewBox="0 0 ' + svgW + ' ' + svgH + '" xmlns="http://www.w3.org/2000/svg">';
+
+  // Zone backgrounds
+  out += '<rect x="0" y="128" width="160" height="90" rx="6" fill="#1a1e1a" opacity="0.5"/>';
+  out += '<text x="80" y="142" text-anchor="middle" font-size="9" fill="#444">US Zone</text>';
+  out += '<rect x="166" y="128" width="160" height="90" rx="6" fill="#1a1a1e" opacity="0.5"/>';
+  out += '<text x="246" y="142" text-anchor="middle" font-size="9" fill="#444">EU Zone</text>';
+  out += '<rect x="332" y="128" width="180" height="90" rx="6" fill="#1e1a1a" opacity="0.5"/>';
+  out += '<text x="422" y="142" text-anchor="middle" font-size="9" fill="#444">APAC Zone</text>';
+
+  // Draw arrows first (behind nodes)
+  step.arrows.forEach(function(arr) {
+    var p1 = edgePoint(arr.from, arr.to);
+    var p2 = edgePoint(arr.to, arr.from);
+    var mid = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+    out += '<defs><marker id="arrowhead-' + arr.color.replace('#','') + '" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">'
+         + '<polygon points="0 0, 8 3, 0 6" fill="' + arr.color + '"/></marker></defs>';
+    out += '<line x1="' + p1.x + '" y1="' + p1.y + '" x2="' + p2.x + '" y2="' + p2.y
+         + '" stroke="' + arr.color + '" stroke-width="1.5" marker-end="url(#arrowhead-' + arr.color.replace('#','') + ')"/>';
+    if (arr.label) {
+      out += '<rect x="' + (mid.x - 38) + '" y="' + (mid.y - 8) + '" width="76" height="14" rx="3" fill="#161618" opacity="0.85"/>';
+      out += '<text x="' + mid.x + '" y="' + (mid.y + 3) + '" text-anchor="middle" font-size="8.5" fill="' + arr.color + '">' + arr.label + '</text>';
+    }
+  });
+
+  // Draw nodes
+  Object.keys(nodes).forEach(function(key) {
+    var n = nodes[key];
+    var bc = nodeColor(key, hi);
+    var bf = nodeFill(key, hi);
+    var isEdge = key.startsWith('edge');
+    var isOrigin = key === 'origin';
+    var headerH = isOrigin ? 14 : 16;
+
+    out += '<rect x="' + n.x + '" y="' + n.y + '" width="' + n.w + '" height="' + n.h + '" rx="4" fill="' + bf + '" stroke="' + bc + '" stroke-width="' + (hi[key] ? 2 : 1) + '"/>';
+
+    if (isOrigin) {
+      out += '<rect x="' + n.x + '" y="' + n.y + '" width="' + n.w + '" height="' + headerH + '" rx="4" fill="' + C.header + '"/>';
+      out += '<rect x="' + n.x + '" y="' + (n.y + headerH - 4) + '" width="' + n.w + '" height="4" fill="' + C.header + '"/>';
+      out += '<text x="' + (n.x + n.w/2) + '" y="' + (n.y + headerH - 3) + '" text-anchor="middle" font-size="8" fill="#fff">ORIGIN</text>';
+      out += '<text x="' + (n.x + n.w/2) + '" y="' + (n.y + headerH + 11) + '" text-anchor="middle" font-size="9" fill="' + C.text + '">' + n.label + '</text>';
+    } else if (isEdge) {
+      out += '<rect x="' + n.x + '" y="' + n.y + '" width="' + n.w + '" height="' + headerH + '" rx="4" fill="' + C.panelBg + '"/>';
+      out += '<rect x="' + n.x + '" y="' + (n.y + headerH - 4) + '" width="' + n.w + '" height="4" fill="' + C.panelBg + '"/>';
+      out += '<text x="' + (n.x + n.w/2) + '" y="' + (n.y + headerH - 3) + '" text-anchor="middle" font-size="8" fill="#999">CDN EDGE</text>';
+      out += '<text x="' + (n.x + n.w/2) + '" y="' + (n.y + headerH + 11) + '" text-anchor="middle" font-size="9" fill="' + C.text + '">' + n.label + '</text>';
+      var cval = cache[key];
+      if (cval) {
+        var ccolor = cval === 'HIT' ? C.green : C.amber;
+        out += '<rect x="' + (n.x + 6) + '" y="' + (n.y + n.h - 15) + '" width="' + (n.w - 12) + '" height="11" rx="2" fill="' + (cval === 'HIT' ? '#0a1a0a' : '#1e1a0a') + '"/>';
+        out += '<text x="' + (n.x + n.w/2) + '" y="' + (n.y + n.h - 6) + '" text-anchor="middle" font-size="8" fill="' + ccolor + '">cache ' + cval + '</text>';
+      }
+    } else {
+      // user node
+      out += '<text x="' + (n.x + n.w/2) + '" y="' + (n.y + n.h/2 + 4) + '" text-anchor="middle" font-size="9" fill="' + C.text + '">' + n.label + '</text>';
+    }
+  });
+
+  out += '</svg>';
+  return out;
+}
+
+function render() {
+  var step = steps[idx];
+  document.getElementById('diagram').innerHTML = renderSVG(step);
+  document.getElementById('stat').textContent = step.msg;
+  var isLast = idx >= steps.length - 1;
+  document.getElementById('btn-step').disabled = isLast;
+  document.getElementById('btn-step').textContent = isLast ? 'Done ✓' : 'Step →';
+  document.getElementById('btn-back').disabled = idx === 0;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
+}
+
+document.getElementById('btn-step').onclick = function() { if (idx < steps.length - 1) { idx++; render(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; render(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; render(); };
+
+render();
+</script>
+</body>
+</html>

@@ -136,6 +136,12 @@ The Backend for Frontend (BFF) pattern extends the API gateway concept. Rather t
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/api-gateway-hld.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="API Gateway Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 A reverse proxy and an API gateway overlap in function. A reverse proxy handles SSL termination and request forwarding; an API gateway adds authentication, rate limiting, and business-aware routing on top.

@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CAP Theorem - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #btn-row {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+  .sys-btn {
+    flex: 1;
+    min-width: 140px;
+    padding: .35rem .5rem;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .8rem;
+    background: #2a2a2e;
+    color: #d4d4d4;
+    text-align: center;
+    transition: opacity .15s;
+  }
+  .sys-btn.active { background: #284b63; border-color: #7b97aa; color: #fff; }
+  .sys-btn:hover:not(.active) { opacity: .75; }
+  #triangle-area {
+    display: flex;
+    justify-content: center;
+    margin-bottom: .75rem;
+  }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #scenario {
+    padding: .45rem .7rem;
+    background: #1e1e20;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    font-size: .8rem;
+    line-height: 1.6;
+  }
+  .scen-title { font-size: .72rem; text-transform: uppercase; letter-spacing: .07em; color: #646464; margin-bottom: .3rem; }
+  .scen-row { display: flex; gap: .5rem; margin-top: .2rem; }
+  .scen-tag {
+    padding: .15rem .5rem;
+    border-radius: 3px;
+    font-size: .75rem;
+    white-space: nowrap;
+  }
+  .scen-tag.cp { background: #1a3a2a; color: #28a745; }
+  .scen-tag.ap { background: #3a2a1a; color: #f0a500; }
+  .scen-tag.ca { background: #1a2a3a; color: #7b97aa; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>CAP Theorem - Interactive Triangle</h4>
+  <div id="btn-row">
+    <div class="sys-btn active" id="btn-cp" onclick="setSystem('cp')">CP System (e.g. HBase)</div>
+    <div class="sys-btn" id="btn-ap" onclick="setSystem('ap')">AP System (e.g. Cassandra)</div>
+    <div class="sys-btn" id="btn-ca" onclick="setSystem('ca')">CA System (no partition)</div>
+  </div>
+  <div id="triangle-area">
+    <svg width="320" height="200" viewBox="0 0 320 200">
+      <!-- Triangle edges -->
+      <line id="edge-cp" x1="160" y1="18" x2="30" y2="182" stroke="#393639" stroke-width="2.5"/>
+      <line id="edge-ap" x1="160" y1="18" x2="290" y2="182" stroke="#393639" stroke-width="2.5"/>
+      <line id="edge-ca" x1="30" y1="182" x2="290" y2="182" stroke="#393639" stroke-width="2.5"/>
+      <!-- Vertices -->
+      <circle id="vert-c" cx="160" cy="18" r="26" fill="#2a2a2e" stroke="#393639" stroke-width="1.5"/>
+      <circle id="vert-a" cx="290" cy="182" r="26" fill="#2a2a2e" stroke="#393639" stroke-width="1.5"/>
+      <circle id="vert-p" cx="30" cy="182" r="26" fill="#2a2a2e" stroke="#393639" stroke-width="1.5"/>
+      <!-- Labels -->
+      <text x="160" y="14" text-anchor="middle" fill="#d4d4d4" font-size="13" font-weight="700" dy="8">C</text>
+      <text x="160" y="26" text-anchor="middle" fill="#888" font-size="9" dy="8">Consistency</text>
+      <text x="290" y="178" text-anchor="middle" fill="#d4d4d4" font-size="13" font-weight="700" dy="8">A</text>
+      <text x="290" y="190" text-anchor="middle" fill="#888" font-size="9" dy="8">Availability</text>
+      <text x="30" y="178" text-anchor="middle" fill="#d4d4d4" font-size="13" font-weight="700" dy="8">P</text>
+      <text x="30" y="190" text-anchor="middle" fill="#888" font-size="9" dy="8">Partition</text>
+      <!-- Dim overlays -->
+      <circle id="dim-c" cx="160" cy="18" r="26" fill="rgba(22,22,24,.7)" stroke="none" opacity="0"/>
+      <circle id="dim-a" cx="290" cy="182" r="26" fill="rgba(22,22,24,.7)" stroke="none" opacity="0"/>
+      <circle id="dim-p" cx="30" cy="182" r="26" fill="rgba(22,22,24,.7)" stroke="none" opacity="0"/>
+    </svg>
+  </div>
+  <div id="stat"></div>
+  <div id="scenario">
+    <div class="scen-title">Network partition occurs → what does each system do?</div>
+    <div id="scen-cp" class="scen-row"><span class="scen-tag cp">CP</span><span id="scen-cp-txt" style="font-size:.8rem;color:#d4d4d4"></span></div>
+    <div id="scen-ap" class="scen-row" style="margin-top:.4rem"><span class="scen-tag ap">AP</span><span id="scen-ap-txt" style="font-size:.8rem;color:#d4d4d4"></span></div>
+  </div>
+</div>
+<script>
+var GREEN = '#28a745';
+var AMBER = '#f0a500';
+var RED = '#dc3545';
+var DIM = '#2a2a2e';
+var NORMAL = '#393639';
+
+var systems = {
+  cp: {
+    edges: { cp: GREEN, ap: NORMAL, ca: NORMAL },
+    dims: { c: 0, a: 1, p: 0 },
+    msg: 'CP System: guarantees Consistency + Partition Tolerance. During a partition, rejects requests rather than return stale data. C ✓ P ✓ - A ✗',
+    scen_cp: 'Returns error until partition heals - prefers correctness.',
+    scen_ap: 'Returns potentially stale data - prefers uptime.'
+  },
+  ap: {
+    edges: { cp: NORMAL, ap: GREEN, ca: NORMAL },
+    dims: { c: 1, a: 0, p: 0 },
+    msg: 'AP System: guarantees Availability + Partition Tolerance. Always responds, even if data may be stale. A ✓ P ✓ - C ✗',
+    scen_cp: 'Returns error until partition heals - prefers correctness.',
+    scen_ap: 'Returns potentially stale data - prefers uptime.'
+  },
+  ca: {
+    edges: { cp: NORMAL, ap: NORMAL, ca: GREEN },
+    dims: { c: 0, a: 0, p: 1 },
+    msg: 'CA System: Consistency + Availability, no Partition Tolerance. Only works without network failures - not practical for distributed systems. C ✓ A ✓ - P ✗',
+    scen_cp: 'Returns error until partition heals - prefers correctness.',
+    scen_ap: 'Returns potentially stale data - prefers uptime.'
+  }
+};
+
+function setEdge(id, color) {
+  document.getElementById(id).setAttribute('stroke', color);
+}
+function setDim(id, v) {
+  document.getElementById(id).setAttribute('opacity', v);
+}
+
+function setSystem(sys) {
+  var s = systems[sys];
+  setEdge('edge-cp', s.edges.cp);
+  setEdge('edge-ap', s.edges.ap);
+  setEdge('edge-ca', s.edges.ca);
+  setDim('dim-c', s.dims.c);
+  setDim('dim-a', s.dims.a);
+  setDim('dim-p', s.dims.p);
+
+  // vertex stroke highlights
+  var verts = {c: 'vert-c', a: 'vert-a', p: 'vert-p'};
+  Object.keys(verts).forEach(function(k) {
+    var el = document.getElementById(verts[k]);
+    var dimmed = s.dims[k] > 0;
+    el.setAttribute('stroke', dimmed ? RED : (s.edges['edge-'+k] || NORMAL));
+  });
+  // highlight active vertices via edges
+  if (sys === 'cp') {
+    document.getElementById('vert-c').setAttribute('stroke', GREEN);
+    document.getElementById('vert-p').setAttribute('stroke', GREEN);
+    document.getElementById('vert-a').setAttribute('stroke', RED);
+  } else if (sys === 'ap') {
+    document.getElementById('vert-a').setAttribute('stroke', GREEN);
+    document.getElementById('vert-p').setAttribute('stroke', GREEN);
+    document.getElementById('vert-c').setAttribute('stroke', RED);
+  } else {
+    document.getElementById('vert-c').setAttribute('stroke', GREEN);
+    document.getElementById('vert-a').setAttribute('stroke', GREEN);
+    document.getElementById('vert-p').setAttribute('stroke', RED);
+  }
+
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('scen-cp-txt').textContent = s.scen_cp;
+  document.getElementById('scen-ap-txt').textContent = s.scen_ap;
+
+  ['btn-cp','btn-ap','btn-ca'].forEach(function(id) {
+    document.getElementById(id).className = 'sys-btn' + (id === 'btn-' + sys ? ' active' : '');
+  });
+}
+
+setSystem('cp');
+</script>
+</body>
+</html>

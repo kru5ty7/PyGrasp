@@ -91,6 +91,12 @@ Failover  -  promoting a replica to primary when the leader fails  -  introduces
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/database-replication.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Database Replication Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Replication is the foundation of read scaling via read replicas. Understanding how replication lag affects reads from replicas is essential before routing queries to them.

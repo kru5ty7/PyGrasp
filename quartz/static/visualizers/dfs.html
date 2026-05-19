@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DFS — Visualizer</title>
+<title>DFS - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -80,7 +80,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>DFS — Depth-First Search</h4>
+  <h4>DFS - Depth-First Search</h4>
   <div id="input-row">
     <label for="start-sel">Start node:</label>
     <select id="start-sel">
@@ -116,8 +116,8 @@
     <span class="leg"><span class="dot" style="background:#28a745"></span>Done</span>
   </div>
   <div id="panels">
-    <div class="panel"><strong>Stack (LIFO)</strong><span id="p-stack">—</span></div>
-    <div class="panel"><strong>Visited order</strong><span id="p-visited">—</span></div>
+    <div class="panel"><strong>Stack (LIFO)</strong><span id="p-stack">-</span></div>
+    <div class="panel"><strong>Visited order</strong><span id="p-visited">-</span></div>
   </div>
   <div id="stat">Press Step to begin.</div>
   <div id="ctrl">
@@ -139,7 +139,7 @@ function buildSteps(src) {
   var s = [];
   var st = {}; NODES.forEach(function(n){ st[n]='u'; });
   var visited = [];
-  // iterative DFS — neighbours pushed in reverse so leftmost is processed first
+  // iterative DFS - neighbours pushed in reverse so leftmost is processed first
   var stack = [src];
   st[src] = 's';
   s.push({ st: Object.assign({},st), stk: stack.slice(), v: visited.slice(),
@@ -150,14 +150,14 @@ function buildSteps(src) {
   while (stack.length) {
     var node = stack.pop();
     if (visitedSet[node]) {
-      // skip already visited — rebuild state and continue without a new step
+      // skip already visited - rebuild state and continue without a new step
       continue;
     }
     visitedSet[node] = true;
     visited.push(node);
     st[node] = 'c';
     s.push({ st: Object.assign({},st), stk: stack.slice(), v: visited.slice(),
-      msg: 'Pop ' + node + ' — processing.', done: false });
+      msg: 'Pop ' + node + ' - processing.', done: false });
     st[node] = 'p';
 
     // push unvisited neighbours in reverse order
@@ -192,7 +192,7 @@ function draw() {
   });
   var stk = s.stk;
   document.getElementById('p-stack').textContent = stk.length ? '[ '+stk.slice().reverse().join(', ')+' ] (top→)' : '(empty)';
-  document.getElementById('p-visited').textContent = s.v.length ? s.v.join(' → ') : '—';
+  document.getElementById('p-visited').textContent = s.v.length ? s.v.join(' → ') : '-';
   document.getElementById('stat').textContent = s.msg;
   document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length-1);
   document.getElementById('btn-step').disabled = s.done;

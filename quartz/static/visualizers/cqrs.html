@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CQRS - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+
+  /* Split layout */
+  .split {
+    display: flex;
+    gap: .5rem;
+    margin-bottom: .6rem;
+  }
+  .side {
+    flex: 1;
+    min-width: 0;
+    border-radius: 4px;
+    border: 1px solid #393639;
+    overflow: hidden;
+  }
+  .side-header {
+    padding: .3rem .5rem;
+    font-size: .65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    text-align: center;
+  }
+  .side-write .side-header { background: #1a2a33; color: #7b97aa; border-bottom: 1px solid #393639; }
+  .side-read  .side-header { background: #1a3320; color: #28a745; border-bottom: 1px solid #393639; }
+  .side-body { padding: .5rem .45rem; }
+  .side-sub { font-size: .6rem; color: #646464; text-align: center; margin-bottom: .4rem; }
+
+  /* Node boxes */
+  .node {
+    border-radius: 4px;
+    border: 1px solid #393639;
+    background: #2a2a2e;
+    padding: .28rem .4rem;
+    font-size: .68rem;
+    text-align: center;
+    margin-bottom: .3rem;
+    transition: all .2s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .node:last-child { margin-bottom: 0; }
+  .node.active { border-color: #f0a500; background: #2a2200; color: #f0a500; }
+  .node.done   { border-color: #28a745; background: #1a3a1a; color: #28a745; }
+  .node.pulse  { border-color: #007bff; background: #001a3a; color: #7ec8e3; }
+  .node.event  { border-color: #7b97aa; background: #1a2a33; color: #7b97aa; font-style: italic; }
+
+  /* Arrow between nodes */
+  .v-arrow {
+    text-align: center;
+    font-size: .75rem;
+    margin: .1rem 0;
+    min-height: 16px;
+  }
+  .v-arrow.green { color: #28a745; }
+  .v-arrow.blue  { color: #007bff; }
+  .v-arrow.amber { color: #f0a500; }
+  .v-arrow.red   { color: #dc3545; }
+  .v-arrow.gray  { color: #7b97aa; }
+
+  /* Sync bridge between sides */
+  .sync-bridge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .3rem;
+    margin-bottom: .6rem;
+    background: #1e1e20;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .35rem .5rem;
+    min-height: 36px;
+  }
+  .sync-bridge .sync-lbl {
+    font-size: .68rem;
+    color: #888;
+  }
+  .sync-bridge .sync-arrow {
+    font-size: .75rem;
+    color: #555;
+  }
+  .sync-bridge.active-sync .sync-lbl { color: #f0a500; }
+  .sync-bridge.active-sync .sync-arrow { color: #f0a500; }
+
+  /* Labels row */
+  .labels-row {
+    display: flex;
+    gap: .5rem;
+    margin-bottom: .6rem;
+  }
+  .label-tag {
+    flex: 1;
+    text-align: center;
+    font-size: .6rem;
+    color: #646464;
+    padding: .2rem .3rem;
+    border-radius: 3px;
+    border: 1px solid #393639;
+  }
+  .label-tag.write { color: #7b97aa; border-color: #2a3a44; }
+  .label-tag.read  { color: #28a745; border-color: #1a3a1a; }
+
+  /* Stat */
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #284b63;
+    border-radius: 0 4px 4px 0;
+    font-size: .84rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+
+  /* Controls */
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>CQRS — Command Query Responsibility Segregation</h4>
+
+  <div class="labels-row">
+    <div class="label-tag write">WRITE: optimized for consistency</div>
+    <div class="label-tag read">READ: optimized for performance</div>
+  </div>
+
+  <div class="split">
+    <!-- WRITE side -->
+    <div class="side side-write">
+      <div class="side-header">Write Side (Command)</div>
+      <div class="side-body">
+        <div class="side-sub">normalized · ACID</div>
+        <div class="node" id="w-app">Application</div>
+        <div class="v-arrow" id="wa-arrow">↓</div>
+        <div class="node" id="w-handler">Command Handler</div>
+        <div class="v-arrow" id="wh-arrow">↓</div>
+        <div class="node" id="w-db">Write DB<br><span style="font-size:.58rem;color:#888">normalized tables</span></div>
+        <div class="v-arrow" id="we-arrow">↓</div>
+        <div class="node event" id="w-event">event emitted</div>
+      </div>
+    </div>
+
+    <!-- READ side -->
+    <div class="side side-read">
+      <div class="side-header">Read Side (Query)</div>
+      <div class="side-body">
+        <div class="side-sub">denormalized · fast</div>
+        <div class="node" id="r-app">Application</div>
+        <div class="v-arrow" id="ra-arrow">↓</div>
+        <div class="node" id="r-handler">Query Handler</div>
+        <div class="v-arrow" id="rh-arrow">↓</div>
+        <div class="node" id="r-db">Read DB<br><span style="font-size:.58rem;color:#888">denormalized views</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sync bridge -->
+  <div class="sync-bridge" id="sync-bridge">
+    <span class="sync-lbl">Write DB</span>
+    <span class="sync-arrow">——→</span>
+    <span class="sync-lbl">Event Bus / Projector</span>
+    <span class="sync-arrow">——→</span>
+    <span class="sync-lbl">Read DB (async sync)</span>
+  </div>
+
+  <div id="stat">Press Step to begin the CQRS flow.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>◀ Back</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+// Each step: which nodes/arrows to highlight and status text
+// highlight: list of element IDs and their class overrides
+var steps = [
+  {
+    stat: 'Initial state: WRITE side and READ side are separate. Write DB is normalized. Read DB holds denormalized projections.',
+    highlights: {},
+    syncActive: false
+  },
+  {
+    stat: 'Step 1: User submits a PlaceOrder command. The application receives the COMMAND (write intent).',
+    highlights: { 'w-app': 'active' },
+    syncActive: false
+  },
+  {
+    stat: 'Step 2: Command Handler validates the command and applies business rules. Writes to the Write DB (normalized tables).',
+    highlights: { 'w-app': 'done', 'wa-arrow': 'green', 'w-handler': 'active', 'wh-arrow': 'green', 'w-db': 'active' },
+    syncActive: false
+  },
+  {
+    stat: 'Step 3: Write DB emits an "OrderPlaced" domain event. This signals that state has changed.',
+    highlights: { 'w-db': 'done', 'we-arrow': 'amber', 'w-event': 'active' },
+    syncActive: false
+  },
+  {
+    stat: 'Step 4: Event propagates through the Event Bus to the Read DB projector (async). Write side is done — it does not wait.',
+    highlights: { 'w-event': 'done' },
+    syncActive: true
+  },
+  {
+    stat: 'Step 5: Read DB projector processes the event and updates the denormalized view (no JOIN needed at read time).',
+    highlights: { 'r-db': 'pulse' },
+    syncActive: true
+  },
+  {
+    stat: 'Step 6: User dashboard sends a QUERY (read intent). Query goes to the Application read path.',
+    highlights: { 'r-db': 'done', 'r-app': 'active' },
+    syncActive: false
+  },
+  {
+    stat: 'Step 7: Query Handler reads from the Read DB directly — no JOINs, no complex aggregations needed.',
+    highlights: { 'r-app': 'done', 'ra-arrow': 'green', 'r-handler': 'active', 'rh-arrow': 'green', 'r-db': 'active' },
+    syncActive: false
+  },
+  {
+    stat: 'Step 8: Pre-computed view returned instantly. Read path is fast because the hard work was done at write time (event projection).',
+    highlights: { 'r-handler': 'done', 'r-db': 'done' },
+    syncActive: false
+  }
+];
+
+var idx = 0;
+
+// Default classes for each node/arrow
+var defaults = {
+  'w-app': 'node', 'w-handler': 'node', 'w-db': 'node', 'w-event': 'node event',
+  'wa-arrow': 'v-arrow gray', 'wh-arrow': 'v-arrow gray', 'we-arrow': 'v-arrow gray',
+  'r-app': 'node', 'r-handler': 'node', 'r-db': 'node',
+  'ra-arrow': 'v-arrow gray', 'rh-arrow': 'v-arrow gray'
+};
+
+// Arrow symbols
+var arrowSymbols = {
+  'wa-arrow': '↓', 'wh-arrow': '↓', 'we-arrow': '↓',
+  'ra-arrow': '↓', 'rh-arrow': '↓'
+};
+
+function draw() {
+  var step = steps[idx];
+
+  // Reset all to defaults
+  Object.keys(defaults).forEach(function(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    if (arrowSymbols[id]) {
+      el.className = defaults[id];
+      el.textContent = arrowSymbols[id];
+    } else {
+      // For node elements, preserve inner HTML — just update class
+      el.className = defaults[id];
+    }
+  });
+
+  // Apply highlights
+  Object.keys(step.highlights).forEach(function(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var cls = step.highlights[id];
+    if (arrowSymbols[id]) {
+      // Arrow element
+      var colorMap = { green: 'v-arrow green', amber: 'v-arrow amber', blue: 'v-arrow blue', red: 'v-arrow red', gray: 'v-arrow gray' };
+      el.className = colorMap[cls] || 'v-arrow gray';
+    } else {
+      el.className = 'node ' + cls;
+    }
+  });
+
+  // Sync bridge
+  var bridge = document.getElementById('sync-bridge');
+  bridge.className = 'sync-bridge' + (step.syncActive ? ' active-sync' : '');
+
+  document.getElementById('stat').textContent = step.stat;
+  document.getElementById('counter').textContent = 'Step ' + (idx + 1) + ' / ' + steps.length;
+  document.getElementById('btn-step').disabled = (idx >= steps.length - 1);
+  document.getElementById('btn-step').textContent = idx >= steps.length - 1 ? 'Done ✓' : 'Step →';
+  document.getElementById('btn-back').disabled = (idx === 0);
+}
+
+document.getElementById('btn-step').onclick = function() {
+  if (idx < steps.length - 1) { idx++; draw(); }
+};
+document.getElementById('btn-back').onclick = function() {
+  if (idx > 0) { idx--; draw(); }
+};
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+draw();
+</script>
+</body>
+</html>

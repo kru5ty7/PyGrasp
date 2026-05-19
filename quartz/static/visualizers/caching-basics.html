@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Caching Basics - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #scenario-row {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: .9rem;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+  #scenario-row span { font-size: .75rem; color: #646464; }
+  .sc-btn {
+    padding: .28rem .65rem;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .78rem;
+    background: #2a2a2e;
+    color: #d4d4d4;
+    transition: opacity .15s, border-color .15s;
+  }
+  .sc-btn.active { border-color: #7b97aa; background: #223344; color: #9fc5d8; }
+  .sc-btn:hover:not(.active) { opacity: .75; }
+  #flow {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    margin-bottom: .75rem;
+    position: relative;
+  }
+  .box {
+    flex: 1;
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .5rem .4rem;
+    text-align: center;
+    font-size: .75rem;
+    position: relative;
+    transition: border-color .3s, background .3s;
+    min-height: 72px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: .2rem;
+  }
+  .box .box-title { font-weight: 700; font-size: .78rem; }
+  .box .box-sub { font-size: .68rem; color: #646464; }
+  .box .box-badge {
+    font-size: .65rem;
+    font-weight: 700;
+    padding: .1rem .35rem;
+    border-radius: 3px;
+    letter-spacing: .04em;
+  }
+  .box.active-hit { border-color: #28a745; background: #1a3a1a; }
+  .box.active-miss { border-color: #f0a500; background: #3a2a00; }
+  .box.active-neutral { border-color: #7b97aa; background: #1e2e38; }
+  .badge-hit { background: #1a3a1a; color: #28a745; border: 1px solid #28a745; }
+  .badge-miss { background: #3a2a00; color: #f0a500; border: 1px solid #f0a500; }
+  .badge-ok { background: #1e2e38; color: #7eb8d4; border: 1px solid #7b97aa; }
+  .arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    flex-shrink: 0;
+    font-size: .9rem;
+    color: #646464;
+    position: relative;
+  }
+  .arrow.active-fwd { color: #7b97aa; }
+  .arrow.active-back { color: #d4a080; }
+  .arrow .arr-label {
+    position: absolute;
+    top: -9px;
+    font-size: .6rem;
+    color: #888;
+    white-space: nowrap;
+  }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .82rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; margin-bottom: .75rem; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+  #metrics {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .45rem .7rem;
+    font-size: .75rem;
+    display: flex;
+    gap: 1.2rem;
+    flex-wrap: wrap;
+  }
+  #metrics span { color: #888; }
+  #metrics strong { color: #d4d4d4; }
+  .hit-val { color: #28a745 !important; }
+  .miss-val { color: #f0a500 !important; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Caching Basics - Hit / Miss Flow</h4>
+  <div id="scenario-row">
+    <span>Scenario:</span>
+    <button class="sc-btn active" id="sc-miss" onclick="selectScenario('miss')">Cache Miss then Populate</button>
+    <button class="sc-btn" id="sc-hit" onclick="selectScenario('hit')">Cache Hit</button>
+  </div>
+  <div id="flow">
+    <div class="box" id="box-app">
+      <div class="box-title">Application</div>
+      <div class="box-sub">GET user_id=42</div>
+    </div>
+    <div class="arrow" id="arr1">→</div>
+    <div class="box" id="box-cache">
+      <div class="box-title">Cache</div>
+      <div class="box-sub" id="cache-sub">Redis/Memcached</div>
+    </div>
+    <div class="arrow" id="arr2">→</div>
+    <div class="box" id="box-db">
+      <div class="box-title">Database</div>
+      <div class="box-sub" id="db-sub">PostgreSQL</div>
+    </div>
+  </div>
+  <div id="stat">Press Step to begin.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>◀ Back</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+  <div id="metrics">
+    <span>Cache hits: <strong id="m-hits">0</strong></span>
+    <span>Misses: <strong id="m-misses">0</strong></span>
+    <span>Ratio: <strong id="m-ratio">-</strong></span>
+  </div>
+</div>
+<script>
+var totalHits = 0, totalMisses = 0;
+var scenario = 'miss';
+var idx = 0;
+var steps = [];
+
+var SCENARIOS = {
+  miss: [
+    {
+      msg: 'Application requests user_id=42.',
+      app: 'neutral', cache: '', db: '',
+      arr1: 'fwd', arr2: '',
+      cacheSub: 'Redis/Memcached', dbSub: 'PostgreSQL',
+      cacheBadge: null, dbActive: false
+    },
+    {
+      msg: 'Cache lookup for user_id=42 → MISS. Key not found in cache.',
+      app: '', cache: 'miss', db: '',
+      arr1: '', arr2: '',
+      cacheSub: 'user_id=42 → MISS', dbSub: 'PostgreSQL',
+      cacheBadge: 'MISS', dbActive: false,
+      miss: true
+    },
+    {
+      msg: 'Cache miss → query database for user_id=42.',
+      app: '', cache: '', db: 'neutral',
+      arr1: '', arr2: 'fwd',
+      cacheSub: 'Redis/Memcached', dbSub: 'Querying...',
+      cacheBadge: null, dbActive: true
+    },
+    {
+      msg: 'Database returns {id:42, name:"Alice"}. Latency: ~50ms.',
+      app: '', cache: '', db: 'neutral',
+      arr1: '', arr2: 'back',
+      cacheSub: 'Redis/Memcached', dbSub: '{id:42, name:"Alice"}',
+      cacheBadge: null, dbActive: true
+    },
+    {
+      msg: 'Store result in cache with TTL=300s. Future reads will be fast.',
+      app: '', cache: 'neutral', db: '',
+      arr1: '', arr2: '',
+      cacheSub: 'SET user:42 TTL=300s', dbSub: 'PostgreSQL',
+      cacheBadge: 'STORED', dbActive: false
+    },
+    {
+      msg: 'Return value to application. Second request for user_id=42 → cache HIT. No DB call. Latency: ~1ms.',
+      app: 'hit', cache: 'hit', db: '',
+      arr1: 'back', arr2: '',
+      cacheSub: 'user_id=42 → HIT', dbSub: 'Not queried',
+      cacheBadge: 'HIT', dbActive: false,
+      hit: true
+    }
+  ],
+  hit: [
+    {
+      msg: 'Application requests user_id=42.',
+      app: 'neutral', cache: '', db: '',
+      arr1: 'fwd', arr2: '',
+      cacheSub: 'Redis/Memcached', dbSub: 'PostgreSQL',
+      cacheBadge: null
+    },
+    {
+      msg: 'Cache lookup for user_id=42 → HIT! Data found in cache. DB never queried.',
+      app: '', cache: 'hit', db: '',
+      arr1: '', arr2: '',
+      cacheSub: 'user_id=42 → HIT', dbSub: 'Not queried',
+      cacheBadge: 'HIT',
+      hit: true
+    },
+    {
+      msg: 'Return cached value to application. Latency: 1ms vs 50ms (database). 50x speedup.',
+      app: 'hit', cache: 'hit', db: '',
+      arr1: 'back', arr2: '',
+      cacheSub: '{id:42, name:"Alice"}', dbSub: 'Not queried',
+      cacheBadge: 'HIT'
+    }
+  ]
+};
+
+function buildSteps() {
+  steps = SCENARIOS[scenario];
+  idx = 0;
+}
+
+function classFor(box, state) {
+  if (!state) return '';
+  if (state === 'hit') return 'active-hit';
+  if (state === 'miss') return 'active-miss';
+  if (state === 'neutral') return 'active-neutral';
+  return '';
+}
+
+function badgeHtml(badge) {
+  if (!badge) return '';
+  var cls = badge === 'HIT' ? 'badge-hit' : badge === 'MISS' ? 'badge-miss' : 'badge-ok';
+  return '<div class="box-badge ' + cls + '">' + badge + '</div>';
+}
+
+function draw() {
+  var s = steps[idx];
+  var boxApp = document.getElementById('box-app');
+  var boxCache = document.getElementById('box-cache');
+  var boxDb = document.getElementById('box-db');
+  var arr1 = document.getElementById('arr1');
+  var arr2 = document.getElementById('arr2');
+
+  boxApp.className = 'box ' + classFor('app', s.app);
+  boxCache.className = 'box ' + classFor('cache', s.cache);
+  boxDb.className = 'box ' + classFor('db', s.db);
+
+  arr1.className = 'arrow' + (s.arr1 === 'fwd' ? ' active-fwd' : s.arr1 === 'back' ? ' active-back' : '');
+  arr1.textContent = s.arr1 === 'back' ? '←' : '→';
+  arr2.className = 'arrow' + (s.arr2 === 'fwd' ? ' active-fwd' : s.arr2 === 'back' ? ' active-back' : '');
+  arr2.textContent = s.arr2 === 'back' ? '←' : '→';
+
+  document.getElementById('cache-sub').textContent = s.cacheSub;
+  document.getElementById('db-sub').textContent = s.dbSub;
+
+  // Cache badge
+  var cacheTitle = boxCache.querySelector('.box-title');
+  var existingBadge = boxCache.querySelector('.box-badge');
+  if (existingBadge) existingBadge.remove();
+  if (s.cacheBadge) {
+    boxCache.insertAdjacentHTML('beforeend', badgeHtml(s.cacheBadge));
+  }
+
+  if (s.hit) { totalHits++; }
+  if (s.miss) { totalMisses++; }
+  updateMetrics();
+
+  document.getElementById('stat').textContent = s.msg;
+  var done = idx === steps.length - 1;
+  document.getElementById('btn-step').disabled = done;
+  document.getElementById('btn-back').disabled = idx === 0;
+  document.getElementById('counter').textContent = 'Step ' + (idx + 1) + ' / ' + steps.length;
+}
+
+function updateMetrics() {
+  document.getElementById('m-hits').textContent = totalHits;
+  document.getElementById('m-misses').textContent = totalMisses;
+  var total = totalHits + totalMisses;
+  document.getElementById('m-ratio').textContent = total ? Math.round(totalHits / total * 100) + '%' : '-';
+}
+
+function selectScenario(sc) {
+  scenario = sc;
+  document.getElementById('sc-miss').className = 'sc-btn' + (sc === 'miss' ? ' active' : '');
+  document.getElementById('sc-hit').className = 'sc-btn' + (sc === 'hit' ? ' active' : '');
+  buildSteps();
+  resetVisual();
+  draw();
+}
+
+function resetVisual() {
+  var boxCache = document.getElementById('box-cache');
+  var badge = boxCache.querySelector('.box-badge');
+  if (badge) badge.remove();
+}
+
+document.getElementById('btn-step').onclick = function() {
+  if (idx < steps.length - 1) { idx++; draw(); }
+};
+document.getElementById('btn-back').onclick = function() {
+  if (idx > 0) {
+    // Undo counters
+    var s = steps[idx];
+    if (s.hit) totalHits = Math.max(0, totalHits - 1);
+    if (s.miss) totalMisses = Math.max(0, totalMisses - 1);
+    idx--;
+    resetVisual();
+    draw();
+    updateMetrics();
+  }
+};
+document.getElementById('btn-reset').onclick = function() {
+  totalHits = 0; totalMisses = 0;
+  buildSteps();
+  resetVisual();
+  draw();
+};
+
+buildSteps();
+draw();
+</script>
+</body>
+</html>

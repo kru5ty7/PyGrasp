@@ -161,6 +161,12 @@ Dirty reads are an unavoidable property of sagas. Between the inventory reservat
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/saga-pattern.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Saga Pattern Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 The Saga pattern is directly tied to event-driven architecture. Choreography sagas are implemented as a chain of events on an event bus.

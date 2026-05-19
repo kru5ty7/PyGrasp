@@ -86,6 +86,12 @@ server {
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/reverse-proxy.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Reverse Proxy Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Nginx is the most common implementation of a reverse proxy for Python applications. Its specific configuration directives are where the abstract concepts above become concrete.

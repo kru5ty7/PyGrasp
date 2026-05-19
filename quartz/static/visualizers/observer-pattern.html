@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Observer Pattern — Visualizer</title>
+<title>Observer Pattern - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -82,7 +82,7 @@
   .arrow-h.green { background: #28a745; }
   .arrow-h.green::after { border-left-color: #28a745; }
 
-  /* diagonal arrows via SVG overlay — simpler: just show text */
+  /* diagonal arrows via SVG overlay - simpler: just show text */
   .conn {
     font-size: .65rem;
     color: #555;
@@ -145,7 +145,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Observer Pattern — Step-Through</h4>
+  <h4>Observer Pattern - Step-Through</h4>
 
   <div class="diagram">
     <!-- top-left: Logger -->
@@ -154,7 +154,7 @@
       <div class="box-body" id="logger-msg">update(event)</div>
     </div>
 
-    <!-- connector top-left to center — just a spacer col -->
+    <!-- connector top-left to center - just a spacer col -->
     <div class="center-col" style="grid-column:2;grid-row:1;">
       <div class="conn" id="conn-logger">&#8599; attached</div>
     </div>
@@ -230,7 +230,7 @@ var steps = [
     arrLogger: '', arrEmail: '',
     subjectBody: 'state = "CRITICAL"\nobservers: [Logger, Email, Dash]',
     loggerMsg: 'waiting...', emailMsg: 'waiting...', dashMsg: 'waiting...',
-    msg: 'subject.set_state("CRITICAL") — Subject state changes (amber). It will now notify all observers.'
+    msg: 'subject.set_state("CRITICAL") - Subject state changes (amber). It will now notify all observers.'
   },
   {
     subject: 'amber', logger: 'amber', email: '', dash: '',

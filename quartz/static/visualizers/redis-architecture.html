@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Redis Architecture - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #mode-row {
+    display: flex; gap: .4rem; margin-bottom: .9rem; flex-wrap: wrap; align-items: center;
+  }
+  #mode-row span { font-size: .75rem; color: #646464; }
+  .m-btn {
+    padding: .28rem .65rem; border: 1px solid #393639; border-radius: 4px; cursor: pointer;
+    font-size: .78rem; background: #2a2a2e; color: #d4d4d4; transition: opacity .15s, border-color .15s;
+  }
+  .m-btn.active { border-color: #dc3545; background: #2a0505; color: #ff8080; }
+  .m-btn:hover:not(.active) { opacity: .75; }
+
+  /* ---- SINGLE MODE ---- */
+  #scene-single { display: none; }
+  .single-layout {
+    display: flex; align-items: center; gap: .5rem; margin-bottom: .75rem;
+    justify-content: center;
+  }
+  .client-box {
+    background: #2a2a2e; border: 1px solid #393639; border-radius: 4px;
+    padding: .45rem .5rem; text-align: center; font-size: .72rem; min-width: 72px;
+    transition: border-color .3s, background .3s;
+  }
+  .client-box .cbt { font-weight: 700; font-size: .75rem; }
+  .redis-box {
+    background: #2a2a2e; border: 1px solid #393639; border-radius: 4px;
+    padding: .5rem .6rem; text-align: center; font-size: .72rem; min-width: 100px;
+    transition: border-color .3s, background .3s;
+  }
+  .redis-box .rbt { font-weight: 700; font-size: .78rem; }
+  .redis-box .rbs { font-size: .67rem; color: #646464; }
+  .mem-box {
+    background: #2a2a2e; border: 1px solid #393639; border-radius: 4px;
+    padding: .45rem .5rem; text-align: center; font-size: .72rem; min-width: 72px;
+    transition: border-color .3s, background .3s;
+  }
+  .mem-box .mbt { font-weight: 700; font-size: .75rem; }
+
+  /* ---- SENTINEL MODE ---- */
+  #scene-sentinel { display: none; }
+  .sent-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: .45rem;
+    margin-bottom: .75rem;
+  }
+  .snode {
+    background: #2a2a2e; border: 1px solid #393639; border-radius: 4px;
+    padding: .4rem .4rem; text-align: center; font-size: .7rem;
+    transition: border-color .3s, background .3s; position: relative;
+    min-height: 56px; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: .18rem;
+  }
+  .snode .snt { font-weight: 700; font-size: .72rem; }
+  .snode .sns { font-size: .63rem; color: #646464; }
+  .snode .sbadge {
+    font-size: .6rem; font-weight: 700; padding: .08rem .26rem;
+    border-radius: 3px; letter-spacing: .03em;
+  }
+  .snode .overlay {
+    position: absolute; inset: 0; display: flex; align-items: center;
+    justify-content: center; font-size: 1.4rem;
+    background: rgba(22,6,6,.6); border-radius: 4px;
+  }
+  .snode.s-primary  { border-color: #28a745; background: #0d2416; }
+  .snode.s-replica  { border-color: #007bff; background: #001830; }
+  .snode.s-sentinel { border-color: #7b5ea7; background: #1a1030; }
+  .snode.s-down     { border-color: #dc3545; background: #2a0505; opacity: .7; }
+  .snode.s-promoted { border-color: #f0a500; background: #2a1a00; }
+  .snode.s-alert    { border-color: #f0a500; background: #2a1a00; }
+  .snode.s-new-rep  { border-color: #007bff; background: #001830; }
+  .badge-green { background: #0d2416; color: #28a745; border: 1px solid #28a745; }
+  .badge-blue  { background: #001830; color: #4da3ff; border: 1px solid #007bff; }
+  .badge-red   { background: #2a0505; color: #ff6b6b; border: 1px solid #dc3545; }
+  .badge-amber { background: #2a1a00; color: #f0a500; border: 1px solid #f0a500; }
+  .badge-purple{ background: #1a1030; color: #b39ddb; border: 1px solid #7b5ea7; }
+
+  #stat {
+    padding: .5rem .75rem; background: #393639;
+    border-left: 3px solid #dc3545;
+    border-radius: 0 4px 4px 0; font-size: .82rem;
+    line-height: 1.5; min-height: 2.4rem; margin-bottom: .6rem;
+  }
+  #note {
+    padding: .35rem .65rem; background: #2a2a2e; border: 1px solid #393639;
+    border-radius: 4px; font-size: .74rem; color: #888;
+    margin-bottom: .75rem; min-height: 1.6rem;
+  }
+  #note strong { color: #dc3545; }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem; border: none; border-radius: 4px; cursor: pointer;
+    font-size: .82rem; background: #393639; color: #d4d4d4; transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+  .arr-h {
+    display: flex; align-items: center; justify-content: center;
+    width: 22px; flex-shrink: 0; font-size: .9rem; color: #646464;
+  }
+  .arr-h.a-fwd  { color: #7b97aa; }
+  .arr-h.a-back { color: #d4a080; }
+  .arr-h.a-rep  { color: #007bff; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Redis Architecture</h4>
+  <div id="mode-row">
+    <span>Mode:</span>
+    <button class="m-btn active" id="m-single"   onclick="selectMode('single')">Single Node</button>
+    <button class="m-btn"        id="m-sentinel" onclick="selectMode('sentinel')">Sentinel (HA)</button>
+  </div>
+
+  <!-- Single mode scene -->
+  <div id="scene-single">
+    <div class="single-layout">
+      <div class="client-box" id="s-client">
+        <div class="cbt">Client</div>
+        <div id="s-client-sub" style="font-size:.67rem;color:#646464">Application</div>
+      </div>
+      <div class="arr-h" id="s-arr1"><span id="s-arr1-sym">→</span></div>
+      <div class="redis-box" id="s-redis">
+        <div class="rbt">Redis</div>
+        <div class="rbs" id="s-redis-sub">Single Node</div>
+      </div>
+      <div class="arr-h" id="s-arr2"><span id="s-arr2-sym">→</span></div>
+      <div class="mem-box" id="s-mem">
+        <div class="mbt">Memory</div>
+        <div id="s-mem-sub" style="font-size:.67rem;color:#646464">keyspace</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sentinel mode scene -->
+  <div id="scene-sentinel">
+    <div class="sent-grid" id="sent-grid">
+      <!-- populated by JS -->
+    </div>
+  </div>
+
+  <div id="stat">Press Step to begin.</div>
+  <div id="note"></div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var mode = 'single';
+var idx = 0;
+var steps = [];
+
+// ---- SINGLE NODE steps ----
+// s: { msg, note, client, redis, mem, arr1, arr2, clientSub, redisSub, memSub }
+var SINGLE_STEPS = [
+  { msg: 'Client connects to the single Redis instance over TCP (port 6379).',
+    client:'blue', redis:'', mem:'',
+    arr1:'fwd', arr2:'', clientSub:'App', redisSub:'Single Node', memSub:'keyspace',
+    note:'' },
+  { msg: 'Client sends SET name "Alice". Redis event loop receives command.',
+    client:'', redis:'amber', mem:'',
+    arr1:'fwd', arr2:'', clientSub:'SET name Alice', redisSub:'Processing...', memSub:'keyspace',
+    note:'<strong>Single thread:</strong> Redis processes one command at a time — atomic by design, no locks needed.' },
+  { msg: 'Redis writes to in-memory keyspace. No disk I/O (unless persistence enabled).',
+    client:'', redis:'green', mem:'green',
+    arr1:'', arr2:'fwd', clientSub:'App', redisSub:'Event Loop', memSub:'name=Alice',
+    note:'<strong>Speed:</strong> Memory access ~100ns vs disk ~100μs — 1000x faster.' },
+  { msg: 'Redis sends "+OK" response. Client receives acknowledgment.',
+    client:'green', redis:'', mem:'',
+    arr1:'back', arr2:'', clientSub:'+OK received', redisSub:'Single Node', memSub:'name=Alice',
+    note:'<strong>I/O multiplexing:</strong> One thread manages thousands of clients via epoll/kqueue.' },
+  { msg: 'Client sends GET name. Redis reads from memory keyspace.',
+    client:'', redis:'amber', mem:'green',
+    arr1:'fwd', arr2:'', clientSub:'GET name', redisSub:'Processing...', memSub:'name=Alice',
+    note:'' },
+  { msg: 'Redis returns "Alice". Full round-trip latency: ~1ms over loopback.',
+    client:'green', redis:'green', mem:'',
+    arr1:'back', arr2:'', clientSub:'"Alice"', redisSub:'Served', memSub:'keyspace',
+    note:'<strong>Limitation:</strong> KEYS * or SMEMBERS on huge sets blocks ALL clients — use SCAN instead.' }
+];
+
+// ---- SENTINEL steps ----
+// Each step: { msg, note, nodes: [ { id, cls, title, sub, badge, dead } ] }
+// node ids: primary, rep1, rep2, sent1, sent2, sent3, clients (optional)
+function mk(id, cls, title, sub, badge, dead) {
+  return { id:id, cls:cls, title:title, sub:sub, badge:badge||null, dead:!!dead };
+}
+
+var SENTINEL_STEPS = [
+  { msg: 'Normal operation: Primary Redis handles all writes. Two replicas receive async replication.',
+    note:'',
+    nodes: [
+      mk('primary','s-primary','Primary','port 6379', { text:'WRITE', cls:'badge-green' }),
+      mk('rep1','s-replica','Replica 1','port 6380', { text:'SYNC', cls:'badge-blue' }),
+      mk('rep2','s-replica','Replica 2','port 6381', { text:'SYNC', cls:'badge-blue' }),
+      mk('sent1','s-sentinel','Sentinel 1','monitor', { text:'WATCH', cls:'badge-purple' }),
+      mk('sent2','s-sentinel','Sentinel 2','monitor', { text:'WATCH', cls:'badge-purple' }),
+      mk('sent3','s-sentinel','Sentinel 3','monitor', { text:'WATCH', cls:'badge-purple' })
+    ]
+  },
+  { msg: 'Primary node goes down (process crash / network partition).',
+    note:'<strong>SDOWN:</strong> Subjectively Down — a single sentinel marks it as unreachable.',
+    nodes: [
+      mk('primary','s-down','Primary','CRASHED', { text:'DOWN', cls:'badge-red' }, true),
+      mk('rep1','s-replica','Replica 1','port 6380', { text:'SYNC?', cls:'badge-blue' }),
+      mk('rep2','s-replica','Replica 2','port 6381', { text:'SYNC?', cls:'badge-blue' }),
+      mk('sent1','s-sentinel','Sentinel 1','SDOWN detected', { text:'SDOWN', cls:'badge-amber' }),
+      mk('sent2','s-sentinel','Sentinel 2','monitor', { text:'WATCH', cls:'badge-purple' }),
+      mk('sent3','s-sentinel','Sentinel 3','monitor', { text:'WATCH', cls:'badge-purple' })
+    ]
+  },
+  { msg: 'Sentinel 1 notifies others. Sentinels 2 and 3 also detect failure — quorum reached.',
+    note:'<strong>ODOWN:</strong> Objectively Down — quorum (≥2 of 3 sentinels) agree the primary is down.',
+    nodes: [
+      mk('primary','s-down','Primary','CRASHED', { text:'DOWN', cls:'badge-red' }, true),
+      mk('rep1','s-replica','Replica 1','port 6380', { text:'REPLICA', cls:'badge-blue' }),
+      mk('rep2','s-replica','Replica 2','port 6381', { text:'REPLICA', cls:'badge-blue' }),
+      mk('sent1','s-sentinel','Sentinel 1','ODOWN', { text:'ODOWN', cls:'badge-red' }),
+      mk('sent2','s-sentinel','Sentinel 2','ODOWN', { text:'ODOWN', cls:'badge-red' }),
+      mk('sent3','s-sentinel','Sentinel 3','ODOWN', { text:'ODOWN', cls:'badge-red' })
+    ]
+  },
+  { msg: 'Sentinels elect a leader among themselves via Raft-like voting.',
+    note:'<strong>Leader election:</strong> The sentinel with the highest priority / lowest run-ID wins the vote.',
+    nodes: [
+      mk('primary','s-down','Primary','CRASHED', { text:'DOWN', cls:'badge-red' }, true),
+      mk('rep1','s-replica','Replica 1','port 6380', { text:'REPLICA', cls:'badge-blue' }),
+      mk('rep2','s-replica','Replica 2','port 6381', { text:'REPLICA', cls:'badge-blue' }),
+      mk('sent1','s-alert','Sentinel 1','LEADER', { text:'LEADER', cls:'badge-amber' }),
+      mk('sent2','s-sentinel','Sentinel 2','voted', { text:'FOLLOWER', cls:'badge-purple' }),
+      mk('sent3','s-sentinel','Sentinel 3','voted', { text:'FOLLOWER', cls:'badge-purple' })
+    ]
+  },
+  { msg: 'Leader Sentinel promotes Replica 1 to primary via REPLICAOF NO ONE.',
+    note:'<strong>Selection:</strong> Sentinel picks the replica with the lowest replication lag.',
+    nodes: [
+      mk('primary','s-down','Primary','CRASHED', { text:'DOWN', cls:'badge-red' }, true),
+      mk('rep1','s-promoted','Replica 1','PROMOTING', { text:'PROMOTED', cls:'badge-amber' }),
+      mk('rep2','s-replica','Replica 2','port 6381', { text:'REPLICA', cls:'badge-blue' }),
+      mk('sent1','s-alert','Sentinel 1','issuing cmd', { text:'LEADER', cls:'badge-amber' }),
+      mk('sent2','s-sentinel','Sentinel 2','monitor', { text:'WATCH', cls:'badge-purple' }),
+      mk('sent3','s-sentinel','Sentinel 3','monitor', { text:'WATCH', cls:'badge-purple' })
+    ]
+  },
+  { msg: 'Replica 1 is now Primary. Replica 2 is pointed at the new primary.',
+    note:'',
+    nodes: [
+      mk('primary','s-down','Old Primary','OFFLINE', { text:'DEAD', cls:'badge-red' }, true),
+      mk('rep1','s-primary','New Primary','port 6380 ✦', { text:'PRIMARY', cls:'badge-green' }),
+      mk('rep2','s-new-rep','Replica 2','→ new primary', { text:'RESYNCING', cls:'badge-blue' }),
+      mk('sent1','s-sentinel','Sentinel 1','updated config', { text:'WATCH', cls:'badge-purple' }),
+      mk('sent2','s-sentinel','Sentinel 2','updated config', { text:'WATCH', cls:'badge-purple' }),
+      mk('sent3','s-sentinel','Sentinel 3','updated config', { text:'WATCH', cls:'badge-purple' })
+    ]
+  },
+  { msg: 'Clients query sentinels for the new primary address and reconnect. Service restored.',
+    note:'<strong>Client flow:</strong> Client asks any sentinel: "who is the primary?" → gets new address → reconnects.',
+    nodes: [
+      mk('primary','s-down','Old Primary','OFFLINE', { text:'DEAD', cls:'badge-red' }, true),
+      mk('rep1','s-primary','New Primary','port 6380 ✦', { text:'SERVING', cls:'badge-green' }),
+      mk('rep2','s-replica','Replica 2','port 6381', { text:'SYNC', cls:'badge-blue' }),
+      mk('sent1','s-sentinel','Sentinel 1','ready', { text:'READY', cls:'badge-purple' }),
+      mk('sent2','s-sentinel','Sentinel 2','ready', { text:'READY', cls:'badge-purple' }),
+      mk('sent3','s-sentinel','Sentinel 3','ready', { text:'READY', cls:'badge-purple' })
+    ]
+  }
+];
+
+function colorClass(c) {
+  if (!c) return '';
+  if (c === 'blue')  return 'border-color:#007bff;background:#001830';
+  if (c === 'amber') return 'border-color:#f0a500;background:#2a1a00';
+  if (c === 'green') return 'border-color:#28a745;background:#0d2416';
+  return '';
+}
+
+function selectMode(m) {
+  mode = m;
+  ['single','sentinel'].forEach(function(id) {
+    document.getElementById('m-' + id).className = 'm-btn' + (id === m ? ' active' : '');
+  });
+  document.getElementById('scene-single').style.display   = m === 'single'   ? '' : 'none';
+  document.getElementById('scene-sentinel').style.display = m === 'sentinel' ? '' : 'none';
+  idx = 0;
+  steps = m === 'single' ? SINGLE_STEPS : SENTINEL_STEPS;
+  draw();
+}
+
+function drawSingle(s) {
+  function applyStyle(elId, col) {
+    var el = document.getElementById(elId);
+    if (!el) return;
+    el.style.cssText = col ? colorClass(col) : '';
+  }
+  applyStyle('s-client', s.client);
+  applyStyle('s-redis',  s.redis);
+  applyStyle('s-mem',    s.mem);
+
+  var a1Map = { fwd:'a-fwd', back:'a-back' };
+  var a1 = document.getElementById('s-arr1');
+  a1.className = 'arr-h ' + (a1Map[s.arr1] || '');
+  document.getElementById('s-arr1-sym').textContent = s.arr1 === 'back' ? '←' : '→';
+
+  var a2Map = { fwd:'a-fwd', back:'a-back' };
+  var a2 = document.getElementById('s-arr2');
+  a2.className = 'arr-h ' + (a2Map[s.arr2] || '');
+  document.getElementById('s-arr2-sym').textContent = s.arr2 === 'back' ? '←' : '→';
+
+  document.getElementById('s-client-sub').textContent = s.clientSub || '';
+  document.getElementById('s-redis-sub').textContent  = s.redisSub  || '';
+  document.getElementById('s-mem-sub').textContent    = s.memSub    || '';
+}
+
+function drawSentinel(s) {
+  var grid = document.getElementById('sent-grid');
+  grid.innerHTML = '';
+  s.nodes.forEach(function(n) {
+    var div = document.createElement('div');
+    div.className = 'snode ' + n.cls;
+
+    var title = document.createElement('div');
+    title.className = 'snt';
+    title.textContent = n.title;
+    div.appendChild(title);
+
+    var sub = document.createElement('div');
+    sub.className = 'sns';
+    sub.textContent = n.sub;
+    div.appendChild(sub);
+
+    if (n.badge) {
+      var b = document.createElement('div');
+      b.className = 'sbadge ' + n.badge.cls;
+      b.textContent = n.badge.text;
+      div.appendChild(b);
+    }
+    if (n.dead) {
+      var ov = document.createElement('div');
+      ov.className = 'overlay';
+      ov.textContent = '✕';
+      div.appendChild(ov);
+    }
+    grid.appendChild(div);
+  });
+}
+
+function draw() {
+  var s = steps[idx];
+  if (mode === 'single') drawSingle(s);
+  else drawSentinel(s);
+
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('note').innerHTML   = s.note || '';
+
+  var done = idx === steps.length - 1;
+  document.getElementById('btn-step').disabled = done;
+  document.getElementById('btn-step').textContent = done ? 'Done ✓' : 'Step →';
+  document.getElementById('btn-back').disabled = idx === 0;
+  document.getElementById('counter').textContent = 'Step ' + (idx + 1) + ' / ' + steps.length;
+}
+
+document.getElementById('btn-step').onclick = function() {
+  if (idx < steps.length - 1) { idx++; draw(); }
+};
+document.getElementById('btn-back').onclick = function() {
+  if (idx > 0) { idx--; draw(); }
+};
+document.getElementById('btn-reset').onclick = function() {
+  idx = 0; draw();
+};
+
+// init
+document.getElementById('scene-single').style.display = '';
+document.getElementById('scene-sentinel').style.display = 'none';
+steps = SINGLE_STEPS;
+draw();
+</script>
+</body>
+</html>

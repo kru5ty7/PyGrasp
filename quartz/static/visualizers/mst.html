@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MST — Kruskal's Algorithm</title>
+<title>MST - Kruskal's Algorithm</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -72,7 +72,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Minimum Spanning Tree — Kruskal's Algorithm</h4>
+  <h4>Minimum Spanning Tree - Kruskal's Algorithm</h4>
   <div id="main">
     <div id="graph-col">
       <svg id="graph-svg" viewBox="0 0 300 240" height="210">
@@ -191,7 +191,7 @@ function buildSteps() {
       snap('Add '+u+'-'+v+' to MST (no cycle). MST weight = '+mstWeight+'.', null, false);
     } else {
       est[eid]='skipped';
-      snap('Skip '+u+'-'+v+' (would create a cycle — '+u+' and '+v+' already connected).', null, false);
+      snap('Skip '+u+'-'+v+' (would create a cycle - '+u+' and '+v+' already connected).', null, false);
     }
 
     if (mstEdges === NODES.length-1) {

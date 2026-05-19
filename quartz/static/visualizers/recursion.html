@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Recursion — Call Stack Visualizer</title>
+<title>Recursion - Call Stack Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -110,7 +110,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Recursion — Call Stack Visualizer</h4>
+  <h4>Recursion - Call Stack Visualizer</h4>
   <div class="input-row">
     <label for="prob-sel">Function:</label>
     <select id="prob-sel">
@@ -126,7 +126,7 @@
   <div id="stack-area"></div>
   <div id="trace-area">
     <div class="trace-label">Return Trace</div>
-    <div id="trace-body">—</div>
+    <div id="trace-body">-</div>
   </div>
   <div id="stat">Press Step to begin.</div>
   <div id="ctrl">
@@ -144,7 +144,7 @@ var steps = [], idx = 0;
 
 function buildFactorialSteps(n) {
   var s = [];
-  s.push({ frames: [], trace: '—', msg: 'Call stack empty. Ready to call factorial(' + n + ').', done: false });
+  s.push({ frames: [], trace: '-', msg: 'Call stack empty. Ready to call factorial(' + n + ').', done: false });
 
   /* Push frames going down */
   var frames = [];
@@ -162,13 +162,13 @@ function buildFactorialSteps(n) {
     var msg = i > 0
       ? 'Push: factorial(' + i + '). Calls factorial(' + (i-1) + ') next.'
       : 'Base case: factorial(0) = 1. Start unwinding.';
-    s.push({ frames: frames.map(function(f){ return Object.assign({},f); }), trace: '—', msg: msg, done: false });
+    s.push({ frames: frames.map(function(f){ return Object.assign({},f); }), trace: '-', msg: msg, done: false });
   }
 
-  /* Unwind — compute return values */
+  /* Unwind - compute return values */
   var returnVals = new Array(n + 1).fill(null);
   returnVals[0] = 1;
-  var traceStr = '—';
+  var traceStr = '-';
   for (var i = 0; i <= n; i++) {
     if (i === 0) {
       /* resolve base case */
@@ -205,7 +205,7 @@ function buildFactorialSteps(n) {
 
 function buildFibonacciSteps(n) {
   var s = [];
-  s.push({ frames: [], trace: '—', msg: 'Call stack empty. Ready to call fibonacci(' + n + ').', done: false });
+  s.push({ frames: [], trace: '-', msg: 'Call stack empty. Ready to call fibonacci(' + n + ').', done: false });
   var events = [];
   var memo = {};
 
@@ -225,10 +225,10 @@ function buildFibonacciSteps(n) {
   }
   simulate(n, 0);
 
-  /* Replay events into steps — maintain an explicit stack of {call, state} */
+  /* Replay events into steps - maintain an explicit stack of {call, state} */
   var stack = [];
   var resolved = {};
-  var traceStr = '—';
+  var traceStr = '-';
   for (var ei = 0; ei < events.length; ei++) {
     var ev = events[ei];
     if (ev.type === 'push') {
@@ -239,7 +239,7 @@ function buildFibonacciSteps(n) {
       newStack.push({ call: 'fibonacci(' + ev.n + ')', returnVal: null, state: 'active' });
       stack = newStack;
       var pushMsg = ev.n <= 1
-        ? 'Push: fibonacci(' + ev.n + '). Base case — returns ' + ev.n + '.'
+        ? 'Push: fibonacci(' + ev.n + '). Base case - returns ' + ev.n + '.'
         : 'Push: fibonacci(' + ev.n + '). Will call fib(' + (ev.n-1) + ') then fib(' + (ev.n-2) + ').';
       s.push({ frames: stack.map(function(f){return Object.assign({},f);}), trace: traceStr, msg: pushMsg, done: false });
     } else {
@@ -274,7 +274,7 @@ function renderStep() {
     stackEl.innerHTML = '<div style="color:#646464;font-size:.75rem;text-align:center;padding:.5rem">Stack is empty</div>';
   } else {
     var html = '';
-    /* frames[0]=bottom, frames[last]=top — we display top first (column-reverse layout) */
+    /* frames[0]=bottom, frames[last]=top - we display top first (column-reverse layout) */
     for (var i = s.frames.length - 1; i >= 0; i--) {
       var f = s.frames[i];
       var cls = 'frame';
@@ -287,7 +287,7 @@ function renderStep() {
     stackEl.innerHTML = html;
   }
 
-  document.getElementById('trace-body').textContent = s.trace || '—';
+  document.getElementById('trace-body').textContent = s.trace || '-';
   document.getElementById('stat').textContent = s.msg;
   document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
   document.getElementById('btn-step').disabled = !!s.done;

@@ -94,6 +94,12 @@ Pipeline pipelining sends multiple commands to Redis without waiting for each re
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/redis-architecture.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Redis Architecture Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Redis's single-threaded architecture makes it an ideal distributed lock and counter store. These use cases exploit the atomicity of individual commands.

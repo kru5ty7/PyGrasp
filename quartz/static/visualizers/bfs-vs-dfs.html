@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BFS vs DFS — Visualizer</title>
+<title>BFS vs DFS - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -76,7 +76,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>BFS vs DFS — Side by Side</h4>
+  <h4>BFS vs DFS - Side by Side</h4>
   <div id="input-row">
     <label for="start-sel">Start node:</label>
     <select id="start-sel">
@@ -108,7 +108,7 @@
         <circle id="bF" cx="175" cy="182" r="14" fill="#4a4a4c" stroke="#393639" stroke-width="1.5"/>
         <text id="btF" x="175" y="187" text-anchor="middle" font-size="11" font-weight="bold" fill="#d4d4d4">F</text>
       </svg>
-      <div class="order-panel"><strong>BFS Order</strong><span id="bfs-order">—</span></div>
+      <div class="order-panel"><strong>BFS Order</strong><span id="bfs-order">-</span></div>
     </div>
     <div class="gcol">
       <h5>DFS (Stack)</h5>
@@ -132,7 +132,7 @@
         <circle id="dF" cx="175" cy="182" r="14" fill="#4a4a4c" stroke="#393639" stroke-width="1.5"/>
         <text id="dtF" x="175" y="187" text-anchor="middle" font-size="11" font-weight="bold" fill="#d4d4d4">F</text>
       </svg>
-      <div class="order-panel"><strong>DFS Order</strong><span id="dfs-order">—</span></div>
+      <div class="order-panel"><strong>DFS Order</strong><span id="dfs-order">-</span></div>
     </div>
   </div>
   <div id="legend">
@@ -228,8 +228,8 @@ function draw() {
   var d = dfsSteps[idx];
   setGraph('b', b.st);
   setGraph('d', d.st);
-  document.getElementById('bfs-order').textContent = b.v.length ? b.v.join(' → ') : '—';
-  document.getElementById('dfs-order').textContent = d.v.length ? d.v.join(' → ') : '—';
+  document.getElementById('bfs-order').textContent = b.v.length ? b.v.join(' → ') : '-';
+  document.getElementById('dfs-order').textContent = d.v.length ? d.v.join(' → ') : '-';
   document.getElementById('stat').textContent = b.msg + '  |  ' + d.msg;
   document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.len-1);
   var done = (idx === steps.len-1);

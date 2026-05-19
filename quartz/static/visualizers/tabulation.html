@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Tabulation — Visualizer</title>
+<title>Tabulation - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -99,7 +99,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Tabulation — Step-Through</h4>
+  <h4>Tabulation - Step-Through</h4>
   <div class="input-row">
     <label for="prob-sel">Problem:</label>
     <select id="prob-sel">
@@ -131,7 +131,7 @@ var steps = [], idx = 0, currentProb = 'fib';
 function buildFibSteps(n) {
   var dp = new Array(n + 1).fill(null);
   var s = [];
-  s.push({ dp: dp.slice(), reading: [], current: -1, arrows: [], msg: 'Initial table — all cells empty.', n: n });
+  s.push({ dp: dp.slice(), reading: [], current: -1, arrows: [], msg: 'Initial table - all cells empty.', n: n });
   dp[0] = 0; if (n >= 1) dp[1] = 1;
   s.push({ dp: dp.slice(), reading: [], current: -1, arrows: [], msg: 'Base cases: dp[0]=0, dp[1]=1 (filled directly, no recurrence).', n: n });
   for (var i = 2; i <= n; i++) {
@@ -159,7 +159,7 @@ function buildKnapsackSteps() {
   var dp = [];
   for (var i = 0; i <= m; i++) { dp.push(new Array(W + 1).fill(0)); }
   var s = [];
-  s.push({ dp: copyDP(dp), reading: [], current: null, msg: 'Initial 2D table — rows=items+1, cols=capacity 0–' + W + '.', done: false });
+  s.push({ dp: copyDP(dp), reading: [], current: null, msg: 'Initial 2D table - rows=items+1, cols=capacity 0–' + W + '.', done: false });
   s.push({ dp: copyDP(dp), reading: [], current: null, msg: 'Row 0 (no items): all zeros (base case).', done: false });
 
   for (var i = 1; i <= m; i++) {
@@ -229,7 +229,7 @@ function renderFib(s) {
   /* arrow SVG for dependencies */
   var arrowSvg = '';
   if (s.arrows && s.arrows.length) {
-    /* we render arrows below the cells — use relative coords based on cell width */
+    /* we render arrows below the cells - use relative coords based on cell width */
     var cellW = 48, gap = 4;
     var svgW = dp.length * (cellW + gap);
     arrowSvg = '<svg id="arrow-svg" width="' + svgW + '" height="24" style="margin-top:0">';

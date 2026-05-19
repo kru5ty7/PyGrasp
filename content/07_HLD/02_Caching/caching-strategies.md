@@ -114,6 +114,12 @@ The cache-aside write strategy has two variants. The simpler variant is to delet
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/caching-strategies.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Caching Strategies Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 All caching strategies must eventually deal with the question of when cached data becomes invalid and must be removed or refreshed. Cache invalidation is the mechanism; the strategy determines when invalidation is triggered.

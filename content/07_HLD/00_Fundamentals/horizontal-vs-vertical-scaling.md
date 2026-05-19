@@ -75,6 +75,12 @@ class APIServer:
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/horizontal-vs-vertical-scaling.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Horizontal vs Vertical Scaling Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Horizontal scaling requires distributing incoming requests across multiple instances. The system that does this distribution and monitors which instances are healthy is the load balancer.

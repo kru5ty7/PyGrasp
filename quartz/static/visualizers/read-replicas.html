@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Read Replicas - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  /* App box */
+  #app-box {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 6px;
+    overflow: hidden;
+    margin-bottom: .4rem;
+    transition: border .2s;
+  }
+  #app-box .box-header {
+    background: #284b63;
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    padding: .3rem .6rem;
+  }
+  #app-box .box-body {
+    display: flex;
+    gap: .5rem;
+    padding: .45rem .6rem;
+    font-size: .73rem;
+    color: #999;
+  }
+  .path-pill {
+    flex: 1;
+    background: #393639;
+    border-radius: 4px;
+    padding: .3rem .5rem;
+    font-size: .7rem;
+    color: #999;
+    text-align: center;
+    transition: background .2s, color .2s;
+  }
+  .path-pill.write-active { background: #f0a50022; color: #f0a500; border: 1px solid #f0a500; }
+  .path-pill.read-active  { background: #007bff22; color: #007bff; border: 1px solid #007bff; }
+  /* Arrow row */
+  .arrow-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: .3rem;
+    margin: .2rem 0;
+    font-size: .7rem;
+    color: #555;
+  }
+  .arrow-row .seg { display: flex; align-items: center; gap: .2rem; flex: 1; }
+  .arrow-line {
+    height: 2px;
+    background: #393639;
+    flex: 1;
+    transition: background .2s;
+  }
+  .arrow-line.write-act { background: #f0a500; }
+  .arrow-line.read-act  { background: #007bff; }
+  .arrow-line.replic    { background: #28a745; }
+  .arrow-line.dashed    { background: repeating-linear-gradient(to right, #393639 0, #393639 4px, transparent 4px, transparent 8px); }
+  .arrow-line.dashed.replic { background: repeating-linear-gradient(to right, #28a745 0, #28a745 4px, transparent 4px, transparent 8px); }
+  .arr-head { font-size: .75rem; transition: color .2s; }
+  .arr-head.write-act { color: #f0a500; }
+  .arr-head.read-act  { color: #007bff; }
+  .arr-head.replic    { color: #28a745; }
+  /* DB nodes */
+  #db-row {
+    display: flex;
+    gap: .5rem;
+    margin-bottom: .6rem;
+  }
+  .db-node {
+    flex: 1;
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 6px;
+    overflow: hidden;
+    transition: border .2s;
+    position: relative;
+  }
+  .db-node .db-header {
+    font-size: .68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    padding: .28rem .5rem;
+    display: flex;
+    align-items: center;
+    gap: .3rem;
+  }
+  .db-node.primary .db-header { background: #284b63; }
+  .db-node.replica .db-header { background: #1a3a2a; }
+  .db-node .badge {
+    font-size: .6rem;
+    font-weight: 700;
+    border-radius: 3px;
+    padding: .05rem .25rem;
+    background: #555;
+    color: #fff;
+    margin-left: auto;
+  }
+  .db-node.primary .badge { background: #f0a500; color: #000; }
+  .db-node.replica .badge { background: #28a745; color: #fff; }
+  .db-node .db-body {
+    padding: .4rem .5rem;
+    font-size: .7rem;
+    color: #999;
+    min-height: 2.6rem;
+    line-height: 1.5;
+  }
+  .db-node .lag-badge {
+    display: none;
+    font-size: .6rem;
+    background: #dc3545;
+    color: #fff;
+    padding: .05rem .3rem;
+    border-radius: 3px;
+    margin: 0 .5rem .35rem;
+  }
+  .db-node .lag-badge.show { display: inline-block; }
+  .db-node.amber-glow { border: 2px solid #f0a500; }
+  .db-node.green-glow { border: 2px solid #28a745; }
+  .db-node.blue-glow  { border: 2px solid #007bff; }
+  .db-node.red-glow   { border: 2px solid #dc3545; }
+  /* Status */
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .82rem;
+    line-height: 1.55;
+    min-height: 2.6rem;
+    margin-bottom: .75rem;
+  }
+  /* Controls */
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+  /* multi-read row */
+  #multi-read {
+    display: none;
+    margin-bottom: .5rem;
+    gap: .3rem;
+  }
+  #multi-read.show { display: flex; }
+  .read-arrow {
+    flex: 1;
+    text-align: center;
+    font-size: .65rem;
+    color: #007bff;
+    padding: .2rem .3rem;
+    background: #007bff18;
+    border: 1px solid #007bff44;
+    border-radius: 4px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Read Replicas - Step-Through</h4>
+
+  <div id="app-box">
+    <div class="box-header">Application</div>
+    <div class="box-body">
+      <div class="path-pill" id="pill-write">Write Path → Primary</div>
+      <div class="path-pill" id="pill-read">Read Path → Load Balancer → Replica</div>
+    </div>
+  </div>
+
+  <div class="arrow-row" id="arr-top">
+    <div class="seg">
+      <div class="arrow-line" id="al-write"></div>
+      <span class="arr-head" id="ah-write">▼</span>
+    </div>
+    <div style="width:.5rem;"></div>
+    <div class="seg">
+      <div class="arrow-line dashed" id="al-read"></div>
+      <span class="arr-head" id="ah-read">▼</span>
+    </div>
+  </div>
+
+  <div id="db-row">
+    <div class="db-node primary" id="node-primary">
+      <div class="db-header">Primary DB <span class="badge">W</span></div>
+      <div class="db-body" id="body-primary">Leader — accepts all writes.</div>
+    </div>
+    <div class="db-node replica" id="node-rep1">
+      <div class="db-header">Replica 1 <span class="badge">R</span></div>
+      <div class="db-body" id="body-rep1">Follower — read-only.</div>
+      <span class="lag-badge" id="lag1">Lag ~10ms</span>
+    </div>
+    <div class="db-node replica" id="node-rep2">
+      <div class="db-header">Replica 2 <span class="badge">R</span></div>
+      <div class="db-body" id="body-rep2">Follower — read-only.</div>
+      <span class="lag-badge" id="lag2">Lag ~10ms</span>
+    </div>
+  </div>
+
+  <div id="multi-read">
+    <div class="read-arrow">READ #1 → Replica 1</div>
+    <div class="read-arrow">READ #2 → Replica 2</div>
+    <div class="read-arrow">READ #3 → Replica 1</div>
+  </div>
+
+  <div id="stat">Press Step to begin the read replica walkthrough.</div>
+
+  <div id="ctrl">
+    <button id="btn-back" disabled>◀ Back</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var stepIdx = 0;
+
+var STEPS = [
+  // Step 0 — initial
+  function() {
+    setApp('', '');
+    setNode('primary', '', 'Leader — accepts all writes.');
+    setNode('rep1', '', 'Follower — read-only.');
+    setNode('rep2', '', 'Follower — read-only.');
+    setArrows('', '');
+    showLag(false, false);
+    showMulti(false);
+    stat('Initial state: one Primary (W) accepts all writes. Two Replicas (R) receive the replication stream and serve reads.');
+  },
+  // Step 1 — App writes to Primary
+  function() {
+    setApp('write-active', '');
+    setNode('primary', 'amber-glow', 'Received WRITE from app. Storing row...');
+    setNode('rep1', '', 'Waiting for replication log.');
+    setNode('rep2', '', 'Waiting for replication log.');
+    setArrows('write-act', '');
+    showLag(false, false);
+    showMulti(false);
+    stat('Step 1 — App sends a WRITE (INSERT) to the Primary. The Primary is the only node that accepts writes. It glows amber while processing.');
+  },
+  // Step 2 — Primary replicates to Replica 1
+  function() {
+    setApp('write-active', '');
+    setNode('primary', 'green-glow', 'Write committed. Streaming WAL log to replicas...');
+    setNode('rep1', 'amber-glow', 'Applying replication log — row arriving...');
+    setNode('rep2', '', 'Waiting for replication log.');
+    setArrows('replic', '');
+    showLag(true, false);
+    showMulti(false);
+    stat('Step 2 — Primary replicates asynchronously to Replica 1 via WAL stream (dashed = async). Replica 1 lags slightly behind the Primary (~10ms under normal load).');
+  },
+  // Step 3 — Primary replicates to Replica 2
+  function() {
+    setApp('write-active', '');
+    setNode('primary', 'green-glow', 'Write committed. All replicas catching up.');
+    setNode('rep1', 'green-glow', 'Synced — row applied.');
+    setNode('rep2', 'amber-glow', 'Applying replication log — row arriving...');
+    setArrows('replic', '');
+    showLag(true, true);
+    showMulti(false);
+    stat('Step 3 — Primary replicates to Replica 2 (dashed arrow). Both replicas carry a "Lag ~10ms" badge — this is the replication lag. Reads during this window may return slightly stale data.');
+  },
+  // Step 4 — App issues READ, routed to Replica 1
+  function() {
+    setApp('', 'read-active');
+    setNode('primary', '', 'Idle — serving write path only.');
+    setNode('rep1', 'blue-glow', 'Serving READ query from load balancer...');
+    setNode('rep2', 'green-glow', 'Synced — available for reads.');
+    setArrows('', 'read-act');
+    showLag(true, true);
+    showMulti(false);
+    stat('Step 4 — App issues a SELECT query. The load balancer routes it to Replica 1 (blue). The Primary is free for writes only — its CPU and I/O are not consumed by reads.');
+  },
+  // Step 5 — Replica 1 returns data, lag warning
+  function() {
+    setApp('', 'read-active');
+    setNode('primary', '', 'Primary did not serve this read.');
+    setNode('rep1', 'blue-glow', 'Returned result to app. Note: may be ~10ms stale.');
+    setNode('rep2', 'green-glow', 'Synced — ready for next read.');
+    setArrows('', 'read-act');
+    showLag(true, true);
+    showMulti(false);
+    stat('Step 5 — Replica 1 returns data. Result may be up to ~10ms stale (replication lag). For most reads this is acceptable. For "read-your-writes" correctness, route post-write reads to the Primary instead.');
+  },
+  // Step 6 — High read load: 3 reads distributed across 2 replicas
+  function() {
+    setApp('', 'read-active');
+    setNode('primary', '', 'Primary — writes only. Load: low.');
+    setNode('rep1', 'blue-glow', 'Serving 2 simultaneous READ queries.');
+    setNode('rep2', 'blue-glow', 'Serving 1 READ query.');
+    setArrows('', 'read-act');
+    showLag(true, true);
+    showMulti(true);
+    stat('Step 6 — Under high read load, the load balancer distributes 3 simultaneous reads across both replicas. 2× replicas = roughly 2× read throughput. Adding a 3rd replica scales linearly.');
+  },
+  // Step 7 — Primary fails
+  function() {
+    setApp('write-active', '');
+    setNode('primary', 'red-glow', 'FAILED — not responding. Writes paused.');
+    setNode('rep1', 'blue-glow', 'Still serving reads from local data.');
+    setNode('rep2', 'blue-glow', 'Still serving reads from local data.');
+    setArrows('', '');
+    showLag(true, true);
+    showMulti(false);
+    stat('Step 7 — Primary fails (red). Writes pause until a replica is promoted. Replicas continue serving reads from their local copy — READ availability is maintained. This is the decoupled fault isolation benefit of read replicas.');
+  }
+];
+
+var TOTAL = STEPS.length;
+
+function setApp(writeClass, readClass) {
+  document.getElementById('pill-write').className = 'path-pill' + (writeClass ? ' ' + writeClass : '');
+  document.getElementById('pill-read').className = 'path-pill' + (readClass ? ' ' + readClass : '');
+}
+
+function setNode(id, glowCls, bodyText) {
+  var isReplica = id !== 'primary';
+  var base = 'db-node ' + (isReplica ? 'replica' : 'primary');
+  document.getElementById('node-' + id).className = base + (glowCls ? ' ' + glowCls : '');
+  document.getElementById('body-' + id).textContent = bodyText;
+}
+
+function setArrows(writeState, readState) {
+  var al = document.getElementById('al-write');
+  var ah = document.getElementById('ah-write');
+  al.className = 'arrow-line' + (writeState ? ' ' + writeState : '');
+  ah.className = 'arr-head' + (writeState ? ' ' + writeState : '');
+
+  var rl = document.getElementById('al-read');
+  var rh = document.getElementById('ah-read');
+  rl.className = 'arrow-line dashed' + (readState ? ' ' + readState : '');
+  rh.className = 'arr-head' + (readState ? ' ' + readState : '');
+}
+
+function showLag(r1, r2) {
+  document.getElementById('lag1').className = 'lag-badge' + (r1 ? ' show' : '');
+  document.getElementById('lag2').className = 'lag-badge' + (r2 ? ' show' : '');
+}
+
+function showMulti(on) {
+  document.getElementById('multi-read').className = on ? 'show' : '';
+}
+
+function stat(msg) {
+  document.getElementById('stat').textContent = msg;
+}
+
+function draw() {
+  STEPS[stepIdx]();
+  document.getElementById('counter').textContent = 'Step ' + stepIdx + ' / ' + (TOTAL - 1);
+  document.getElementById('btn-step').disabled = stepIdx >= TOTAL - 1;
+  document.getElementById('btn-back').disabled = stepIdx === 0;
+  if (stepIdx === TOTAL - 1) {
+    document.getElementById('btn-step').textContent = 'Done ✓';
+  } else {
+    document.getElementById('btn-step').textContent = 'Step →';
+  }
+}
+
+document.getElementById('btn-step').onclick = function() {
+  if (stepIdx < TOTAL - 1) { stepIdx++; draw(); }
+};
+document.getElementById('btn-back').onclick = function() {
+  if (stepIdx > 0) { stepIdx--; draw(); }
+};
+document.getElementById('btn-reset').onclick = function() {
+  stepIdx = 0; draw();
+};
+
+draw();
+</script>
+</body>
+</html>

@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reverse Proxy - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #toggle-row {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: 1rem;
+  }
+  .tog-btn {
+    flex: 1;
+    padding: .35rem .6rem;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #2a2a2e;
+    color: #d4d4d4;
+    text-align: center;
+    transition: opacity .15s;
+  }
+  .tog-btn.active { background: #284b63; border-color: #7b97aa; color: #fff; }
+  .tog-btn:hover:not(.active) { opacity: .75; }
+  #diagram {
+    margin-bottom: .75rem;
+  }
+  .flow-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .3rem;
+  }
+  .box {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .35rem .7rem;
+    font-size: .82rem;
+    text-align: center;
+    min-width: 90px;
+    transition: border .2s, background .2s;
+  }
+  .box.active { border: 2px solid #f0a500; background: #2e2810; }
+  .box.success { border: 2px solid #28a745; background: #0e2018; }
+  .box.dim { opacity: .35; }
+  .box.cache-hit { border: 2px solid #28a745; background: #0e2018; }
+  .arrow { color: #646464; font-size: .85rem; text-align: center; }
+  .arrow.active { color: #f0a500; }
+  .arrow.success { color: #28a745; }
+  .backend-row {
+    display: flex;
+    justify-content: center;
+    gap: .5rem;
+  }
+  .cache-badge {
+    font-size: .68rem;
+    margin-top: .2rem;
+    padding: .1rem .35rem;
+    border-radius: 3px;
+    background: #1e2e1e;
+    color: #28a745;
+  }
+  .cache-badge.miss { background: #2e1e1e; color: #f0a500; }
+  .ssl-note {
+    font-size: .72rem;
+    color: #7b97aa;
+    text-align: center;
+    margin-top: .3rem;
+    padding: .25rem .5rem;
+    background: #1a2030;
+    border-radius: 3px;
+  }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Reverse Proxy - Request Flow</h4>
+  <div id="toggle-row">
+    <div class="tog-btn active" id="btn-miss" onclick="setScenario('miss')">Cache Miss Flow</div>
+    <div class="tog-btn" id="btn-hit" onclick="setScenario('hit')">Cached Request</div>
+  </div>
+  <div id="diagram"></div>
+  <div id="stat"></div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>◀ Back</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+// highlight: 'client'|'proxy'|'backend'|'response'
+var scenarios = {
+  miss: [
+    {
+      client: '', arrow1: '', proxy: '', cache: '', arrow2: '', backend: '', msg:
+        'Cache Miss scenario: client sends first request. Press Step to begin.',
+      proxyNote: '', sslNote: false
+    },
+    {
+      client: 'active', arrow1: 'active', proxy: '', cache: '', arrow2: '', backend: '', msg:
+        'Step 1: Client sends GET /image.png to proxy IP. Client sees only the proxy - backend is hidden.',
+      sslNote: true
+    },
+    {
+      client: '', arrow1: '', proxy: 'active', cache: 'miss', arrow2: '', backend: '', msg:
+        'Step 2: Proxy receives request. Checks cache → CACHE MISS (first request).',
+      sslNote: true
+    },
+    {
+      client: '', arrow1: '', proxy: 'active', cache: 'miss', arrow2: 'active', backend: 'active', msg:
+        'Step 3: Proxy forwards request to Backend S1 (selected by load balancing).',
+      sslNote: true
+    },
+    {
+      client: '', arrow1: '', proxy: '', cache: 'miss', arrow2: 'success', backend: 'success', msg:
+        'Step 4: Backend S1 processes request and sends response back to proxy.',
+      sslNote: true
+    },
+    {
+      client: '', arrow1: '', proxy: 'success', cache: 'hit', arrow2: '', backend: '', msg:
+        'Step 5: Proxy stores response in cache (TTL set). Future requests will be served from cache.',
+      sslNote: true
+    },
+    {
+      client: 'success', arrow1: 'success', proxy: 'success', cache: 'hit', arrow2: '', backend: '', msg:
+        'Step 6: Proxy returns response to client. Client never knew about backend servers. TLS terminated at proxy.',
+      sslNote: true
+    }
+  ],
+  hit: [
+    {
+      client: '', arrow1: '', proxy: '', cache: 'hit', arrow2: '', backend: '', msg:
+        'Cached Request scenario: proxy already has image.png cached from a previous request. Press Step to begin.',
+      sslNote: false
+    },
+    {
+      client: 'active', arrow1: 'active', proxy: '', cache: 'hit', arrow2: '', backend: '', msg:
+        'Step 1: Client sends GET /image.png to proxy IP.',
+      sslNote: true
+    },
+    {
+      client: '', arrow1: '', proxy: 'success', cache: 'hit', arrow2: '', backend: '', msg:
+        'Step 2: Proxy checks cache → CACHE HIT! (TTL still valid). No backend request needed.',
+      sslNote: true
+    },
+    {
+      client: 'success', arrow1: 'success', proxy: 'success', cache: 'hit', arrow2: '', backend: 'dim', msg:
+        'Step 3: Proxy serves directly from cache. Backends untouched. "Client never knows about backend servers." Latency: ~5ms vs ~50ms.',
+      sslNote: true
+    }
+  ]
+};
+
+var scenario = 'miss';
+var idx = 0;
+
+function cls(base, extra) { return base + (extra ? ' ' + extra : ''); }
+
+function render() {
+  var steps = scenarios[scenario];
+  var s = steps[idx];
+
+  var html = '<div class="flow-col">';
+  html += '<div class="' + cls('box', s.client) + '">Client</div>';
+  html += '<div class="' + cls('arrow', s.arrow1) + '">↕ HTTPS</div>';
+  html += '<div class="' + cls('box', s.proxy) + '">Reverse Proxy';
+  if (s.cache === 'hit') {
+    html += '<div class="cache-badge">cache HIT ✓</div>';
+  } else if (s.cache === 'miss') {
+    html += '<div class="cache-badge miss">cache MISS</div>';
+  }
+  html += '</div>';
+  html += '<div class="' + cls('arrow', s.arrow2) + '">↕ HTTP (internal)</div>';
+  html += '<div class="backend-row">';
+  ['S1','S2','S3'].forEach(function(label, i) {
+    var bCls = 'box';
+    if (i === 0 && s.backend) bCls = cls('box', s.backend);
+    else if (s.backend === 'dim') bCls = 'box dim';
+    html += '<div class="' + bCls + '">' + label + '</div>';
+  });
+  html += '</div>';
+  if (s.sslNote) {
+    html += '<div class="ssl-note">SSL Termination: Proxy handles TLS - backends use plain HTTP internally</div>';
+  }
+  html += '</div>';
+
+  document.getElementById('diagram').innerHTML = html;
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('btn-step').disabled = idx >= steps.length - 1;
+  document.getElementById('btn-back').disabled = idx === 0;
+  document.getElementById('counter').textContent = 'Step ' + (idx + 1) + ' / ' + steps.length;
+}
+
+function setScenario(sc) {
+  scenario = sc;
+  idx = 0;
+  document.getElementById('btn-miss').className = 'tog-btn' + (sc === 'miss' ? ' active' : '');
+  document.getElementById('btn-hit').className = 'tog-btn' + (sc === 'hit' ? ' active' : '');
+  render();
+}
+
+document.getElementById('btn-step').onclick = function() {
+  if (idx < scenarios[scenario].length - 1) { idx++; render(); }
+};
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; render(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; render(); };
+
+render();
+</script>
+</body>
+</html>

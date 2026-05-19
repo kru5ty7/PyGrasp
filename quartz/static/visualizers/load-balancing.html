@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Load Balancing - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #sel-row {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: 1rem;
+    align-items: center;
+  }
+  #sel-row label { font-size: .78rem; color: #646464; white-space: nowrap; }
+  select {
+    flex: 1;
+    background: #222224;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    color: #d4d4d4;
+    font-size: .85rem;
+    padding: .3rem .6rem;
+    outline: none;
+  }
+  select:focus { border-color: #7b97aa; }
+  #diagram {
+    margin-bottom: .75rem;
+  }
+  .diag-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: .5rem;
+    margin-bottom: .4rem;
+  }
+  .box {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .35rem .65rem;
+    font-size: .82rem;
+    text-align: center;
+    min-width: 64px;
+  }
+  .box.active { border: 2px solid #f0a500; }
+  .box.success { border: 2px solid #28a745; }
+  .lb-box {
+    background: #2a2a2e;
+    border: 1px solid #7b97aa;
+    border-radius: 4px;
+    padding: .35rem .9rem;
+    font-size: .8rem;
+    text-align: center;
+  }
+  .client-box {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .35rem .65rem;
+    font-size: .82rem;
+    text-align: center;
+  }
+  .arrows { display: flex; justify-content: center; gap: 2.4rem; color: #646464; font-size: .85rem; margin: .2rem 0; }
+  .load-bar-wrap {
+    width: 56px;
+    height: 5px;
+    background: #393639;
+    border-radius: 3px;
+    margin: .25rem auto 0;
+    overflow: hidden;
+  }
+  .load-bar {
+    height: 100%;
+    background: #28a745;
+    border-radius: 3px;
+    transition: width .3s;
+  }
+  .load-pct { font-size: .68rem; color: #888; margin-top: .15rem; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Load Balancing - Request Distribution</h4>
+  <div id="sel-row">
+    <label for="algo-sel">Algorithm:</label>
+    <select id="algo-sel" onchange="setAlgo(this.value)">
+      <option value="rr">Round Robin</option>
+      <option value="lc">Least Connections</option>
+      <option value="ih">IP Hash</option>
+    </select>
+  </div>
+  <div id="diagram"></div>
+  <div id="stat"></div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>◀ Back</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var NUM_REQUESTS = 10;
+var currentAlgo = 'rr';
+var history = [];
+var serverLoads = [0, 0, 0]; // request counts per server
+var rrIndex = 0;
+
+// IP Hash: fixed mapping for demo (5 unique IPs cycling)
+var clientIPs = ['10.0.0.1','10.0.0.2','10.0.0.3','10.0.0.4','10.0.0.5',
+                 '10.0.0.1','10.0.0.2','10.0.0.3','10.0.0.1','10.0.0.4'];
+
+function hashIP(ip) {
+  var parts = ip.split('.');
+  return parseInt(parts[3]) % 3;
+}
+
+// For LC: simulate connections decreasing over time (every 3 steps, one server finishes)
+var lcConns = [0, 0, 0];
+
+function buildSteps(algo) {
+  var steps = [];
+  var loads = [0, 0, 0];
+  var conns = [2, 4, 1]; // LC starting connections (different per server)
+  var rr = 0;
+
+  for (var i = 0; i < NUM_REQUESTS; i++) {
+    var target;
+    var algoName;
+    var clientIP = clientIPs[i];
+
+    if (algo === 'rr') {
+      target = rr % 3;
+      rr++;
+      algoName = 'Round Robin';
+    } else if (algo === 'lc') {
+      // pick server with least connections
+      target = 0;
+      for (var j = 1; j < 3; j++) {
+        if (conns[j] < conns[target]) target = j;
+      }
+      conns[target]++;
+      // randomly complete a connection every 2 steps
+      if (i > 0 && i % 2 === 0) {
+        var toFree = (target + 2) % 3;
+        if (conns[toFree] > 0) conns[toFree]--;
+      }
+      algoName = 'Least Connections';
+    } else {
+      target = hashIP(clientIP);
+      algoName = 'IP Hash';
+    }
+
+    loads[target]++;
+    var total = loads[0] + loads[1] + loads[2];
+    steps.push({
+      reqNum: i + 1,
+      target: target,
+      loads: loads.slice(),
+      conns: conns.slice(),
+      algo: algoName,
+      clientIP: clientIP
+    });
+  }
+  return steps;
+}
+
+var steps = buildSteps('rr');
+var idx = 0;
+var stateHistory = [{loads: [0,0,0], idx: 0}];
+
+function pct(n, total) {
+  return total === 0 ? 0 : Math.round(n / total * 100);
+}
+
+function render() {
+  var s = idx === 0 ? null : steps[idx - 1];
+  var loads = s ? s.loads : [0, 0, 0];
+  var target = s ? s.target : -1;
+  var total = loads[0] + loads[1] + loads[2];
+
+  var html = '';
+  html += '<div class="diag-row"><div class="client-box">Client</div></div>';
+  html += '<div class="diag-row" style="color:#646464;font-size:.85rem">↓</div>';
+  html += '<div class="diag-row"><div class="lb-box">Load Balancer</div></div>';
+  html += '<div class="arrows">↓ ↓ ↓</div>';
+  html += '<div class="diag-row">';
+  ['S1','S2','S3'].forEach(function(label, i) {
+    var cls = 'box' + (i === target ? ' active' : (loads[i] > 0 ? ' success' : ''));
+    var barColor = i === target ? '#f0a500' : '#28a745';
+    var barW = pct(loads[i], total);
+    html += '<div class="' + cls + '" style="min-width:74px">';
+    html += '<div>' + label + '</div>';
+    html += '<div class="load-bar-wrap"><div class="load-bar" style="width:' + barW + '%;background:' + barColor + '"></div></div>';
+    html += '<div class="load-pct">' + loads[i] + ' req (' + pct(loads[i], Math.max(total,1)) + '%)</div>';
+    html += '</div>';
+  });
+  html += '</div>';
+  document.getElementById('diagram').innerHTML = html;
+
+  var msg = '';
+  if (!s) {
+    msg = 'Press Step to send request 1. Algorithm: ' + (currentAlgo === 'rr' ? 'Round Robin' : currentAlgo === 'lc' ? 'Least Connections' : 'IP Hash') + '.';
+  } else {
+    var sNames = ['S1','S2','S3'];
+    var algoTag = s.algo;
+    var extra = currentAlgo === 'ih' ? ' (hash("' + s.clientIP + '") % 3 = ' + s.target + ')' : '';
+    msg = 'Request ' + s.reqNum + ' → ' + sNames[s.target] + extra + ' (' + algoTag + '). Loads: S1=' + pct(loads[0], total) + '%, S2=' + pct(loads[1], total) + '%, S3=' + pct(loads[2], total) + '%';
+  }
+  document.getElementById('stat').textContent = msg;
+  document.getElementById('btn-step').disabled = idx >= steps.length;
+  document.getElementById('btn-back').disabled = idx === 0;
+  document.getElementById('counter').textContent = 'Request ' + idx + ' / ' + steps.length;
+}
+
+function setAlgo(algo) {
+  currentAlgo = algo;
+  steps = buildSteps(algo);
+  idx = 0;
+  render();
+}
+
+document.getElementById('btn-step').onclick = function() {
+  if (idx < steps.length) { idx++; render(); }
+};
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; render(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; render(); };
+
+render();
+</script>
+</body>
+</html>

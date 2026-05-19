@@ -101,6 +101,12 @@ Message filtering reduces the wasted work in coarse-grained topics. SNS supports
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/pub-sub-pattern.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Pub/Sub Pattern Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 When exactly-one-consumer semantics is needed instead of fan-out, a message queue is the right pattern. Pub/sub and message queues are complementary, not competing.

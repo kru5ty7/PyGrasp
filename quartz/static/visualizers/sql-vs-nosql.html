@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SQL vs NoSQL - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  /* Split layout */
+  #split {
+    display: flex;
+    gap: .5rem;
+    margin-bottom: .65rem;
+  }
+  .side {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: .35rem;
+  }
+  .side-header {
+    font-size: .68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    padding: .28rem .55rem;
+    border-radius: 4px 4px 0 0;
+    text-align: center;
+  }
+  .sql-header  { background: #284b63; }
+  .nosql-header { background: #1a3a2a; }
+  .panel {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 0 0 6px 6px;
+    padding: .45rem .55rem;
+    font-size: .7rem;
+    color: #999;
+    min-height: 6rem;
+    line-height: 1.55;
+    transition: border .2s;
+    flex: 1;
+  }
+  .panel.amber-glow { border: 2px solid #f0a500; }
+  .panel.green-glow { border: 2px solid #28a745; }
+  .panel.red-glow   { border: 2px solid #dc3545; }
+  .panel.blue-glow  { border: 2px solid #007bff; }
+  /* Table mini-display inside panel */
+  .mini-tbl { width: 100%; border-collapse: collapse; font-size: .65rem; margin-bottom: .3rem; }
+  .mini-tbl th { background: #1a2e40; padding: .15rem .3rem; text-align: left; color: #7b97aa; font-weight: 700; }
+  .mini-tbl td { padding: .15rem .3rem; border-bottom: 1px solid #2e2e32; color: #999; }
+  .mini-tbl tr.highlight td { background: #28a74518; color: #28a745; }
+  .mini-tbl tr.amber td     { background: #f0a50018; color: #f0a500; }
+  .join-arrow { text-align: center; font-size: .65rem; color: #007bff; margin: .2rem 0; }
+  /* JSON doc */
+  .json-doc {
+    background: #222224;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .35rem .5rem;
+    font-size: .65rem;
+    font-family: monospace;
+    color: #999;
+    line-height: 1.6;
+  }
+  .json-doc .k { color: #7b97aa; }
+  .json-doc .v { color: #ce9178; }
+  .json-doc .new-field { color: #28a745; }
+  /* Scale blocks */
+  .scale-block {
+    background: #222224;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .3rem .5rem;
+    font-size: .68rem;
+    text-align: center;
+    color: #999;
+    transition: border .2s, color .2s;
+  }
+  .scale-block.bigger { border: 1px solid #f0a500; color: #f0a500; }
+  .scale-block.shard  { border: 1px solid #28a745; color: #28a745; }
+  /* Status */
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .82rem;
+    line-height: 1.55;
+    min-height: 2.6rem;
+    margin-bottom: .75rem;
+  }
+  /* Controls */
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+  /* Summary tags */
+  .tag-row { display: flex; gap: .3rem; flex-wrap: wrap; margin-top: .3rem; }
+  .tag {
+    font-size: .62rem;
+    padding: .1rem .35rem;
+    border-radius: 3px;
+    background: #284b63;
+    color: #a0bfd4;
+  }
+  .tag.nosql-tag { background: #1a3a2a; color: #7bcf94; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>SQL vs NoSQL - Step-Through Comparison</h4>
+
+  <div id="split">
+    <div class="side">
+      <div class="side-header sql-header">SQL (Relational)</div>
+      <div class="panel" id="sql-panel">Loading...</div>
+    </div>
+    <div class="side">
+      <div class="side-header nosql-header">NoSQL (Document)</div>
+      <div class="panel" id="nosql-panel">Loading...</div>
+    </div>
+  </div>
+
+  <div id="stat">Press Step to begin the SQL vs NoSQL comparison.</div>
+
+  <div id="ctrl">
+    <button id="btn-back" disabled>◀ Back</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var stepIdx = 0;
+
+// Each step defines: sqlHtml, nosqlHtml, sqlGlow, nosqlGlow, msg
+var STEPS = [
+  // Step 0 — initial state
+  {
+    sqlGlow: '', nosqlGlow: '',
+    sql: function() {
+      return '<b style="font-size:.68rem;color:#7b97aa;">orders table</b>' +
+        '<table class="mini-tbl"><thead><tr><th>id</th><th>user_id</th><th>product</th><th>qty</th></tr></thead>' +
+        '<tbody>' +
+        '<tr><td>1</td><td>42</td><td>Widget A</td><td>3</td></tr>' +
+        '<tr><td>2</td><td>17</td><td>Gadget B</td><td>1</td></tr>' +
+        '</tbody></table>' +
+        '<div class="join-arrow">↕ FK → users.id</div>' +
+        '<b style="font-size:.68rem;color:#7b97aa;">users table</b>' +
+        '<table class="mini-tbl"><thead><tr><th>id</th><th>name</th><th>email</th></tr></thead>' +
+        '<tbody>' +
+        '<tr><td>42</td><td>Alice</td><td>alice@ex.com</td></tr>' +
+        '<tr><td>17</td><td>Bob</td><td>bob@ex.com</td></tr>' +
+        '</tbody></table>';
+    },
+    nosql: function() {
+      return '<div class="json-doc">' +
+        '<span class="k">{</span><br>' +
+        '&nbsp;<span class="k">"_id":</span> <span class="v">"order_1"</span>,<br>' +
+        '&nbsp;<span class="k">"product":</span> <span class="v">"Widget A"</span>,<br>' +
+        '&nbsp;<span class="k">"qty":</span> <span class="v">3</span>,<br>' +
+        '&nbsp;<span class="k">"user":</span> {<br>' +
+        '&nbsp;&nbsp;<span class="k">"name":</span> <span class="v">"Alice"</span>,<br>' +
+        '&nbsp;&nbsp;<span class="k">"email":</span> <span class="v">"alice@ex.com"</span><br>' +
+        '&nbsp;}<br>' +
+        '<span class="k">}</span>' +
+        '</div><div style="font-size:.63rem;color:#555;margin-top:.3rem;">Denormalized document — all data in one place.</div>';
+    },
+    msg: 'Initial state: SQL stores data in separate normalized tables linked by foreign keys. NoSQL stores a single denormalized JSON document with all related data embedded.'
+  },
+  // Step 1 — Write new order
+  {
+    sqlGlow: 'amber-glow', nosqlGlow: 'green-glow',
+    sql: function() {
+      return '<b style="font-size:.68rem;color:#f0a500;">Writing new order...</b>' +
+        '<table class="mini-tbl"><thead><tr><th>id</th><th>user_id</th><th>product</th><th>qty</th></tr></thead>' +
+        '<tbody>' +
+        '<tr><td>1</td><td>42</td><td>Widget A</td><td>3</td></tr>' +
+        '<tr><td>2</td><td>17</td><td>Gadget B</td><td>1</td></tr>' +
+        '<tr class="amber"><td>3</td><td>42</td><td>Gizmo C</td><td>2</td></tr>' +
+        '</tbody></table>' +
+        '<div style="font-size:.63rem;color:#f0a500;margin-top:.3rem;">INSERT + FK constraint check against users table.</div>';
+    },
+    nosql: function() {
+      return '<b style="font-size:.68rem;color:#28a745;">Writing new document...</b>' +
+        '<div class="json-doc">' +
+        '<span class="k">{</span><br>' +
+        '&nbsp;<span class="k">"_id":</span> <span class="v new-field">"order_3"</span>,<br>' +
+        '&nbsp;<span class="k">"product":</span> <span class="v new-field">"Gizmo C"</span>,<br>' +
+        '&nbsp;<span class="k">"qty":</span> <span class="v new-field">2</span>,<br>' +
+        '&nbsp;<span class="k">"user":</span> {<br>' +
+        '&nbsp;&nbsp;<span class="k">"name":</span> <span class="v new-field">"Alice"</span><br>' +
+        '&nbsp;}<br>' +
+        '<span class="k">}</span>' +
+        '</div><div style="font-size:.63rem;color:#28a745;margin-top:.3rem;">Single document write. No FK check needed.</div>';
+    },
+    msg: 'Write new order: SQL inserts a row in the orders table and validates the foreign key against the users table (2 operations). NoSQL inserts a single self-contained document — faster write, but user data is duplicated.'
+  },
+  // Step 2 — Read: user's orders
+  {
+    sqlGlow: 'blue-glow', nosqlGlow: 'green-glow',
+    sql: function() {
+      return '<b style="font-size:.68rem;color:#007bff;">Reading orders for Alice...</b>' +
+        '<div style="font-size:.65rem;font-family:monospace;color:#7b97aa;margin:.2rem 0;">SELECT o.*, u.name<br>FROM orders o<br>JOIN users u ON o.user_id = u.id<br>WHERE u.id = 42</div>' +
+        '<table class="mini-tbl"><thead><tr><th>id</th><th>product</th><th>user</th></tr></thead>' +
+        '<tbody>' +
+        '<tr class="highlight"><td>1</td><td>Widget A</td><td>Alice</td></tr>' +
+        '<tr class="highlight"><td>3</td><td>Gizmo C</td><td>Alice</td></tr>' +
+        '</tbody></table>' +
+        '<div style="font-size:.63rem;color:#007bff;margin-top:.3rem;">JOIN merged 2 tables. 2 index lookups.</div>';
+    },
+    nosql: function() {
+      return '<b style="font-size:.68rem;color:#28a745;">Single document read for Alice...</b>' +
+        '<div class="json-doc">' +
+        '<span class="k">{</span><br>' +
+        '&nbsp;<span class="k">"user_id":</span> <span class="v">"42"</span>,<br>' +
+        '&nbsp;<span class="k">"orders":</span> [<br>' +
+        '&nbsp;&nbsp;<span class="v new-field">{ "product": "Widget A", "qty": 3 }</span>,<br>' +
+        '&nbsp;&nbsp;<span class="v new-field">{ "product": "Gizmo C", "qty": 2 }</span><br>' +
+        '&nbsp;]<br>' +
+        '<span class="k">}</span>' +
+        '</div><div style="font-size:.63rem;color:#28a745;margin-top:.3rem;">1 document fetch. No join needed.</div>';
+    },
+    msg: 'Read user\'s orders: SQL needs a JOIN across two tables (two index lookups, one merge). NoSQL fetches a single document — data was pre-joined at write time. NoSQL wins for this access pattern; SQL wins for flexible ad-hoc queries.'
+  },
+  // Step 3 — Schema change
+  {
+    sqlGlow: 'amber-glow', nosqlGlow: 'green-glow',
+    sql: function() {
+      return '<b style="font-size:.68rem;color:#f0a500;">ALTER TABLE — adding "discount" column...</b>' +
+        '<div style="font-size:.65rem;font-family:monospace;color:#f0a500;margin:.2rem 0;">ALTER TABLE orders<br>ADD COLUMN discount DECIMAL(5,2);</div>' +
+        '<div style="font-size:.63rem;color:#f0a500;margin-top:.2rem;">Table lock during migration. Writes paused for large tables. All existing rows get NULL.</div>' +
+        '<table class="mini-tbl"><thead><tr><th>id</th><th>product</th><th>qty</th><th style="color:#f0a500;">discount</th></tr></thead>' +
+        '<tbody>' +
+        '<tr class="amber"><td>1</td><td>Widget A</td><td>3</td><td>NULL</td></tr>' +
+        '<tr class="amber"><td>2</td><td>Gadget B</td><td>1</td><td>NULL</td></tr>' +
+        '<tr class="amber"><td>3</td><td>Gizmo C</td><td>2</td><td>NULL</td></tr>' +
+        '</tbody></table>';
+    },
+    nosql: function() {
+      return '<b style="font-size:.68rem;color:#28a745;">Adding "discount" to new documents only...</b>' +
+        '<div class="json-doc">' +
+        '<span class="k">// Old doc — unchanged</span><br>' +
+        '<span class="k">{ "product": "Widget A", "qty": 3 }</span><br><br>' +
+        '<span class="k">// New doc — has discount</span><br>' +
+        '<span class="k">{</span><br>' +
+        '&nbsp;<span class="k">"product":</span> <span class="v">"Gizmo C"</span>,<br>' +
+        '&nbsp;<span class="k">"qty":</span> <span class="v">2</span>,<br>' +
+        '&nbsp;<span class="k new-field">"discount":</span> <span class="v new-field">0.10</span><br>' +
+        '<span class="k">}</span>' +
+        '</div><div style="font-size:.63rem;color:#28a745;margin-top:.3rem;">No migration. New docs have the field; old docs do not. App code must handle both.</div>';
+    },
+    msg: 'Schema change: SQL requires ALTER TABLE which locks the table and blocks writes (amber). All existing rows get NULL. NoSQL just adds the field to new documents — no migration needed (green). But app code must handle old documents missing the field.'
+  },
+  // Step 4 — Horizontal scaling
+  {
+    sqlGlow: 'red-glow', nosqlGlow: 'green-glow',
+    sql: function() {
+      return '<b style="font-size:.68rem;color:#dc3545;">Scaling SQL — vertical only</b>' +
+        '<div class="scale-block bigger" style="margin:.3rem 0;">Primary DB<br><span style="font-size:.62rem;">↑ Bigger machine (32→64 cores)<br>↑ More RAM, faster storage<br>Single point of write contention</span></div>' +
+        '<div style="font-size:.63rem;color:#dc3545;margin-top:.2rem;">Read replicas help reads. Writes bottleneck on 1 primary. Sharding is complex (cross-shard JOINs break).</div>';
+    },
+    nosql: function() {
+      return '<b style="font-size:.68rem;color:#28a745;">Scaling NoSQL — horizontal shards</b>' +
+        '<div style="display:flex;gap:.25rem;margin:.3rem 0;">' +
+        '<div class="scale-block shard">Shard 1<br><span style="font-size:.62rem;">docs A–H</span></div>' +
+        '<div class="scale-block shard">Shard 2<br><span style="font-size:.62rem;">docs I–P</span></div>' +
+        '<div class="scale-block shard">Shard 3<br><span style="font-size:.62rem;">docs Q–Z</span></div>' +
+        '</div>' +
+        '<div style="font-size:.63rem;color:#28a745;margin-top:.2rem;">Add more shards as load grows. Writes distribute. Each shard handles its slice independently.</div>';
+    },
+    msg: 'Horizontal scale: SQL scales vertically (bigger machine, higher cost, single write bottleneck). NoSQL built for horizontal sharding — add more servers as you grow. SQL sharding is possible but complex; NoSQL sharding is a core feature.'
+  },
+  // Step 5 — Summary
+  {
+    sqlGlow: '', nosqlGlow: '',
+    sql: function() {
+      return '<b style="font-size:.68rem;color:#7b97aa;">SQL — Best for:</b>' +
+        '<div class="tag-row">' +
+        '<span class="tag">ACID transactions</span>' +
+        '<span class="tag">Complex JOINs</span>' +
+        '<span class="tag">Financial data</span>' +
+        '<span class="tag">Strict schema</span>' +
+        '<span class="tag">Ad-hoc queries</span>' +
+        '</div>' +
+        '<div style="font-size:.63rem;color:#555;margin-top:.35rem;">PostgreSQL, MySQL, SQLite</div>';
+    },
+    nosql: function() {
+      return '<b style="font-size:.68rem;color:#7bcf94;">NoSQL — Best for:</b>' +
+        '<div class="tag-row">' +
+        '<span class="tag nosql-tag">Flexible schema</span>' +
+        '<span class="tag nosql-tag">Horizontal scale</span>' +
+        '<span class="tag nosql-tag">Document data</span>' +
+        '<span class="tag nosql-tag">High write rate</span>' +
+        '<span class="tag nosql-tag">Key-value access</span>' +
+        '</div>' +
+        '<div style="font-size:.63rem;color:#555;margin-top:.35rem;">MongoDB, DynamoDB, Redis, Cassandra</div>';
+    },
+    msg: 'Summary: choose SQL when you need ACID guarantees, complex joins, and a fixed schema (financial, e-commerce). Choose NoSQL when you need flexible schemas, horizontal sharding, and access-pattern-optimized reads (social feeds, analytics events, document stores).'
+  }
+];
+
+var TOTAL = STEPS.length;
+
+function render() {
+  var s = STEPS[stepIdx];
+  document.getElementById('sql-panel').className = 'panel' + (s.sqlGlow ? ' ' + s.sqlGlow : '');
+  document.getElementById('nosql-panel').className = 'panel' + (s.nosqlGlow ? ' ' + s.nosqlGlow : '');
+  document.getElementById('sql-panel').innerHTML = s.sql();
+  document.getElementById('nosql-panel').innerHTML = s.nosql();
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + stepIdx + ' / ' + (TOTAL - 1);
+  document.getElementById('btn-back').disabled = stepIdx === 0;
+  document.getElementById('btn-step').disabled = stepIdx >= TOTAL - 1;
+  document.getElementById('btn-step').textContent = stepIdx >= TOTAL - 1 ? 'Done ✓' : 'Step →';
+}
+
+document.getElementById('btn-step').onclick = function() {
+  if (stepIdx < TOTAL - 1) { stepIdx++; render(); }
+};
+document.getElementById('btn-back').onclick = function() {
+  if (stepIdx > 0) { stepIdx--; render(); }
+};
+document.getElementById('btn-reset').onclick = function() {
+  stepIdx = 0; render();
+};
+
+render();
+</script>
+</body>
+</html>

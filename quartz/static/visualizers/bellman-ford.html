@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bellman-Ford — Visualizer</title>
+<title>Bellman-Ford - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -128,7 +128,7 @@
       </svg>
     </div>
     <div id="edge-col">
-      <div id="pass-badge">Pass — / —</div>
+      <div id="pass-badge">Pass - / -</div>
       <div id="edge-list">
         <strong>Edges (sorted)</strong>
         <div id="e-rows"></div>
@@ -151,7 +151,7 @@
 </div>
 <script>
 var NODES = ['A','B','C','D','E','F'];
-// All edges as [u, v, w] — undirected so we add both directions
+// All edges as [u, v, w] - undirected so we add both directions
 var EDGES_BASE = [
   ['A','B',4],['A','C',2],['B','D',5],['B','E',10],['C','F',3],['E','F',4]
 ];
@@ -213,7 +213,7 @@ function buildSteps(src) {
       }
     }
     if (!improved) {
-      snap('Pass '+pass+': no relaxations — converged early!', pass, null, null, false);
+      snap('Pass '+pass+': no relaxations - converged early!', pass, null, null, false);
       break;
     }
   }
@@ -271,7 +271,7 @@ function draw() {
   // pass badge
   var passEl = document.getElementById('pass-badge');
   if (s.pass>0) passEl.textContent = 'Pass '+s.pass+' / '+(NODES.length-1);
-  else passEl.textContent = 'Pass — / —';
+  else passEl.textContent = 'Pass - / -';
   document.getElementById('stat').textContent = s.msg;
   document.getElementById('counter').textContent = 'Step '+idx+' / '+(steps.length-1);
   document.getElementById('btn-step').disabled = s.done;

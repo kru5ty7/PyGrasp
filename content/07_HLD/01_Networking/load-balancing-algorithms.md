@@ -96,6 +96,12 @@ Random selection  -  picking a server completely at random on each request  -  i
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/load-balancing-algorithms.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Load Balancing Algorithms Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Consistent hashing is so important for distributed systems that it warrants its own deep exploration beyond just its role in load balancing algorithms.

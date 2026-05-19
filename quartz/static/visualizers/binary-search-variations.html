@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Binary Search Variations — Visualizer</title>
+<title>Binary Search Variations - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -122,7 +122,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Binary Search Variations — Step-Through</h4>
+  <h4>Binary Search Variations - Step-Through</h4>
   <div class="input-row">
     <label for="variant-select">Variant:</label>
     <select id="variant-select">
@@ -171,15 +171,15 @@ function buildFirst(arr, t) {
     if (arr[m] === t) {
       result = m;
       s.push({ lo: lo, hi: hi, mid: m, result: result, done: false,
-        msg: varName + ': arr[' + m + '] = ' + arr[m] + ' equals target — record index ' + m + ', but search LEFT for earlier occurrence. hi = ' + (m - 1) + '.' });
+        msg: varName + ': arr[' + m + '] = ' + arr[m] + ' equals target - record index ' + m + ', but search LEFT for earlier occurrence. hi = ' + (m - 1) + '.' });
       hi = m - 1;
     } else if (arr[m] < t) {
       s.push({ lo: lo, hi: hi, mid: m, result: result, done: false,
-        msg: varName + ': arr[' + m + '] = ' + arr[m] + ' < ' + t + ' — search right. lo = ' + (m + 1) + '.' });
+        msg: varName + ': arr[' + m + '] = ' + arr[m] + ' < ' + t + ' - search right. lo = ' + (m + 1) + '.' });
       lo = m + 1;
     } else {
       s.push({ lo: lo, hi: hi, mid: m, result: result, done: false,
-        msg: varName + ': arr[' + m + '] = ' + arr[m] + ' > ' + t + ' — search left. hi = ' + (m - 1) + '.' });
+        msg: varName + ': arr[' + m + '] = ' + arr[m] + ' > ' + t + ' - search left. hi = ' + (m - 1) + '.' });
       hi = m - 1;
     }
   }
@@ -200,15 +200,15 @@ function buildLast(arr, t) {
     if (arr[m] === t) {
       result = m;
       s.push({ lo: lo, hi: hi, mid: m, result: result, done: false,
-        msg: varName + ': arr[' + m + '] = ' + arr[m] + ' equals target — record index ' + m + ', but search RIGHT for later occurrence. lo = ' + (m + 1) + '.' });
+        msg: varName + ': arr[' + m + '] = ' + arr[m] + ' equals target - record index ' + m + ', but search RIGHT for later occurrence. lo = ' + (m + 1) + '.' });
       lo = m + 1;
     } else if (arr[m] < t) {
       s.push({ lo: lo, hi: hi, mid: m, result: result, done: false,
-        msg: varName + ': arr[' + m + '] = ' + arr[m] + ' < ' + t + ' — search right. lo = ' + (m + 1) + '.' });
+        msg: varName + ': arr[' + m + '] = ' + arr[m] + ' < ' + t + ' - search right. lo = ' + (m + 1) + '.' });
       lo = m + 1;
     } else {
       s.push({ lo: lo, hi: hi, mid: m, result: result, done: false,
-        msg: varName + ': arr[' + m + '] = ' + arr[m] + ' > ' + t + ' — search left. hi = ' + (m - 1) + '.' });
+        msg: varName + ': arr[' + m + '] = ' + arr[m] + ' > ' + t + ' - search left. hi = ' + (m - 1) + '.' });
       hi = m - 1;
     }
   }
@@ -228,7 +228,7 @@ function buildRotated(arr, t) {
     var m = lo + Math.floor((hi - lo) / 2);
     if (arr[m] === t) {
       s.push({ lo: lo, hi: hi, mid: m, found: true, foundIdx: m, done: true,
-        msg: varName + ': arr[' + m + '] = ' + arr[m] + ' equals target — found at index ' + m + '!' });
+        msg: varName + ': arr[' + m + '] = ' + arr[m] + ' equals target - found at index ' + m + '!' });
       break;
     }
     // Determine which half is sorted
@@ -237,22 +237,22 @@ function buildRotated(arr, t) {
       // left half sorted
       if (arr[lo] <= t && t < arr[m]) {
         s.push({ lo: lo, hi: hi, mid: m, found: false, foundIdx: -1, done: false,
-          msg: varName + ': arr[' + lo + '..' + m + '] = [' + arr[lo] + '..' + arr[m] + '] is sorted, and ' + t + ' lies in it — search left. hi = ' + (m - 1) + '.' });
+          msg: varName + ': arr[' + lo + '..' + m + '] = [' + arr[lo] + '..' + arr[m] + '] is sorted, and ' + t + ' lies in it - search left. hi = ' + (m - 1) + '.' });
         hi = m - 1;
       } else {
         s.push({ lo: lo, hi: hi, mid: m, found: false, foundIdx: -1, done: false,
-          msg: varName + ': arr[' + lo + '..' + m + '] = [' + arr[lo] + '..' + arr[m] + '] is sorted, but ' + t + ' is NOT in it — search right. lo = ' + (m + 1) + '.' });
+          msg: varName + ': arr[' + lo + '..' + m + '] = [' + arr[lo] + '..' + arr[m] + '] is sorted, but ' + t + ' is NOT in it - search right. lo = ' + (m + 1) + '.' });
         lo = m + 1;
       }
     } else {
       // right half sorted
       if (arr[m] < t && t <= arr[hi]) {
         s.push({ lo: lo, hi: hi, mid: m, found: false, foundIdx: -1, done: false,
-          msg: varName + ': arr[' + m + '..' + hi + '] = [' + arr[m] + '..' + arr[hi] + '] is sorted, and ' + t + ' lies in it — search right. lo = ' + (m + 1) + '.' });
+          msg: varName + ': arr[' + m + '..' + hi + '] = [' + arr[m] + '..' + arr[hi] + '] is sorted, and ' + t + ' lies in it - search right. lo = ' + (m + 1) + '.' });
         lo = m + 1;
       } else {
         s.push({ lo: lo, hi: hi, mid: m, found: false, foundIdx: -1, done: false,
-          msg: varName + ': arr[' + m + '..' + hi + '] = [' + arr[m] + '..' + arr[hi] + '] is sorted, but ' + t + ' is NOT in it — search left. hi = ' + (m - 1) + '.' });
+          msg: varName + ': arr[' + m + '..' + hi + '] = [' + arr[m] + '..' + arr[hi] + '] is sorted, but ' + t + ' is NOT in it - search left. hi = ' + (m - 1) + '.' });
         hi = m - 1;
       }
     }
@@ -300,7 +300,7 @@ function draw() {
       else if (i === s.mid) cls += ' mid';
       else if (i < s.lo || i > s.hi) cls += ' elim';
     } else {
-      // first / last — highlight result candidate
+      // first / last - highlight result candidate
       if (s.done && s.result === i) cls += ' found';
       else if (!s.done && s.result === i) cls += ' candidate';
       else if (i === s.mid && !s.done) cls += ' mid';

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Reader-Writer Locks — Visualizer</title>
+<title>Reader-Writer Locks - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -118,7 +118,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Reader-Writer Locks — Step-Through</h4>
+  <h4>Reader-Writer Locks - Step-Through</h4>
   <div id="stat">Press Step to begin.</div>
   <div id="ctrl">
     <button id="btn-back" disabled>◀ Back</button>
@@ -136,7 +136,7 @@
     <div class="center-col">
       <div id="resource" class="resource-box clear">
         <div class="res-title">Shared Resource</div>
-        <div class="res-status" id="res-status">—</div>
+        <div class="res-status" id="res-status">-</div>
         <div class="res-count" id="res-count"></div>
       </div>
     </div>
@@ -163,13 +163,13 @@ var steps = [
     resCls:'read-active', resStatus:'reading', resCount:'readers: 3' },
   { msg: 'W tries write lock → BLOCKED. Must wait for all readers to finish. 🔒',
     r1:'reading', r2:'reading', r3:'reading', w:'waiting',
-    resCls:'read-active', resStatus:'reading', resCount:'readers: 3 — writer waiting' },
+    resCls:'read-active', resStatus:'reading', resCount:'readers: 3 - writer waiting' },
   { msg: 'R1 releases read lock.',
     r1:'done', r2:'reading', r3:'reading', w:'waiting',
-    resCls:'read-active', resStatus:'reading', resCount:'readers: 2 — writer waiting' },
+    resCls:'read-active', resStatus:'reading', resCount:'readers: 2 - writer waiting' },
   { msg: 'R2 releases read lock.',
     r1:'done', r2:'done', r3:'reading', w:'waiting',
-    resCls:'read-active', resStatus:'reading', resCount:'readers: 1 — writer waiting' },
+    resCls:'read-active', resStatus:'reading', resCount:'readers: 1 - writer waiting' },
   { msg: 'R3 releases read lock. All readers done.',
     r1:'done', r2:'done', r3:'done', w:'waiting',
     resCls:'clear', resStatus:'readers: 0', resCount:'writer unblocking…' },

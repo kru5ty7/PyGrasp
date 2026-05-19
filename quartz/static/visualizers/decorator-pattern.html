@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Decorator Pattern — Visualizer</title>
+<title>Decorator Pattern - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -119,7 +119,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Decorator Pattern — Step-Through</h4>
+  <h4>Decorator Pattern - Step-Through</h4>
 
   <div class="stack-area">
     <!-- Sugar wrapper (outermost) -->
@@ -168,7 +168,7 @@
 
   <div class="total-row" id="total-row">
     <span>coffee.get_cost()</span>
-    <span class="total-amount" id="total-amount">—</span>
+    <span class="total-amount" id="total-amount">-</span>
   </div>
 
   <div id="stat">Press Step to begin. We will stack decorators onto SimpleCoffee.</div>
@@ -185,26 +185,26 @@
 // 1: base active, cost $1.00
 // 2: milk-top wrapping base, cost $1.50
 // 3: sugar wrapping (milk+base), cost $1.75
-// 4: trace — highlight all + total
+// 4: trace - highlight all + total
 
 var steps = [
   {
     showBase: true, showMilkTop: false, showSugar: false,
     baseState: 'active', milkTopState: '', sugarState: '',
     total: '$1.00', totalHL: false,
-    msg: 'coffee = SimpleCoffee() — base object. Cost: $1.00. No decorators yet.'
+    msg: 'coffee = SimpleCoffee() - base object. Cost: $1.00. No decorators yet.'
   },
   {
     showBase: false, showMilkTop: true, showSugar: false,
     baseState: 'done', milkTopState: 'active', sugarState: '',
     total: '$1.50', totalHL: false,
-    msg: 'coffee = MilkDecorator(coffee) — MilkDecorator wraps SimpleCoffee. Adds $0.50. Cost now: $1.50.'
+    msg: 'coffee = MilkDecorator(coffee) - MilkDecorator wraps SimpleCoffee. Adds $0.50. Cost now: $1.50.'
   },
   {
     showBase: false, showMilkTop: false, showSugar: true,
     baseState: 'done', milkTopState: 'done', sugarState: 'active',
     total: '$1.75', totalHL: false,
-    msg: 'coffee = SugarDecorator(coffee) — SugarDecorator wraps MilkDecorator(SimpleCoffee). Adds $0.25. Cost now: $1.75.'
+    msg: 'coffee = SugarDecorator(coffee) - SugarDecorator wraps MilkDecorator(SimpleCoffee). Adds $0.25. Cost now: $1.75.'
   },
   {
     showBase: false, showMilkTop: false, showSugar: true,
@@ -225,7 +225,7 @@ function draw() {
   // Base standalone
   var baseEl = document.getElementById('base-layer');
   // We only show base-layer when sugar is visible (it's nested inside sugar>milk)
-  // For step 0 we need a standalone base — handle via showing/hiding layers
+  // For step 0 we need a standalone base - handle via showing/hiding layers
 
   document.getElementById('milk-layer-top').style.display = s.showMilkTop ? '' : 'none';
   document.getElementById('sugar-layer').style.display = s.showSugar ? '' : 'none';

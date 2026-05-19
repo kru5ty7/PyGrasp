@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SOLID Principles — Visualizer</title>
+<title>SOLID Principles - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -146,7 +146,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>SOLID Principles — Click a card to expand</h4>
+  <h4>SOLID Principles - Click a card to expand</h4>
 
   <div class="grid">
     <div class="card" onclick="toggle('S')">
@@ -178,10 +178,10 @@
 
   <!-- S detail -->
   <div class="detail" id="detail-S">
-    <div class="detail-title">S — Single Responsibility Principle</div>
+    <div class="detail-title">S - Single Responsibility Principle</div>
     <div class="examples">
       <div class="example-box bad">
-        <div class="ex-label">❌ BAD — Fat class</div>
+        <div class="ex-label">❌ BAD - Fat class</div>
         <div class="cls-box">
           <div class="cls-hdr">UserManager</div>
           <div class="cls-body">
@@ -194,10 +194,10 @@
             <div class="method">+ log_activity()</div>
           </div>
         </div>
-        <div style="font-size:.68rem;color:#dc3545;margin-top:.3rem;">4 responsibilities — every concern coupled together</div>
+        <div style="font-size:.68rem;color:#dc3545;margin-top:.3rem;">4 responsibilities - every concern coupled together</div>
       </div>
       <div class="example-box good">
-        <div class="ex-label">✓ GOOD — Split classes</div>
+        <div class="ex-label">✓ GOOD - Split classes</div>
         <div class="cls-box">
           <div class="cls-hdr">User</div>
           <div class="cls-body"><div class="method">+ hash_password()</div></div>
@@ -217,10 +217,10 @@
 
   <!-- O detail -->
   <div class="detail" id="detail-O">
-    <div class="detail-title">O — Open/Closed Principle</div>
+    <div class="detail-title">O - Open/Closed Principle</div>
     <div class="examples">
       <div class="example-box bad">
-        <div class="ex-label">❌ BAD — if/elif chain</div>
+        <div class="ex-label">❌ BAD - if/elif chain</div>
         <div class="snippet"><span class="kw">def</span> <span class="fn">area</span>(shape):
   <span class="kw">if</span> shape == <span style="color:#ce9178">'circle'</span>:
     ...
@@ -230,7 +230,7 @@
         <div style="font-size:.68rem;color:#dc3545;margin-top:.3rem;">Every new shape requires modifying existing code</div>
       </div>
       <div class="example-box good">
-        <div class="ex-label">✓ GOOD — Polymorphism</div>
+        <div class="ex-label">✓ GOOD - Polymorphism</div>
         <div class="cls-box">
           <div class="cls-hdr" style="background:#1a3a4a;font-style:italic;">Shape (abstract)</div>
           <div class="cls-body"><div class="method">+ area(): float</div></div>
@@ -246,10 +246,10 @@
 
   <!-- L detail -->
   <div class="detail" id="detail-L">
-    <div class="detail-title">L — Liskov Substitution Principle</div>
+    <div class="detail-title">L - Liskov Substitution Principle</div>
     <div class="examples">
       <div class="example-box bad">
-        <div class="ex-label">❌ BAD — Broken subtype</div>
+        <div class="ex-label">❌ BAD - Broken subtype</div>
         <div class="cls-box">
           <div class="cls-hdr">Bird</div>
           <div class="cls-body"><div class="method">+ fly()</div></div>
@@ -265,7 +265,7 @@
         <div style="font-size:.68rem;color:#dc3545;margin-top:.3rem;">Subclass breaks parent contract</div>
       </div>
       <div class="example-box good">
-        <div class="ex-label">✓ GOOD — Correct hierarchy</div>
+        <div class="ex-label">✓ GOOD - Correct hierarchy</div>
         <div class="cls-box">
           <div class="cls-hdr">Bird</div>
           <div class="cls-body"><div class="attr">+ name</div></div>
@@ -275,17 +275,17 @@
           <div class="cls-hdr">FlyingBird</div>
           <div class="cls-body"><div class="method">+ fly()</div></div>
         </div>
-        <div style="font-size:.68rem;color:#28a745;margin-top:.3rem;">Penguin extends NonFlyingBird — no fly() needed</div>
+        <div style="font-size:.68rem;color:#28a745;margin-top:.3rem;">Penguin extends NonFlyingBird - no fly() needed</div>
       </div>
     </div>
   </div>
 
   <!-- I detail -->
   <div class="detail" id="detail-I">
-    <div class="detail-title">I — Interface Segregation Principle</div>
+    <div class="detail-title">I - Interface Segregation Principle</div>
     <div class="examples">
       <div class="example-box bad">
-        <div class="ex-label">❌ BAD — Fat interface</div>
+        <div class="ex-label">❌ BAD - Fat interface</div>
         <div class="cls-box">
           <div class="cls-hdr" style="background:#1a3a4a;font-style:italic;">IWorker</div>
           <div class="cls-body">
@@ -295,10 +295,10 @@
             <div class="method">+ charge_battery()</div>
           </div>
         </div>
-        <div style="font-size:.68rem;color:#dc3545;margin-top:.3rem;">Robot must implement eat() and sleep() — makes no sense</div>
+        <div style="font-size:.68rem;color:#dc3545;margin-top:.3rem;">Robot must implement eat() and sleep() - makes no sense</div>
       </div>
       <div class="example-box good">
-        <div class="ex-label">✓ GOOD — Segregated</div>
+        <div class="ex-label">✓ GOOD - Segregated</div>
         <div style="display:flex;gap:.25rem;flex-wrap:wrap;">
           <div class="cls-box" style="flex:1;min-width:70px;">
             <div class="cls-hdr" style="background:#1a3a4a;font-style:italic;font-size:.65rem;">IWorkable</div>
@@ -320,15 +320,15 @@
 
   <!-- D detail -->
   <div class="detail" id="detail-D">
-    <div class="detail-title">D — Dependency Inversion Principle</div>
+    <div class="detail-title">D - Dependency Inversion Principle</div>
     <div class="examples">
       <div class="example-box bad">
-        <div class="ex-label">❌ BAD — Concrete dependency</div>
+        <div class="ex-label">❌ BAD - Concrete dependency</div>
         <div class="cls-box">
           <div class="cls-hdr">OrderService</div>
           <div class="cls-body"><div class="method">+ place_order()</div></div>
         </div>
-        <div style="font-size:.68rem;color:#dc3545;text-align:center;margin:.25rem 0;">— depends on concrete ↓</div>
+        <div style="font-size:.68rem;color:#dc3545;text-align:center;margin:.25rem 0;">- depends on concrete ↓</div>
         <div class="cls-box" style="border-color:#dc3545;">
           <div class="cls-hdr">MySQLDatabase</div>
           <div class="cls-body"><div class="method">+ save()</div></div>
@@ -336,12 +336,12 @@
         <div style="font-size:.68rem;color:#dc3545;margin-top:.3rem;">Swap DB = modify OrderService</div>
       </div>
       <div class="example-box good">
-        <div class="ex-label">✓ GOOD — Abstraction layer</div>
+        <div class="ex-label">✓ GOOD - Abstraction layer</div>
         <div class="cls-box">
           <div class="cls-hdr">OrderService</div>
           <div class="cls-body"><div class="method">+ place_order()</div></div>
         </div>
-        <div style="font-size:.68rem;color:#888;text-align:center;margin:.2rem 0;">— depends on abstraction ↓</div>
+        <div style="font-size:.68rem;color:#888;text-align:center;margin:.2rem 0;">- depends on abstraction ↓</div>
         <div class="cls-box" style="border-color:#28a745;">
           <div class="cls-hdr" style="background:#1a3a4a;font-style:italic;">DatabaseInterface</div>
           <div class="cls-body"><div class="method">+ save()</div></div>
@@ -361,11 +361,11 @@ function toggle(key) {
   var detail = document.getElementById('detail-' + key);
   var stat = document.getElementById('stat');
   var msgs = {
-    S: 'S — Single Responsibility: each class should have one reason to change.',
-    O: 'O — Open/Closed: add new behaviour by writing new code, not editing existing code.',
-    L: 'L — Liskov Substitution: any subclass must work wherever its parent is expected.',
-    I: 'I — Interface Segregation: never force a class to implement methods it does not use.',
-    D: 'D — Dependency Inversion: business logic should depend on abstractions, not concrete details.'
+    S: 'S - Single Responsibility: each class should have one reason to change.',
+    O: 'O - Open/Closed: add new behaviour by writing new code, not editing existing code.',
+    L: 'L - Liskov Substitution: any subclass must work wherever its parent is expected.',
+    I: 'I - Interface Segregation: never force a class to implement methods it does not use.',
+    D: 'D - Dependency Inversion: business logic should depend on abstractions, not concrete details.'
   };
   if (current === key) {
     detail.classList.remove('visible');

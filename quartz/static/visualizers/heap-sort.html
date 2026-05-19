@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Heap Sort — Visualizer</title>
+<title>Heap Sort - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -135,7 +135,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Heap Sort — Step-Through</h4>
+  <h4>Heap Sort - Step-Through</h4>
   <div id="input-row">
     <label for="arr-input">Array:</label>
     <input id="arr-input" type="text" value="5, 3, 8, 4, 2, 9, 1" placeholder="e.g. 5, 3, 8, 4, 2" spellcheck="false">
@@ -176,7 +176,7 @@ function buildSteps(arr) {
       var children = [];
       if (l < heapSize) children.push(l);
       if (ri2 < heapSize) children.push(ri2);
-      s.push({ arr: a.slice(), parent: r, children: children, swap: [], heapEnd: heapSize, phase: heapSize < n ? 'Phase 2: Extract Max' : 'Phase 1: Build Max-Heap', msg: (heapSize < n ? 'Phase 2' : 'Phase 1') + ': Sift-down at idx ' + r + ' (val=' + a[r] + '). Children: ' + children.map(function(c){ return 'arr[' + c + ']=' + a[c]; }).join(', ') + (children.length ? '.' : ' — leaf node.') });
+      s.push({ arr: a.slice(), parent: r, children: children, swap: [], heapEnd: heapSize, phase: heapSize < n ? 'Phase 2: Extract Max' : 'Phase 1: Build Max-Heap', msg: (heapSize < n ? 'Phase 2' : 'Phase 1') + ': Sift-down at idx ' + r + ' (val=' + a[r] + '). Children: ' + children.map(function(c){ return 'arr[' + c + ']=' + a[c]; }).join(', ') + (children.length ? '.' : ' - leaf node.') });
       if (l < heapSize && a[l] > a[largest]) largest = l;
       if (ri2 < heapSize && a[ri2] > a[largest]) largest = ri2;
       if (largest !== r) {

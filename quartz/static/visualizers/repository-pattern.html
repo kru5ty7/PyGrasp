@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Repository Pattern — Visualizer</title>
+<title>Repository Pattern - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -54,7 +54,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Repository Pattern — Step-Through</h4>
+  <h4>Repository Pattern - Step-Through</h4>
 
   <div class="layer">
     <div class="box" id="svc-box">
@@ -107,7 +107,7 @@ var steps = [
     svc: 'active', repo: '', sql: '', mem: '', ret: ''
   },
   {
-    msg: 'repository.find_by_id(1) called — UserService talks only to the interface, not the implementation.',
+    msg: 'repository.find_by_id(1) called - UserService talks only to the interface, not the implementation.',
     svc: '', repo: 'active', sql: '', mem: '', ret: ''
   },
   {
@@ -116,7 +116,7 @@ var steps = [
     ret: '→ User(id=1, name="Alice", email="alice@example.com")'
   },
   {
-    msg: 'Swap to InMemoryUserRepository for tests — same interface, service code unchanged. Swap storage layer without touching service.',
+    msg: 'Swap to InMemoryUserRepository for tests - same interface, service code unchanged. Swap storage layer without touching service.',
     svc: 'done', repo: 'done', sql: 'inactive', mem: 'done',
     ret: '→ User(id=1, name="Alice")  [from in-memory dict]'
   }

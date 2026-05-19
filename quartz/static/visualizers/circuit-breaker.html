@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Circuit Breaker - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  /* State machine diagram */
+  .diagram {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: .75rem;
+    gap: .3rem;
+  }
+  .state-box {
+    flex: 1;
+    border-radius: 4px;
+    padding: .55rem .4rem;
+    text-align: center;
+    border: 2px solid #393639;
+    background: #2a2a2e;
+    transition: all .2s;
+    min-width: 0;
+  }
+  .state-box .state-name {
+    font-size: .72rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+    text-transform: uppercase;
+  }
+  .state-box .state-sub {
+    font-size: .6rem;
+    color: #888;
+    margin-top: .15rem;
+    line-height: 1.3;
+  }
+  .state-box.active-closed {
+    border-color: #28a745;
+    background: #1a3a1a;
+  }
+  .state-box.active-closed .state-name { color: #28a745; }
+  .state-box.active-open {
+    border-color: #dc3545;
+    background: #3a1a1a;
+  }
+  .state-box.active-open .state-name { color: #dc3545; }
+  .state-box.active-halfopen {
+    border-color: #f0a500;
+    background: #3a2a00;
+  }
+  .state-box.active-halfopen .state-name { color: #f0a500; }
+  .arrow-col {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: .15rem;
+    flex-shrink: 0;
+    width: 38px;
+  }
+  .arrow-label {
+    font-size: .52rem;
+    color: #555;
+    text-align: center;
+    line-height: 1.2;
+  }
+  .arrow-svg { width: 36px; height: 18px; }
+
+  /* Flow area */
+  .flow-area {
+    background: #1e1e20;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .6rem .7rem;
+    margin-bottom: .75rem;
+    min-height: 80px;
+  }
+  .flow-row {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    flex-wrap: wrap;
+    margin-bottom: .3rem;
+  }
+  .flow-row:last-child { margin-bottom: 0; }
+  .svc {
+    border-radius: 4px;
+    padding: .28rem .5rem;
+    font-size: .72rem;
+    border: 1px solid #393639;
+    background: #2a2a2e;
+    white-space: nowrap;
+  }
+  .svc.caller { border-color: #7b97aa; }
+  .svc.breaker-closed { border-color: #28a745; background: #1a3a1a; }
+  .svc.breaker-open   { border-color: #dc3545; background: #3a1a1a; }
+  .svc.breaker-half   { border-color: #f0a500; background: #3a2a00; }
+  .svc.target         { border-color: #555; }
+  .svc.target-fail    { border-color: #dc3545; background: #3a1a1a; }
+  .flow-arrow { font-size: .75rem; color: #555; }
+  .flow-arrow.green { color: #28a745; }
+  .flow-arrow.red   { color: #dc3545; }
+  .flow-arrow.amber { color: #f0a500; }
+  .badge {
+    font-size: .62rem;
+    padding: .12rem .35rem;
+    border-radius: 3px;
+    background: #393639;
+    color: #d4d4d4;
+    white-space: nowrap;
+  }
+  .badge.fail { background: #3a1a1a; color: #dc3545; border: 1px solid #dc3545; }
+  .badge.ok   { background: #1a3a1a; color: #28a745; border: 1px solid #28a745; }
+  .badge.warn { background: #3a2a00; color: #f0a500; border: 1px solid #f0a500; }
+
+  /* Counters */
+  .counters {
+    display: flex;
+    gap: .5rem;
+    flex-wrap: wrap;
+    margin-bottom: .3rem;
+  }
+  .counter-pill {
+    font-size: .68rem;
+    padding: .15rem .45rem;
+    border-radius: 3px;
+    background: #2a2a2e;
+    border: 1px solid #393639;
+  }
+  .counter-pill span { color: #7b97aa; font-weight: 700; }
+  .counter-pill.red span { color: #dc3545; }
+  .counter-pill.green span { color: #28a745; }
+  .counter-pill.amber span { color: #f0a500; }
+
+  /* Timer bar */
+  .timer-wrap {
+    margin-top: .35rem;
+  }
+  .timer-label { font-size: .62rem; color: #888; margin-bottom: .2rem; }
+  .timer-track {
+    height: 6px;
+    background: #393639;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .timer-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: #f0a500;
+    transition: width .3s;
+  }
+
+  /* Stat */
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+
+  /* Controls */
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step  { background: #284b63; color: #fff; }
+  #btn-fail  { background: #4a1a1a; color: #dc3545; border: 1px solid #dc3545; }
+  #btn-succ  { background: #1a3a1a; color: #28a745; border: 1px solid #28a745; }
+  #btn-fail:disabled, #btn-succ:disabled { opacity: .25; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Circuit Breaker - State Machine</h4>
+
+  <!-- State machine diagram -->
+  <div class="diagram">
+    <div class="state-box" id="box-closed">
+      <div class="state-name">Closed</div>
+      <div class="state-sub">Normal ops</div>
+    </div>
+    <div class="arrow-col">
+      <div class="arrow-label">failures ≥ threshold</div>
+      <svg class="arrow-svg" viewBox="0 0 36 18">
+        <defs><marker id="ah1" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#dc3545"/>
+        </marker></defs>
+        <line x1="2" y1="9" x2="30" y2="9" stroke="#dc3545" stroke-width="1.5" marker-end="url(#ah1)"/>
+      </svg>
+      <svg class="arrow-svg" viewBox="0 0 36 18" style="transform:scaleX(-1)">
+        <defs><marker id="ah2" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#28a745"/>
+        </marker></defs>
+        <line x1="2" y1="9" x2="30" y2="9" stroke="#28a745" stroke-width="1.5" marker-end="url(#ah2)"/>
+      </svg>
+      <div class="arrow-label">probe success</div>
+    </div>
+    <div class="state-box" id="box-open">
+      <div class="state-name">Open</div>
+      <div class="state-sub">Fast fail</div>
+    </div>
+    <div class="arrow-col">
+      <div class="arrow-label">timer expires</div>
+      <svg class="arrow-svg" viewBox="0 0 36 18">
+        <defs><marker id="ah3" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#f0a500"/>
+        </marker></defs>
+        <line x1="2" y1="9" x2="30" y2="9" stroke="#f0a500" stroke-width="1.5" marker-end="url(#ah3)"/>
+      </svg>
+      <svg class="arrow-svg" viewBox="0 0 36 18" style="transform:scaleX(-1)">
+        <defs><marker id="ah4" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+          <path d="M0,0 L6,3 L0,6 Z" fill="#dc3545"/>
+        </marker></defs>
+        <line x1="2" y1="9" x2="30" y2="9" stroke="#dc3545" stroke-width="1.5" marker-end="url(#ah4)"/>
+      </svg>
+      <div class="arrow-label">probe fails</div>
+    </div>
+    <div class="state-box" id="box-halfopen">
+      <div class="state-name">Half-Open</div>
+      <div class="state-sub">Testing</div>
+    </div>
+  </div>
+
+  <!-- Dynamic flow area -->
+  <div class="flow-area" id="flow-area"></div>
+
+  <div id="stat">Press Step to begin.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>◀ Back</button>
+    <button id="btn-step">Step →</button>
+    <button id="btn-reset">↺ Reset</button>
+    <button id="btn-fail" disabled>✕ Trigger Failure</button>
+    <button id="btn-succ" disabled>✓ Trigger Success</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var steps = [
+  {
+    state: 'CLOSED',
+    failures: 0,
+    timer: 0,
+    timerVisible: false,
+    stat: 'CLOSED state: Service A calls Service B normally. Every request passes through the breaker. Failures are counted.',
+    flow: [
+      { type:'row', items:[{t:'Service A',c:'caller'},{a:'→',ac:'green'},{t:'[Breaker: CLOSED]',c:'breaker-closed'},{a:'→',ac:'green'},{t:'Service B',c:'target'}] },
+      { type:'row', items:[{t:'← 200 OK',c:'badge ok'}] }
+    ],
+    btnFail: false, btnSucc: false
+  },
+  {
+    state: 'CLOSED',
+    failures: 1,
+    timer: 0,
+    timerVisible: false,
+    stat: 'Service B starts failing. Failure count: 1/5. Breaker still CLOSED - failures must reach threshold.',
+    flow: [
+      { type:'row', items:[{t:'Service A',c:'caller'},{a:'→',ac:'green'},{t:'[Breaker: CLOSED]',c:'breaker-closed'},{a:'→',ac:'red'},{t:'Service B ✕',c:'target-fail'}] },
+      { type:'row', items:[{t:'failure count: 1/5',c:'badge fail'}] }
+    ],
+    btnFail: true, btnSucc: false
+  },
+  {
+    state: 'CLOSED',
+    failures: 3,
+    timer: 0,
+    timerVisible: false,
+    stat: 'Failures accumulate. Failure count: 3/5. Service B is consistently failing. Breaker still monitoring.',
+    flow: [
+      { type:'row', items:[{t:'Service A',c:'caller'},{a:'→',ac:'green'},{t:'[Breaker: CLOSED]',c:'breaker-closed'},{a:'→',ac:'red'},{t:'Service B ✕',c:'target-fail'}] },
+      { type:'row', items:[{t:'failure count: 3/5',c:'badge fail'}] }
+    ],
+    btnFail: true, btnSucc: false
+  },
+  {
+    state: 'OPEN',
+    failures: 5,
+    timer: 100,
+    timerVisible: true,
+    stat: 'Threshold reached (5/5). Circuit OPENS. Fast fail - no more calls to Service B. Recovery timer starts (30s).',
+    flow: [
+      { type:'row', items:[{t:'Service A',c:'caller'},{a:'→',ac:'red'},{t:'[Breaker: OPEN]',c:'breaker-open'},{a:'✕',ac:'red'},{t:'Service B',c:'target'}] },
+      { type:'row', items:[{t:'immediate fallback - no call made',c:'badge fail'}] }
+    ],
+    btnFail: false, btnSucc: false
+  },
+  {
+    state: 'OPEN',
+    failures: 5,
+    timer: 55,
+    timerVisible: true,
+    stat: 'OPEN state: all requests fail immediately without touching Service B. Timer counting down: ~15s remaining.',
+    flow: [
+      { type:'row', items:[{t:'Service A',c:'caller'},{a:'→',ac:'red'},{t:'[Breaker: OPEN]',c:'breaker-open'}] },
+      { type:'row', items:[{t:'← 503 (fallback)',c:'badge fail'},{t:'Service B not contacted',c:'badge'}] }
+    ],
+    btnFail: false, btnSucc: false
+  },
+  {
+    state: 'OPEN',
+    failures: 5,
+    timer: 5,
+    timerVisible: true,
+    stat: 'Timer almost expired. Retry in ~1s… Breaker about to allow a single probe request through.',
+    flow: [
+      { type:'row', items:[{t:'Service A',c:'caller'},{a:'→',ac:'red'},{t:'[Breaker: OPEN]',c:'breaker-open'}] },
+      { type:'row', items:[{t:'← 503 (fallback)',c:'badge fail'},{t:'timer expiring…',c:'badge warn'}] }
+    ],
+    btnFail: false, btnSucc: false
+  },
+  {
+    state: 'HALF-OPEN',
+    failures: 5,
+    timer: 0,
+    timerVisible: false,
+    stat: 'Timer expired → HALF-OPEN. Allowing 1 probe request. Use buttons below: success → CLOSED, failure → back to OPEN.',
+    flow: [
+      { type:'row', items:[{t:'Service A',c:'caller'},{a:'→',ac:'amber'},{t:'[Breaker: HALF-OPEN]',c:'breaker-half'},{a:'→ probe',ac:'amber'},{t:'Service B',c:'target'}] },
+      { type:'row', items:[{t:'1 test request allowed',c:'badge warn'}] }
+    ],
+    btnFail: true, btnSucc: true
+  },
+  {
+    state: 'CLOSED',
+    failures: 0,
+    timer: 0,
+    timerVisible: false,
+    stat: 'Probe succeeded! Circuit CLOSES. Failure counters reset. Normal operation resumes.',
+    flow: [
+      { type:'row', items:[{t:'Service A',c:'caller'},{a:'→',ac:'green'},{t:'[Breaker: CLOSED]',c:'breaker-closed'},{a:'→',ac:'green'},{t:'Service B ✓',c:'target'}] },
+      { type:'row', items:[{t:'← 200 OK - counters reset',c:'badge ok'}] }
+    ],
+    btnFail: false, btnSucc: false
+  }
+];
+
+var idx = 0;
+var manualMode = false; // after step 6 (half-open), user can branch
+
+function renderFlow(flowDef) {
+  var html = '';
+  flowDef.forEach(function(row) {
+    if (row.type === 'row') {
+      html += '<div class="flow-row">';
+      row.items.forEach(function(item) {
+        if (item.a !== undefined) {
+          html += '<span class="flow-arrow ' + (item.ac||'') + '">' + item.a + '</span>';
+        } else if (item.c && item.c.startsWith('badge')) {
+          html += '<span class="badge ' + item.c.replace('badge','').trim() + '">' + item.t + '</span>';
+        } else {
+          html += '<span class="svc ' + (item.c||'') + '">' + item.t + '</span>';
+        }
+      });
+      html += '</div>';
+    }
+  });
+  return html;
+}
+
+function draw() {
+  var s = steps[idx];
+  // State boxes
+  document.getElementById('box-closed').className = 'state-box' + (s.state === 'CLOSED' ? ' active-closed' : '');
+  document.getElementById('box-open').className = 'state-box' + (s.state === 'OPEN' ? ' active-open' : '');
+  document.getElementById('box-halfopen').className = 'state-box' + (s.state === 'HALF-OPEN' ? ' active-halfopen' : '');
+
+  // Counters
+  var failColor = s.failures >= 5 ? 'red' : (s.failures > 0 ? 'amber' : '');
+  var stateColor = s.state === 'CLOSED' ? 'green' : (s.state === 'OPEN' ? 'red' : 'amber');
+  var flowHtml = '<div class="counters">';
+  flowHtml += '<span class="counter-pill ' + failColor + '">Failure count: <span>' + s.failures + '/5</span></span>';
+  flowHtml += '<span class="counter-pill ' + stateColor + '">State: <span>' + s.state + '</span></span>';
+  if (s.timerVisible) {
+    var secs = Math.round(s.timer * 30 / 100);
+    flowHtml += '<span class="counter-pill amber">Time in OPEN: <span>' + secs + 's</span></span>';
+  }
+  flowHtml += '</div>';
+
+  if (s.timerVisible) {
+    flowHtml += '<div class="timer-wrap"><div class="timer-label">Recovery timer (30s)</div><div class="timer-track"><div class="timer-fill" style="width:' + s.timer + '%"></div></div></div>';
+  }
+
+  flowHtml += renderFlow(s.flow);
+  document.getElementById('flow-area').innerHTML = flowHtml;
+
+  document.getElementById('stat').textContent = s.stat;
+  document.getElementById('counter').textContent = 'Step ' + (idx + 1) + ' / ' + steps.length;
+  document.getElementById('btn-step').disabled = (idx >= steps.length - 1);
+  document.getElementById('btn-back').disabled = (idx === 0);
+  document.getElementById('btn-fail').disabled = !s.btnFail;
+  document.getElementById('btn-succ').disabled = !s.btnSucc;
+}
+
+document.getElementById('btn-step').onclick = function() {
+  if (idx < steps.length - 1) { idx++; draw(); }
+};
+document.getElementById('btn-back').onclick = function() {
+  if (idx > 0) { idx--; draw(); }
+};
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+document.getElementById('btn-fail').onclick = function() {
+  var s = steps[idx];
+  if (s.state === 'HALF-OPEN') {
+    // Probe failed: back to OPEN
+    steps.splice(idx + 1, 0, {
+      state: 'OPEN',
+      failures: 5,
+      timer: 100,
+      timerVisible: true,
+      stat: 'Probe FAILED in HALF-OPEN. Circuit trips back to OPEN. Recovery timer restarted.',
+      flow: [
+        { type:'row', items:[{t:'Service A',c:'caller'},{a:'→',ac:'red'},{t:'[Breaker: OPEN]',c:'breaker-open'},{a:'✕',ac:'red'},{t:'Service B',c:'target-fail'}] },
+        { type:'row', items:[{t:'probe failed - back to OPEN',c:'badge fail'}] }
+      ],
+      btnFail: false, btnSucc: false
+    });
+    idx++;
+    draw();
+  } else if (s.state === 'CLOSED') {
+    var newFail = Math.min(s.failures + 1, 5);
+    var isTrip = newFail >= 5;
+    steps.splice(idx + 1, 0, isTrip ? {
+      state: 'OPEN', failures: 5, timer: 100, timerVisible: true,
+      stat: 'Threshold reached (5/5). Circuit OPENS. Fast fail - no more calls to Service B.',
+      flow: [
+        { type:'row', items:[{t:'Service A',c:'caller'},{a:'→',ac:'red'},{t:'[Breaker: OPEN]',c:'breaker-open'},{a:'✕',ac:'red'},{t:'Service B',c:'target'}] },
+        { type:'row', items:[{t:'immediate fallback - no call made',c:'badge fail'}] }
+      ],
+      btnFail: false, btnSucc: false
+    } : {
+      state: 'CLOSED', failures: newFail, timer: 0, timerVisible: false,
+      stat: 'Service B failed again. Failure count: ' + newFail + '/5.',
+      flow: [
+        { type:'row', items:[{t:'Service A',c:'caller'},{a:'→',ac:'green'},{t:'[Breaker: CLOSED]',c:'breaker-closed'},{a:'→',ac:'red'},{t:'Service B ✕',c:'target-fail'}] },
+        { type:'row', items:[{t:'failure count: ' + newFail + '/5',c:'badge fail'}] }
+      ],
+      btnFail: true, btnSucc: false
+    });
+    idx++;
+    draw();
+  }
+};
+
+document.getElementById('btn-succ').onclick = function() {
+  var s = steps[idx];
+  if (s.state === 'HALF-OPEN') {
+    steps.splice(idx + 1, 0, {
+      state: 'CLOSED', failures: 0, timer: 0, timerVisible: false,
+      stat: 'Probe SUCCEEDED. Circuit CLOSES. Counters reset. Normal operation resumes.',
+      flow: [
+        { type:'row', items:[{t:'Service A',c:'caller'},{a:'→',ac:'green'},{t:'[Breaker: CLOSED]',c:'breaker-closed'},{a:'→',ac:'green'},{t:'Service B ✓',c:'target'}] },
+        { type:'row', items:[{t:'← 200 OK - counters reset',c:'badge ok'}] }
+      ],
+      btnFail: false, btnSucc: false
+    });
+    idx++;
+    draw();
+  }
+};
+
+draw();
+</script>
+</body>
+</html>

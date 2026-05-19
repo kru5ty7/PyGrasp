@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Dependency Injection — Visualizer</title>
+<title>Dependency Injection - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -62,11 +62,11 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Dependency Injection — Step-Through</h4>
+  <h4>Dependency Injection - Step-Through</h4>
 
   <div class="cols">
     <div class="col">
-      <div class="col-label bad">BEFORE ✗ — Hard-coded deps</div>
+      <div class="col-label bad">BEFORE ✗ - Hard-coded deps</div>
       <div class="box" id="before-box">
         <div class="box-header">ReportService</div>
         <div class="code">
@@ -78,7 +78,7 @@
       </div>
     </div>
     <div class="col">
-      <div class="col-label good">AFTER ✓ — Injected deps</div>
+      <div class="col-label good">AFTER ✓ - Injected deps</div>
       <div class="box" id="injector-box">
         <div class="box-header injector">Injector</div>
         <div class="deps-row">
@@ -102,7 +102,7 @@
   </div>
 
   <div class="box" id="test-box" style="display:none">
-    <div class="box-header">Test Scenario — Mock Injection</div>
+    <div class="box-header">Test Scenario - Mock Injection</div>
     <div class="deps-row">
       <div class="dep-box mock" id="mock0">MockDB</div>
       <div class="dep-box mock" id="mock1">FakeMailer</div>
@@ -111,7 +111,7 @@
     <div class="arrow-down">↓ same interface</div>
     <div class="code" style="padding:.2rem .4rem">
       <span class="good">ReportService(db=MockDB(), mailer=FakeMailer(), logger=NullLogger())</span><br>
-      <span style="color:#888">— service code unchanged</span>
+      <span style="color:#888">- service code unchanged</span>
     </div>
   </div>
 
@@ -126,7 +126,7 @@
 <script>
 var steps = [
   {
-    msg: 'BEFORE: ReportService creates its own dependencies inside __init__. Tightly coupled — cannot swap MySQL, SMTPMailer, or FileLogger without editing the class.',
+    msg: 'BEFORE: ReportService creates its own dependencies inside __init__. Tightly coupled - cannot swap MySQL, SMTPMailer, or FileLogger without editing the class.',
     beforeClass: 'box bad', afterClass: 'box dim', injectorClass: 'box dim',
     deps: ['','',''], showTest: false
   },

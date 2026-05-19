@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Composition Over Inheritance — Visualizer</title>
+<title>Composition Over Inheritance - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -145,7 +145,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Composition Over Inheritance — Step-Through</h4>
+  <h4>Composition Over Inheritance - Step-Through</h4>
   <div id="stat">Press Step to begin.</div>
   <div id="ctrl">
     <button id="btn-back" disabled>◀ Back</button>
@@ -167,17 +167,17 @@
 <script>
 var steps = [
   {
-    msg: 'Step 1 of 3 — Both approaches model a Duck. Inheritance chains classes; composition assembles behaviors.',
+    msg: 'Step 1 of 3 - Both approaches model a Duck. Inheritance chains classes; composition assembles behaviors.',
     inh: { chain: ['Animal', 'FlyingAnimal', 'SwimmingFlyingAnimal', 'Duck'], highlight: [], newBox: null, faded: [] },
     comp: { flySlot: 'NormalFly()', quackSlot: 'Quack()', highlightSlot: null, activeImpl: [], newBird: false }
   },
   {
-    msg: 'Step 2 of 3 — Change Duck to use RocketFly. LEFT: must create a new RocketFlyingDuck subclass ✗. RIGHT: just swap duck.fly_behavior = RocketFly() ✓.',
+    msg: 'Step 2 of 3 - Change Duck to use RocketFly. LEFT: must create a new RocketFlyingDuck subclass ✗. RIGHT: just swap duck.fly_behavior = RocketFly() ✓.',
     inh: { chain: ['Animal', 'FlyingAnimal', 'SwimmingFlyingAnimal', 'Duck', 'RocketFlyingDuck'], highlight: ['RocketFlyingDuck'], newBox: 'RocketFlyingDuck', faded: [] },
     comp: { flySlot: 'RocketFly()', quackSlot: 'Quack()', highlightSlot: 'fly', activeImpl: ['RocketFly'], newBird: false }
   },
   {
-    msg: 'Step 3 of 3 — Add a new bird type. LEFT: where does Penguin fit? Must find the right spot in the hierarchy (?). RIGHT: new class, compose any behaviors instantly ✓.',
+    msg: 'Step 3 of 3 - Add a new bird type. LEFT: where does Penguin fit? Must find the right spot in the hierarchy (?). RIGHT: new class, compose any behaviors instantly ✓.',
     inh: { chain: ['Animal', 'FlyingAnimal', 'SwimmingFlyingAnimal', 'Duck', 'RocketFlyingDuck'], highlight: [], newBox: null, faded: ['FlyingAnimal', 'SwimmingFlyingAnimal'], questionAt: 'Animal' },
     comp: { flySlot: 'RocketFly()', quackSlot: 'Quack()', highlightSlot: null, activeImpl: [], newBird: true }
   }

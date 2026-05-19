@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Singleton Pattern — Visualizer</title>
+<title>Singleton Pattern - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -129,7 +129,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Singleton Pattern — Step-Through</h4>
+  <h4>Singleton Pattern - Step-Through</h4>
 
   <div class="diagram">
     <div class="clients">
@@ -189,17 +189,17 @@ var steps = [
   {
     clients: ['amber','',''], arrows: ['amber','',''], singleton: 'amber', body: '_instance = &lt;DatabaseConnection @ 0x1a2b&gt;',
     code: false,
-    msg: 'Client1 calls DatabaseConnection.get_instance() — no instance exists yet, so one is created. Instance returned (amber).'
+    msg: 'Client1 calls DatabaseConnection.get_instance() - no instance exists yet, so one is created. Instance returned (amber).'
   },
   {
     clients: ['green','amber',''], arrows: ['green','amber',''], singleton: 'amber', body: '_instance = &lt;DatabaseConnection @ 0x1a2b&gt;',
     code: false,
-    msg: 'Client2 calls get_instance() — instance already exists. Same object returned. Same object returned.'
+    msg: 'Client2 calls get_instance() - instance already exists. Same object returned. Same object returned.'
   },
   {
     clients: ['green','green','amber'], arrows: ['green','green','amber'], singleton: 'amber', body: '_instance = &lt;DatabaseConnection @ 0x1a2b&gt;',
     code: false,
-    msg: 'Client3 calls get_instance() — same instance again. All three clients share the exact same object.'
+    msg: 'Client3 calls get_instance() - same instance again. All three clients share the exact same object.'
   },
   {
     clients: ['green','green','green'], arrows: ['green','green','green'], singleton: 'green', body: '_instance = &lt;DatabaseConnection @ 0x1a2b&gt;',

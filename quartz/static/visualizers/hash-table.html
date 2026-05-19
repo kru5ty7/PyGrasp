@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hash Table — Visualizer</title>
+<title>Hash Table - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -146,7 +146,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Hash Table — Chaining (mod 7)</h4>
+  <h4>Hash Table - Chaining (mod 7)</h4>
   <div id="input-row">
     <label for="key-input">Key:</label>
     <input id="key-input" type="text" placeholder="e.g. cat" maxlength="10" spellcheck="false">
@@ -156,11 +156,11 @@
     <button id="btn-reset">↺ Reset</button>
   </div>
   <div id="pipeline">
-    <div class="pipe-box" id="p-key">key: —</div>
+    <div class="pipe-box" id="p-key">key: -</div>
     <div class="pipe-arrow">→</div>
-    <div class="pipe-box" id="p-hash">hash: —</div>
+    <div class="pipe-box" id="p-hash">hash: -</div>
     <div class="pipe-arrow">→</div>
-    <div class="pipe-box" id="p-bucket">bucket: —</div>
+    <div class="pipe-box" id="p-bucket">bucket: -</div>
   </div>
   <div id="stat">Enter a key and press Insert, Lookup, or Delete.</div>
   <div id="buckets"></div>
@@ -210,9 +210,9 @@ function setPipeline(key, hash, bucket, stage) {
   var pk = document.getElementById('p-key');
   var ph = document.getElementById('p-hash');
   var pb = document.getElementById('p-bucket');
-  pk.textContent = key !== null ? 'key: "' + key + '"' : 'key: —';
-  ph.textContent = hash !== null ? 'hash: ' + hash : 'hash: —';
-  pb.textContent = bucket !== null ? 'hash % 7 = ' + bucket : 'bucket: —';
+  pk.textContent = key !== null ? 'key: "' + key + '"' : 'key: -';
+  ph.textContent = hash !== null ? 'hash: ' + hash : 'hash: -';
+  pb.textContent = bucket !== null ? 'hash % 7 = ' + bucket : 'bucket: -';
   pk.className = 'pipe-box' + (stage >= 1 ? (stage === 1 ? ' active' : ' done') : '');
   ph.className = 'pipe-box' + (stage >= 2 ? (stage === 2 ? ' active' : ' done') : '');
   pb.className = 'pipe-box' + (stage >= 3 ? ' active' : '');
@@ -269,7 +269,7 @@ function doInsert() {
       // check for duplicate
       var idx = table[h].indexOf(key);
       if (idx !== -1) {
-        setStatus('"' + key + '" already in bucket ' + h + ' — no duplicate inserted.');
+        setStatus('"' + key + '" already in bucket ' + h + ' - no duplicate inserted.');
       } else {
         table[h].push(key);
         setStatus('Inserted "' + key + '" into bucket ' + h + '.');
@@ -299,7 +299,7 @@ function doLookup() {
   var chain = table[h];
   if (chain.length === 0) {
     stepsArr.push(function() {
-      setStatus('Bucket ' + h + ' is empty — "' + key + '" not found.');
+      setStatus('Bucket ' + h + ' is empty - "' + key + '" not found.');
       renderBuckets({}, {}, {});
     });
   } else {
@@ -343,7 +343,7 @@ function doDelete() {
     },
     function() {
       if (idx === -1) {
-        setStatus('"' + key + '" not found in bucket ' + h + ' — nothing to delete.');
+        setStatus('"' + key + '" not found in bucket ' + h + ' - nothing to delete.');
         renderBuckets({}, {}, {});
       } else {
         var fNodes = {};

@@ -106,6 +106,12 @@ Real-world systems that use consistent hashing include Amazon DynamoDB, Apache C
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/consistent-hashing.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Consistent Hashing Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Consistent hashing is applied in Redis Cluster, which divides the key space into 16,384 hash slots and assigns ranges of slots to nodes. While not a ring, the concept of minimizing remapping when cluster topology changes is the same.

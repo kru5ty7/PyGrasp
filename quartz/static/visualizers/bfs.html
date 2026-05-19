@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BFS — Visualizer</title>
+<title>BFS - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -80,7 +80,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>BFS — Breadth-First Search</h4>
+  <h4>BFS - Breadth-First Search</h4>
   <div id="input-row">
     <label for="start-sel">Start node:</label>
     <select id="start-sel">
@@ -118,8 +118,8 @@
     <span class="leg"><span class="dot" style="background:#28a745"></span>Done</span>
   </div>
   <div id="panels">
-    <div class="panel"><strong>Queue (FIFO)</strong><span id="p-queue">—</span></div>
-    <div class="panel"><strong>Visited order</strong><span id="p-visited">—</span></div>
+    <div class="panel"><strong>Queue (FIFO)</strong><span id="p-queue">-</span></div>
+    <div class="panel"><strong>Visited order</strong><span id="p-visited">-</span></div>
   </div>
   <div id="stat">Press Step to begin.</div>
   <div id="ctrl">
@@ -182,7 +182,7 @@ function draw() {
     document.getElementById('t-'+n).setAttribute('fill', TC[state]);
   });
   document.getElementById('p-queue').textContent = s.q.length ? '[ '+s.q.join(' , ')+' ]' : '(empty)';
-  document.getElementById('p-visited').textContent = s.v.length ? s.v.join(' → ') : '—';
+  document.getElementById('p-visited').textContent = s.v.length ? s.v.join(' → ') : '-';
   document.getElementById('stat').textContent = s.msg;
   document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length-1);
   document.getElementById('btn-step').disabled = s.done;

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Async Safe Design — Visualizer</title>
+<title>Async Safe Design - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -144,7 +144,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Async Safe Design — Event Loop Step-Through</h4>
+  <h4>Async Safe Design - Event Loop Step-Through</h4>
   <div id="stat">Press Step to begin.</div>
   <div id="ctrl">
     <button id="btn-back" disabled>◀ Back</button>
@@ -202,17 +202,17 @@
 
 <script>
 var steps = [
-  { msg: 'Event loop starts. Tasks A, B, C are queued. Single thread — no races.',
+  { msg: 'Event loop starts. Tasks A, B, C are queued. Single thread - no races.',
     ta:'queued', taState:'queued', taAwait:'',
     tb:'queued', tbState:'queued', tbAwait:'',
     tc:'queued', tcState:'queued', tcAwait:'',
-    loopCls:'', loopSub:'single thread — ready' },
+    loopCls:'', loopSub:'single thread - ready' },
   { msg: 'Event loop starts Task A. Task A begins executing.',
     ta:'running', taState:'running', taAwait:'',
     tb:'queued', tbState:'queued', tbAwait:'',
     tc:'queued', tcState:'queued', tcAwait:'',
     loopCls:'active', loopSub:'running Task A' },
-  { msg: 'Task A hits "await io_operation()" — suspends, yields control back to loop.',
+  { msg: 'Task A hits "await io_operation()" - suspends, yields control back to loop.',
     ta:'awaiting', taState:'suspended', taAwait:'await io_operation()',
     tb:'queued', tbState:'queued', tbAwait:'',
     tc:'queued', tcState:'queued', tcAwait:'',

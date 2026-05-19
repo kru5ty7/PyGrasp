@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Quick Sort — Visualizer</title>
+<title>Quick Sort - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -130,7 +130,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Quick Sort — Step-Through (Iterative, Lomuto)</h4>
+  <h4>Quick Sort - Step-Through (Iterative, Lomuto)</h4>
   <div id="input-row">
     <label for="arr-input">Array:</label>
     <input id="arr-input" type="text" value="5, 3, 8, 4, 2, 7, 1" placeholder="e.g. 5, 3, 8, 4, 2" spellcheck="false">
@@ -162,7 +162,7 @@ var steps, idx, MAX;
 function buildSteps(arr) {
   var s = [], a = arr.slice(), n = a.length;
   var sortedSet = {};
-  s.push({ arr: a.slice(), pivot: -1, iptr: -1, jptr: -1, swap: [], sortedSet: {}, lo: 0, hi: n - 1, msg: 'Initial array — iterative quicksort (Lomuto partition). Press Step.' });
+  s.push({ arr: a.slice(), pivot: -1, iptr: -1, jptr: -1, swap: [], sortedSet: {}, lo: 0, hi: n - 1, msg: 'Initial array - iterative quicksort (Lomuto partition). Press Step.' });
   var stack = [[0, n - 1]];
   while (stack.length > 0) {
     var range = stack.pop();

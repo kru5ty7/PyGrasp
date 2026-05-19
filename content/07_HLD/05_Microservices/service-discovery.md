@@ -107,6 +107,12 @@ Health checks are the mechanism that keeps the registry accurate. A service inst
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/service-discovery.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Service Discovery Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Service discovery is what makes independent deployability practical. When a service is redeployed at a new address, the registry reflects the change and other services pick it up via discovery.

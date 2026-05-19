@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Producer-Consumer Pattern — Visualizer</title>
+<title>Producer-Consumer Pattern - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -133,7 +133,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Producer-Consumer Pattern — Step-Through</h4>
+  <h4>Producer-Consumer Pattern - Step-Through</h4>
   <div id="stat">Press Step to begin.</div>
   <div id="ctrl">
     <button id="btn-back" disabled>◀ Back</button>
@@ -191,11 +191,11 @@ var steps = [
     prod: 'normal', prodSt: 'idle', cons: 'active', consSt: 'consuming…',
     slots: [null, 2, null, null, null], newSlot: -1,
     infoP: 'idle', infoQ: '1 / 5', infoC: 'consumed item 1', alertP: false, alertC: false },
-  { msg: 'Producer fills slots 3, 4, 5 — queue is now full.',
+  { msg: 'Producer fills slots 3, 4, 5 - queue is now full.',
     prod: 'active', prodSt: 'producing…', cons: 'normal', consSt: 'idle',
     slots: [3, 2, 4, 5, 6], newSlot: -1,
     infoP: 'produced 3, 4, 5', infoQ: '5 / 5', infoC: 'idle', alertP: false, alertC: false },
-  { msg: 'Producer tries to add item but queue is FULL → BLOCKED. 🔒 Queue full — producer waiting.',
+  { msg: 'Producer tries to add item but queue is FULL → BLOCKED. 🔒 Queue full - producer waiting.',
     prod: 'blocked', prodSt: '🔒 blocked', cons: 'normal', consSt: 'idle',
     slots: [3, 2, 4, 5, 6], newSlot: -1,
     infoP: '🔒 waiting (queue full)', infoQ: '5 / 5', infoC: 'idle', alertP: true, alertC: false },
@@ -207,7 +207,7 @@ var steps = [
     prod: 'normal', prodSt: 'idle', cons: 'active', consSt: 'consuming…',
     slots: [null, null, null, null, null], newSlot: -1,
     infoP: 'idle', infoQ: '0 / 5', infoC: 'consumed all', alertP: false, alertC: false },
-  { msg: 'Consumer tries to consume from empty queue → BLOCKED. 🔒 Queue empty — consumer waiting.',
+  { msg: 'Consumer tries to consume from empty queue → BLOCKED. 🔒 Queue empty - consumer waiting.',
     prod: 'normal', prodSt: 'idle', cons: 'blocked', consSt: '🔒 blocked',
     slots: [null, null, null, null, null], newSlot: -1,
     infoP: 'idle', infoQ: '0 / 5', infoC: '🔒 waiting (queue empty)', alertP: false, alertC: true }

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Builder Pattern — Visualizer</title>
+<title>Builder Pattern - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -107,7 +107,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Builder Pattern — Step-Through</h4>
+  <h4>Builder Pattern - Step-Through</h4>
 
   <div class="diagram">
     <div class="builder-col">
@@ -145,39 +145,39 @@ var steps = [
     builderMsg: 'Ready to build.',
     slots: {dough:0, sauce:0, top1:0, top2:0},
     slotText: {dough:'empty', sauce:'empty', top1:'empty', top2:'empty'},
-    msg: 'builder = PizzaBuilder() — Builder object created. Pizza result starts empty.'
+    msg: 'builder = PizzaBuilder() - Builder object created. Pizza result starts empty.'
   },
   {
     builder: 'amber', pizza: '',
     builderMsg: '.set_dough("thin crust")',
     slots: {dough:2, sauce:0, top1:0, top2:0},
     slotText: {dough:'thin crust', sauce:'empty', top1:'empty', top2:'empty'},
-    msg: '.set_dough("thin crust") — dough slot filled in Pizza. Builder configures one part at a time.'
+    msg: '.set_dough("thin crust") - dough slot filled in Pizza. Builder configures one part at a time.'
   },
   {
     builder: 'amber', pizza: '',
     builderMsg: '.set_sauce("tomato")',
     slots: {dough:1, sauce:2, top1:0, top2:0},
     slotText: {dough:'thin crust', sauce:'tomato', top1:'empty', top2:'empty'},
-    msg: '.set_sauce("tomato") — sauce slot filled. Dough already locked in (green).'
+    msg: '.set_sauce("tomato") - sauce slot filled. Dough already locked in (green).'
   },
   {
     builder: 'amber', pizza: '',
     builderMsg: '.add_topping("cheese")',
     slots: {dough:1, sauce:1, top1:2, top2:0},
     slotText: {dough:'thin crust', sauce:'tomato', top1:'cheese', top2:'empty'},
-    msg: '.add_topping("cheese") — first topping added. Each step mutates the internal Pizza under construction.'
+    msg: '.add_topping("cheese") - first topping added. Each step mutates the internal Pizza under construction.'
   },
   {
     builder: 'amber', pizza: '',
     builderMsg: '.add_topping("mushrooms")',
     slots: {dough:1, sauce:1, top1:1, top2:2},
     slotText: {dough:'thin crust', sauce:'tomato', top1:'cheese', top2:'mushrooms'},
-    msg: '.add_topping("mushrooms") — second topping added. Pizza nearly complete.'
+    msg: '.add_topping("mushrooms") - second topping added. Pizza nearly complete.'
   },
   {
     builder: 'green', pizza: 'green',
-    builderMsg: '.build() — done!',
+    builderMsg: '.build() - done!',
     slots: {dough:1, sauce:1, top1:1, top2:1},
     slotText: {dough:'thin crust', sauce:'tomato', top1:'cheese', top2:'mushrooms'},
     msg: '.build() → complete Pizza returned. Complex object assembled step by step. Final: thin crust | tomato sauce | cheese + mushrooms.'

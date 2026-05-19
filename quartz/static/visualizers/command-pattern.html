@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Command Pattern — Visualizer</title>
+<title>Command Pattern - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -57,7 +57,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Command Pattern — Step-Through</h4>
+  <h4>Command Pattern - Step-Through</h4>
 
   <div class="row">
     <div class="box" id="invoker-box">
@@ -100,22 +100,22 @@ var steps = [
     activeCmd: -1, invokerDone: false
   },
   {
-    msg: 'remote.execute(TurnOnCommand(light)) — TurnOnCommand.execute() calls light.turn_on(). Stored in history.',
+    msg: 'remote.execute(TurnOnCommand(light)) - TurnOnCommand.execute() calls light.turn_on(). Stored in history.',
     lightOn: true, history: ['TurnOn'],
     activeCmd: 0, invokerDone: false
   },
   {
-    msg: 'remote.execute(TurnOffCommand(light)) — TurnOffCommand.execute() calls light.turn_off(). Appended to history.',
+    msg: 'remote.execute(TurnOffCommand(light)) - TurnOffCommand.execute() calls light.turn_off(). Appended to history.',
     lightOn: false, history: ['TurnOn', 'TurnOff'],
     activeCmd: 1, invokerDone: false
   },
   {
-    msg: 'remote.execute(TurnOnCommand(light)) — Light ON again. History grows.',
+    msg: 'remote.execute(TurnOnCommand(light)) - Light ON again. History grows.',
     lightOn: true, history: ['TurnOn', 'TurnOff', 'TurnOn'],
     activeCmd: 0, invokerDone: false
   },
   {
-    msg: 'remote.undo() — Last command (TurnOn) reversed via undo(). Light OFF. History shrinks. Undo supported via command history.',
+    msg: 'remote.undo() - Last command (TurnOn) reversed via undo(). Light OFF. History shrinks. Undo supported via command history.',
     lightOn: false, history: ['TurnOn', 'TurnOff'],
     activeCmd: -1, invokerDone: true
   }

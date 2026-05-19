@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Design Patterns — Overview</title>
+<title>Design Patterns - Overview</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -68,7 +68,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Design Patterns — Interactive Reference</h4>
+  <h4>Design Patterns - Interactive Reference</h4>
 
   <!-- CREATIONAL -->
   <div class="section" id="sec-creational">
@@ -136,7 +136,7 @@ var DATA = {
       detail: {
         title: 'Singleton',
         diagram: [{cls:'Singleton', type:'ctx'}, {a:'→'}, {cls:'Singleton._instance', type:'impl'}],
-        note: 'Override __new__ to return the cached instance. Thread safety requires a lock. Use sparingly — global state hinders testing.'
+        note: 'Override __new__ to return the cached instance. Thread safety requires a lock. Use sparingly - global state hinders testing.'
       }
     },
     {
@@ -215,7 +215,7 @@ var DATA = {
       detail: {
         title: 'Facade',
         diagram: [{cls:'Client', type:'ctx'}, {a:'→'}, {cls:'VideoFacade', type:'iface'}, {a:'→'}, {cls:'Subsystems ×5', type:'impl'}],
-        note: 'Facade does not prevent direct subsystem access — it just makes the common case easy. Reduces coupling between client and subsystem.'
+        note: 'Facade does not prevent direct subsystem access - it just makes the common case easy. Reduces coupling between client and subsystem.'
       }
     },
     {
@@ -237,7 +237,7 @@ var DATA = {
       detail: {
         title: 'Proxy & Composite',
         diagram: [{cls:'Client', type:'ctx'}, {a:'→'}, {cls:'Proxy / Composite', type:'iface'}],
-        note: 'Proxy adds indirection (lazy load, caching, auth). Composite lets clients treat a leaf and a branch the same — e.g. file system nodes.'
+        note: 'Proxy adds indirection (lazy load, caching, auth). Composite lets clients treat a leaf and a branch the same - e.g. file system nodes.'
       }
     }
   ],

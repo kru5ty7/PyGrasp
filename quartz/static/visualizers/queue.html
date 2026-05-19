@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Queue — Visualizer</title>
+<title>Queue - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -142,7 +142,7 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Queue (FIFO) — Interactive</h4>
+  <h4>Queue (FIFO) - Interactive</h4>
   <div class="dir-hint">← Dequeue (front)&nbsp;&nbsp;&nbsp;Enqueue (back) →</div>
   <div id="input-row">
     <label for="val-input">Value:</label>
@@ -219,14 +219,14 @@ document.getElementById('btn-enqueue').onclick = function() {
 };
 
 document.getElementById('btn-dequeue').onclick = function() {
-  if (queue.length === 0) { status('Queue is empty — nothing to dequeue.'); return; }
+  if (queue.length === 0) { status('Queue is empty - nothing to dequeue.'); return; }
   var v = queue.shift();
   render(-1);
   status('Dequeued "' + v + '" from HEAD. New HEAD = ' + (queue.length > 0 ? '"' + queue[0] + '"' : '(queue empty)') + '.');
 };
 
 document.getElementById('btn-peek').onclick = function() {
-  if (queue.length === 0) { status('Queue is empty — nothing to peek.'); return; }
+  if (queue.length === 0) { status('Queue is empty - nothing to peek.'); return; }
   render(0);
   status('Peek: HEAD = "' + queue[0] + '" (not removed).');
 };

@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Consistent Hashing - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #ring-container {
+    display: flex;
+    justify-content: center;
+    margin-bottom: .75rem;
+  }
+  svg text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .82rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl {
+    display: flex;
+    gap: .4rem;
+    align-items: center;
+    flex-wrap: wrap;
+    margin-bottom: .75rem;
+  }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-add-node { background: #284b63; color: #fff; }
+  #add-key-row {
+    display: flex;
+    gap: .4rem;
+    align-items: center;
+    margin-bottom: .75rem;
+  }
+  #add-key-row label { font-size: .78rem; color: #646464; white-space: nowrap; }
+  #key-input {
+    flex: 1;
+    background: #222224;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    color: #d4d4d4;
+    font-size: .82rem;
+    padding: .3rem .6rem;
+    outline: none;
+  }
+  #key-input:focus { border-color: #7b97aa; }
+  #tbl-wrap {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  table { width: 100%; border-collapse: collapse; font-size: .78rem; }
+  th {
+    background: #323236;
+    padding: .35rem .6rem;
+    text-align: left;
+    color: #888;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    font-size: .7rem;
+  }
+  td { padding: .32rem .6rem; border-top: 1px solid #393639; }
+  tr:first-child td { border-top: none; }
+  .dot-n1 { color: #7eb8d4; }
+  .dot-n2 { color: #a8d8a8; }
+  .dot-n3 { color: #d4a8d4; }
+  .dot-n4 { color: #f0c080; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Consistent Hashing - Ring Visualizer</h4>
+  <div id="ring-container">
+    <svg id="ring-svg" width="300" height="300" viewBox="0 0 300 300"></svg>
+  </div>
+  <div id="stat">3 nodes on ring. Each key is owned by the next clockwise node.</div>
+  <div id="ctrl">
+    <button id="btn-add-node">Add N4 (120°)</button>
+    <button id="btn-remove-node">Remove N2</button>
+    <button id="btn-reset">↺ Reset</button>
+  </div>
+  <div id="add-key-row">
+    <label for="key-input">Add Key:</label>
+    <input id="key-input" type="text" placeholder="e.g. K6" maxlength="8" spellcheck="false">
+    <button id="btn-add-key">Add</button>
+  </div>
+  <div id="tbl-wrap">
+    <table id="node-table">
+      <thead><tr><th>Node</th><th>Keys Owned</th><th>% of Ring</th></tr></thead>
+      <tbody id="tbl-body"></tbody>
+    </table>
+  </div>
+</div>
+<script>
+// State
+var CX = 150, CY = 150, R = 110, NR = 13, KR = 6;
+
+var BASE_NODES = [
+  { id: 'N1', deg: 60,  color: '#7eb8d4', label: 'N1' },
+  { id: 'N2', deg: 180, color: '#a8d8a8', label: 'N2' },
+  { id: 'N3', deg: 300, color: '#d4a8d4', label: 'N3' }
+];
+
+var BASE_KEYS = [
+  { id: 'K1', deg: 10  },
+  { id: 'K2', deg: 100 },
+  { id: 'K3', deg: 200 },
+  { id: 'K4', deg: 140 },
+  { id: 'K5', deg: 260 }
+];
+
+var N4_NODE = { id: 'N4', deg: 120, color: '#f0c080', label: 'N4' };
+
+var state = {
+  nodes: [],
+  keys: [],
+  highlighted: {},  // keyId -> 'amber'|'green'
+  n4Added: false,
+  n2Removed: false
+};
+
+function resetState() {
+  state.nodes = BASE_NODES.map(function(n) { return Object.assign({}, n); });
+  state.keys = BASE_KEYS.map(function(k) { return Object.assign({}, k); });
+  state.highlighted = {};
+  state.n4Added = false;
+  state.n2Removed = false;
+  document.getElementById('btn-add-node').disabled = false;
+  document.getElementById('btn-remove-node').disabled = false;
+}
+
+function degToRad(d) { return (d - 90) * Math.PI / 180; }
+function posOnRing(deg) {
+  var a = degToRad(deg);
+  return { x: CX + R * Math.cos(a), y: CY + R * Math.sin(a) };
+}
+function posLabel(deg, extra) {
+  var r = R + (extra || 22);
+  var a = degToRad(deg);
+  return { x: CX + r * Math.cos(a), y: CY + r * Math.sin(a) };
+}
+
+function ownerOf(keyDeg, nodes) {
+  if (!nodes.length) return null;
+  var sorted = nodes.slice().sort(function(a, b) { return a.deg - b.deg; });
+  for (var i = 0; i < sorted.length; i++) {
+    if (keyDeg <= sorted[i].deg) return sorted[i];
+  }
+  return sorted[0]; // wrap around
+}
+
+function ringPercent(node, nodes) {
+  if (nodes.length === 0) return 0;
+  var sorted = nodes.slice().sort(function(a, b) { return a.deg - b.deg; });
+  var idx = sorted.findIndex(function(n) { return n.id === node.id; });
+  var prevDeg = idx === 0 ? sorted[sorted.length - 1].deg - 360 : sorted[idx - 1].deg;
+  var span = sorted[idx].deg - prevDeg;
+  return Math.round(span / 360 * 100);
+}
+
+function drawRing() {
+  var svg = document.getElementById('ring-svg');
+  var html = '';
+
+  // Ring circle
+  html += '<circle cx="' + CX + '" cy="' + CY + '" r="' + R + '" fill="none" stroke="#393639" stroke-width="2"/>';
+
+  // Arc ownership segments
+  var sortedNodes = state.nodes.slice().sort(function(a, b) { return a.deg - b.deg; });
+  sortedNodes.forEach(function(node, i) {
+    var prevNode = sortedNodes[(i - 1 + sortedNodes.length) % sortedNodes.length];
+    var startDeg = prevNode.deg;
+    var endDeg = node.deg;
+    if (endDeg <= startDeg) endDeg += 360;
+    var midDeg = (startDeg + endDeg) / 2;
+    var startRad = degToRad(startDeg);
+    var endRad = degToRad(endDeg > 360 ? endDeg - 360 : endDeg);
+    // Draw a subtle arc fill
+    var arcSpan = endDeg - startDeg;
+    if (arcSpan > 0 && arcSpan < 360) {
+      var x1 = CX + R * Math.cos(degToRad(startDeg));
+      var y1 = CY + R * Math.sin(degToRad(startDeg));
+      var x2 = CX + R * Math.cos(degToRad(endDeg > 360 ? endDeg - 360 : endDeg));
+      var y2 = CY + R * Math.sin(degToRad(endDeg > 360 ? endDeg - 360 : endDeg));
+      var largeArc = arcSpan > 180 ? 1 : 0;
+      var col = node.color + '22';
+      html += '<path d="M' + CX + ',' + CY + ' L' + x1 + ',' + y1 +
+              ' A' + R + ',' + R + ' 0 ' + largeArc + ',1 ' + x2 + ',' + y2 + ' Z"' +
+              ' fill="' + col + '" />';
+    }
+  });
+
+  // Keys (diamonds)
+  state.keys.forEach(function(key) {
+    var pos = posOnRing(key.deg);
+    var hl = state.highlighted[key.id];
+    var fill = hl === 'amber' ? '#f0a500' : hl === 'green' ? '#28a745' : '#f0a500';
+    var opacity = hl ? '1' : '0.85';
+    var s = KR;
+    html += '<polygon points="' +
+      pos.x + ',' + (pos.y - s) + ' ' +
+      (pos.x + s) + ',' + pos.y + ' ' +
+      pos.x + ',' + (pos.y + s) + ' ' +
+      (pos.x - s) + ',' + pos.y + '"' +
+      ' fill="' + fill + '" opacity="' + opacity + '"' +
+      (hl === 'amber' ? ' stroke="#ffcc44" stroke-width="1.5"' : '') +
+      (hl === 'green' ? ' stroke="#44cc66" stroke-width="1.5"' : '') +
+      '/>';
+    var lp = posLabel(key.deg, 14);
+    html += '<text x="' + lp.x + '" y="' + (lp.y + 4) + '"' +
+            ' text-anchor="middle" font-size="9" fill="#d4d4d4" font-weight="600">' +
+            key.id + '</text>';
+  });
+
+  // Nodes (circles)
+  state.nodes.forEach(function(node) {
+    var pos = posOnRing(node.deg);
+    html += '<circle cx="' + pos.x + '" cy="' + pos.y + '" r="' + NR + '"' +
+            ' fill="' + node.color + '" stroke="#161618" stroke-width="2"/>';
+    html += '<text x="' + pos.x + '" y="' + (pos.y + 4) + '"' +
+            ' text-anchor="middle" font-size="9" fill="#fff" font-weight="700">' +
+            node.id + '</text>';
+    // Degree label
+    var lp = posLabel(node.deg);
+    html += '<text x="' + lp.x + '" y="' + (lp.y + 4) + '"' +
+            ' text-anchor="middle" font-size="8" fill="#646464">' +
+            node.deg + '°</text>';
+  });
+
+  svg.innerHTML = html;
+}
+
+function updateTable() {
+  var tbody = document.getElementById('tbl-body');
+  var rows = '';
+  state.nodes.forEach(function(node) {
+    var owned = state.keys.filter(function(k) {
+      return ownerOf(k.deg, state.nodes) && ownerOf(k.deg, state.nodes).id === node.id;
+    }).map(function(k) { return k.id; });
+    var pct = ringPercent(node, state.nodes);
+    rows += '<tr>' +
+      '<td style="color:' + node.color + ';font-weight:700">' + node.id + '</td>' +
+      '<td>' + (owned.length ? owned.join(', ') : '-') + '</td>' +
+      '<td>' + pct + '%</td>' +
+      '</tr>';
+  });
+  tbody.innerHTML = rows;
+}
+
+function render(msg) {
+  drawRing();
+  updateTable();
+  if (msg) document.getElementById('stat').textContent = msg;
+}
+
+function addN4() {
+  if (state.n4Added) return;
+  state.n4Added = true;
+  document.getElementById('btn-add-node').disabled = true;
+
+  // Find which keys move: keys currently owned by N1 whose deg is between 60 and 120
+  // (between old N1 predecessor angle and 120)
+  // Before N4: N1 owns keys with deg in (300, 360] ∪ [0, 60]
+  // After N4 at 120: N4 owns keys with deg in (60, 120]
+  var moved = [];
+  state.keys.forEach(function(k) {
+    var oldOwner = ownerOf(k.deg, state.nodes);
+    if (oldOwner && oldOwner.id === 'N1' && k.deg > 60 && k.deg <= 120) {
+      moved.push(k.id);
+    }
+  });
+
+  state.nodes.push(Object.assign({}, N4_NODE));
+
+  // Highlight moved keys amber first, then green
+  moved.forEach(function(id) { state.highlighted[id] = 'amber'; });
+  render('Adding N4 at 120°: checking which keys move from N1...');
+
+  setTimeout(function() {
+    moved.forEach(function(id) { state.highlighted[id] = 'green'; });
+    render('N4 added. Keys ' + moved.join(', ') + ' moved from N1 to N4. Only ' +
+           moved.length + ' of ' + state.keys.length + ' keys affected.');
+  }, 800);
+}
+
+function removeN2() {
+  if (state.n2Removed) return;
+  state.n2Removed = true;
+  document.getElementById('btn-remove-node').disabled = true;
+
+  // Find keys owned by N2 before removal
+  var n2Keys = state.keys.filter(function(k) {
+    var o = ownerOf(k.deg, state.nodes);
+    return o && o.id === 'N2';
+  }).map(function(k) { return k.id; });
+
+  // Highlight amber
+  n2Keys.forEach(function(id) { state.highlighted[id] = 'amber'; });
+  render('Removing N2: its keys will move to the next clockwise node...');
+
+  setTimeout(function() {
+    state.nodes = state.nodes.filter(function(n) { return n.id !== 'N2'; });
+    // Keys now go to N3 (next clockwise after 180 is 300 = N3)
+    n2Keys.forEach(function(id) { state.highlighted[id] = 'amber'; });
+    render('N2 removed. Keys ' + n2Keys.join(', ') + ' moved to N3. All other keys unaffected.');
+  }, 800);
+}
+
+function addKey() {
+  var input = document.getElementById('key-input');
+  var name = input.value.trim();
+  if (!name) return;
+  // Check duplicate
+  if (state.keys.find(function(k) { return k.id === name; })) {
+    document.getElementById('stat').textContent = 'Key "' + name + '" already exists.';
+    return;
+  }
+  // Hash the name to a degree 0-359
+  var hash = 0;
+  for (var i = 0; i < name.length; i++) {
+    hash = (hash * 31 + name.charCodeAt(i)) & 0x7fffffff;
+  }
+  var deg = hash % 360;
+  var newKey = { id: name, deg: deg };
+  state.keys.push(newKey);
+  var owner = ownerOf(deg, state.nodes);
+  state.highlighted[name] = 'green';
+  input.value = '';
+  render('Key "' + name + '" placed at ' + deg + '° → owned by ' + (owner ? owner.id : 'none') + '.');
+  setTimeout(function() {
+    delete state.highlighted[name];
+    render('Key "' + name + '" added at ' + deg + '° → owned by ' + (owner ? owner.id : 'none') + '.');
+  }, 1200);
+}
+
+document.getElementById('btn-add-node').onclick = addN4;
+document.getElementById('btn-remove-node').onclick = removeN2;
+document.getElementById('btn-reset').onclick = function() {
+  resetState();
+  render('Reset. 3 nodes on ring. Each key is owned by the next clockwise node.');
+};
+document.getElementById('btn-add-key').onclick = addKey;
+document.getElementById('key-input').onkeydown = function(e) { if (e.key === 'Enter') addKey(); };
+
+resetState();
+render('3 nodes on ring. Each key is owned by the next clockwise node.');
+</script>
+</body>
+</html>

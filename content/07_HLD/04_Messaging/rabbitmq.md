@@ -139,6 +139,12 @@ RabbitMQ's push-based model means the broker pushes messages to consumers as fas
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/rabbitmq.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="RabbitMQ Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 RabbitMQ implements pub/sub through its fanout exchange type. Understanding the general pub/sub pattern provides the conceptual foundation.

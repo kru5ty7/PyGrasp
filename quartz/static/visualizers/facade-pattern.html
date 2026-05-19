@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Facade Pattern — Visualizer</title>
+<title>Facade Pattern - Visualizer</title>
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -66,10 +66,10 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Facade Pattern — Step-Through</h4>
+  <h4>Facade Pattern - Step-Through</h4>
 
   <div class="panel" id="before-panel">
-    <div class="panel-header">BEFORE ✗ — Direct coupling</div>
+    <div class="panel-header">BEFORE ✗ - Direct coupling</div>
     <div class="client-row"><div class="client-box" id="client-before">Client</div></div>
     <div class="arrows-bad">
       <span>↓</span><span>↓</span><span>↓</span><span>↓</span><span>↓</span>
@@ -85,7 +85,7 @@
   </div>
 
   <div class="panel" id="after-panel">
-    <div class="panel-header">AFTER ✓ — Via Facade</div>
+    <div class="panel-header">AFTER ✓ - Via Facade</div>
     <div class="client-row"><div class="client-box" id="client-after">Client</div></div>
     <div class="arrow-center">↓ facade.upload_video(file)</div>
     <div class="facade-row"><div class="facade-box" id="facade-box">VideoFacade</div></div>
@@ -119,7 +119,7 @@ var steps = [
     activeAfterSubs: [], facadeDone: false
   },
   {
-    msg: 'AFTER: Client calls facade.upload_video(file) — one method. VideoFacade owns the orchestration logic.',
+    msg: 'AFTER: Client calls facade.upload_video(file) - one method. VideoFacade owns the orchestration logic.',
     beforeActive: false, afterActive: true,
     activeAfterSubs: [], facadeDone: false
   },
@@ -129,7 +129,7 @@ var steps = [
     activeAfterSubs: [0, 1, 2], facadeDone: false
   },
   {
-    msg: 'Continuing … MetadataParser.parse() … NetworkUploader.upload() — all 5 subsystems called in sequence. Client untouched.',
+    msg: 'Continuing … MetadataParser.parse() … NetworkUploader.upload() - all 5 subsystems called in sequence. Client untouched.',
     beforeActive: false, afterActive: true,
     activeAfterSubs: [3, 4], facadeDone: true
   }
