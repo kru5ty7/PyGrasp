@@ -129,6 +129,12 @@ fib.cache_clear()   # resets all cached values
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/memoization.html" style="width:100%;height:500px;border:none;border-radius:8px;" title="Memoization Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Memoization is the top-down implementation of dynamic programming. It preserves the natural recursive structure of the solution — the code looks almost identical to a brute-force recursive solution — while achieving the same asymptotic complexity as bottom-up tabulation. For problems where only a subset of subproblems are actually needed, memoization can be faster than tabulation in practice, because tabulation always fills the entire table.

@@ -16,7 +16,7 @@
     min-height: 100vh;
     padding: 1.5rem 1rem;
   }
-  .wrap { width: 100%; max-width: 680px; }
+  .wrap { width: 100%; max-width: 660px; }
   h4 {
     font-size: .78rem;
     text-transform: uppercase;
@@ -24,71 +24,41 @@
     color: #646464;
     margin-bottom: .75rem;
   }
-  #ctrl-row {
-    display: flex;
-    gap: .4rem;
-    margin-bottom: .75rem;
-    align-items: center;
-    flex-wrap: wrap;
+  .input-row {
+    display: flex; gap: .4rem; margin-bottom: .6rem; align-items: center; flex-wrap: wrap;
   }
-  #ctrl-row label { font-size: .78rem; color: #646464; white-space: nowrap; }
+  .input-row label { font-size: .78rem; color: #646464; white-space: nowrap; }
   input[type=text] {
-    flex: 1;
-    min-width: 140px;
-    background: #222224;
-    border: 1px solid #393639;
-    border-radius: 4px;
-    color: #d4d4d4;
-    font-size: .85rem;
-    padding: .3rem .6rem;
-    outline: none;
+    flex: 1; background: #222224; border: 1px solid #393639; border-radius: 4px;
+    color: #d4d4d4; font-size: .85rem; padding: .3rem .6rem; outline: none;
   }
   input[type=text]:focus { border-color: #7b97aa; }
   input[type=text].error { border-color: #c0392b; }
-  #err-msg { font-size: .75rem; color: #c0392b; margin-bottom: .5rem; min-height: 1rem; }
-  #phase-badge {
-    display: inline-block;
-    padding: .2rem .6rem;
-    border-radius: 3px;
-    font-size: .72rem;
-    font-weight: 600;
-    letter-spacing: .05em;
-    text-transform: uppercase;
-    margin-bottom: .5rem;
-    background: #2e3a4a;
-    color: #7b97aa;
+  #btn-apply {
+    padding: .3rem .7rem; border: none; border-radius: 4px; cursor: pointer;
+    font-size: .82rem; background: #2e4a30; color: #d4d4d4; white-space: nowrap;
   }
-  #phase-badge.divide  { background: #3a2e0a; color: #f0a500; }
-  #phase-badge.conquer { background: #1a3a22; color: #28a745; }
-  #viz-area {
+  #btn-apply:hover { opacity: .8; }
+  #err-msg { font-size: .75rem; color: #c0392b; margin-bottom: .5rem; min-height: 1rem; }
+
+  #svg-area {
     background: #1e1e20;
     border: 1px solid #393639;
-    border-radius: 6px;
-    padding: .5rem;
-    margin-bottom: .75rem;
-    overflow: auto;
-  }
-  svg { display: block; }
-  #stat {
-    padding: .5rem .75rem;
-    background: #393639;
-    border-left: 3px solid #7b97aa;
-    border-radius: 0 4px 4px 0;
-    font-size: .85rem;
-    line-height: 1.5;
-    min-height: 2.4rem;
-    margin-bottom: .75rem;
-  }
-  #buttons { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
-  button {
-    padding: .32rem .72rem;
-    border: none;
     border-radius: 4px;
-    cursor: pointer;
-    font-size: .82rem;
-    background: #393639;
-    color: #d4d4d4;
-    transition: opacity .15s;
+    margin-bottom: .75rem;
+    overflow: hidden;
+  }
+  #tree-svg { display: block; }
+
+  #stat {
+    padding: .5rem .75rem; background: #393639;
+    border-left: 3px solid #7b97aa; border-radius: 0 4px 4px 0;
+    font-size: .85rem; line-height: 1.5; min-height: 2.4rem; margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem; border: none; border-radius: 4px; cursor: pointer;
+    font-size: .82rem; background: #393639; color: #d4d4d4; transition: opacity .15s;
   }
   button:disabled { opacity: .3; cursor: default; }
   button:not(:disabled):hover { opacity: .75; }
@@ -98,19 +68,16 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Divide &amp; Conquer — Merge Sort</h4>
-  <div id="ctrl-row">
+  <h4>Divide and Conquer — Merge Sort Tree</h4>
+  <div class="input-row">
     <label for="arr-input">Array:</label>
-    <input type="text" id="arr-input" value="5,3,8,1,4,2" placeholder="e.g. 5,3,8,1,4,2" spellcheck="false">
+    <input id="arr-input" type="text" value="5,3,8,1,4,2" placeholder="e.g. 5,3,8,1 (max 8 elements)">
     <button id="btn-apply">Apply</button>
   </div>
   <div id="err-msg"></div>
-  <div id="phase-badge">Ready</div>
-  <div id="viz-area">
-    <svg id="tree-svg" width="640" height="300"></svg>
-  </div>
+  <div id="svg-area"><svg id="tree-svg"></svg></div>
   <div id="stat">Press Step to begin.</div>
-  <div id="buttons">
+  <div id="ctrl">
     <button id="btn-back" disabled>◀ Back</button>
     <button id="btn-step">Step →</button>
     <button id="btn-reset">↺ Reset</button>
@@ -118,229 +85,240 @@
   </div>
 </div>
 <script>
-var steps = [], idx = 0;
-var currentArr = [5,3,8,1,4,2];
+var steps = [], idx = 0, treeNodes = null, treeEdges = null;
 
-/* Tree node: {id, arr, left, right, parent, depth, pos, state, sorted} */
-/* state: 'hidden'|'dividing'|'leaf'|'merging'|'merged' */
+/* ------- Build tree structure ------- */
+/*
+  Each node: { id, arr, left?, right?, parentId, state, sortedArr? }
+  States: hidden | pending (amber) | leaf (grey) | merged (green)
+  Steps:
+    Phase 1 Divide: expose root, then each child level by level
+    Phase 2 Conquer: merge leaves upward
+*/
 
-function buildSteps(arr) {
-  var nodes = {}, edges = [], uid = 0;
-  var seq = [];
+var nodeId = 0;
 
-  function snapshot() {
-    var ns = {};
-    Object.keys(nodes).forEach(function(k) {
-      var nd = nodes[k];
-      ns[k] = { id:nd.id, arr:nd.arr.slice(), left:nd.left, right:nd.right, parent:nd.parent, depth:nd.depth, state:nd.state, sorted:nd.sorted ? nd.sorted.slice() : null };
-    });
-    return { nodes: ns, edges: edges.slice() };
+function buildNode(arr, parentId) {
+  var id = nodeId++;
+  return { id: id, arr: arr.slice(), parentId: parentId, state: 'hidden', left: null, right: null, sortedArr: null };
+}
+
+function buildTreeStructure(arr, parentId, nodes) {
+  var node = buildNode(arr, parentId);
+  nodes[node.id] = node;
+  if (arr.length > 1) {
+    var mid = Math.floor(arr.length / 2);
+    node.left  = buildTreeStructure(arr.slice(0, mid), node.id, nodes);
+    node.right = buildTreeStructure(arr.slice(mid),    node.id, nodes);
+  }
+  return node;
+}
+
+function assignPositions(node, nodes, levels, level) {
+  if (!levels[level]) levels[level] = [];
+  levels[level].push(node.id);
+  if (node.left)  assignPositions(nodes[node.left.id],  nodes, levels, level + 1);
+  if (node.right) assignPositions(nodes[node.right.id], nodes, levels, level + 1);
+}
+
+function computeLayout(rootNode, nodes, W) {
+  var levels = [];
+  assignPositions(rootNode, nodes, levels, 0);
+  var H_LEVEL = 70;
+  var NODE_H = 28, NODE_W_PAD = 10;
+
+  for (var li = 0; li < levels.length; li++) {
+    var count = levels[li].length;
+    for (var ni = 0; ni < count; ni++) {
+      var nid = levels[li][ni];
+      var n = nodes[nid];
+      n.cx = W / (count + 1) * (ni + 1);
+      n.cy = 20 + li * H_LEVEL;
+    }
+  }
+  var totalH = levels.length * H_LEVEL + NODE_H + 10;
+  return { levels: levels, totalH: totalH };
+}
+
+/* Build steps */
+function buildSteps(rootNode, nodes) {
+  var s = [];
+  var nodeStates = {}; /* id → state */
+  var nodeSorted = {}; /* id → sortedArr */
+
+  /* Phase 1: Divide — BFS level by level, expose each node */
+  var queue = [rootNode.id];
+  while (queue.length) {
+    var next = [];
+    for (var qi = 0; qi < queue.length; qi++) {
+      var nid = queue[qi];
+      var n = nodes[nid];
+      var prev = Object.assign({}, nodeStates);
+      var prevSorted = Object.assign({}, nodeSorted);
+      nodeStates[nid] = (n.arr.length <= 1) ? 'leaf' : 'pending';
+      var msgArr = '[' + n.arr.join(',') + ']';
+      var msg;
+      if (n.arr.length <= 1) {
+        msg = 'Base case: ' + msgArr + ' is already sorted.';
+      } else {
+        var mid = Math.floor(n.arr.length / 2);
+        msg = 'Divide: ' + msgArr + ' → [' + n.arr.slice(0, mid).join(',') + '] and [' + n.arr.slice(mid).join(',') + '].';
+      }
+      s.push({ nodeStates: Object.assign({}, nodeStates), nodeSorted: Object.assign({}, nodeSorted), highlightId: nid, msg: msg });
+      if (n.left)  next.push(n.left.id);
+      if (n.right) next.push(n.right.id);
+    }
+    queue = next;
   }
 
-  // Phase 1: build full tree structure first (hidden), then reveal top-down
-  function buildTree(subArr, parentId, depth) {
-    var myId = uid++;
-    nodes[myId] = { id:myId, arr:subArr.slice(), left:null, right:null, parent:parentId, depth:depth, state:'hidden', sorted:null };
-    if (parentId !== null) edges.push({ from:parentId, to:myId });
-    if (subArr.length <= 1) return myId;
-    var mid = Math.floor(subArr.length / 2);
-    var lc = buildTree(subArr.slice(0, mid), myId, depth + 1);
-    var rc = buildTree(subArr.slice(mid), myId, depth + 1);
-    nodes[myId].left = lc;
-    nodes[myId].right = rc;
-    return myId;
-  }
-  buildTree(arr, null, 0);
-
-  // Reveal divide phase top-down BFS
-  seq.push(Object.assign(snapshot(), { msg: 'Merge Sort: divide phase. Array will be split recursively until single elements.', phase:'ready' }));
-
-  function revealDivide(id) {
-    nodes[id].state = 'dividing';
-    var nd = nodes[id];
-    if (nd.arr.length <= 1) {
-      nodes[id].state = 'leaf';
-      seq.push(Object.assign(snapshot(), { msg: 'Leaf: [' + nd.arr.join(',') + '] — single element, already sorted.', phase:'divide' }));
+  /* Phase 2: Conquer — post-order merge from leaves up */
+  function postOrderMerge(node) {
+    if (!node.left || !node.right) {
+      /* leaf — already sorted */
+      nodeSorted[node.id] = node.arr.slice();
       return;
     }
-    var mid = Math.floor(nd.arr.length / 2);
-    seq.push(Object.assign(snapshot(), {
-      msg: 'Divide: splitting [' + nd.arr.join(',') + '] → [' + nd.arr.slice(0,mid).join(',') + '] and [' + nd.arr.slice(mid).join(',') + '].',
-      phase:'divide'
-    }));
-    revealDivide(nd.left);
-    revealDivide(nd.right);
-  }
-  revealDivide(0);
+    postOrderMerge(nodes[node.left.id]);
+    postOrderMerge(nodes[node.right.id]);
 
-  // Conquer phase: merge bottom-up (post-order)
-  function doMerge(id) {
-    var nd = nodes[id];
-    if (nd.arr.length <= 1) {
-      nd.sorted = nd.arr.slice();
-      return nd.sorted;
+    /* merge left + right */
+    var left  = nodeSorted[node.left.id]  || nodes[node.left.id].arr.slice();
+    var right = nodeSorted[node.right.id] || nodes[node.right.id].arr.slice();
+    var merged = [], li = 0, ri = 0;
+    while (li < left.length && ri < right.length) {
+      if (left[li] <= right[ri]) merged.push(left[li++]);
+      else merged.push(right[ri++]);
     }
-    var lSorted = doMerge(nd.left);
-    var rSorted = doMerge(nd.right);
-    // merge
-    var merged = [], i = 0, j = 0;
-    while (i < lSorted.length && j < rSorted.length) {
-      if (lSorted[i] <= rSorted[j]) merged.push(lSorted[i++]);
-      else merged.push(rSorted[j++]);
-    }
-    while (i < lSorted.length) merged.push(lSorted[i++]);
-    while (j < rSorted.length) merged.push(rSorted[j++]);
-    nodes[id].state = 'merging';
-    seq.push(Object.assign(snapshot(), {
-      msg: 'Merge: [' + lSorted.join(',') + '] + [' + rSorted.join(',') + '] → [' + merged.join(',') + '].',
-      phase:'conquer'
-    }));
-    nodes[id].state = 'merged';
-    nodes[id].sorted = merged;
-    seq.push(Object.assign(snapshot(), {
-      msg: 'Merged: [' + merged.join(',') + '] — sorted subarray complete.',
-      phase:'conquer'
-    }));
-    return merged;
+    while (li < left.length)  merged.push(left[li++]);
+    while (ri < right.length) merged.push(right[ri++]);
+
+    nodeSorted[node.id] = merged;
+    nodeStates[node.id] = 'merged';
+
+    var msg = 'Merge: [' + left.join(',') + '] and [' + right.join(',') + '] → [' + merged.join(',') + '].';
+    s.push({ nodeStates: Object.assign({}, nodeStates), nodeSorted: Object.assign({}, nodeSorted), highlightId: node.id, msg: msg });
   }
-  doMerge(0);
-  seq.push(Object.assign(snapshot(), {
-    msg: 'Done! Array fully sorted: [' + nodes[0].sorted.join(',') + '].',
-    phase:'done'
-  }));
-  return seq;
+
+  /* reset nodeSorted before phase 2 */
+  nodeSorted = {};
+  /* set leaves sorted */
+  for (var id in nodes) {
+    if (!nodes[id].left) nodeSorted[id] = nodes[id].arr.slice();
+  }
+
+  postOrderMerge(rootNode);
+
+  /* final step */
+  s.push({ nodeStates: Object.assign({}, nodeStates), nodeSorted: Object.assign({}, nodeSorted), highlightId: rootNode.id,
+    msg: 'Done! Array fully sorted: [' + (nodeSorted[rootNode.id] || []).join(',') + '].', done: true });
+  return s;
 }
 
-/* Layout */
-function computeLayout(nodesSnap) {
-  // BFS to collect by depth, but only visible nodes
-  var byDepth = {};
-  Object.keys(nodesSnap).forEach(function(k) {
-    var nd = nodesSnap[k];
-    if (nd.state === 'hidden') return;
-    var d = nd.depth;
-    if (!byDepth[d]) byDepth[d] = [];
-    byDepth[d].push(+k);
-  });
-  var maxDepth = 0;
-  Object.keys(byDepth).forEach(function(d) { if (+d > maxDepth) maxDepth = +d; });
-  var pos = {};
-  Object.keys(byDepth).forEach(function(d) {
-    var arr = byDepth[d];
-    arr.sort(function(a,b){return a-b;});
-    arr.forEach(function(id, i) {
-      pos[id] = { x: (i + 1) / (arr.length + 1), y: +d / Math.max(maxDepth, 1) };
-    });
-  });
-  return { pos:pos, maxDepth:maxDepth };
-}
-
-function nodeColor(state) {
-  if (state === 'dividing') return '#a06000';
-  if (state === 'leaf')     return '#4a4a4c';
-  if (state === 'merging')  return '#3a5a3a';
-  if (state === 'merged')   return '#1e6b34';
-  return '#2a2a2e';
-}
-function nodeBorderColor(state) {
-  if (state === 'dividing') return '#f0a500';
-  if (state === 'leaf')     return '#646464';
-  if (state === 'merging')  return '#28a745';
-  if (state === 'merged')   return '#28a745';
-  return '#555';
-}
-
-function draw() {
-  var s = steps[idx];
-  var nodesSnap = s.nodes;
-  var edgesSnap = s.edges;
-  var layout = computeLayout(nodesSnap);
-  var pos = layout.pos;
-  var maxD = layout.maxDepth;
-  var svgW = 640;
-  var svgH = Math.max(240, (maxD + 1) * 90 + 50);
+function renderSvg(stepData, nodes, layout, W) {
   var svg = document.getElementById('tree-svg');
-  svg.setAttribute('width', svgW);
-  svg.setAttribute('height', svgH);
-  var padX = 30, padY = 30;
-  var nodeW = 68, nodeH = 28, nodeR = 5;
+  var H = layout.totalH;
+  svg.setAttribute('width', W);
+  svg.setAttribute('height', H);
+  svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+  document.getElementById('svg-area').style.height = H + 'px';
 
-  function cx(id) { return padX + pos[id].x * (svgW - 2 * padX); }
-  function cy(id) { return padY + pos[id].y * (svgH - 2 * padY); }
+  var nodeStates = stepData.nodeStates || {};
+  var nodeSorted = stepData.nodeSorted || {};
+  var hlId = stepData.highlightId;
+  var NODE_H = 26, NODE_W_BASE = 40;
 
-  var html = '';
-  // edges (only between visible nodes)
-  edgesSnap.forEach(function(e) {
-    if (!pos[e.from] || !pos[e.to]) return;
-    var x1 = cx(e.from).toFixed(1), y1 = (cy(e.from) + nodeH/2).toFixed(1);
-    var x2 = cx(e.to).toFixed(1),   y2 = (cy(e.to)  - nodeH/2).toFixed(1);
-    html += '<line x1="'+x1+'" y1="'+y1+'" x2="'+x2+'" y2="'+y2+'" stroke="#555" stroke-width="1.5"/>';
-  });
-  // nodes
-  Object.keys(nodesSnap).forEach(function(k) {
-    var nd = nodesSnap[k];
-    if (!pos[k]) return;
-    var x = (cx(k) - nodeW/2).toFixed(1);
-    var y = (cy(k) - nodeH/2).toFixed(1);
-    var fill   = nodeColor(nd.state);
-    var stroke = nodeBorderColor(nd.state);
-    html += '<rect x="'+x+'" y="'+y+'" width="'+nodeW+'" height="'+nodeH+'" rx="'+nodeR+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="2"/>';
-    var label = nd.sorted ? '['+nd.sorted.join(',')+']' : '['+nd.arr.join(',')+']';
-    // truncate if too long
-    if (label.length > 10) label = label.substring(0, 9) + '…]';
-    html += '<text x="'+cx(k).toFixed(1)+'" y="'+cy(k).toFixed(1)+'" text-anchor="middle" dominant-baseline="central" font-size="11" fill="#d4d4d4" font-family="monospace">'+label+'</text>';
-  });
+  /* compute node display widths */
+  function nodeWidth(arr) { return Math.max(NODE_W_BASE, arr.length * 16 + NODE_W_PAD * 2); }
+  var NODE_W_PAD = 8;
+
+  var html = '<defs><marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#393639"/></marker></defs>';
+
+  /* edges first */
+  for (var id in nodes) {
+    var n = nodes[id];
+    if (n.left) {
+      var child = nodes[n.left.id];
+      html += '<line x1="' + n.cx + '" y1="' + (n.cy + NODE_H/2) + '" x2="' + child.cx + '" y2="' + (child.cy - NODE_H/2 - 2) + '" stroke="#393639" stroke-width="1.5" marker-end="url(#arr)"/>';
+    }
+    if (n.right) {
+      var child2 = nodes[n.right.id];
+      html += '<line x1="' + n.cx + '" y1="' + (n.cy + NODE_H/2) + '" x2="' + child2.cx + '" y2="' + (child2.cy - NODE_H/2 - 2) + '" stroke="#393639" stroke-width="1.5" marker-end="url(#arr)"/>';
+    }
+  }
+
+  /* nodes */
+  for (var id in nodes) {
+    var nid2 = parseInt(id);
+    var n2 = nodes[id];
+    var st = nodeStates[nid2] || 'hidden';
+    if (st === 'hidden') continue;
+
+    var displayArr = (nodeSorted[nid2] && st === 'merged') ? nodeSorted[nid2] : n2.arr;
+    var label = '[' + displayArr.join(',') + ']';
+    var nw = Math.max(NODE_W_BASE, label.length * 7 + NODE_W_PAD * 2);
+
+    var fill = '#2a2a2e', stroke = '#393639', textCol = '#d4d4d4';
+    if (st === 'pending') { fill = '#7a5000'; stroke = '#f0a500'; textCol = '#f0a500'; }
+    if (st === 'leaf')    { fill = '#2e2e30'; stroke = '#4a4a4c'; textCol = '#888'; }
+    if (st === 'merged')  { fill = '#0e2e17'; stroke = '#28a745'; textCol = '#28a745'; }
+    if (nid2 === hlId)    { stroke = '#fff'; }
+
+    var rx = n2.cx - nw/2, ry = n2.cy - NODE_H/2;
+    html += '<rect x="' + rx + '" y="' + ry + '" width="' + nw + '" height="' + NODE_H + '" rx="5" fill="' + fill + '" stroke="' + stroke + '" stroke-width="' + (nid2===hlId?2.5:1.5) + '"/>';
+    html += '<text x="' + n2.cx + '" y="' + (n2.cy + 5) + '" text-anchor="middle" font-size="11" fill="' + textCol + '" font-family="monospace" font-weight="700">' + label + '</text>';
+  }
+
   svg.innerHTML = html;
+}
 
-  // phase badge
-  var badge = document.getElementById('phase-badge');
-  if (s.phase === 'divide') { badge.className = 'phase-badge divide'; badge.textContent = 'Phase 1 — Divide'; }
-  else if (s.phase === 'conquer' || s.phase === 'done') { badge.className = 'phase-badge conquer'; badge.textContent = s.phase === 'done' ? 'Complete' : 'Phase 2 — Conquer'; }
-  else { badge.className = 'phase-badge'; badge.textContent = 'Ready'; }
-  badge.id = 'phase-badge';
-
+function renderStep() {
+  var s = steps[idx];
+  renderSvg(s, treeNodes, treeLayout, svgW);
   document.getElementById('stat').textContent = s.msg;
   document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
-  document.getElementById('btn-step').disabled = idx === steps.length - 1;
+  document.getElementById('btn-step').disabled = !!s.done;
   document.getElementById('btn-back').disabled = idx === 0;
 }
 
-function parseInput(raw) {
+var treeLayout = null, svgW = 620;
+
+function parseArray(raw) {
   var parts = raw.split(',').map(function(x){return x.trim();}).filter(function(x){return x!=='';});
   if (parts.length < 2 || parts.length > 8) return null;
   var nums = parts.map(Number);
   if (nums.some(isNaN)) return null;
-  if (nums.some(function(n){return !isFinite(n)||Math.floor(n)!==n;})) return null;
+  if (nums.some(function(v){return v<0||v>999||Math.floor(v)!==v;})) return null;
   return nums;
 }
 
-function applyInput() {
+function buildAndLoad() {
   var raw = document.getElementById('arr-input').value;
-  var nums = parseInput(raw);
+  var nums = parseArray(raw);
   var errEl = document.getElementById('err-msg');
-  var inputEl = document.getElementById('arr-input');
+  var inp = document.getElementById('arr-input');
   if (!nums) {
-    errEl.textContent = 'Enter 2–8 integers, comma-separated.';
-    inputEl.classList.add('error');
-    return;
+    errEl.textContent = 'Enter 2–8 whole numbers (0–999), comma-separated.';
+    inp.classList.add('error'); return;
   }
   errEl.textContent = '';
-  inputEl.classList.remove('error');
-  currentArr = nums;
-  steps = buildSteps(currentArr.slice());
+  inp.classList.remove('error');
+
+  nodeId = 0;
+  treeNodes = {};
+  var root = buildTreeStructure(nums, -1, treeNodes);
+  treeLayout = computeLayout(root, treeNodes, svgW);
+  steps = buildSteps(root, treeNodes);
   idx = 0;
-  draw();
+  renderStep();
 }
 
-document.getElementById('btn-apply').onclick = applyInput;
-document.getElementById('arr-input').onkeydown = function(e) { if (e.key === 'Enter') applyInput(); };
-document.getElementById('btn-step').onclick = function() { if (idx < steps.length - 1) { idx++; draw(); } };
-document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
-document.getElementById('btn-reset').onclick = function() {
-  steps = buildSteps(currentArr.slice()); idx = 0; draw();
-};
+document.getElementById('btn-apply').onclick = buildAndLoad;
+document.getElementById('arr-input').onkeydown = function(e) { if (e.key === 'Enter') buildAndLoad(); };
+document.getElementById('btn-step').onclick = function() { if (idx < steps.length - 1) { idx++; renderStep(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; renderStep(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; renderStep(); };
 
-steps = buildSteps(currentArr.slice()); draw();
+buildAndLoad();
 </script>
 </body>
 </html>

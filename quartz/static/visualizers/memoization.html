@@ -16,7 +16,7 @@
     min-height: 100vh;
     padding: 1.5rem 1rem;
   }
-  .wrap { width: 100%; max-width: 660px; }
+  .wrap { width: 100%; max-width: 640px; }
   h4 {
     font-size: .78rem;
     text-transform: uppercase;
@@ -24,63 +24,43 @@
     color: #646464;
     margin-bottom: .75rem;
   }
-  #ctrl-row {
-    display: flex;
-    gap: .4rem;
-    margin-bottom: .75rem;
-    align-items: center;
-    flex-wrap: wrap;
+  .input-row {
+    display: flex; gap: .4rem; margin-bottom: .6rem; align-items: center; flex-wrap: wrap;
   }
-  #ctrl-row label { font-size: .78rem; color: #646464; white-space: nowrap; }
+  .input-row label { font-size: .78rem; color: #646464; white-space: nowrap; }
   input[type=number] {
-    width: 64px;
-    background: #222224;
-    border: 1px solid #393639;
-    border-radius: 4px;
-    color: #d4d4d4;
-    font-size: .85rem;
-    padding: .3rem .6rem;
-    outline: none;
+    background: #222224; border: 1px solid #393639; border-radius: 4px;
+    color: #d4d4d4; font-size: .85rem; padding: .3rem .6rem; outline: none; width: 64px;
   }
   input[type=number]:focus { border-color: #7b97aa; }
-  #viz-area {
+  #btn-apply {
+    padding: .3rem .7rem; border: none; border-radius: 4px; cursor: pointer;
+    font-size: .82rem; background: #2e4a30; color: #d4d4d4;
+  }
+  #btn-apply:hover { opacity: .8; }
+  #err-msg { font-size: .75rem; color: #c0392b; margin-bottom: .5rem; min-height: 1rem; }
+
+  #svg-area {
     background: #1e1e20;
     border: 1px solid #393639;
-    border-radius: 6px;
-    padding: .5rem;
-    margin-bottom: .75rem;
-    overflow: auto;
+    border-radius: 4px;
+    margin-bottom: .5rem;
+    overflow: hidden;
   }
-  svg { display: block; }
-  #panels {
-    display: flex;
-    gap: .75rem;
-    margin-bottom: .75rem;
-    flex-wrap: wrap;
+  #tree-svg { display: block; }
+
+  .side-panels {
+    display: flex; gap: .5rem; margin-bottom: .75rem; flex-wrap: wrap;
   }
-  #cache-panel {
-    flex: 1;
-    min-width: 140px;
-    background: #1e1e20;
-    border: 1px solid #393639;
-    border-radius: 6px;
-    padding: .6rem .75rem;
+  .panel {
+    flex: 1; min-width: 140px;
+    background: #393639; border-radius: 4px; padding: .5rem .6rem;
+    font-size: .78rem;
   }
-  #cache-panel h5 { font-size: .7rem; color: #646464; text-transform: uppercase; letter-spacing: .07em; margin-bottom: .4rem; }
-  #cache-list { font-size: .78rem; line-height: 1.7; }
-  .cache-entry { color: #007bff; }
-  #stats-panel {
-    flex: 1;
-    min-width: 140px;
-    background: #1e1e20;
-    border: 1px solid #393639;
-    border-radius: 6px;
-    padding: .6rem .75rem;
-  }
-  #stats-panel h5 { font-size: .7rem; color: #646464; text-transform: uppercase; letter-spacing: .07em; margin-bottom: .4rem; }
-  .stat-row { font-size: .78rem; line-height: 1.7; }
-  .hl-blue { color: #4da6ff; }
-  .hl-green { color: #28a745; }
+  .panel .panel-title { color: #7b97aa; font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; margin-bottom: .35rem; }
+  .cache-entry { color: #28a745; }
+  .cache-entry.new-entry { color: #5bc8ff; }
+
   #stat {
     padding: .5rem .75rem;
     background: #393639;
@@ -91,16 +71,10 @@
     min-height: 2.4rem;
     margin-bottom: .75rem;
   }
-  #buttons { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
   button {
-    padding: .32rem .72rem;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: .82rem;
-    background: #393639;
-    color: #d4d4d4;
-    transition: opacity .15s;
+    padding: .32rem .72rem; border: none; border-radius: 4px; cursor: pointer;
+    font-size: .82rem; background: #393639; color: #d4d4d4; transition: opacity .15s;
   }
   button:disabled { opacity: .3; cursor: default; }
   button:not(:disabled):hover { opacity: .75; }
@@ -111,26 +85,25 @@
 <body>
 <div class="wrap">
   <h4>Memoization — Fibonacci Call Tree</h4>
-  <div id="ctrl-row">
-    <label for="n-input">n:</label>
-    <input type="number" id="n-input" value="5" min="1" max="8">
+  <div class="input-row">
+    <label for="n-input">n (fib):</label>
+    <input id="n-input" type="number" value="5" min="1" max="8">
     <button id="btn-apply">Apply</button>
   </div>
-  <div id="viz-area">
-    <svg id="tree-svg" width="620" height="300"></svg>
-  </div>
-  <div id="panels">
-    <div id="cache-panel">
-      <h5>Cache</h5>
-      <div id="cache-list"><span style="color:#646464;font-size:.75rem">empty</span></div>
+  <div id="err-msg"></div>
+  <div id="svg-area"><svg id="tree-svg"></svg></div>
+  <div class="side-panels">
+    <div class="panel" id="cache-panel">
+      <div class="panel-title">Cache</div>
+      <div id="cache-list">—</div>
     </div>
-    <div id="stats-panel">
-      <h5>Call Stats</h5>
-      <div id="stats-body" class="stat-row">—</div>
+    <div class="panel" id="calls-panel">
+      <div class="panel-title">Call Counter</div>
+      <div id="calls-info">—</div>
     </div>
   </div>
   <div id="stat">Press Step to begin.</div>
-  <div id="buttons">
+  <div id="ctrl">
     <button id="btn-back" disabled>◀ Back</button>
     <button id="btn-step">Step →</button>
     <button id="btn-reset">↺ Reset</button>
@@ -138,212 +111,247 @@
   </div>
 </div>
 <script>
-var steps = [], idx = 0, currentN = 5;
+var steps = [], idx = 0;
 
-/* Pre-compute fib without memo to count naive calls */
-function naiveCalls(n) {
-  if (n <= 1) return 1;
-  return 1 + naiveCalls(n - 1) + naiveCalls(n - 2);
-}
+/* ----  Build the full call tree structure ---- */
+/* Each node: { id, n, parent, children, left?, right? } */
+/* We simulate top-down calls. fib(n) calls fib(n-1) then fib(n-2). */
+/* Cache hits: if node's n already resolved by the time we call it → blue. */
 
-/* Build tree nodes and steps */
-function buildSteps(n) {
-  var nodes = {}; // id -> {id, n, parent, children, state, value}
-  var edges = []; // {from, to}
-  var seq = []; // steps
-  var memo = {};
-  var callCount = 0;
-  var cacheSnapshot = function() { return Object.assign({}, memo); };
-  var nodeSnapshot = function() {
-    var s = {};
-    Object.keys(nodes).forEach(function(k) {
-      var nd = nodes[k];
-      s[k] = { id: nd.id, n: nd.n, parent: nd.parent, children: nd.children.slice(), state: nd.state, value: nd.value };
-    });
-    return s;
-  };
-  var edgeSnapshot = function() { return edges.slice(); };
+function buildTree(N) {
+  var nodes = [];   // { id, n, parentId }
+  var edges = [];   // { from, to }
+  var counter = [0];
 
-  var uid = 0;
-  function dfs(nval, parentId) {
-    var myId = uid++;
-    callCount++;
-    nodes[myId] = { id: myId, n: nval, parent: parentId, children: [], state: 'pending', value: null };
-    if (parentId !== null) {
-      nodes[parentId].children.push(myId);
-      edges.push({ from: parentId, to: myId });
-    }
-    seq.push({
-      nodes: nodeSnapshot(), edges: edgeSnapshot(), cache: cacheSnapshot(),
-      calls: callCount, highlight: myId,
-      msg: 'Calling fib(' + nval + ').' + (parentId !== null ? ' Stack depth growing.' : '')
-    });
-    if (nval in memo) {
-      nodes[myId].state = 'cached';
-      nodes[myId].value = memo[nval];
-      seq.push({
-        nodes: nodeSnapshot(), edges: edgeSnapshot(), cache: cacheSnapshot(),
-        calls: callCount, highlight: myId,
-        msg: 'Cache HIT! fib(' + nval + ') = ' + memo[nval] + ' already known. No recursion needed.'
-      });
-      return memo[nval];
-    }
-    if (nval <= 1) {
-      var bval = nval;
-      memo[nval] = bval;
-      nodes[myId].state = 'fresh';
-      nodes[myId].value = bval;
-      seq.push({
-        nodes: nodeSnapshot(), edges: edgeSnapshot(), cache: cacheSnapshot(),
-        calls: callCount, highlight: myId,
-        msg: 'Base case: fib(' + nval + ') = ' + bval + '. Storing in cache.'
-      });
-      return bval;
-    }
-    var left = dfs(nval - 1, myId);
-    var right = dfs(nval - 2, myId);
-    var result = left + right;
-    memo[nval] = result;
-    nodes[myId].state = 'fresh';
-    nodes[myId].value = result;
-    seq.push({
-      nodes: nodeSnapshot(), edges: edgeSnapshot(), cache: cacheSnapshot(),
-      calls: callCount, highlight: myId,
-      msg: 'fib(' + nval + ') = fib(' + (nval-1) + ') + fib(' + (nval-2) + ') = ' + left + ' + ' + right + ' = ' + result + '. Cached.'
-    });
-    return result;
+  function makeNode(n, parentId) {
+    var id = counter[0]++;
+    nodes.push({ id: id, n: n, parentId: parentId, value: null, state: 'pending', cacheHit: false });
+    if (parentId !== -1) edges.push({ from: parentId, to: id });
+    return id;
   }
-  dfs(n, null);
-  return { steps: seq, naiveCalls: naiveCalls(n), finalCalls: callCount };
-}
 
-/* Layout: BFS level assignment, then x by position within level */
-function computeLayout(nodesSnap) {
-  var root = 0;
-  var levels = {}, order = [];
-  var queue = [{ id: root, level: 0 }];
+  /* DFS that respects memo — first encounter computes, second is cache hit */
+  var memo = {};   /* n → first-computed nodeId */
+  var stepsArr = [];
+  var cache = {};  /* n → value, built up during sim */
+  var callCount = [0];
+
+  function dfs(n, parentId) {
+    callCount[0]++;
+    var id = makeNode(n, parentId);
+
+    if (n <= 1) {
+      stepsArr.push({ action: 'call', nodeId: id, callCount: callCount[0], cache: Object.assign({}, cache) });
+      cache[n] = n;
+      stepsArr.push({ action: 'resolve', nodeId: id, value: n, newCacheKey: n, callCount: callCount[0], cache: Object.assign({}, cache) });
+      return { id: id, value: n };
+    }
+
+    if (memo.hasOwnProperty(n)) {
+      /* cache hit */
+      stepsArr.push({ action: 'call', nodeId: id, cacheHit: true, callCount: callCount[0], cache: Object.assign({}, cache) });
+      stepsArr.push({ action: 'hit', nodeId: id, value: cache[n], callCount: callCount[0], cache: Object.assign({}, cache) });
+      return { id: id, value: cache[n], cacheHit: true };
+    }
+
+    stepsArr.push({ action: 'call', nodeId: id, callCount: callCount[0], cache: Object.assign({}, cache) });
+    memo[n] = id;   /* mark computing */
+
+    var left = dfs(n - 1, id);
+    var right = dfs(n - 2, id);
+    var val = left.value + right.value;
+    cache[n] = val;
+    stepsArr.push({ action: 'resolve', nodeId: id, value: val, newCacheKey: n, callCount: callCount[0], cache: Object.assign({}, cache) });
+    return { id: id, value: val };
+  }
+
+  var root = dfs(N, -1);
+
+  /* Compute layout: BFS levels */
+  /* We need parent info on nodes */
+  var nodeMap = {};
+  for (var i = 0; i < nodes.length; i++) nodeMap[nodes[i].id] = nodes[i];
+
+  /* Build children lists */
+  for (var i = 0; i < edges.length; i++) {
+    var e = edges[i];
+    var parent = nodeMap[e.from];
+    if (!parent.children) parent.children = [];
+    parent.children.push(e.to);
+  }
+
+  /* Compute positions — BFS, spreading by level */
+  var W = 580, H_PER_LEVEL = 56, R = 18;
+  var levels = [];
+  var queue = [root.id];
+  var visited = {};
   while (queue.length) {
-    var cur = queue.shift();
-    var nd = nodesSnap[cur.id];
-    if (!nd) continue;
-    levels[cur.id] = cur.level;
-    order.push(cur.id);
-    nd.children.forEach(function(cid) { queue.push({ id: cid, level: cur.level + 1 }); });
-  }
-  // Group by level
-  var byLevel = {};
-  order.forEach(function(id) {
-    var lv = levels[id];
-    if (!byLevel[lv]) byLevel[lv] = [];
-    byLevel[lv].push(id);
-  });
-  var maxLevel = 0;
-  Object.keys(byLevel).forEach(function(l) { if (+l > maxLevel) maxLevel = +l; });
-  var pos = {};
-  Object.keys(byLevel).forEach(function(lv) {
-    var arr = byLevel[lv];
-    arr.forEach(function(id, i) {
-      pos[id] = { x: (i + 1) / (arr.length + 1), y: +lv };
-    });
-  });
-  return { pos: pos, maxLevel: maxLevel };
-}
-
-var allSteps, naiveC, finalC;
-
-function rebuild(n) {
-  var res = buildSteps(n);
-  allSteps = res.steps;
-  naiveC = res.naiveCalls;
-  finalC = res.finalCalls;
-  idx = 0;
-}
-
-/* NODE COLOR */
-function nodeColor(state, highlight, id) {
-  if (state === 'pending') return highlight === id ? '#a06000' : '#3a3a3e';
-  if (state === 'cached')  return '#007bff';
-  if (state === 'fresh')   return '#28a745';
-  return '#3a3a3e';
-}
-function nodeBorder(state, highlight, id) {
-  if (highlight === id) return '#f0a500';
-  if (state === 'cached') return '#4da6ff';
-  if (state === 'fresh')  return '#28a745';
-  return '#555';
-}
-
-function draw() {
-  var s = allSteps[idx];
-  var nodesSnap = s.nodes;
-  var edgesSnap = s.edges;
-  var layout = computeLayout(nodesSnap);
-  var pos = layout.pos;
-  var maxL = layout.maxLevel;
-  var svgW = 620, nodeR = 20;
-  var svgH = Math.max(220, (maxL + 1) * 80 + 40);
-  var svg = document.getElementById('tree-svg');
-  svg.setAttribute('width', svgW);
-  svg.setAttribute('height', svgH);
-  var pad = 40;
-  function px(id) { return pad + pos[id].x * (svgW - 2 * pad); }
-  function py(id) { return 30 + pos[id].y * ((svgH - 60) / Math.max(maxL, 1)); }
-  var html = '';
-  // edges
-  edgesSnap.forEach(function(e) {
-    if (!pos[e.from] || !pos[e.to]) return;
-    html += '<line x1="' + px(e.from).toFixed(1) + '" y1="' + py(e.from).toFixed(1) +
-            '" x2="' + px(e.to).toFixed(1) + '" y2="' + py(e.to).toFixed(1) +
-            '" stroke="#555" stroke-width="1.5"/>';
-  });
-  // nodes
-  Object.keys(nodesSnap).forEach(function(id) {
-    var nd = nodesSnap[id];
-    if (!pos[id]) return;
-    var cx = px(id).toFixed(1), cy = py(id).toFixed(1);
-    var fill = nodeColor(nd.state, s.highlight, +id);
-    var stroke = nodeBorder(nd.state, s.highlight, +id);
-    html += '<circle cx="' + cx + '" cy="' + cy + '" r="' + nodeR + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="2"/>';
-    // label inside
-    var lbl = nd.value !== null ? nd.value : ('f(' + nd.n + ')');
-    html += '<text x="' + cx + '" y="' + cy + '" text-anchor="middle" dominant-baseline="central" font-size="11" fill="#fff" font-family="monospace">' + lbl + '</text>';
-    // cached badge
-    if (nd.state === 'cached') {
-      html += '<text x="' + (parseFloat(cx) + nodeR - 2) + '" y="' + (parseFloat(cy) - nodeR + 2) + '" font-size="10" fill="#ffd700">⚡</text>';
+    var next = [];
+    var level = [];
+    for (var qi = 0; qi < queue.length; qi++) {
+      var nid = queue[qi];
+      if (visited[nid]) continue;
+      visited[nid] = true;
+      level.push(nid);
+      var nd = nodeMap[nid];
+      if (nd.children) for (var ci = 0; ci < nd.children.length; ci++) next.push(nd.children[ci]);
     }
-  });
+    if (level.length) levels.push(level);
+    queue = next;
+  }
+
+  for (var li = 0; li < levels.length; li++) {
+    var lvl = levels[li];
+    var count = lvl.length;
+    for (var ni = 0; ni < count; ni++) {
+      var nd = nodeMap[lvl[ni]];
+      nd.x = W / (count + 1) * (ni + 1);
+      nd.y = R + li * H_PER_LEVEL + 4;
+    }
+  }
+
+  var svgH = levels.length * H_PER_LEVEL + R * 2 + 8;
+
+  /* naive without-memo call count: 2^(N+1) - 1 approx */
+  function naiveCount(n) { return n <= 1 ? 1 : 1 + naiveCount(n-1) + naiveCount(n-2); }
+
+  return { nodes: nodeMap, edges: edges, steps: stepsArr, root: root.id, svgW: W, svgH: svgH, R: R, naiveCalls: naiveCount(N), totalCalls: callCount[0] };
+}
+
+var treeData = null;
+
+function renderSvg(nodeStates, highlightId) {
+  var nd = treeData.nodes;
+  var edges = treeData.edges;
+  var W = treeData.svgW, H = treeData.svgH, R = treeData.R;
+  var svg = document.getElementById('tree-svg');
+  svg.setAttribute('width', W);
+  svg.setAttribute('height', H);
+  svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H);
+
+  var html = '<defs><marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7b97aa"/></marker></defs>';
+
+  /* edges */
+  for (var ei = 0; ei < edges.length; ei++) {
+    var e = edges[ei];
+    var a = nd[e.from], b = nd[e.to];
+    if (!a || !b) continue;
+    html += '<line x1="' + a.x + '" y1="' + (a.y + R) + '" x2="' + b.x + '" y2="' + (b.y - R) + '" stroke="#393639" stroke-width="1.5" marker-end="url(#arr)"/>';
+  }
+
+  /* nodes */
+  var ids = Object.keys(nd);
+  for (var ii = 0; ii < ids.length; ii++) {
+    var nid = parseInt(ids[ii]);
+    var n = nd[nid];
+    var st = nodeStates[nid] || 'hidden';
+    if (st === 'hidden') continue;
+    var fill = '#2a2a2e', stroke = '#393639';
+    if (st === 'pending')  { fill = '#7a5000'; stroke = '#f0a500'; }
+    if (st === 'resolved') { fill = '#1a5c2a'; stroke = '#28a745'; }
+    if (st === 'hit')      { fill = '#0a3a6a'; stroke = '#007bff'; }
+    var isHL = (nid === highlightId);
+    if (isHL) stroke = '#fff';
+
+    html += '<circle cx="' + n.x + '" cy="' + n.y + '" r="' + R + '" fill="' + fill + '" stroke="' + stroke + '" stroke-width="' + (isHL ? 2.5 : 1.5) + '"/>';
+    var label = 'fib(' + n.n + ')';
+    var valLabel = (st === 'resolved' || st === 'hit') ? String(n.resolvedValue !== undefined ? n.resolvedValue : '') : '';
+    var badge = (st === 'hit') ? '✓' : '';
+    html += '<text x="' + n.x + '" y="' + (n.y - 2) + '" text-anchor="middle" font-size="9" fill="#d4d4d4" font-family="monospace">' + label + '</text>';
+    if (valLabel !== '') {
+      html += '<text x="' + n.x + '" y="' + (n.y + 9) + '" text-anchor="middle" font-size="9" fill="' + (st==='hit'?'#5bc8ff':'#28a745') + '" font-family="monospace" font-weight="bold">=' + valLabel + (badge?' '+badge:'') + '</text>';
+    }
+  }
   svg.innerHTML = html;
+}
 
-  // Cache panel
-  var cache = s.cache;
-  var keys = Object.keys(cache).map(Number).sort(function(a,b){return a-b;});
-  var chtml = keys.length === 0 ? '<span style="color:#646464;font-size:.75rem">empty</span>' :
-    keys.map(function(k) { return '<div class="cache-entry">fib(' + k + ') = ' + cache[k] + '</div>'; }).join('');
-  document.getElementById('cache-list').innerHTML = chtml;
+function applyStep(stepIdx) {
+  /* Replay all steps 0..stepIdx to compute current nodeStates */
+  var nodeStates = {};  /* nodeId → state string */
+  var nodeVals = {};
+  var cache = {};
+  var callCount = 0;
 
-  // Stats panel
-  document.getElementById('stats-body').innerHTML =
-    '<div>Calls so far: <span class="hl-green">' + s.calls + '</span></div>' +
-    '<div>Calls without memo: <span style="color:#c0392b">' + naiveC + '</span></div>' +
-    '<div style="font-size:.72rem;color:#646464;margin-top:.2rem">Savings: ' + (naiveC - finalC) + ' redundant calls avoided</div>';
+  for (var si = 0; si <= stepIdx; si++) {
+    var st = treeData.steps[si];
+    callCount = st.callCount;
+    cache = st.cache;
+    var nid = st.nodeId;
+    if (st.action === 'call') {
+      nodeStates[nid] = st.cacheHit ? 'hit' : 'pending';
+    } else if (st.action === 'resolve') {
+      nodeStates[nid] = 'resolved';
+      treeData.nodes[nid].resolvedValue = st.value;
+    } else if (st.action === 'hit') {
+      nodeStates[nid] = 'hit';
+      treeData.nodes[nid].resolvedValue = st.value;
+    }
+  }
+  return { nodeStates: nodeStates, cache: cache, callCount: callCount };
+}
 
-  document.getElementById('stat').textContent = s.msg;
-  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (allSteps.length - 1);
-  document.getElementById('btn-step').disabled = idx === allSteps.length - 1;
+function renderStep() {
+  var s = treeData.steps[idx];
+  var result = applyStep(idx);
+
+  renderSvg(result.nodeStates, s.nodeId);
+
+  /* cache panel */
+  var cacheKeys = Object.keys(result.cache).sort(function(a,b){return a-b;});
+  var cHtml = cacheKeys.length === 0 ? '—' : '';
+  for (var i = 0; i < cacheKeys.length; i++) {
+    var k = cacheKeys[i];
+    var isNew = (s.action === 'resolve' || s.action === 'hit') && s.newCacheKey !== undefined && String(s.newCacheKey) === k;
+    cHtml += '<div class="cache-entry' + (isNew ? ' new-entry' : '') + '">fib(' + k + ') = ' + result.cache[k] + '</div>';
+  }
+  document.getElementById('cache-list').innerHTML = cHtml;
+
+  /* calls panel */
+  document.getElementById('calls-info').innerHTML =
+    'With memo: <b style="color:#28a745">' + result.callCount + '</b><br>' +
+    'Without memo: <b style="color:#f0a500">' + treeData.naiveCalls + '</b>';
+
+  /* status */
+  var n = treeData.nodes[s.nodeId];
+  var msg = '';
+  if (s.action === 'call' && !s.cacheHit) msg = 'Calling fib(' + n.n + ') — node added (amber = pending).';
+  else if (s.action === 'call' && s.cacheHit) msg = 'fib(' + n.n + ') already in cache — CACHE HIT! (blue, instant return).';
+  else if (s.action === 'resolve') msg = 'fib(' + n.n + ') resolved = ' + s.value + '. Stored in cache (green).';
+  else if (s.action === 'hit') msg = 'fib(' + n.n + ') = ' + s.value + ' returned from cache (blue ✓). No recomputation.';
+  document.getElementById('stat').textContent = msg;
+
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (treeData.steps.length - 1);
+  document.getElementById('btn-step').disabled = (idx >= treeData.steps.length - 1);
   document.getElementById('btn-back').disabled = idx === 0;
 }
 
-document.getElementById('btn-apply').onclick = function() {
-  var v = parseInt(document.getElementById('n-input').value) || 5;
-  if (v < 1) v = 1; if (v > 8) v = 8;
-  currentN = v;
-  rebuild(currentN); draw();
-};
-document.getElementById('btn-step').onclick = function() { if (idx < allSteps.length - 1) { idx++; draw(); } };
-document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
-document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+function buildAndLoad() {
+  var nVal = parseInt(document.getElementById('n-input').value, 10);
+  var errEl = document.getElementById('err-msg');
+  errEl.textContent = '';
+  if (isNaN(nVal) || nVal < 1 || nVal > 8) { errEl.textContent = 'n must be 1–8.'; return; }
+  treeData = buildTree(nVal);
+  /* set SVG area height */
+  document.getElementById('svg-area').style.height = treeData.svgH + 'px';
+  idx = 0;
+  /* reset node resolved values */
+  var ids = Object.keys(treeData.nodes);
+  for (var i = 0; i < ids.length; i++) delete treeData.nodes[ids[i]].resolvedValue;
+  renderStep();
+}
 
-rebuild(currentN); draw();
+document.getElementById('btn-apply').onclick = buildAndLoad;
+document.getElementById('n-input').onkeydown = function(e) { if (e.key === 'Enter') buildAndLoad(); };
+document.getElementById('btn-step').onclick = function() { if (idx < treeData.steps.length - 1) { idx++; renderStep(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; renderStep(); } };
+document.getElementById('btn-reset').onclick = function() {
+  idx = 0;
+  var ids = Object.keys(treeData.nodes);
+  for (var i = 0; i < ids.length; i++) delete treeData.nodes[ids[i]].resolvedValue;
+  renderStep();
+};
+
+buildAndLoad();
 </script>
 </body>
 </html>

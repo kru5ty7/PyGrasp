@@ -114,6 +114,12 @@ print(merge_sort(data))  # [3, 9, 10, 27, 38, 43, 82]
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/divide-and-conquer.html" style="width:100%;height:500px;border:none;border-radius:8px;" title="Divide and Conquer Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Divide and conquer is the gateway to understanding why efficient sorting and searching algorithms are efficient. Merge sort and binary search are the canonical examples, and both appear in Python's standard library (Timsort in `sorted()`, `bisect` module for binary search). Recognising the divide-conquer-combine pattern is also the first step to distinguishing it from dynamic programming: when you notice subproblems are independent, divide and conquer is the right frame; when you notice they overlap, reach for memoization or tabulation.

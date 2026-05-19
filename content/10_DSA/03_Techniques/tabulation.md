@@ -151,6 +151,12 @@ print(edit_distance("intention", "execution"))  # 5
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/tabulation.html" style="width:100%;height:480px;border:none;border-radius:8px;" title="Tabulation Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Tabulation and memoization are two implementations of the same dynamic programming idea. Choosing between them is a matter of practicality: memoization preserves the recursive structure and is easier to derive, while tabulation avoids recursion overhead and is more memory-friendly when space optimisation is applied. For problems where only a fraction of subproblems are reachable, memoization avoids computing unused cells; for problems where all cells are needed and inputs are large, tabulation is the safer choice in Python.

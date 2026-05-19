@@ -123,6 +123,12 @@ print(lcs("abcde", "ace"))             # 3
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/dynamic-programming.html" style="width:100%;height:460px;border:none;border-radius:8px;" title="Dynamic Programming Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Dynamic programming is the resolution of a tension between two earlier ideas: recursion (which naturally expresses the structure of overlapping subproblems) and the observation that recomputing the same values is wasteful. Memoization solves this by caching recursive calls; tabulation solves it by computing in dependency order without recursion at all. Both are implementations of the same DP idea, just approached from opposite directions.

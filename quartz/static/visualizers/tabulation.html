@@ -24,104 +24,72 @@
     color: #646464;
     margin-bottom: .75rem;
   }
-  #ctrl-row {
-    display: flex;
-    gap: .4rem;
-    margin-bottom: .75rem;
-    align-items: center;
-    flex-wrap: wrap;
+  .input-row {
+    display: flex; gap: .4rem; margin-bottom: .6rem; align-items: center; flex-wrap: wrap;
   }
-  #ctrl-row label { font-size: .78rem; color: #646464; white-space: nowrap; }
+  .input-row label { font-size: .78rem; color: #646464; white-space: nowrap; }
   select, input[type=number] {
-    background: #222224;
-    border: 1px solid #393639;
-    border-radius: 4px;
-    color: #d4d4d4;
-    font-size: .85rem;
-    padding: .3rem .6rem;
-    outline: none;
+    background: #222224; border: 1px solid #393639; border-radius: 4px;
+    color: #d4d4d4; font-size: .85rem; padding: .3rem .6rem; outline: none;
   }
   select:focus, input[type=number]:focus { border-color: #7b97aa; }
   input[type=number] { width: 64px; }
-  #viz-area {
-    background: #1e1e20;
-    border: 1px solid #393639;
-    border-radius: 6px;
-    padding: 1rem;
-    margin-bottom: .75rem;
-    min-height: 120px;
-    overflow-x: auto;
+  #btn-apply {
+    padding: .3rem .7rem; border: none; border-radius: 4px; cursor: pointer;
+    font-size: .82rem; background: #2e4a30; color: #d4d4d4;
   }
-  /* 1D table */
-  .dp-table-1d { display: flex; flex-direction: column; gap: 6px; }
-  .dp-row { display: flex; gap: 4px; align-items: center; }
+  #btn-apply:hover { opacity: .8; }
+  #err-msg { font-size: .75rem; color: #c0392b; margin-bottom: .5rem; min-height: 1rem; }
+
+  /* 1D table (Fibonacci) */
+  #dp-area { margin-bottom: .75rem; overflow-x: auto; }
+  .dp-table { display: flex; flex-wrap: nowrap; gap: 4px; padding: 4px 0; }
   .dp-cell {
-    min-width: 44px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid #393639;
-    border-radius: 3px;
-    font-size: .82rem;
-    background: #2a2a2e;
-    transition: background .2s;
+    min-width: 44px; height: 44px; border: 1px solid #393639; border-radius: 3px;
+    background: #2a2a2e; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; font-size: .85rem; font-weight: 700; color: #d4d4d4; flex-shrink: 0;
     position: relative;
   }
-  .dp-cell.active   { background: #a06000; border-color: #f0a500; color: #fff; }
-  .dp-cell.reading  { background: #7a4d00; border-color: #f0a500; color: #ffd; }
-  .dp-cell.filled   { background: #1e6b34; border-color: #28a745; color: #fff; }
-  .dp-cell.base     { background: #2e3a4a; border-color: #7b97aa; color: #aac; }
-  .dp-label { font-size: .65rem; color: #646464; min-width: 44px; text-align: center; }
-  /* arrows SVG */
-  #arrow-area { position: relative; height: 28px; overflow: visible; }
-  /* 2D table */
-  .dp-table-2d { border-collapse: collapse; font-size: .78rem; }
-  .dp-table-2d th { padding: 4px 6px; color: #646464; font-weight: 500; text-align: center; min-width: 38px; }
-  .dp-table-2d td {
-    border: 1px solid #393639;
-    min-width: 38px;
-    height: 32px;
-    text-align: center;
-    background: #2a2a2e;
-    transition: background .15s;
-    font-size: .78rem;
+  .dp-cell .cell-label { font-size: .55rem; font-weight: 400; color: #646464; margin-bottom: 1px; }
+  .dp-cell.reading  { background: #b07200; border-color: #f0a500; color: #000; }
+  .dp-cell.reading .cell-label { color: #332000; }
+  .dp-cell.filled   { background: #1a5c2a; border-color: #28a745; color: #d4d4d4; }
+  .dp-cell.filled .cell-label  { color: #9ecfad; }
+  .dp-cell.current  { background: #284b63; border-color: #5b9fc0; color: #fff; }
+  .dp-cell.current .cell-label { color: #9cc8e0; }
+
+  /* SVG arrows for Fib dependency */
+  #arrow-svg { display: block; overflow: visible; }
+
+  /* 2D knapsack table */
+  #kn-area { margin-bottom: .75rem; overflow-x: auto; }
+  .kn-wrap { overflow-x: auto; }
+  table.kn-table { border-collapse: collapse; font-size: .76rem; }
+  table.kn-table th, table.kn-table td {
+    border: 1px solid #393639; min-width: 34px; height: 30px; text-align: center;
+    font-weight: 700; padding: 0 3px; color: #d4d4d4;
   }
-  .dp-table-2d td.active  { background: #a06000; border-color: #f0a500; color: #fff; }
-  .dp-table-2d td.reading { background: #7a4d00; border-color: #f0a500; color: #ffd; }
-  .dp-table-2d td.filled  { background: #1e6b34; border-color: #28a745; color: #fff; }
-  .dp-table-2d td.rh      { color: #646464; background: #1e1e20; border: none; font-size: .72rem; }
-  /* result panel */
+  table.kn-table th { background: #222224; color: #646464; font-weight: 400; }
+  table.kn-table td { background: #2a2a2e; }
+  table.kn-table td.reading  { background: #b07200; color: #000; }
+  table.kn-table td.filled   { background: #1a5c2a; color: #d4d4d4; }
+  table.kn-table td.current  { background: #284b63; color: #fff; }
+
   #result-panel {
-    background: #1e1e20;
-    border: 1px solid #393639;
-    border-radius: 6px;
-    padding: .6rem .75rem;
-    margin-bottom: .75rem;
-    font-size: .82rem;
-    min-height: 2rem;
+    background: #393639; border-radius: 4px; padding: .4rem .6rem;
+    font-size: .78rem; margin-bottom: .5rem; display: none;
   }
-  #result-panel span { color: #28a745; }
+  #result-panel .panel-title { color: #7b97aa; font-size: .68rem; text-transform: uppercase; letter-spacing: .06em; margin-bottom: .25rem; }
+
   #stat {
-    padding: .5rem .75rem;
-    background: #393639;
-    border-left: 3px solid #7b97aa;
-    border-radius: 0 4px 4px 0;
-    font-size: .85rem;
-    line-height: 1.5;
-    min-height: 2.4rem;
-    margin-bottom: .75rem;
+    padding: .5rem .75rem; background: #393639;
+    border-left: 3px solid #7b97aa; border-radius: 0 4px 4px 0;
+    font-size: .85rem; line-height: 1.5; min-height: 2.4rem; margin-bottom: .75rem;
   }
-  #buttons { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
   button {
-    padding: .32rem .72rem;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    font-size: .82rem;
-    background: #393639;
-    color: #d4d4d4;
-    transition: opacity .15s;
+    padding: .32rem .72rem; border: none; border-radius: 4px; cursor: pointer;
+    font-size: .82rem; background: #393639; color: #d4d4d4; transition: opacity .15s;
   }
   button:disabled { opacity: .3; cursor: default; }
   button:not(:disabled):hover { opacity: .75; }
@@ -131,23 +99,25 @@
 </head>
 <body>
 <div class="wrap">
-  <h4>Tabulation (Bottom-Up DP) — Step-Through</h4>
-  <div id="ctrl-row">
+  <h4>Tabulation — Step-Through</h4>
+  <div class="input-row">
     <label for="prob-sel">Problem:</label>
     <select id="prob-sel">
       <option value="fib">Fibonacci</option>
       <option value="knapsack">0/1 Knapsack</option>
     </select>
-    <span id="n-wrap">
+    <span id="n-group">
       <label for="n-input" style="margin-left:.4rem">n:</label>
-      <input type="number" id="n-input" value="8" min="2" max="12">
+      <input id="n-input" type="number" value="7" min="1" max="12" style="margin-left:.3rem">
     </span>
     <button id="btn-apply">Apply</button>
   </div>
-  <div id="viz-area"></div>
-  <div id="result-panel" style="display:none"></div>
+  <div id="err-msg"></div>
+  <div id="dp-area"></div>
+  <div id="kn-area" style="display:none"></div>
+  <div id="result-panel"><div class="panel-title">Selected Items</div><div id="result-body"></div></div>
   <div id="stat">Press Step to begin.</div>
-  <div id="buttons">
+  <div id="ctrl">
     <button id="btn-back" disabled>◀ Back</button>
     <button id="btn-step">Step →</button>
     <button id="btn-reset">↺ Reset</button>
@@ -155,179 +125,215 @@
   </div>
 </div>
 <script>
-var steps = [], idx = 0;
-var currentProb = 'fib', currentN = 8;
+var steps = [], idx = 0, currentProb = 'fib';
 
-/* -------- FIBONACCI bottom-up with arrows -------- */
-function buildFib(n) {
-  var s = [];
+/* ---- Fibonacci 1D with dependency arrows ---- */
+function buildFibSteps(n) {
   var dp = new Array(n + 1).fill(null);
-  s.push({ type: 'fib', dp: dp.slice(), active: -1, reading: [], msg: 'Bottom-up Fibonacci. We fill dp[0], dp[1] first, then each dp[i] = dp[i-1] + dp[i-2].', result: '' });
-  dp[0] = 0;
-  s.push({ type: 'fib', dp: dp.slice(), active: 0, reading: [], msg: 'Base case: dp[0] = 0.', result: '' });
-  if (n >= 1) {
-    dp[1] = 1;
-    s.push({ type: 'fib', dp: dp.slice(), active: 1, reading: [], msg: 'Base case: dp[1] = 1.', result: '' });
-  }
+  var s = [];
+  s.push({ dp: dp.slice(), reading: [], current: -1, arrows: [], msg: 'Initial table — all cells empty.', n: n });
+  dp[0] = 0; if (n >= 1) dp[1] = 1;
+  s.push({ dp: dp.slice(), reading: [], current: -1, arrows: [], msg: 'Base cases: dp[0]=0, dp[1]=1 (filled directly, no recurrence).', n: n });
   for (var i = 2; i <= n; i++) {
-    s.push({ type: 'fib', dp: dp.slice(), active: -1, reading: [i-1, i-2], msg: 'Reading dp[' + (i-1) + ']=' + dp[i-1] + ' and dp[' + (i-2) + ']=' + dp[i-2] + '. Dependency arrows shown.', result: '' });
-    dp[i] = dp[i-1] + dp[i-2];
-    s.push({ type: 'fib', dp: dp.slice(), active: i, reading: [], msg: 'dp[' + i + '] = dp[' + (i-1) + '] + dp[' + (i-2) + '] = ' + dp[i-1] + ' + ' + dp[i-2] + ' = ' + dp[i] + '.', result: '' });
+    var r1 = dp[i-1], r2 = dp[i-2];
+    s.push({ dp: dp.slice(), reading: [i-1, i-2], current: i,
+      arrows: [{from: i-1, to: i}, {from: i-2, to: i}],
+      msg: 'dp[' + i + '] depends on dp[' + (i-1) + ']=' + r1 + ' and dp[' + (i-2) + ']=' + r2 + '.', n: n });
+    dp[i] = r1 + r2;
+    s.push({ dp: dp.slice(), reading: [], current: -1, arrows: [],
+      msg: 'dp[' + i + '] = ' + r1 + ' + ' + r2 + ' = ' + dp[i] + '. Written to table.', n: n });
   }
-  s.push({ type: 'fib', dp: dp.slice(), active: -1, reading: [], msg: 'Done! Fibonacci(' + n + ') = ' + dp[n] + '. All cells filled bottom-up.', result: 'fib(' + n + ') = ' + dp[n] });
+  s.push({ dp: dp.slice(), reading: [], current: -1, arrows: [],
+    msg: 'Done! dp[' + n + '] = ' + dp[n] + '.', n: n, done: true });
   return s;
 }
 
-/* -------- 0/1 KNAPSACK -------- */
-function buildKnapsack() {
-  var items = [{w:1,v:1},{w:3,v:4},{w:4,v:5},{w:2,v:3}];
-  var W = 7;
-  var n = items.length;
-  var s = [];
-  // dp[i][w] = max value using items 0..i-1 with capacity w
-  function mkGrid(g) { return g.map(function(r){return r.slice();}); }
+/* ---- 0/1 Knapsack ---- */
+var KN_ITEMS = [{w:1,v:1},{w:3,v:4},{w:4,v:5},{w:2,v:3}];
+var KN_CAP = 7;
+
+function buildKnapsackSteps() {
+  var items = KN_ITEMS, W = KN_CAP, m = items.length;
+  /* dp[i][w] = max value using items 0..i-1 with capacity w */
+  /* row 0 = no items (all 0), rows 1..m = items */
   var dp = [];
-  for (var r = 0; r <= n; r++) dp.push(new Array(W+1).fill(0));
-  s.push({ type: 'ks', dp: mkGrid(dp), items: items, W: W, ar:-1, ac:-1, reading:[], result:'', msg:'0/1 Knapsack: 4 items, capacity W=7. dp[i][w] = best value using first i items with cap w.' });
-  for (var i = 1; i <= n; i++) {
+  for (var i = 0; i <= m; i++) { dp.push(new Array(W + 1).fill(0)); }
+  var s = [];
+  s.push({ dp: copyDP(dp), reading: [], current: null, msg: 'Initial 2D table — rows=items+1, cols=capacity 0–' + W + '.', done: false });
+  s.push({ dp: copyDP(dp), reading: [], current: null, msg: 'Row 0 (no items): all zeros (base case).', done: false });
+
+  for (var i = 1; i <= m; i++) {
     var item = items[i-1];
     for (var w = 0; w <= W; w++) {
-      var skipVal = dp[i-1][w];
-      var takeVal = -1;
-      var rdg = [[i-1, w]];
+      var readCells = [];
+      var exclude = dp[i-1][w];
+      readCells.push({r: i-1, c: w});
+      var include = -1, includeLabel = '';
       if (item.w <= w) {
-        takeVal = dp[i-1][w - item.w] + item.v;
-        rdg.push([i-1, w - item.w]);
+        include = dp[i-1][w - item.w] + item.v;
+        readCells.push({r: i-1, c: w - item.w});
+        includeLabel = 'dp[' + (i-1) + '][' + (w-item.w) + ']+' + item.v + '=' + include;
       }
-      s.push({ type:'ks', dp:mkGrid(dp), items:items, W:W, ar:i, ac:w, reading:rdg, result:'',
-        msg:'Item '+ i +' (w='+ item.w +',v='+ item.v +'), cap='+ w +': skip=' + skipVal + (item.w<=w ? ', take=dp['+(i-1)+']['+(w-item.w)+']+'+item.v+'='+(dp[i-1][w-item.w]+item.v) : ' (too heavy)') + '.' });
-      dp[i][w] = item.w <= w ? Math.max(skipVal, takeVal) : skipVal;
-      s.push({ type:'ks', dp:mkGrid(dp), items:items, W:W, ar:i, ac:w, reading:[], result:'',
-        msg:'dp['+i+']['+w+'] = '+dp[i][w]+'.' });
+      var decision = include > exclude ? 'take' : 'skip';
+      var msgParts = 'Item ' + i + ' (w=' + item.w + ',v=' + item.v + '), cap=' + w + ': ';
+      if (include < 0) {
+        msgParts += 'cannot include (item too heavy). dp=' + exclude + '.';
+      } else {
+        msgParts += 'include? ' + includeLabel + ' vs exclude=' + exclude + ' → ' + decision + '.';
+      }
+      s.push({ dp: copyDP(dp), reading: readCells, current: {r: i, c: w}, msg: msgParts, done: false });
+      dp[i][w] = include > exclude ? include : exclude;
+      s.push({ dp: copyDP(dp), reading: [], current: null, msg: 'dp[' + i + '][' + w + '] = ' + dp[i][w] + '.', done: false });
     }
   }
-  // backtrack
-  var sel = [], rw = W;
-  for (var bi = n; bi >= 1; bi--) {
-    if (dp[bi][rw] !== dp[bi-1][rw]) { sel.push(bi-1); rw -= items[bi-1].w; }
+
+  /* backtrack to find items */
+  var selected = [];
+  var ww = W;
+  for (var ii = m; ii >= 1; ii--) {
+    if (dp[ii][ww] !== dp[ii-1][ww]) {
+      selected.push(ii);
+      ww -= items[ii-1].w;
+    }
   }
-  var totalV = dp[n][W];
-  var selStr = sel.map(function(si){ return 'Item'+(si+1)+'(w='+items[si].w+',v='+items[si].v+')'; }).join(', ');
-  s.push({ type:'ks', dp:mkGrid(dp), items:items, W:W, ar:-1, ac:-1, reading:[], selected:sel,
-    result:'Max value=' + totalV + ' with: ' + selStr,
-    msg:'Done! Max value for W=7 is ' + totalV + '. Backtracking to find selected items.' });
+  selected.reverse();
+  var selLabels = selected.map(function(i) { return 'Item' + i + '(w='+items[i-1].w+',v='+items[i-1].v+')'; });
+  s.push({ dp: copyDP(dp), reading: [], current: null, selectedItems: selected,
+    msg: 'Done! Max value = ' + dp[m][W] + '. Selected: ' + (selLabels.length ? selLabels.join(', ') : 'none') + '.', done: true });
   return s;
 }
 
+function copyDP(dp) {
+  return dp.map(function(row) { return row.slice(); });
+}
+
+/* ---- Render ---- */
 function renderFib(s) {
-  var dp = s.dp, n = dp.length - 1;
-  var CELL_W = 48, GAP = 4;
-  // labels row
-  var lblHtml = '<div class="dp-row">';
-  for (var i = 0; i <= n; i++) lblHtml += '<div class="dp-label">dp[' + i + ']</div>';
-  lblHtml += '</div>';
-  // cells row
-  var rowHtml = '<div class="dp-row">';
-  for (var i = 0; i <= n; i++) {
+  var dp = s.dp, n = s.n;
+  var dpArea = document.getElementById('dp-area');
+  document.getElementById('kn-area').style.display = 'none';
+  dpArea.style.display = '';
+
+  /* cells */
+  var cellsHtml = '<div class="dp-table" id="fib-cells">';
+  for (var i = 0; i < dp.length; i++) {
     var cls = 'dp-cell';
-    if (i === s.active) cls += ' active';
-    else if (s.reading.indexOf(i) >= 0) cls += ' reading';
-    else if (i <= 1 && dp[i] !== null) cls += ' base';
+    if (s.reading.indexOf(i) >= 0) cls += ' reading';
+    else if (s.current === i) cls += ' current';
     else if (dp[i] !== null) cls += ' filled';
-    rowHtml += '<div class="' + cls + '" id="dc' + i + '">' + (dp[i] === null ? '' : dp[i]) + '</div>';
+    var val = dp[i] === null ? '' : String(dp[i]);
+    cellsHtml += '<div class="' + cls + '" id="fc' + i + '"><span class="cell-label">dp['+i+']</span>' + val + '</div>';
   }
-  rowHtml += '</div>';
-  // arrows SVG between reading cells and active
+  cellsHtml += '</div>';
+
+  /* arrow SVG for dependencies */
   var arrowSvg = '';
-  if (s.reading.length === 2 && s.reading[0] !== undefined) {
-    var r0 = s.reading[0], r1 = s.reading[1];
-    // arrows from r0, r1 pointing right toward next cell
-    var totalW = (n+1) * (CELL_W + GAP);
-    arrowSvg = '<svg width="' + totalW + '" height="28" style="overflow:visible;display:block">';
-    [r0, r1].forEach(function(ri) {
-      var x1 = ri * (CELL_W + GAP) + CELL_W / 2;
-      var x2 = (ri + (ri === r0 ? 2 : 3)) * (CELL_W + GAP) - CELL_W / 2;
-      // simple dashed line arrow
-      arrowSvg += '<line x1="' + x1 + '" y1="14" x2="' + x1 + '" y2="28" stroke="#7b97aa" stroke-width="1.5" stroke-dasharray="3,2"/>';
-    });
+  if (s.arrows && s.arrows.length) {
+    /* we render arrows below the cells — use relative coords based on cell width */
+    var cellW = 48, gap = 4;
+    var svgW = dp.length * (cellW + gap);
+    arrowSvg = '<svg id="arrow-svg" width="' + svgW + '" height="24" style="margin-top:0">';
+    for (var ai = 0; ai < s.arrows.length; ai++) {
+      var a = s.arrows[ai];
+      var x1 = a.from * (cellW + gap) + cellW / 2;
+      var x2 = a.to   * (cellW + gap) + cellW / 2;
+      arrowSvg += '<line x1="' + x1 + '" y1="4" x2="' + (x2 - 6) + '" y2="4" stroke="#7b97aa" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#darr)"/>';
+    }
+    arrowSvg += '<defs><marker id="darr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#7b97aa"/></marker></defs>';
     arrowSvg += '</svg>';
   }
-  return '<div class="dp-table-1d">' + lblHtml + rowHtml + (arrowSvg ? '<div>' + arrowSvg + '</div>' : '') + '</div>';
+
+  dpArea.innerHTML = cellsHtml + arrowSvg;
+  document.getElementById('result-panel').style.display = 'none';
 }
 
 function renderKnapsack(s) {
-  var dp = s.dp, items = s.items, W = s.W;
-  var n = items.length;
-  var selected = s.selected || [];
-  var html = '<div style="overflow-x:auto"><table class="dp-table-2d"><thead><tr><th>Item\\ Cap</th>';
-  for (var w = 0; w <= W; w++) html += '<th>' + w + '</th>';
+  document.getElementById('dp-area').style.display = 'none';
+  var knArea = document.getElementById('kn-area');
+  knArea.style.display = '';
+
+  var items = KN_ITEMS, W = KN_CAP, m = items.length;
+  var dp = s.dp;
+
+  /* build table */
+  var html = '<div class="kn-wrap"><table class="kn-table"><thead><tr><th></th>';
+  for (var c = 0; c <= W; c++) html += '<th>cap=' + c + '</th>';
   html += '</tr></thead><tbody>';
-  for (var i = 0; i <= n; i++) {
-    html += '<tr>';
-    var rLabel = i === 0 ? '(none)' : 'Item'+i+'<br><small style="font-size:.65rem;color:#888">w='+items[i-1].w+' v='+items[i-1].v+'</small>';
-    html += '<td class="rh">' + rLabel + '</td>';
-    for (var w2 = 0; w2 <= W; w2++) {
-      var isSel = selected.indexOf(i-1) >= 0 && dp[i][w2] !== dp[i-1] && w2 === W;
-      var cls = '';
-      if (i === s.ar && w2 === s.ac) cls = 'active';
-      else {
-        var isR = false;
+
+  for (var r = 0; r <= m; r++) {
+    var rowLabel = r === 0 ? 'no items' : 'item' + r + '(w='+items[r-1].w+',v='+items[r-1].v+')';
+    html += '<tr><th>' + rowLabel + '</th>';
+    for (var c = 0; c <= W; c++) {
+      var cls = 'td';
+      var isCurrent = s.current && s.current.r === r && s.current.c === c;
+      var isReading = false;
+      if (s.reading) {
         for (var ri = 0; ri < s.reading.length; ri++) {
-          if (s.reading[ri][0] === i && s.reading[ri][1] === w2) { isR = true; break; }
+          if (s.reading[ri].r === r && s.reading[ri].c === c) { isReading = true; break; }
         }
-        if (isR) cls = 'reading';
-        else if (dp[i][w2] !== null) cls = 'filled';
       }
-      html += '<td' + (cls ? ' class="'+cls+'"' : '') + '>' + dp[i][w2] + '</td>';
+      var extra = '';
+      if (isCurrent) extra = ' class="current"';
+      else if (isReading) extra = ' class="reading"';
+      else if (dp[r][c] > 0) extra = ' class="filled"';
+      html += '<td' + extra + '>' + dp[r][c] + '</td>';
     }
     html += '</tr>';
   }
   html += '</tbody></table></div>';
-  return html;
-}
+  knArea.innerHTML = html;
 
-function draw() {
-  var s = steps[idx];
-  var html = '';
-  if (s.type === 'fib') html = renderFib(s);
-  else html = renderKnapsack(s);
-  document.getElementById('viz-area').innerHTML = html;
   var rp = document.getElementById('result-panel');
-  if (s.result) {
-    rp.style.display = 'block';
-    rp.innerHTML = '<span>' + s.result + '</span>';
+  if (s.selectedItems) {
+    rp.style.display = '';
+    var selText = s.selectedItems.map(function(i) {
+      return 'Item ' + i + ' (w=' + items[i-1].w + ', v=' + items[i-1].v + ')';
+    }).join(', ');
+    document.getElementById('result-body').textContent = selText || 'None';
   } else {
     rp.style.display = 'none';
   }
+}
+
+function renderStep() {
+  var s = steps[idx];
+  if (currentProb === 'fib') renderFib(s);
+  else renderKnapsack(s);
+
   document.getElementById('stat').textContent = s.msg;
   document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
-  document.getElementById('btn-step').disabled = idx === steps.length - 1;
+  document.getElementById('btn-step').disabled = !!s.done;
   document.getElementById('btn-back').disabled = idx === 0;
 }
 
-function rebuild() {
-  currentProb = document.getElementById('prob-sel').value;
-  var nw = document.getElementById('n-wrap');
-  if (currentProb === 'fib') {
-    nw.style.display = '';
-    currentN = parseInt(document.getElementById('n-input').value) || 8;
-    if (currentN < 2) currentN = 2;
-    if (currentN > 12) currentN = 12;
-    steps = buildFib(currentN);
+function buildAndLoad() {
+  var prob = document.getElementById('prob-sel').value;
+  var errEl = document.getElementById('err-msg');
+  errEl.textContent = '';
+  currentProb = prob;
+  if (prob === 'fib') {
+    var nVal = parseInt(document.getElementById('n-input').value, 10);
+    if (isNaN(nVal) || nVal < 1 || nVal > 12) { errEl.textContent = 'n must be 1–12.'; return; }
+    steps = buildFibSteps(nVal);
   } else {
-    nw.style.display = 'none';
-    steps = buildKnapsack();
+    steps = buildKnapsackSteps();
   }
   idx = 0;
+  renderStep();
 }
 
-document.getElementById('prob-sel').onchange = function() { rebuild(); draw(); };
-document.getElementById('btn-apply').onclick = function() { rebuild(); draw(); };
-document.getElementById('btn-step').onclick = function() { if (idx < steps.length - 1) { idx++; draw(); } };
-document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
-document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+document.getElementById('prob-sel').onchange = function() {
+  var prob = this.value;
+  document.getElementById('n-group').style.display = prob === 'fib' ? '' : 'none';
+  buildAndLoad();
+};
+document.getElementById('btn-apply').onclick = buildAndLoad;
+document.getElementById('n-input').onkeydown = function(e) { if (e.key === 'Enter') buildAndLoad(); };
+document.getElementById('btn-step').onclick = function() { if (idx < steps.length - 1) { idx++; renderStep(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; renderStep(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; renderStep(); };
 
-rebuild(); draw();
+buildAndLoad();
 </script>
 </body>
 </html>

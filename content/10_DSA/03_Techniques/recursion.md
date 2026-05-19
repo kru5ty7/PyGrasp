@@ -99,6 +99,12 @@ sys.setrecursionlimit(2000)      # use sparingly
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/recursion.html" style="width:100%;height:440px;border:none;border-radius:8px;" title="Recursion Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Recursion is not merely a technique — it is the mechanism underlying most of the important algorithms in this layer. Divide and conquer splits a problem and recurses on each half; dynamic programming memoises recursive calls to avoid redundant work; backtracking recurses through a decision tree and unwinds when a path fails. Understanding the call stack and the recursive trust model is a prerequisite for all of them.
