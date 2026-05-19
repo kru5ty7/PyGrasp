@@ -171,6 +171,12 @@ except ImportError:
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/balanced-tree.html" style="width:100%;height:500px;border:none;border-radius:8px;" title="Balanced Tree Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 The entire motivation for balanced trees comes from the BST's degenerate worst case. The binary search tree note establishes why O(n) height is possible; balanced trees are the solution to that problem. Understanding BST insertion and the inorder sequence property is a prerequisite for understanding why rotations preserve correctness.

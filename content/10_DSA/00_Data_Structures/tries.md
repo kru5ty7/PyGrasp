@@ -189,6 +189,12 @@ print("search 'hel':", search_word(compact_trie, "hel"))     # False (no end mar
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/trie.html" style="width:100%;height:500px;border:none;border-radius:8px;" title="Trie Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Hash tables offer O(L) lookup for a string of length L (due to hashing cost), but no prefix operations. The trie's advantage over a hash table is not raw lookup speed — it is the prefix-based operations that hash tables cannot support efficiently. Understanding hash tables makes the contrast with tries sharper.

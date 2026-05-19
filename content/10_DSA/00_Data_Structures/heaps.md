@@ -163,6 +163,12 @@ print("Merged:", merged)  # [1, 2, 3, 4, 5, 6, 7, 8, 9]
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/heap-tree.html" style="width:100%;height:500px;border:none;border-radius:8px;" title="Heap Tree Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Heap sort uses the heap structure to sort an array in O(n log n) guaranteed time. Unlike quick sort, it has no worst-case degeneration. Understanding the heap is a prerequisite for understanding heap sort as a sorting algorithm that does not require additional memory.

@@ -161,6 +161,12 @@ def dijkstra_to_target(
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/dijkstra.html" style="width:100%;height:460px;border:none;border-radius:8px;" title="Dijkstra's Algorithm Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Dijkstra's algorithm is a greedy algorithm: at each step, it makes the locally optimal choice (process the nearest vertex) and that choice turns out to be globally correct under the assumption of non-negative weights. Understanding why the greedy choice is correct here, and why it fails with negative weights, is the bridge to understanding when Bellman-Ford is required instead.

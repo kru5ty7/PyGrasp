@@ -185,6 +185,12 @@ print("Balanced height:", balanced.height())      # 2
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/binary-search-tree.html" style="width:100%;height:500px;border:none;border-radius:8px;" title="Binary Search Tree Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Binary trees define the structural foundation for BSTs — the parent/child/leaf vocabulary, traversal orders, and height analysis all come from the general binary tree. The BST adds only the ordering constraint, but that single constraint changes the complexity of search from O(n) to O(log n) on average.

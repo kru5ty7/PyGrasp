@@ -177,6 +177,12 @@ print(f"Prim MST weight: {weight_p}")    # 14
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/mst.html" style="width:100%;height:460px;border:none;border-radius:8px;" title="Minimum Spanning Tree Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Both Kruskal's and Prim's are greedy algorithms justified by the cut property. Kruskal's uses Union-Find as its core data structure — making it also an excellent application of the Disjoint Set data structure. Prim's uses a min-heap and is structurally similar to Dijkstra's algorithm, the key difference being that Prim's tracks the minimum edge cost into the MST rather than the minimum path length from a source.

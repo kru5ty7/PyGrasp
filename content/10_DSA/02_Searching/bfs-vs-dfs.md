@@ -188,6 +188,12 @@ def all_paths(graph, source, target):
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/bfs-vs-dfs.html" style="width:100%;height:460px;border:none;border-radius:8px;" title="BFS vs DFS Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Choosing between BFS and DFS is ultimately a question about which traversal order the problem requires. That order is determined by the data structure at the core of the algorithm. Understanding queues and stacks — and what FIFO vs LIFO ordering means — is the conceptual foundation that makes the BFS/DFS distinction intuitive rather than arbitrary.

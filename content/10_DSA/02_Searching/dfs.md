@@ -172,6 +172,12 @@ print(dfs_iterative(graph, 'A'))   # ['A', 'B', 'D', 'E', 'F', 'C']
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/dfs.html" style="width:100%;height:460px;border:none;border-radius:8px;" title="DFS Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 DFS is complementary to BFS: both explore all nodes reachable from a source in O(V + E) time, but DFS uses a stack (depth-first) while BFS uses a queue (breadth-first). The choice between them depends on the structure of the problem. DFS's post-order property — processing a node after all its descendants — is what makes it suitable for topological sort and cycle detection, applications where BFS cannot be directly substituted.

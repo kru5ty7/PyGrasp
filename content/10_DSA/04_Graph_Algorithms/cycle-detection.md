@@ -213,6 +213,12 @@ print(find_cycle_start(n1).val)            # 2
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/cycle-detection.html" style="width:100%;height:460px;border:none;border-radius:8px;" title="Cycle Detection Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Cycle detection is a prerequisite for topological sort: a DAG has a topological ordering if and only if it contains no directed cycle. Kahn's topological sort algorithm doubles as a cycle detector — if the output contains fewer vertices than the graph, unprocessed vertices form one or more cycles. The three-state DFS cycle detection is also the cycle-detection component of the DFS-based topological sort algorithm.

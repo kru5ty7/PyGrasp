@@ -174,6 +174,12 @@ def find_arbitrage(currencies: list, rates: list) -> bool:
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/bellman-ford.html" style="width:100%;height:460px;border:none;border-radius:8px;" title="Bellman-Ford Algorithm Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Bellman-Ford and Dijkstra solve the same problem (single-source shortest paths) but under different constraints. Dijkstra is faster but requires non-negative edge weights; Bellman-Ford is slower but handles negative weights and detects negative cycles. The correct choice depends entirely on whether negative weights are possible in the input graph.

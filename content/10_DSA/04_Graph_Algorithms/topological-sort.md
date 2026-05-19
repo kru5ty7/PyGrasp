@@ -165,6 +165,12 @@ print(can_finish(2, [[1, 0], [0, 1]]))                   # False (cycle)
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/topological-sort.html" style="width:100%;height:460px;border:none;border-radius:8px;" title="Topological Sort Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Topological sort is fundamentally DFS with a post-order collection step, or BFS with in-degree tracking. Understanding it solidifies both DFS and BFS patterns. The cycle detection embedded in Kahn's algorithm — output length shorter than vertex count — is a clean, practical technique that appears as a sub-step in many graph problems.
