@@ -10,7 +10,7 @@ tags: [moc, learning-path, lld, design-patterns, layer-7]
 
 ---
 
-## Layer 7a - OOP Concepts
+## Layer 8a - OOP Concepts
 
 1. [[oop-basics|OOP Basics]]
 2. [[encapsulation|Encapsulation]]
@@ -28,7 +28,7 @@ tags: [moc, learning-path, lld, design-patterns, layer-7]
 
 ---
 
-## Layer 7b - Design Patterns
+## Layer 8b - Design Patterns
 
 1. [[design-patterns-overview|Design Patterns Overview]]
 2. [[singleton|Singleton Pattern]]
@@ -48,7 +48,7 @@ tags: [moc, learning-path, lld, design-patterns, layer-7]
 
 ---
 
-## Layer 7c - Concurrency and Thread Safety
+## Layer 8c - Concurrency and Thread Safety
 
 1. [[thread-safety-basics|Thread Safety Basics]]
 2. [[immutable-objects|Immutable Objects for Safety]]
@@ -59,7 +59,7 @@ tags: [moc, learning-path, lld, design-patterns, layer-7]
 
 ---
 
-## Layer 7d - API Design (LLD)
+## Layer 8d - API Design (LLD)
 
 1. [[api-design-principles|API Design Principles]]
 2. [[api-versioning|API Versioning]]
@@ -72,7 +72,7 @@ tags: [moc, learning-path, lld, design-patterns, layer-7]
 
 ---
 
-## Layer 7e - LLD Case Studies
+## Layer 8e - LLD Case Studies
 
 1. [[lld-parking-lot|LLD: Parking Lot System]]
 2. [[lld-library-management|LLD: Library Management System]]

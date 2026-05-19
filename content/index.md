@@ -59,9 +59,9 @@ Layer 3    Web Frameworks
     ↓
 Layer 4    Web Ecosystem
     ↓               ↓
-Layer 5    Data     Layer 7   LLD (OOP + Design Patterns)
+Layer 5    Data     Layer 7   HLD (Distributed Systems)
 Engineering             ↓
-    ↓           Layer 8   HLD (Distributed Systems)
+    ↓           Layer 8   (OOP + Design Patterns)
 Layer 6    AI
 Engineering
 

@@ -10,7 +10,7 @@ tags: [moc, learning-path, hld, system-design, layer-8]
 
 ---
 
-## Layer 8a - Fundamentals
+## Layer 7a - Fundamentals
 
 1. [[scalability-basics|Scalability Basics]]
 2. [[horizontal-vs-vertical-scaling|Horizontal vs Vertical Scaling]]
@@ -23,7 +23,7 @@ tags: [moc, learning-path, hld, system-design, layer-8]
 
 ---
 
-## Layer 8b - Networking and Load Balancing
+## Layer 7b - Networking and Load Balancing
 
 1. [[dns|DNS]]
 2. [[load-balancing|Load Balancing]]
@@ -36,7 +36,7 @@ tags: [moc, learning-path, hld, system-design, layer-8]
 
 ---
 
-## Layer 8c - Caching
+## Layer 7c - Caching
 
 1. [[caching-basics|Caching Basics]]
 2. [[caching-strategies|Caching Strategies]]
@@ -49,7 +49,7 @@ tags: [moc, learning-path, hld, system-design, layer-8]
 
 ---
 
-## Layer 8d - Databases at Scale
+## Layer 7d - Databases at Scale
 
 1. [[database-replication|Database Replication]]
 2. [[database-sharding|Database Sharding]]
@@ -61,7 +61,7 @@ tags: [moc, learning-path, hld, system-design, layer-8]
 
 ---
 
-## Layer 8e - Messaging and Queues
+## Layer 7e - Messaging and Queues
 
 1. [[message-queues|Message Queues]]
 2. [[pub-sub-pattern|Pub/Sub Pattern]]
@@ -72,7 +72,7 @@ tags: [moc, learning-path, hld, system-design, layer-8]
 
 ---
 
-## Layer 8f - Microservices Patterns
+## Layer 7f - Microservices Patterns
 
 1. [[microservices-basics|Microservices Basics]]
 2. [[service-discovery|Service Discovery]]
@@ -85,7 +85,7 @@ tags: [moc, learning-path, hld, system-design, layer-8]
 
 ---
 
-## Layer 8g - HLD Case Studies
+## Layer 7g - HLD Case Studies
 
 1. [[design-url-shortener|Design a URL Shortener]]
 2. [[design-rate-limiter|Design a Rate Limiter]]
