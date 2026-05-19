@@ -112,7 +112,7 @@ print(quick_sort(sorted_data)[:5])  # [0, 1, 2, 3, 4]
 
 ## Visualizer
 
-<iframe src="/visualizers/quick-sort.html" style="width:100%;height:420px;border:none;border-radius:8px;" title="Quick Sort Visualizer"></iframe>
+<iframe src="/static/visualizers/quick-sort.html" style="width:100%;height:420px;border:none;border-radius:8px;" title="Quick Sort Visualizer"></iframe>
 
 ---
 

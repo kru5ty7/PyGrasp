@@ -160,7 +160,7 @@ print(ll.to_list())   # [3, 1, 0]
 
 ## Visualizer
 
-<iframe src="/visualizers/linked-list.html" style="width:100%;height:380px;border:none;border-radius:8px;" title="Linked List Visualizer"></iframe>
+<iframe src="/static/visualizers/linked-list.html" style="width:100%;height:380px;border:none;border-radius:8px;" title="Linked List Visualizer"></iframe>
 
 ---
 

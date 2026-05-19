@@ -100,7 +100,7 @@ large = [random.randint(0, 100) for _ in range(1_000_000)]
 
 ## Visualizer
 
-<iframe src="/visualizers/sorting-comparison.html" style="width:100%;height:460px;border:none;border-radius:8px;" title="Sorting Comparison Visualizer"></iframe>
+<iframe src="/static/visualizers/sorting-comparison.html" style="width:100%;height:460px;border:none;border-radius:8px;" title="Sorting Comparison Visualizer"></iframe>
 
 ---
 

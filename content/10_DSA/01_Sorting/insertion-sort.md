@@ -93,7 +93,7 @@ print(insertion_sort([1, 2, 3, 4, 5]))  # [1, 2, 3, 4, 5]
 
 ## Visualizer
 
-<iframe src="/visualizers/insertion-sort.html" style="width:100%;height:420px;border:none;border-radius:8px;" title="Insertion Sort Visualizer"></iframe>
+<iframe src="/static/visualizers/insertion-sort.html" style="width:100%;height:420px;border:none;border-radius:8px;" title="Insertion Sort Visualizer"></iframe>
 
 ---
 

@@ -129,7 +129,7 @@ print(contains(sorted_list, 4))   # False
 
 ## Visualizer
 
-<iframe src="/visualizers/binary-search.html" style="width:100%;height:400px;border:none;border-radius:8px;" title="Binary Search Visualizer"></iframe>
+<iframe src="/static/visualizers/binary-search.html" style="width:100%;height:400px;border:none;border-radius:8px;" title="Binary Search Visualizer"></iframe>
 
 ---
 

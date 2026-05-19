@@ -214,7 +214,7 @@ print(oht.get("z"))   # 30
 
 ## Visualizer
 
-<iframe src="/visualizers/hash-collisions.html" style="width:100%;height:400px;border:none;border-radius:8px;" title="Hash Collisions Visualizer"></iframe>
+<iframe src="/static/visualizers/hash-collisions.html" style="width:100%;height:400px;border:none;border-radius:8px;" title="Hash Collisions Visualizer"></iframe>
 
 ---
 

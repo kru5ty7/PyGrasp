@@ -115,7 +115,7 @@ def counting_sort_simple(arr: list) -> list:
 
 ## Visualizer
 
-<iframe src="/visualizers/counting-sort.html" style="width:100%;height:420px;border:none;border-radius:8px;" title="Counting Sort Visualizer"></iframe>
+<iframe src="/static/visualizers/counting-sort.html" style="width:100%;height:420px;border:none;border-radius:8px;" title="Counting Sort Visualizer"></iframe>
 
 ---
 

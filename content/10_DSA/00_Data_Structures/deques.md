@@ -141,7 +141,7 @@ print(d)
 
 ## Visualizer
 
-<iframe src="/visualizers/deque.html" style="width:100%;height:380px;border:none;border-radius:8px;" title="Deque Visualizer"></iframe>
+<iframe src="/static/visualizers/deque.html" style="width:100%;height:380px;border:none;border-radius:8px;" title="Deque Visualizer"></iframe>
 
 ---
 

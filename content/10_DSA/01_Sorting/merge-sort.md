@@ -107,7 +107,7 @@ def merge_sort_linked(head):
 
 ## Visualizer
 
-<iframe src="/visualizers/merge-sort.html" style="width:100%;height:420px;border:none;border-radius:8px;" title="Merge Sort Visualizer"></iframe>
+<iframe src="/static/visualizers/merge-sort.html" style="width:100%;height:420px;border:none;border-radius:8px;" title="Merge Sort Visualizer"></iframe>
 
 ---
 

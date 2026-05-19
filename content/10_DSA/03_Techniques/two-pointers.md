@@ -147,7 +147,7 @@ def has_cycle(head: Optional[ListNode]) -> bool:
 
 ## Visualizer
 
-<iframe src="/visualizers/two-pointers.html" style="width:100%;height:400px;border:none;border-radius:8px;" title="Two Pointers Visualizer"></iframe>
+<iframe src="/static/visualizers/two-pointers.html" style="width:100%;height:400px;border:none;border-radius:8px;" title="Two Pointers Visualizer"></iframe>
 
 ---
 

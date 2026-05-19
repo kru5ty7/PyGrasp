@@ -113,7 +113,7 @@ print([heapq.heappop(min_heap) for _ in range(len(min_heap))])  # sorted ascendi
 
 ## Visualizer
 
-<iframe src="/visualizers/heap-sort.html" style="width:100%;height:420px;border:none;border-radius:8px;" title="Heap Sort Visualizer"></iframe>
+<iframe src="/static/visualizers/heap-sort.html" style="width:100%;height:420px;border:none;border-radius:8px;" title="Heap Sort Visualizer"></iframe>
 
 ---
 

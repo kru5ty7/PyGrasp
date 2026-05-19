@@ -181,7 +181,7 @@ print(dict(groups))  # {'a': ['apple', 'apple', 'apple'], 'b': [...], 'c': [...]
 
 ## Visualizer
 
-<iframe src="/visualizers/hash-table.html" style="width:100%;height:400px;border:none;border-radius:8px;" title="Hash Table Visualizer"></iframe>
+<iframe src="/static/visualizers/hash-table.html" style="width:100%;height:400px;border:none;border-radius:8px;" title="Hash Table Visualizer"></iframe>
 
 ---
 

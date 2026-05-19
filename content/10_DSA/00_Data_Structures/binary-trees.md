@@ -186,7 +186,7 @@ print("Is complete:", is_complete(root)) # False (right child of 3 is missing le
 
 ## Visualizer
 
-<iframe src="/visualizers/binary-tree.html" style="width:100%;height:480px;border:none;border-radius:8px;" title="Binary Tree Visualizer"></iframe>
+<iframe src="/static/visualizers/binary-tree.html" style="width:100%;height:480px;border:none;border-radius:8px;" title="Binary Tree Visualizer"></iframe>
 
 ---
 

@@ -164,7 +164,7 @@ task_queue.join()
 
 ## Visualizer
 
-<iframe src="/visualizers/queue.html" style="width:100%;height:380px;border:none;border-radius:8px;" title="Queue Visualizer"></iframe>
+<iframe src="/static/visualizers/queue.html" style="width:100%;height:380px;border:none;border-radius:8px;" title="Queue Visualizer"></iframe>
 
 ---
 
