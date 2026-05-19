@@ -26,7 +26,7 @@
   }
 }
 
-// 2. Right sidebar — stack Backlinks vertically on mobile instead of the
+// 2. Right sidebar - stack Backlinks vertically on mobile instead of the
 //    default side-by-side flex row (which is cramped on small screens).
 @media all and ($mobile) {
   .sidebar.right {
@@ -40,7 +40,7 @@
   }
 }
 
-// 3. Explorer drawer on mobile — card-style with max-height + scroll
+// 3. Explorer drawer on mobile - card-style with max-height + scroll
 @media all and ($mobile) {
   .explorer-content {
     background: var(--light);
@@ -55,7 +55,7 @@
   }
 }
 
-// 4. Article content — better reading experience on small screens
+// 4. Article content - better reading experience on small screens
 @media all and ($mobile) {
   article {
     padding: 0 0.1rem;
@@ -67,7 +67,7 @@
     }
   }
 
-  // Breadcrumbs — horizontal scroll instead of wrapping/truncating
+  // Breadcrumbs - horizontal scroll instead of wrapping/truncating
   .breadcrumb-container {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
@@ -79,23 +79,23 @@
     scrollbar-width: none;
   }
 
-  // Tags — wrap and add spacing
+  // Tags - wrap and add spacing
   .tags {
     flex-wrap: wrap;
     gap: 0.35rem;
   }
 
-  // Code blocks — smaller font, ensure horizontal scroll works
+  // Code blocks - smaller font, ensure horizontal scroll works
   pre {
     font-size: 0.78rem !important;
   }
 
-  // Inline code — slightly smaller
+  // Inline code - slightly smaller
   code {
     font-size: 0.82em !important;
   }
 
-  // Tables — horizontal scroll container already exists, ensure width
+  // Tables - horizontal scroll container already exists, ensure width
   .table-container {
     width: 100%;
     -webkit-overflow-scrolling: touch;
@@ -108,13 +108,13 @@
     gap: 0.3rem;
   }
 
-  // Backlinks — full width, remove any max-height cap
+  // Backlinks - full width, remove any max-height cap
   .backlinks {
     width: 100%;
     max-height: unset !important;
   }
 
-  // Footer — smaller, centered
+  // Footer - smaller, centered
   footer {
     font-size: 0.8rem;
     text-align: center;

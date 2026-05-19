@@ -781,7 +781,7 @@ export const ObsidianFlavoredMarkdown: QuartzTransformerPlugin<Partial<Options>>
         })
       }
 
-      // Always load visualizer script — it detects and activates inline
+      // Always load visualizer script - it detects and activates inline
       // <script> blocks inside visualizer containers on every page nav.
       js.push({
         script: visualizerScript,

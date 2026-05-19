@@ -48,7 +48,7 @@ function initVisualizers() {
         )
         .replace(
           /document\.addEventListener\s*\(\s*['"]nav['"]\s*,\s*(\w+)\s*\)\s*;?/g,
-          "/* nav listener removed — called directly */",
+          "/* nav listener removed - called directly */",
         )
 
       const fn = new Function(patched)
