@@ -54,6 +54,12 @@ At inference time, a **chat completions API** call wraps this generation loop. Y
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/llm-basics.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="LLM Basics Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 LLM APIs are accessed over HTTP  -  each completion request is a POST to an API endpoint. Understanding HTTP request structure (headers, request body as JSON, response streaming via SSE) and how to make async HTTP calls is the mechanical foundation for building LLM-powered applications in Python.

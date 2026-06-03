@@ -177,6 +177,12 @@ aws logs put-retention-policy \
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/cloudwatch.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="CloudWatch Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 CloudWatch Logs is the default output destination for Lambda functions and the primary debugging tool for production Lambda issues. The structured logging patterns described in the handlers note are designed specifically to be queryable with CloudWatch Logs Insights.

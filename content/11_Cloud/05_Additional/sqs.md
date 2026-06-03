@@ -146,6 +146,12 @@ def setup_queues():
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/sqs.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="SQS Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 SQS is the most common trigger source for Lambda functions in data processing pipelines. The Lambda event source mapping polls SQS on your behalf, and the SQS queue's visibility timeout must be configured in coordination with the Lambda function's timeout.

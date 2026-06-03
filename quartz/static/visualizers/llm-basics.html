@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LLM Basics - Transformer Forward Pass</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #vis-area {
+    background: #2a2a2e;
+    border-radius: 6px;
+    padding: .75rem;
+    min-height: 180px;
+    margin-bottom: .5rem;
+    position: relative;
+  }
+  .vis-label {
+    font-size: .68rem;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: #646464;
+    margin-bottom: .4rem;
+  }
+  /* token row */
+  .token-row { display: flex; gap: .3rem; flex-wrap: wrap; align-items: center; }
+  .token {
+    padding: .2rem .45rem;
+    border-radius: 3px;
+    font-size: .82rem;
+    font-family: monospace;
+    border: 1px solid #393639;
+    background: #393639;
+    color: #d4d4d4;
+    transition: background .25s, border-color .25s;
+  }
+  .token.active { background: #f0a500; color: #000; border-color: #f0a500; }
+  .token.pointer { background: #007bff; color: #fff; border-color: #007bff; }
+  /* embedding bar */
+  .embed-row { display: flex; flex-direction: column; gap: .25rem; }
+  .embed-item { display: flex; gap: .4rem; align-items: center; }
+  .embed-name { font-size: .75rem; font-family: monospace; color: #d4d4d4; min-width: 46px; }
+  .embed-bar-bg { flex: 1; height: 10px; background: #393639; border-radius: 3px; overflow: hidden; }
+  .embed-bar-fill { height: 100%; border-radius: 3px; transition: width .3s; }
+  .embed-dim { font-size: .68rem; color: #646464; white-space: nowrap; }
+  /* attention grid */
+  .attn-wrap { overflow-x: auto; }
+  .attn-grid { border-collapse: collapse; font-size: .72rem; }
+  .attn-grid td, .attn-grid th {
+    width: 38px; height: 28px;
+    text-align: center;
+    border: 1px solid #2a2a2e;
+    font-size: .7rem;
+  }
+  .attn-grid th { background: #393639; color: #646464; font-weight: 400; }
+  /* logits bars */
+  .logit-row { display: flex; flex-direction: column; gap: .25rem; }
+  .logit-item { display: flex; gap: .5rem; align-items: center; }
+  .logit-name { font-size: .78rem; font-family: monospace; min-width: 50px; color: #d4d4d4; }
+  .logit-bar-bg { flex: 1; height: 12px; background: #393639; border-radius: 3px; overflow: hidden; }
+  .logit-bar-fill { height: 100%; border-radius: 3px; background: #284b63; transition: width .3s; }
+  .logit-bar-fill.winner { background: #28a745; }
+  .logit-pct { font-size: .72rem; color: #646464; min-width: 36px; text-align: right; }
+  /* pipeline step boxes */
+  .pipeline { display: flex; gap: .25rem; flex-wrap: wrap; align-items: center; margin-bottom: .3rem; }
+  .pipe-box {
+    padding: .2rem .4rem;
+    border-radius: 3px;
+    font-size: .72rem;
+    border: 1px solid #393639;
+    background: #393639;
+    color: #646464;
+    white-space: nowrap;
+  }
+  .pipe-box.done { background: #1a3a2a; border-color: #28a745; color: #28a745; }
+  .pipe-box.active { background: #284b63; border-color: #7b97aa; color: #fff; }
+  .pipe-arrow { color: #646464; font-size: .75rem; }
+  /* info box */
+  .info-box {
+    background: #1e1e20;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .4rem .6rem;
+    font-size: .78rem;
+    line-height: 1.5;
+    color: #d4d4d4;
+  }
+  /* controls */
+  #stat {
+    padding: .45rem .75rem; background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem; line-height: 1.5;
+    min-height: 2.2rem; margin-bottom: .5rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem; border: none; border-radius: 4px;
+    cursor: pointer; font-size: .82rem;
+    background: #393639; color: #d4d4d4; transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>LLM Basics — Transformer Forward Pass</h4>
+  <div id="vis-area"></div>
+  <div id="stat">Press Step to begin.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var TOKENS = ['The', 'cat', 'sat', 'on', 'the'];
+var COLORS = ['#c9a96e','#7bafd4','#a8d5a2','#d4a8d5','#7bafd4'];
+var PIPE = ['Embedding','Pos Enc','Attention','FFN','Logits','Sample'];
+
+var STEPS = [
+  {
+    title: 'Input Tokens',
+    pipe: -1,
+    render: function() {
+      var h = '<div class="vis-label">Input sequence</div>';
+      h += '<div class="token-row">';
+      TOKENS.forEach(function(t, i) {
+        h += '<span class="token active">' + t + '</span>';
+        if (i < TOKENS.length - 1) h += '<span style="color:#646464;font-size:.8rem">→</span>';
+      });
+      h += '</div>';
+      h += '<div style="margin-top:.6rem" class="info-box">5 tokens fed into the model. Each token maps to an integer ID in the vocabulary (e.g. "cat" → 2368).</div>';
+      return h;
+    },
+    msg: 'Input: "The cat sat on the" — 5 tokens are fed to the model as integer IDs.'
+  },
+  {
+    title: 'Token Embedding',
+    pipe: 0,
+    render: function() {
+      var h = '<div class="vis-label">Token → 768-dim embedding vector</div>';
+      h += '<div class="embed-row">';
+      var widths = [72, 55, 83, 40, 68];
+      TOKENS.forEach(function(t, i) {
+        h += '<div class="embed-item">';
+        h += '<span class="embed-name">' + t + '</span>';
+        h += '<div class="embed-bar-bg"><div class="embed-bar-fill" style="width:' + widths[i] + '%;background:' + COLORS[i] + '"></div></div>';
+        h += '<span class="embed-dim">768-d</span>';
+        h += '</div>';
+      });
+      h += '</div>';
+      return h;
+    },
+    msg: 'Each token is looked up in the embedding table → dense 768-dimensional vector. Similar words have similar vectors.'
+  },
+  {
+    title: 'Positional Encoding',
+    pipe: 1,
+    render: function() {
+      var h = '<div class="vis-label">Embedding + positional vector</div>';
+      h += '<div class="embed-row">';
+      var widths = [72, 55, 83, 40, 68];
+      TOKENS.forEach(function(t, i) {
+        h += '<div class="embed-item">';
+        h += '<span class="embed-name">' + t + '</span>';
+        h += '<div class="embed-bar-bg">';
+        h += '<div class="embed-bar-fill" style="width:' + widths[i] + '%;background:' + COLORS[i] + '"></div>';
+        h += '</div>';
+        h += '<span style="color:#646464;font-size:.72rem">+ pos[' + i + ']</span>';
+        h += '</div>';
+      });
+      h += '</div>';
+      h += '<div style="margin-top:.5rem" class="info-box">Sinusoidal position signals added so model knows token order. Without this, "cat sat" = "sat cat".</div>';
+      return h;
+    },
+    msg: 'Positional encoding added to each embedding — injects order information (position 0,1,2,3,4).'
+  },
+  {
+    title: 'Self-Attention',
+    pipe: 2,
+    render: function() {
+      var labels = ['The','cat','sat','on','the'];
+      var matrix = [
+        [0.9, 0.1, 0.1, 0.1, 0.3],
+        [0.2, 0.8, 0.3, 0.1, 0.2],
+        [0.2, 0.4, 0.7, 0.2, 0.2],
+        [0.1, 0.1, 0.2, 0.9, 0.1],
+        [0.3, 0.2, 0.2, 0.2, 0.8]
+      ];
+      return renderAttn(labels, matrix, null, 'Each token attends to all others. Cell (row, col) = attention weight from row→col.');
+    },
+    msg: 'Self-attention: each token computes Q·Kᵀ scores with every other token, then softmax → attention weights.'
+  },
+  {
+    title: 'Attention Highlights',
+    pipe: 2,
+    render: function() {
+      var labels = ['The','cat','sat','on','the'];
+      var matrix = [
+        [0.9, 0.1, 0.1, 0.1, 0.3],
+        [0.2, 0.8, 0.3, 0.1, 0.2],
+        [0.2, 0.4, 0.7, 0.2, 0.2],
+        [0.1, 0.1, 0.2, 0.9, 0.1],
+        [0.3, 0.5, 0.4, 0.2, 0.8]
+      ];
+      return renderAttn(labels, matrix, 4, '"the" (row 4) attends strongly to "cat" and "sat" — predicting a noun after a preposition+article.');
+    },
+    msg: '"the" attends strongly to "cat" (0.5) and "sat" (0.4) — context for predicting what comes after "on the".'
+  },
+  {
+    title: 'FFN Layer',
+    pipe: 3,
+    render: function() {
+      var h = '<div class="vis-label">Feed-Forward Network — applied per position</div>';
+      h += '<div class="embed-row">';
+      var out = [61, 78, 49, 55, 74];
+      TOKENS.forEach(function(t, i) {
+        h += '<div class="embed-item">';
+        h += '<span class="embed-name">' + t + '</span>';
+        h += '<span style="color:#646464;font-size:.72rem;min-width:24px">in</span>';
+        h += '<div class="embed-bar-bg"><div class="embed-bar-fill" style="width:' + (50+i*7) + '%;background:#393639"></div></div>';
+        h += '<span style="color:#646464;font-size:.9rem;padding:0 .2rem">→</span>';
+        h += '<div class="embed-bar-bg"><div class="embed-bar-fill" style="width:' + out[i] + '%;background:' + COLORS[i] + '"></div></div>';
+        h += '<span style="color:#646464;font-size:.72rem;min-width:24px">out</span>';
+        h += '</div>';
+      });
+      h += '</div>';
+      h += '<div style="margin-top:.4rem" class="info-box">Two linear layers + GELU activation. No cross-position interaction here — each vector transformed independently.</div>';
+      return h;
+    },
+    msg: 'FFN layer: 2-layer MLP applied independently to each position. Adds non-linear capacity to each token representation.'
+  },
+  {
+    title: 'Output Logits',
+    pipe: 4,
+    render: function() {
+      var words = ['mat', 'floor', 'chair', 'rug', 'couch'];
+      var probs = [0.45, 0.25, 0.15, 0.10, 0.05];
+      var h = '<div class="vis-label">Top-5 next-token probabilities (after softmax)</div>';
+      h += '<div class="logit-row">';
+      words.forEach(function(w, i) {
+        h += '<div class="logit-item">';
+        h += '<span class="logit-name">' + w + '</span>';
+        h += '<div class="logit-bar-bg"><div class="logit-bar-fill' + (i===0?' winner':'') + '" style="width:' + (probs[i]*100) + '%"></div></div>';
+        h += '<span class="logit-pct">' + (probs[i]*100).toFixed(0) + '%</span>';
+        h += '</div>';
+      });
+      h += '</div>';
+      return h;
+    },
+    msg: 'Final linear layer projects to vocabulary size → softmax → probability over all ~100k tokens. Top-5 shown.'
+  },
+  {
+    title: 'Greedy Decode',
+    pipe: 5,
+    render: function() {
+      var words = ['mat', 'floor', 'chair', 'rug', 'couch'];
+      var probs = [0.45, 0.25, 0.15, 0.10, 0.05];
+      var h = '<div class="vis-label">Greedy decoding — pick highest probability token</div>';
+      h += '<div class="logit-row">';
+      words.forEach(function(w, i) {
+        h += '<div class="logit-item">';
+        h += '<span class="logit-name"' + (i===0?' style="color:#28a745"':'') + '>' + w + (i===0?' ✓':'') + '</span>';
+        h += '<div class="logit-bar-bg"><div class="logit-bar-fill' + (i===0?' winner':'') + '" style="width:' + (probs[i]*100) + '%;' + (i===0?'':'opacity:.4') + '"></div></div>';
+        h += '<span class="logit-pct">' + (probs[i]*100).toFixed(0) + '%</span>';
+        h += '</div>';
+      });
+      h += '</div>';
+      h += '<div style="margin-top:.5rem" class="token-row"><span class="token">The</span><span class="token">cat</span><span class="token">sat</span><span class="token">on</span><span class="token">the</span><span class="token active">mat</span></div>';
+      return h;
+    },
+    msg: 'Greedy decode: argmax picks "mat" (45%). Token appended to sequence. Temperature=1.0 sampling would vary this choice.'
+  },
+  {
+    title: 'Next Iteration',
+    pipe: -1,
+    render: function() {
+      var h = '<div class="vis-label">Autoregressive generation — feed output back as input</div>';
+      var seq = ['The','cat','sat','on','the','mat'];
+      h += '<div class="token-row">';
+      seq.forEach(function(t, i) {
+        h += '<span class="token' + (i===seq.length-1?' pointer':'') + '">' + t + '</span>';
+        if (i < seq.length - 1) h += '<span style="color:#646464;font-size:.8rem">→</span>';
+      });
+      h += '</div>';
+      h += '<div style="margin-top:.5rem" class="info-box">New sequence "...on the mat" fed back through all transformer layers to predict the next token. Repeat until stop token or max length.</div>';
+      return h;
+    },
+    msg: 'Done ✓ — the generated token feeds back as the next input. This loop continues until [EOS] token or max_tokens limit.'
+  }
+];
+
+function renderAttn(labels, matrix, highlightRow, note) {
+  var h = '<div class="vis-label">Self-attention weight matrix</div>';
+  h += '<div class="attn-wrap"><table class="attn-grid"><thead><tr><th></th>';
+  labels.forEach(function(l) { h += '<th>' + l + '</th>'; });
+  h += '</tr></thead><tbody>';
+  matrix.forEach(function(row, r) {
+    h += '<tr><th style="background:#393639;color:#888">' + labels[r] + '</th>';
+    row.forEach(function(val, c) {
+      var intensity = Math.round(val * 200);
+      var bg = 'rgb(' + (40 + Math.round(val*60)) + ',' + (54 + intensity) + ',' + (99 + Math.round(val*40)) + ')';
+      var isHighlight = (highlightRow === r && (c === 1 || c === 2));
+      if (isHighlight) bg = '#f0a500';
+      var textColor = val > 0.5 || isHighlight ? '#fff' : '#aaa';
+      h += '<td style="background:' + bg + ';color:' + textColor + '">' + val.toFixed(1) + '</td>';
+    });
+    h += '</tr>';
+  });
+  h += '</tbody></table></div>';
+  if (note) h += '<div class="info-box" style="margin-top:.4rem;font-size:.72rem">' + note + '</div>';
+  return h;
+}
+
+function renderPipeline(activeIdx) {
+  var h = '<div class="pipeline">';
+  PIPE.forEach(function(p, i) {
+    if (i > 0) h += '<span class="pipe-arrow">→</span>';
+    var cls = 'pipe-box';
+    if (activeIdx < 0) cls += '';
+    else if (i < activeIdx) cls += ' done';
+    else if (i === activeIdx) cls += ' active';
+    h += '<span class="' + cls + '">' + p + '</span>';
+  });
+  h += '</div>';
+  return h;
+}
+
+var idx = 0;
+
+function draw() {
+  var s = STEPS[idx];
+  var isDone = (idx === STEPS.length - 1);
+  var vis = renderPipeline(s.pipe) + s.render();
+  document.getElementById('vis-area').innerHTML = vis;
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (STEPS.length - 1);
+  document.getElementById('btn-step').disabled = isDone;
+  document.getElementById('btn-step').textContent = isDone ? 'Done ✓' : 'Step →';
+  document.getElementById('btn-back').disabled = idx === 0;
+}
+
+document.getElementById('btn-step').onclick = function() { if (idx < STEPS.length - 1) { idx++; draw(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+draw();
+</script>
+</body>
+</html>

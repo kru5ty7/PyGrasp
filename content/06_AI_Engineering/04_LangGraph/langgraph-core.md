@@ -55,6 +55,12 @@ The **prebuilt agents** in `langgraph.prebuilt`  -  `create_react_agent`  -  pro
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/langgraph-core.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="LangGraph Core Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 LangGraph is built on LangChain's Runnable abstraction. A compiled `StateGraph` is a Runnable  -  it implements the same `.invoke()`, `.astream()`, and `.ainvoke()` interface as any LCEL chain. Every node in the graph can itself be a LangChain Runnable (a prompt | llm | parser chain). Understanding LangChain's Runnable interface and LCEL composition is the foundation for understanding what happens inside each LangGraph node.

@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IAM Overview Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #diagram { margin-bottom: .75rem; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+
+  /* Diagram styles */
+  .account-box {
+    border: 2px solid #284b63;
+    border-radius: 8px;
+    padding: .6rem .8rem;
+    background: #1e1e22;
+  }
+  .account-header {
+    background: #284b63;
+    color: #fff;
+    font-size: .78rem;
+    font-weight: 600;
+    padding: .25rem .5rem;
+    border-radius: 4px;
+    text-align: center;
+    margin-bottom: .6rem;
+    letter-spacing: .04em;
+  }
+  .row {
+    display: flex;
+    gap: .5rem;
+    margin-bottom: .5rem;
+  }
+  .entity {
+    flex: 1;
+    border-radius: 6px;
+    padding: .35rem .5rem;
+    font-size: .78rem;
+    text-align: center;
+    background: #2a2a2e;
+    border: 1px solid #3a3a3e;
+    transition: all .3s;
+    opacity: 0;
+  }
+  .entity.show { opacity: 1; }
+  .entity-label {
+    font-weight: 600;
+    font-size: .72rem;
+    color: #646464;
+    margin-bottom: .15rem;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+  }
+  .entity-name {
+    color: #d4d4d4;
+    font-size: .82rem;
+  }
+  .entity.user { border-color: #007bff; }
+  .entity.group { border-color: #f0a500; }
+  .entity.role { border-color: #28a745; }
+  .policy-tag {
+    display: inline-block;
+    background: #2a2a2e;
+    border: 1px solid #555;
+    border-radius: 3px;
+    font-size: .7rem;
+    padding: .1rem .3rem;
+    margin-top: .2rem;
+    transition: all .3s;
+    opacity: 0;
+  }
+  .policy-tag.show { opacity: 1; }
+  .policy-tag.attached { border-color: #28a745; color: #28a745; }
+  .policy-tag.inherited { border-color: #f0a500; color: #f0a500; }
+  .arrow-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: .72rem;
+    color: #646464;
+    margin: .15rem 0;
+    opacity: 0;
+    transition: opacity .3s;
+  }
+  .arrow-row.show { opacity: 1; }
+  .lambda-box {
+    border: 1px dashed #007bff;
+    border-radius: 6px;
+    padding: .3rem .5rem;
+    font-size: .78rem;
+    text-align: center;
+    background: #1a1a2a;
+    opacity: 0;
+    transition: all .3s;
+  }
+  .lambda-box.show { opacity: 1; }
+  .arrow-line {
+    text-align: center;
+    font-size: .7rem;
+    color: #007bff;
+    opacity: 0;
+    transition: opacity .3s;
+    margin: .1rem 0;
+  }
+  .arrow-line.show { opacity: 1; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>IAM Overview — Entity Hierarchy</h4>
+  <div id="diagram"></div>
+  <div id="stat"></div>
+  <div id="ctrl">
+    <button id="btn-back">Back</button>
+    <button id="btn-step">Step</button>
+    <button id="btn-reset">Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+const steps = [
+  {
+    status: "Root AWS Account created. No IAM entities exist yet — the account is empty.",
+    render: () => `
+      <div class="account-box">
+        <div class="account-header">AWS Account (Root)</div>
+        <div style="text-align:center;color:#646464;font-size:.8rem;padding:.5rem 0;">No IAM entities yet</div>
+      </div>`
+  },
+  {
+    status: "IAM User 'alice' created. She can authenticate but has no permissions yet.",
+    render: () => `
+      <div class="account-box">
+        <div class="account-header">AWS Account (Root)</div>
+        <div class="row">
+          <div class="entity user show">
+            <div class="entity-label">IAM User</div>
+            <div class="entity-name">alice</div>
+          </div>
+        </div>
+      </div>`
+  },
+  {
+    status: "Group 'developers' created. Alice is added as a member. Group membership lets policies apply to all members.",
+    render: () => `
+      <div class="account-box">
+        <div class="account-header">AWS Account (Root)</div>
+        <div class="row">
+          <div class="entity group show">
+            <div class="entity-label">IAM Group</div>
+            <div class="entity-name">developers</div>
+          </div>
+          <div class="entity user show">
+            <div class="entity-label">IAM User</div>
+            <div class="entity-name">alice</div>
+            <div style="font-size:.68rem;color:#f0a500;margin-top:.15rem;">member</div>
+          </div>
+        </div>
+      </div>`
+  },
+  {
+    status: "Policy 'S3ReadOnly' attached to group 'developers'. Alice inherits the policy through group membership.",
+    render: () => `
+      <div class="account-box">
+        <div class="account-header">AWS Account (Root)</div>
+        <div class="row">
+          <div class="entity group show">
+            <div class="entity-label">IAM Group</div>
+            <div class="entity-name">developers</div>
+            <span class="policy-tag show attached">S3ReadOnly</span>
+          </div>
+          <div class="entity user show">
+            <div class="entity-label">IAM User</div>
+            <div class="entity-name">alice</div>
+            <div style="font-size:.68rem;color:#f0a500;margin-top:.15rem;">member</div>
+            <span class="policy-tag show inherited">S3ReadOnly (inherited)</span>
+          </div>
+        </div>
+      </div>`
+  },
+  {
+    status: "Role 'lambda-exec-role' created as a separate branch. Roles issue temporary credentials — no permanent keys.",
+    render: () => `
+      <div class="account-box">
+        <div class="account-header">AWS Account (Root)</div>
+        <div class="row">
+          <div class="entity group show">
+            <div class="entity-label">IAM Group</div>
+            <div class="entity-name">developers</div>
+            <span class="policy-tag show attached">S3ReadOnly</span>
+          </div>
+          <div class="entity user show">
+            <div class="entity-label">IAM User</div>
+            <div class="entity-name">alice</div>
+            <span class="policy-tag show inherited">S3ReadOnly (inherited)</span>
+          </div>
+        </div>
+        <div class="row">
+          <div class="entity role show">
+            <div class="entity-label">IAM Role</div>
+            <div class="entity-name">lambda-exec-role</div>
+          </div>
+        </div>
+      </div>`
+  },
+  {
+    status: "Policy 'LambdaBasicExecution' attached to the role. This grants CloudWatch Logs write access.",
+    render: () => `
+      <div class="account-box">
+        <div class="account-header">AWS Account (Root)</div>
+        <div class="row">
+          <div class="entity group show">
+            <div class="entity-label">IAM Group</div>
+            <div class="entity-name">developers</div>
+            <span class="policy-tag show attached">S3ReadOnly</span>
+          </div>
+          <div class="entity user show">
+            <div class="entity-label">IAM User</div>
+            <div class="entity-name">alice</div>
+            <span class="policy-tag show inherited">S3ReadOnly (inherited)</span>
+          </div>
+        </div>
+        <div class="row">
+          <div class="entity role show">
+            <div class="entity-label">IAM Role</div>
+            <div class="entity-name">lambda-exec-role</div>
+            <span class="policy-tag show attached">LambdaBasicExecution</span>
+          </div>
+        </div>
+      </div>`
+  },
+  {
+    status: "Lambda function assumes the role via STS. Lambda uses the role's temporary credentials for all API calls.",
+    render: () => `
+      <div class="account-box">
+        <div class="account-header">AWS Account (Root)</div>
+        <div class="row">
+          <div class="entity group show">
+            <div class="entity-label">IAM Group</div>
+            <div class="entity-name">developers</div>
+            <span class="policy-tag show attached">S3ReadOnly</span>
+          </div>
+          <div class="entity user show">
+            <div class="entity-label">IAM User</div>
+            <div class="entity-name">alice</div>
+            <span class="policy-tag show inherited">S3ReadOnly (inherited)</span>
+          </div>
+        </div>
+        <div class="row">
+          <div class="entity role show">
+            <div class="entity-label">IAM Role</div>
+            <div class="entity-name">lambda-exec-role</div>
+            <span class="policy-tag show attached">LambdaBasicExecution</span>
+          </div>
+        </div>
+        <div class="arrow-line show">↑ assumes via STS</div>
+        <div class="lambda-box show">
+          <span style="color:#007bff;font-weight:600;">Lambda</span> my-function
+        </div>
+      </div>`
+  },
+  {
+    status: "Full hierarchy: Users → Groups (with inherited policies), Roles (with attached policies) → Services. All entities visible.",
+    render: () => `
+      <div class="account-box">
+        <div class="account-header">AWS Account (Root)</div>
+        <div class="row">
+          <div class="entity group show">
+            <div class="entity-label">IAM Group</div>
+            <div class="entity-name">developers</div>
+            <span class="policy-tag show attached">S3ReadOnly</span>
+          </div>
+          <div class="entity user show">
+            <div class="entity-label">IAM User</div>
+            <div class="entity-name">alice</div>
+            <div style="font-size:.68rem;color:#f0a500;margin-top:.15rem;">member of developers</div>
+            <span class="policy-tag show inherited">S3ReadOnly (inherited)</span>
+          </div>
+        </div>
+        <div style="border-top:1px solid #3a3a3e;margin:.3rem 0;"></div>
+        <div class="row">
+          <div class="entity role show">
+            <div class="entity-label">IAM Role</div>
+            <div class="entity-name">lambda-exec-role</div>
+            <span class="policy-tag show attached">LambdaBasicExecution</span>
+          </div>
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:.7rem;color:#007bff;">
+            <span>←assumes</span>
+          </div>
+          <div class="lambda-box show" style="flex:1;margin:0;">
+            <div class="entity-label">Service</div>
+            <div class="entity-name" style="color:#007bff;">Lambda</div>
+            <div style="font-size:.7rem;color:#646464;">my-function</div>
+          </div>
+        </div>
+      </div>`
+  }
+];
+
+let idx = 0;
+
+function render() {
+  document.getElementById('diagram').innerHTML = steps[idx].render();
+  document.getElementById('stat').textContent = steps[idx].status;
+  document.getElementById('counter').textContent = `Step ${idx + 1} / ${steps.length}`;
+  document.getElementById('btn-back').disabled = idx === 0;
+  const stepBtn = document.getElementById('btn-step');
+  if (idx === steps.length - 1) {
+    stepBtn.textContent = 'Done ✓';
+    stepBtn.disabled = true;
+  } else {
+    stepBtn.textContent = 'Step';
+    stepBtn.disabled = false;
+  }
+}
+
+document.getElementById('btn-step').addEventListener('click', () => { if (idx < steps.length - 1) { idx++; render(); } });
+document.getElementById('btn-back').addEventListener('click', () => { if (idx > 0) { idx--; render(); } });
+document.getElementById('btn-reset').addEventListener('click', () => { idx = 0; render(); });
+
+render();
+</script>
+</body>
+</html>

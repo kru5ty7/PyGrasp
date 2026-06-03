@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EC2 Security Groups - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #diagram { margin-bottom: .75rem; }
+  svg { display: block; width: 100%; height: auto; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>EC2 Security Groups — Rule Evaluation</h4>
+  <div id="diagram"></div>
+  <div id="stat"></div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var C = {
+  bg: '#2a2a2e', border: '#393639', header: '#284b63',
+  amber: '#f0a500', green: '#28a745', red: '#dc3545',
+  blue: '#007bff', text: '#d4d4d4', dim: '#444'
+};
+
+// Layout: Internet (left) → SG boundary (middle) → EC2 (right)
+// Rules panel below SG boundary
+
+var steps = [
+  {
+    msg: 'Initial state: new EC2 instance with default security group. All inbound DENIED. All outbound ALLOWED.',
+    internet: 'idle', sg: 'idle', ec2: 'idle',
+    rules: [],
+    arrow: null,
+    verdict: null,
+    dbSg: false
+  },
+  {
+    msg: 'Step 1: Add inbound rule — Port 22 (SSH) from My-IP (203.0.113.42/32) only. Rule appears in the SG.',
+    internet: 'idle', sg: 'active', ec2: 'idle',
+    rules: [{ port: '22', src: '203.0.113.42/32', label: 'SSH' }],
+    arrow: null,
+    verdict: null,
+    dbSg: false
+  },
+  {
+    msg: 'Step 2: SSH attempt from My-IP (203.0.113.42) — matches rule → connection ALLOWED (green).',
+    internet: 'active', sg: 'active', ec2: 'done',
+    rules: [{ port: '22', src: '203.0.113.42/32', label: 'SSH', match: true }],
+    arrow: { color: '#28a745', label: 'ALLOWED', fromRight: false },
+    verdict: 'ALLOWED',
+    verdictColor: '#28a745',
+    dbSg: false
+  },
+  {
+    msg: 'Step 3: SSH attempt from other IP (198.51.100.7) — no matching rule → DROPPED silently. No response sent.',
+    internet: 'error', sg: 'active', ec2: 'idle',
+    rules: [{ port: '22', src: '203.0.113.42/32', label: 'SSH' }],
+    arrow: { color: '#dc3545', label: 'DROPPED', fromRight: false },
+    verdict: 'DROPPED',
+    verdictColor: '#dc3545',
+    dbSg: false
+  },
+  {
+    msg: 'Step 4: Add inbound rule — Port 80 from 0.0.0.0/0. HTTP now allowed from anywhere on the internet.',
+    internet: 'idle', sg: 'active', ec2: 'idle',
+    rules: [
+      { port: '22', src: '203.0.113.42/32', label: 'SSH' },
+      { port: '80', src: '0.0.0.0/0', label: 'HTTP' }
+    ],
+    arrow: null,
+    verdict: null,
+    dbSg: false
+  },
+  {
+    msg: 'Step 5: EC2 makes outbound HTTPS request to api.example.com. Default outbound rule (all allowed) permits it.',
+    internet: 'active', sg: 'active', ec2: 'active',
+    rules: [
+      { port: '22', src: '203.0.113.42/32', label: 'SSH' },
+      { port: '80', src: '0.0.0.0/0', label: 'HTTP' }
+    ],
+    arrow: { color: '#007bff', label: 'HTTPS out', fromRight: true },
+    verdict: 'ALLOWED (outbound)',
+    verdictColor: '#007bff',
+    dbSg: false
+  },
+  {
+    msg: 'Step 6: SGs are STATEFUL — response traffic for allowed inbound is automatically allowed back. No extra rule needed.',
+    internet: 'done', sg: 'done', ec2: 'done',
+    rules: [
+      { port: '22', src: '203.0.113.42/32', label: 'SSH' },
+      { port: '80', src: '0.0.0.0/0', label: 'HTTP' }
+    ],
+    arrow: { color: '#28a745', label: 'Response (auto-allowed)', fromRight: true },
+    verdict: 'STATEFUL',
+    verdictColor: '#28a745',
+    dbSg: false
+  },
+  {
+    msg: 'Step 7: SG reference — DB allows Port 5432 from app-server-sg only. Any EC2 in that SG can reach DB, regardless of IP.',
+    internet: 'idle', sg: 'idle', ec2: 'idle',
+    rules: [
+      { port: '22', src: '203.0.113.42/32', label: 'SSH' },
+      { port: '80', src: '0.0.0.0/0', label: 'HTTP' },
+      { port: '5432', src: 'app-server-sg', label: 'Postgres' }
+    ],
+    arrow: null,
+    verdict: null,
+    dbSg: true
+  }
+];
+
+var idx = 0;
+
+function nodeColor(state) {
+  if (state === 'active') return C.amber;
+  if (state === 'done')   return C.green;
+  if (state === 'error')  return C.red;
+  return C.border;
+}
+function nodeFill(state) {
+  if (state === 'active') return '#2e2810';
+  if (state === 'done')   return '#0e2018';
+  if (state === 'error')  return '#2e1010';
+  return C.bg;
+}
+
+function renderSVG(step) {
+  var W = 510, H = 260;
+  var out = '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">';
+
+  // Internet node
+  var inet = { x: 8, y: 60, w: 80, h: 50 };
+  var inetC = nodeColor(step.internet);
+  var inetF = nodeFill(step.internet);
+  out += '<rect x="' + inet.x + '" y="' + inet.y + '" width="' + inet.w + '" height="' + inet.h + '" rx="5" fill="' + inetF + '" stroke="' + inetC + '" stroke-width="' + (step.internet !== 'idle' ? 2 : 1) + '"/>';
+  out += '<rect x="' + inet.x + '" y="' + inet.y + '" width="' + inet.w + '" height="14" rx="5" fill="' + C.header + '"/>';
+  out += '<rect x="' + inet.x + '" y="' + (inet.y + 10) + '" width="' + inet.w + '" height="4" fill="' + C.header + '"/>';
+  out += '<text x="' + (inet.x + inet.w / 2) + '" y="' + (inet.y + 10) + '" text-anchor="middle" font-size="8" fill="#aaa">NET</text>';
+  out += '<text x="' + (inet.x + inet.w / 2) + '" y="' + (inet.y + 32) + '" text-anchor="middle" font-size="9" fill="' + C.text + '">Internet</text>';
+  out += '<text x="' + (inet.x + inet.w / 2) + '" y="' + (inet.y + 45) + '" text-anchor="middle" font-size="7.5" fill="#666">Public</text>';
+
+  // SG boundary (dashed rect)
+  var sgX = 115, sgY = 20, sgW = 200, sgH = 110;
+  var sgBC = nodeColor(step.sg);
+  out += '<rect x="' + sgX + '" y="' + sgY + '" width="' + sgW + '" height="' + sgH + '" rx="6" fill="#1a1a1e" stroke="' + sgBC + '" stroke-width="' + (step.sg !== 'idle' ? 2 : 1) + '" stroke-dasharray="5,3"/>';
+  out += '<text x="' + (sgX + sgW / 2) + '" y="' + (sgY + 12) + '" text-anchor="middle" font-size="8" fill="' + sgBC + '">Security Group</text>';
+
+  // Rules list inside SG
+  var ry = sgY + 22;
+  step.rules.forEach(function(r) {
+    var rColor = r.match ? C.green : C.text;
+    var bg = r.match ? '#0a1a0a' : '#1a1a1e';
+    out += '<rect x="' + (sgX + 8) + '" y="' + ry + '" width="' + (sgW - 16) + '" height="16" rx="3" fill="' + bg + '"/>';
+    out += '<text x="' + (sgX + 14) + '" y="' + (ry + 11) + '" font-size="7.5" fill="' + rColor + '">port ' + r.port + ' ← ' + r.src + '</text>';
+    out += '<text x="' + (sgX + sgW - 12) + '" y="' + (ry + 11) + '" text-anchor="end" font-size="7" fill="#777">' + r.label + '</text>';
+    ry += 20;
+  });
+  if (step.rules.length === 0) {
+    out += '<text x="' + (sgX + sgW / 2) + '" y="' + (ry + 8) + '" text-anchor="middle" font-size="8" fill="#555">no inbound rules (deny all)</text>';
+  }
+
+  // EC2 node
+  var ec2 = { x: 370, y: 55, w: 100, h: 60 };
+  var ec2C = nodeColor(step.ec2);
+  var ec2F = nodeFill(step.ec2);
+  out += '<rect x="' + ec2.x + '" y="' + ec2.y + '" width="' + ec2.w + '" height="' + ec2.h + '" rx="5" fill="' + ec2F + '" stroke="' + ec2C + '" stroke-width="' + (step.ec2 !== 'idle' ? 2 : 1) + '"/>';
+  out += '<rect x="' + ec2.x + '" y="' + ec2.y + '" width="' + ec2.w + '" height="14" rx="5" fill="' + C.header + '"/>';
+  out += '<rect x="' + ec2.x + '" y="' + (ec2.y + 10) + '" width="' + ec2.w + '" height="4" fill="' + C.header + '"/>';
+  out += '<text x="' + (ec2.x + ec2.w / 2) + '" y="' + (ec2.y + 10) + '" text-anchor="middle" font-size="8" fill="#aaa">EC2</text>';
+  out += '<text x="' + (ec2.x + ec2.w / 2) + '" y="' + (ec2.y + 32) + '" text-anchor="middle" font-size="9" font-weight="600" fill="' + ec2C + '">Instance</text>';
+  out += '<text x="' + (ec2.x + ec2.w / 2) + '" y="' + (ec2.y + 47) + '" text-anchor="middle" font-size="7.5" fill="#666">10.0.1.5</text>';
+
+  // Arrow between internet and SG/EC2
+  if (step.arrow) {
+    var id = 'ah-' + step.arrow.color.replace('#','');
+    out += '<defs><marker id="' + id + '" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="' + step.arrow.color + '"/></marker></defs>';
+    if (!step.arrow.fromRight) {
+      // internet → ec2 (left to right)
+      var ax1 = inet.x + inet.w, ay1 = inet.y + inet.h / 2;
+      var ax2 = ec2.x, ay2 = ec2.y + ec2.h / 2;
+      out += '<line x1="' + ax1 + '" y1="' + ay1 + '" x2="' + ax2 + '" y2="' + ay2 + '" stroke="' + step.arrow.color + '" stroke-width="2" marker-end="url(#' + id + ')"/>';
+      var mx = (ax1 + ax2) / 2, my = (ay1 + ay2) / 2;
+      out += '<rect x="' + (mx - 38) + '" y="' + (my - 9) + '" width="76" height="14" rx="3" fill="#161618" opacity="0.9"/>';
+      out += '<text x="' + mx + '" y="' + (my + 2) + '" text-anchor="middle" font-size="8" fill="' + step.arrow.color + '">' + step.arrow.label + '</text>';
+    } else {
+      // ec2 → internet (right to left)
+      var ax1r = ec2.x + ec2.w, ay1r = ec2.y + ec2.h / 2;
+      var ax2r = inet.x + inet.w, ay2r = inet.y + inet.h / 2;
+      out += '<line x1="' + ax1r + '" y1="' + ay1r + '" x2="' + ax2r + '" y2="' + ay2r + '" stroke="' + step.arrow.color + '" stroke-width="2" marker-end="url(#' + id + ')"/>';
+      var mxr = (ax1r + ax2r) / 2 + 20, myr = (ay1r + ay2r) / 2 - 10;
+      out += '<rect x="' + (mxr - 55) + '" y="' + (myr - 8) + '" width="110" height="14" rx="3" fill="#161618" opacity="0.9"/>';
+      out += '<text x="' + mxr + '" y="' + (myr + 3) + '" text-anchor="middle" font-size="8" fill="' + step.arrow.color + '">' + step.arrow.label + '</text>';
+    }
+  }
+
+  // Verdict badge
+  if (step.verdict) {
+    var vx = W / 2, vy = 155;
+    var vc = step.verdictColor;
+    var vbg = vc === C.green ? '#0e2018' : (vc === C.red ? '#2e1010' : '#0a1a2e');
+    out += '<rect x="' + (vx - 55) + '" y="' + (vy - 1) + '" width="110" height="18" rx="4" fill="' + vbg + '" stroke="' + vc + '" stroke-width="1.5"/>';
+    out += '<text x="' + vx + '" y="' + (vy + 12) + '" text-anchor="middle" font-size="9" font-weight="700" fill="' + vc + '">' + step.verdict + '</text>';
+  }
+
+  // DB SG reference diagram (step 7)
+  if (step.dbSg) {
+    var dy = 185;
+    // App server
+    out += '<rect x="30" y="' + dy + '" width="95" height="36" rx="4" fill="#2e2810" stroke="' + C.amber + '" stroke-width="1.5"/>';
+    out += '<text x="77" y="' + (dy + 11) + '" text-anchor="middle" font-size="7.5" fill="#aaa">app-server-sg</text>';
+    out += '<text x="77" y="' + (dy + 25) + '" text-anchor="middle" font-size="9" fill="' + C.amber + '">App Server</text>';
+    // Arrow
+    out += '<defs><marker id="ah-db" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="' + C.green + '"/></marker></defs>';
+    out += '<line x1="125" y1="' + (dy + 18) + '" x2="200" y2="' + (dy + 18) + '" stroke="' + C.green + '" stroke-width="1.5" marker-end="url(#ah-db)"/>';
+    out += '<text x="162" y="' + (dy + 14) + '" text-anchor="middle" font-size="7.5" fill="' + C.green + '">port 5432</text>';
+    // DB
+    out += '<rect x="200" y="' + dy + '" width="95" height="36" rx="4" fill="#0e2018" stroke="' + C.green + '" stroke-width="1.5"/>';
+    out += '<text x="247" y="' + (dy + 11) + '" text-anchor="middle" font-size="7.5" fill="#aaa">db-sg</text>';
+    out += '<text x="247" y="' + (dy + 25) + '" text-anchor="middle" font-size="9" fill="' + C.green + '">Database</text>';
+    // Bad actor blocked
+    out += '<defs><marker id="ah-red2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="' + C.red + '"/></marker></defs>';
+    out += '<rect x="330" y="' + dy + '" width="80" height="36" rx="4" fill="#2e1010" stroke="' + C.red + '" stroke-width="1.5"/>';
+    out += '<text x="370" y="' + (dy + 20) + '" text-anchor="middle" font-size="9" fill="' + C.red + '">Other IP</text>';
+    out += '<line x1="330" y1="' + (dy + 18) + '" x2="296" y2="' + (dy + 18) + '" stroke="' + C.red + '" stroke-width="1.5" marker-end="url(#ah-red2)"/>';
+    out += '<text x="313" y="' + (dy + 14) + '" text-anchor="middle" font-size="7" fill="' + C.red + '">BLOCKED</text>';
+    // Label
+    out += '<text x="' + W / 2 + '" y="' + (dy + 56) + '" text-anchor="middle" font-size="7.5" fill="#666">DB sg allows port 5432 only from app-server-sg (not from IP ranges)</text>';
+  }
+
+  out += '</svg>';
+  return out;
+}
+
+function render() {
+  var step = steps[idx];
+  document.getElementById('diagram').innerHTML = renderSVG(step);
+  document.getElementById('stat').textContent = step.msg;
+  var isLast = idx >= steps.length - 1;
+  document.getElementById('btn-step').disabled = isLast;
+  document.getElementById('btn-step').textContent = isLast ? 'Done ✓' : 'Step →';
+  document.getElementById('btn-back').disabled = idx === 0;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
+}
+
+document.getElementById('btn-step').onclick  = function() { if (idx < steps.length - 1) { idx++; render(); } };
+document.getElementById('btn-back').onclick  = function() { if (idx > 0) { idx--; render(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; render(); };
+
+render();
+</script>
+</body>
+</html>

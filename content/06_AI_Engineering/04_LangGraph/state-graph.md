@@ -64,6 +64,12 @@ The `.compile()` step performs validation: it checks that every node has at leas
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/state-graph.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="State Graph Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 The state graph is LangGraph's core data structure  -  understanding it in detail is understanding what LangGraph does. The graph definition (node functions, edge structure, state schema with reducers) is the static structure; the compiled graph's execution against an initial state is the dynamic behavior.

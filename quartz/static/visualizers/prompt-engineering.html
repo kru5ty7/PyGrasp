@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prompt Engineering - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #vis-area {
+    background: #2a2a2e;
+    border-radius: 6px;
+    padding: .75rem;
+    min-height: 200px;
+    margin-bottom: .5rem;
+  }
+  .vis-label {
+    font-size: .68rem;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: #646464;
+    margin-bottom: .5rem;
+  }
+  /* prompt builder */
+  .prompt-box {
+    border: 1px solid #393639;
+    border-radius: 5px;
+    overflow: hidden;
+    font-size: .8rem;
+    line-height: 1.5;
+  }
+  .prompt-section {
+    padding: .35rem .55rem;
+    border-bottom: 1px solid #2a2a2e;
+    display: flex;
+    gap: .5rem;
+    align-items: baseline;
+  }
+  .prompt-section:last-child { border-bottom: none; }
+  .section-tag {
+    font-size: .6rem;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    padding: .1rem .3rem;
+    border-radius: 2px;
+    white-space: nowrap;
+    min-width: 52px;
+    text-align: center;
+  }
+  .section-text { color: #d4d4d4; flex: 1; }
+  /* output box */
+  .output-box {
+    background: #1a3a2a;
+    border: 1px solid #28a745;
+    border-radius: 4px;
+    padding: .4rem .6rem;
+    font-size: .85rem;
+    color: #28a745;
+    font-weight: 600;
+    margin-top: .4rem;
+  }
+  /* token count */
+  .token-cost {
+    background: #1e1e20;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .35rem .55rem;
+    font-size: .75rem;
+    display: flex;
+    gap: 1rem;
+    margin-top: .4rem;
+    flex-wrap: wrap;
+  }
+  .tc-item { display: flex; flex-direction: column; }
+  .tc-label { font-size: .62rem; text-transform: uppercase; letter-spacing: .06em; color: #646464; }
+  .tc-val { font-family: monospace; color: #f0a500; font-size: .9rem; font-weight: 600; }
+  /* compare columns */
+  .compare-row { display: flex; gap: .5rem; margin-top: .4rem; }
+  .compare-col { flex: 1; }
+  .compare-title { font-size: .62rem; text-transform: uppercase; letter-spacing: .07em; color: #646464; margin-bottom: .25rem; text-align: center; }
+  .compare-prompt {
+    background: #1e1e20;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .35rem .45rem;
+    font-size: .73rem;
+    line-height: 1.5;
+  }
+  /* info */
+  .info-box {
+    background: #1e1e20;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .4rem .6rem;
+    font-size: .78rem;
+    line-height: 1.5;
+    margin-top: .4rem;
+  }
+  /* cot output */
+  .cot-box {
+    background: #1e1e20;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .35rem .55rem;
+    font-size: .75rem;
+    line-height: 1.5;
+    margin-top: .4rem;
+  }
+  .cot-thinking { color: #646464; font-style: italic; }
+  .cot-answer { color: #28a745; font-weight: 600; margin-top: .2rem; }
+  #stat {
+    padding: .45rem .75rem; background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem; line-height: 1.5;
+    min-height: 2.2rem; margin-bottom: .5rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem; border: none; border-radius: 4px;
+    cursor: pointer; font-size: .82rem;
+    background: #393639; color: #d4d4d4; transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Prompt Engineering — Building an Effective Prompt</h4>
+  <div id="vis-area"></div>
+  <div id="stat">Press Step to begin.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+function section(tagText, tagBg, tagColor, text) {
+  return '<div class="prompt-section"><span class="section-tag" style="background:' + tagBg + ';color:' + tagColor + '">' + tagText + '</span><span class="section-text">' + text + '</span></div>';
+}
+
+var STEPS = [
+  {
+    render: function() {
+      var h = '<div class="vis-label">Empty prompt</div>';
+      h += '<div class="prompt-box" style="min-height:80px"><div style="padding:.5rem .75rem;color:#393639;font-size:.8rem;font-style:italic">Prompt is empty — no context given to the model.</div></div>';
+      h += '<div class="info-box">A prompt is everything the model receives as input. Without any structure, responses will be generic and unpredictable. We will build this prompt section by section.</div>';
+      return h;
+    },
+    msg: 'Start: empty prompt. The model has no instructions, no examples, no context. Output quality will be low.'
+  },
+  {
+    render: function() {
+      var h = '<div class="vis-label">Step 1: add system prompt (role + behavior)</div>';
+      h += '<div class="prompt-box">';
+      h += section('system', '#284b63', '#7bafd4', 'You are a helpful assistant that classifies text sentiment accurately and concisely.');
+      h += '</div>';
+      h += '<div class="info-box"><strong style="color:#7bafd4">System prompt</strong> sets the model\'s role and behavior for the entire conversation. It is processed first and frames all subsequent responses.</div>';
+      return h;
+    },
+    msg: 'System prompt added: sets the model\'s role. All responses will be framed within this context.'
+  },
+  {
+    render: function() {
+      var h = '<div class="vis-label">Step 2: add task instruction</div>';
+      h += '<div class="prompt-box">';
+      h += section('system', '#284b63', '#7bafd4', 'You are a helpful assistant that classifies text sentiment accurately and concisely.');
+      h += section('instruction', '#1a3a2a', '#28a745', 'Classify the sentiment of the following text as Positive, Negative, or Neutral. Reply with only the sentiment label.');
+      h += '</div>';
+      h += '<div class="info-box"><strong style="color:#28a745">Instruction:</strong> clear, specific, positive framing. "Reply with only the sentiment label" constrains format. Avoid vague instructions like "analyze this text."</div>';
+      return h;
+    },
+    msg: 'Instruction added: tells the model exactly what to do and what format to use. Clarity beats length.'
+  },
+  {
+    render: function() {
+      var h = '<div class="vis-label">Step 3: add few-shot example 1</div>';
+      h += '<div class="prompt-box">';
+      h += section('system', '#284b63', '#7bafd4', 'You are a helpful assistant...');
+      h += section('instruction', '#1a3a2a', '#28a745', 'Classify the sentiment... Reply with only the sentiment label.');
+      h += section('example 1', '#3a2a0a', '#f0a500', 'Text: "I love this product!" → Sentiment: Positive');
+      h += '</div>';
+      h += '<div class="info-box"><strong style="color:#f0a500">Few-shot example:</strong> demonstrates the input→output pattern. The model learns the format by seeing it, not by reading a description of it.</div>';
+      return h;
+    },
+    msg: 'Few-shot example 1: positive case. Model sees "Text: ... → Sentiment: ..." pattern. Format is shown, not described.'
+  },
+  {
+    render: function() {
+      var h = '<div class="vis-label">Step 4: add few-shot example 2</div>';
+      h += '<div class="prompt-box">';
+      h += section('system', '#284b63', '#7bafd4', 'You are a helpful assistant...');
+      h += section('instruction', '#1a3a2a', '#28a745', 'Classify the sentiment...');
+      h += section('example 1', '#3a2a0a', '#f0a500', 'Text: "I love this product!" → Sentiment: Positive');
+      h += section('example 2', '#3a2a0a', '#f0a500', 'Text: "This is terrible." → Sentiment: Negative');
+      h += '</div>';
+      h += '<div class="info-box">Adding a <strong style="color:#f0a500">negative example</strong> gives the model two anchors. Two examples cover both ends of the spectrum. For 3-class problems, a neutral example would complete the set.</div>';
+      return h;
+    },
+    msg: 'Few-shot example 2: negative case. Two examples anchor both ends of the classification spectrum.'
+  },
+  {
+    render: function() {
+      var h = '<div class="vis-label">Step 5: add user input</div>';
+      h += '<div class="prompt-box">';
+      h += section('system', '#284b63', '#7bafd4', 'You are a helpful assistant...');
+      h += section('instruction', '#1a3a2a', '#28a745', 'Classify the sentiment...');
+      h += section('example 1', '#3a2a0a', '#f0a500', 'Text: "I love this product!" → Sentiment: Positive');
+      h += section('example 2', '#3a2a0a', '#f0a500', 'Text: "This is terrible." → Sentiment: Negative');
+      h += section('user', '#2a2a2e', '#d4d4d4', 'Text: "It was okay I guess."');
+      h += '</div>';
+      h += '<div class="info-box"><strong>User input</strong> follows the same format as the examples. The model pattern-matches and completes the sequence with the expected output format.</div>';
+      return h;
+    },
+    msg: 'User input added following the established pattern. Model sees the incomplete example and will complete it.'
+  },
+  {
+    render: function() {
+      var h = '<div class="vis-label">Step 6: model output</div>';
+      h += '<div class="prompt-box">';
+      h += section('system', '#284b63', '#7bafd4', 'You are a helpful assistant...');
+      h += section('instruction', '#1a3a2a', '#28a745', 'Classify the sentiment...');
+      h += section('example 1', '#3a2a0a', '#f0a500', '"I love this!" → Positive');
+      h += section('example 2', '#3a2a0a', '#f0a500', '"This is terrible." → Negative');
+      h += section('user', '#2a2a2e', '#d4d4d4', 'Text: "It was okay I guess."');
+      h += '</div>';
+      h += '<div class="output-box">Sentiment: Neutral</div>';
+      return h;
+    },
+    msg: 'Model output: "Sentiment: Neutral". Matches the format from examples. Few-shot dramatically improves format consistency.'
+  },
+  {
+    render: function() {
+      var h = '<div class="vis-label">Token count and cost estimate</div>';
+      h += '<div class="token-cost">';
+      h += '<div class="tc-item"><span class="tc-label">System + instruction</span><span class="tc-val">38 tok</span></div>';
+      h += '<div class="tc-item"><span class="tc-label">Examples (×2)</span><span class="tc-val">32 tok</span></div>';
+      h += '<div class="tc-item"><span class="tc-label">User input</span><span class="tc-val">12 tok</span></div>';
+      h += '<div class="tc-item"><span class="tc-label">Total input</span><span class="tc-val">82 tok</span></div>';
+      h += '<div class="tc-item"><span class="tc-label">Output</span><span class="tc-val">2 tok</span></div>';
+      h += '<div class="tc-item"><span class="tc-label">Cost @ $3/1M</span><span class="tc-val">$0.000246</span></div>';
+      h += '</div>';
+      h += '<div class="info-box">At scale: 10,000 requests/day = 840,000 input tokens = $2.52/day. Few-shot examples add cost — worth it for reliability. Trim examples for high-volume, low-complexity tasks.</div>';
+      return h;
+    },
+    msg: 'Token cost: 82 input + 2 output = 84 tokens total per call. At 10k calls/day: ~$2.52/day with Claude Sonnet pricing.'
+  },
+  {
+    render: function() {
+      var h = '<div class="vis-label">Chain-of-thought variant</div>';
+      h += '<div class="compare-row">';
+      // zero-shot
+      h += '<div class="compare-col">';
+      h += '<div class="compare-title">Zero-shot</div>';
+      h += '<div class="compare-prompt"><span style="color:#646464">[instruction only]</span><br><br>Text: "It was okay I guess."<br><br><span style="color:#28a745">Sentiment: Neutral</span><br><span style="color:#646464;font-size:.68rem">Direct, fast, cheap</span></div>';
+      h += '</div>';
+      // cot
+      h += '<div class="compare-col">';
+      h += '<div class="compare-title">Chain-of-thought</div>';
+      h += '<div class="compare-prompt"><span style="color:#f0a500">"Let\'s think step by step."</span><br><br>Text: "It was okay I guess."<br>';
+      h += '<div class="cot-box" style="margin-top:.25rem"><span class="cot-thinking">"okay" = mild positive; "I guess" = uncertain/tepid → not strongly positive or negative...</span><span class="cot-answer">Sentiment: Neutral</span></div>';
+      h += '<span style="color:#646464;font-size:.68rem">Slower, more tokens, better for ambiguous cases</span></div>';
+      h += '</div>';
+      h += '</div>';
+      return h;
+    },
+    msg: 'Done ✓ — Chain-of-thought: "Let\'s think step by step" forces explicit reasoning. More tokens, better accuracy on ambiguous or complex inputs.'
+  }
+];
+
+var idx = 0;
+
+function draw() {
+  var s = STEPS[idx];
+  var isDone = (idx === STEPS.length - 1);
+  document.getElementById('vis-area').innerHTML = s.render();
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (STEPS.length - 1);
+  document.getElementById('btn-step').disabled = isDone;
+  document.getElementById('btn-step').textContent = isDone ? 'Done ✓' : 'Step →';
+  document.getElementById('btn-back').disabled = idx === 0;
+}
+
+document.getElementById('btn-step').onclick = function() { if (idx < STEPS.length - 1) { idx++; draw(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+draw();
+</script>
+</body>
+</html>

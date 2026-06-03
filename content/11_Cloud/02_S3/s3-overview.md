@@ -83,6 +83,12 @@ for page in paginator.paginate(Bucket="my-bucket", Prefix="data/2026/"):
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/s3-overview.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="S3 Overview Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 S3 does not stand alone - almost every AWS service either reads from or writes to it. Understanding how IAM controls access to S3 is essential before you store anything sensitive; every read and write requires either an IAM identity with the correct permissions or a presigned URL.

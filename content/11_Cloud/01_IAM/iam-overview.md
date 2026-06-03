@@ -109,6 +109,12 @@ print(f"ARN: {identity['Arn']}")
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/iam-overview.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="IAM Overview Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 IAM is the prerequisite for every other AWS service note in this layer. Every boto3 call and every CLI command is an IAM event - before writing application code, you must understand who is allowed to do what.

@@ -99,6 +99,12 @@ ec2.terminate_instances(InstanceIds=["i-0123456789abcdef0"])
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/ec2-overview.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="EC2 Overview Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 EC2 instances need IAM roles (attached as instance profiles) to make AWS API calls without embedding credentials in the instance. Every production EC2 instance should have an IAM role attached at launch that grants only the permissions the running application needs.

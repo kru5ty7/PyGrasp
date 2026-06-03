@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SQS - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .5rem;
+  }
+  #mode-row {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: .75rem;
+  }
+  .mode-btn {
+    padding: .28rem .65rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .8rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: background .15s;
+  }
+  .mode-btn.active { background: #284b63; color: #fff; }
+  #diagram { margin-bottom: .75rem; }
+  svg { display: block; width: 100%; height: auto; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>SQS — Queue Polling Model</h4>
+  <div id="mode-row">
+    <button class="mode-btn active" id="mbtn-std" onclick="setMode('std')">Standard Queue</button>
+    <button class="mode-btn" id="mbtn-fifo" onclick="setMode('fifo')">FIFO Queue</button>
+  </div>
+  <div id="diagram"></div>
+  <div id="stat"></div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var C = {
+  bg: '#2a2a2e', border: '#393639', header: '#284b63',
+  amber: '#f0a500', green: '#28a745', red: '#dc3545',
+  blue: '#007bff', text: '#d4d4d4', dim: '#444', grey: '#777'
+};
+
+var mode = 'std';
+var idx = 0;
+
+// Each step describes the queue and consumer state
+// msgs: array of {id, state} where state: 'queued'|'invisible'|'deleted'|'dlq'|'processing'
+// consumers: array of {id, state, handling}
+var MODES = {
+  std: [
+    {
+      msg: 'Standard Queue — Step 1/8: Producer sends 3 messages. All arrive in queue (at-least-once, best-effort ordering).',
+      msgs: [
+        { id: 'M1', state: 'queued' },
+        { id: 'M2', state: 'queued' },
+        { id: 'M3', state: 'queued' }
+      ],
+      consumers: [{ id: 'C1', state: 'idle' }],
+      dlq: [],
+      note: null
+    },
+    {
+      msg: 'Standard Queue — Step 2/8: Consumer polls with long polling (WaitTimeSeconds=20). Receives batch of messages.',
+      msgs: [
+        { id: 'M1', state: 'invisible' },
+        { id: 'M2', state: 'invisible' },
+        { id: 'M3', state: 'invisible' }
+      ],
+      consumers: [{ id: 'C1', state: 'receiving', handling: 'polling...' }],
+      dlq: [],
+      note: 'ReceiveMessage called'
+    },
+    {
+      msg: 'Standard Queue — Step 3/8: Messages become invisible (visibility timeout). Other consumers cannot see them during this window.',
+      msgs: [
+        { id: 'M1', state: 'invisible' },
+        { id: 'M2', state: 'invisible' },
+        { id: 'M3', state: 'invisible' }
+      ],
+      consumers: [{ id: 'C1', state: 'active', handling: 'processing M1' }],
+      dlq: [],
+      note: 'Visibility timeout: 60s'
+    },
+    {
+      msg: 'Standard Queue — Step 4/8: Consumer processes M1 successfully → deletes it using receipt handle.',
+      msgs: [
+        { id: 'M1', state: 'deleted' },
+        { id: 'M2', state: 'invisible' },
+        { id: 'M3', state: 'invisible' }
+      ],
+      consumers: [{ id: 'C1', state: 'done', handling: 'deleted M1' }],
+      dlq: [],
+      note: 'DeleteMessage(receiptHandle)'
+    },
+    {
+      msg: 'Standard Queue — Step 5/8: Consumer fails on M2. Does NOT delete. Visibility timeout expires — M2 reappears.',
+      msgs: [
+        { id: 'M1', state: 'deleted' },
+        { id: 'M2', state: 'queued' },
+        { id: 'M3', state: 'invisible' }
+      ],
+      consumers: [{ id: 'C1', state: 'error', handling: 'failed M2!' }],
+      dlq: [],
+      note: 'M2 visible again after timeout'
+    },
+    {
+      msg: 'Standard Queue — Step 6/8: M2 reappears in queue. Another consumer picks it up (at-least-once: may be processed twice).',
+      msgs: [
+        { id: 'M1', state: 'deleted' },
+        { id: 'M2', state: 'invisible' },
+        { id: 'M3', state: 'invisible' }
+      ],
+      consumers: [
+        { id: 'C1', state: 'idle' },
+        { id: 'C2', state: 'active', handling: 'retry M2' }
+      ],
+      dlq: [],
+      note: 'At-least-once: consumers must be idempotent'
+    },
+    {
+      msg: 'Standard Queue — Step 7/8: After maxReceiveCount (3) delivery attempts, M2 moves to Dead Letter Queue (DLQ) for inspection.',
+      msgs: [
+        { id: 'M1', state: 'deleted' },
+        { id: 'M2', state: 'deleted' },
+        { id: 'M3', state: 'invisible' }
+      ],
+      consumers: [{ id: 'C1', state: 'idle' }],
+      dlq: [{ id: 'M2', state: 'dlq' }],
+      note: 'maxReceiveCount=3 → DLQ'
+    },
+    {
+      msg: 'Standard Queue — Step 8/8: 2 consumers polling simultaneously. Each receives different messages — no message sent to both.',
+      msgs: [
+        { id: 'M1', state: 'deleted' },
+        { id: 'M4', state: 'invisible' },
+        { id: 'M5', state: 'invisible' }
+      ],
+      consumers: [
+        { id: 'C1', state: 'active', handling: 'M4' },
+        { id: 'C2', state: 'active', handling: 'M5' }
+      ],
+      dlq: [],
+      note: 'Concurrent consumers: each msg delivered to one consumer'
+    }
+  ],
+  fifo: [
+    {
+      msg: 'FIFO Queue — Step 1/4: Messages sent with MessageGroupId="orders". Order guaranteed within group.',
+      msgs: [
+        { id: 'M1', state: 'queued', seq: 1 },
+        { id: 'M2', state: 'queued', seq: 2 },
+        { id: 'M3', state: 'queued', seq: 3 }
+      ],
+      consumers: [{ id: 'C1', state: 'idle' }],
+      dlq: [],
+      note: 'MessageGroupId="orders"'
+    },
+    {
+      msg: 'FIFO Queue — Step 2/4: Strict ordering guaranteed within group. M1 processed before M2 before M3. No reordering.',
+      msgs: [
+        { id: 'M1', state: 'invisible', seq: 1 },
+        { id: 'M2', state: 'queued', seq: 2 },
+        { id: 'M3', state: 'queued', seq: 3 }
+      ],
+      consumers: [{ id: 'C1', state: 'active', handling: 'M1 (seq 1)' }],
+      dlq: [],
+      note: 'Strict ordering within MessageGroupId'
+    },
+    {
+      msg: 'FIFO Queue — Step 3/4: Exactly-once delivery — deduplication ID prevents duplicate messages within 5-minute window.',
+      msgs: [
+        { id: 'M1', state: 'deleted', seq: 1 },
+        { id: 'M2', state: 'invisible', seq: 2 },
+        { id: 'M2*', state: 'deleted', seq: 2, dedup: true }
+      ],
+      consumers: [{ id: 'C1', state: 'active', handling: 'M2 (dedup)' }],
+      dlq: [],
+      note: 'MessageDeduplicationId: duplicate M2* dropped'
+    },
+    {
+      msg: 'FIFO Queue — Step 4/4: Lower throughput than Standard — 300 TPS (3000 with batching) vs Standard near-unlimited. Trade-off: ordering vs throughput.',
+      msgs: [
+        { id: 'M1', state: 'deleted', seq: 1 },
+        { id: 'M2', state: 'deleted', seq: 2 },
+        { id: 'M3', state: 'deleted', seq: 3 }
+      ],
+      consumers: [{ id: 'C1', state: 'done', handling: 'complete' }],
+      dlq: [],
+      note: 'FIFO: 300 TPS vs Standard: near-unlimited'
+    }
+  ]
+};
+
+function getSteps() { return MODES[mode]; }
+
+function msgColor(state) {
+  if (state === 'queued')    return C.amber;
+  if (state === 'invisible') return C.blue;
+  if (state === 'deleted')   return C.dim;
+  if (state === 'dlq')       return C.red;
+  return C.border;
+}
+function msgFill(state) {
+  if (state === 'queued')    return '#2e2810';
+  if (state === 'invisible') return '#0a1a2e';
+  if (state === 'deleted')   return '#1a1a1a';
+  if (state === 'dlq')       return '#2e1010';
+  return C.bg;
+}
+function consColor(state) {
+  if (state === 'active')    return C.amber;
+  if (state === 'done')      return C.green;
+  if (state === 'error')     return C.red;
+  if (state === 'receiving') return C.blue;
+  return C.border;
+}
+function consFill(state) {
+  if (state === 'active')    return '#2e2810';
+  if (state === 'done')      return '#0e2018';
+  if (state === 'error')     return '#2e1010';
+  if (state === 'receiving') return '#0a1a2e';
+  return C.bg;
+}
+
+function renderSVG(step) {
+  var W = 510, H = 240;
+  var out = '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">';
+
+  // Producer box
+  var px = 8, py = 90, pw = 68, ph = 50;
+  out += '<rect x="' + px + '" y="' + py + '" width="' + pw + '" height="' + ph + '" rx="4" fill="' + C.bg + '" stroke="' + C.border + '" stroke-width="1"/>';
+  out += '<rect x="' + px + '" y="' + py + '" width="' + pw + '" height="13" rx="4" fill="' + C.header + '"/>';
+  out += '<rect x="' + px + '" y="' + (py + 9) + '" width="' + pw + '" height="4" fill="' + C.header + '"/>';
+  out += '<text x="' + (px + pw / 2) + '" y="' + (py + 9) + '" text-anchor="middle" font-size="7.5" fill="#aaa">PROD</text>';
+  out += '<text x="' + (px + pw / 2) + '" y="' + (py + 28) + '" text-anchor="middle" font-size="9" fill="' + C.text + '">Producer</text>';
+
+  // Arrow from producer to queue
+  out += '<defs><marker id="ah-amber" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="' + C.amber + '"/></marker></defs>';
+  out += '<line x1="' + (px + pw) + '" y1="' + (py + ph / 2) + '" x2="88" y2="' + (py + ph / 2) + '" stroke="' + C.amber + '" stroke-width="1.5" marker-end="url(#ah-amber)"/>';
+
+  // Queue area
+  var qx = 88, qy = 60, qw = 200, qh = 110;
+  var qLabel = mode === 'fifo' ? 'FIFO Queue' : 'Standard Queue';
+  out += '<rect x="' + qx + '" y="' + qy + '" width="' + qw + '" height="' + qh + '" rx="5" fill="#1a1a1e" stroke="' + C.border + '" stroke-width="1"/>';
+  out += '<text x="' + (qx + qw / 2) + '" y="' + (qy + 12) + '" text-anchor="middle" font-size="8" fill="#666">' + qLabel + '</text>';
+
+  // Messages in queue
+  var msgW = 40, msgH = 28, mgap = 6;
+  var msgs = step.msgs;
+  var totalMsgW = msgs.length * msgW + (msgs.length - 1) * mgap;
+  var msx = qx + (qw - totalMsgW) / 2;
+  var msy = qy + 22;
+  msgs.forEach(function(m) {
+    var mc = msgColor(m.state);
+    var mf = msgFill(m.state);
+    out += '<rect x="' + msx + '" y="' + msy + '" width="' + msgW + '" height="' + msgH + '" rx="3" fill="' + mf + '" stroke="' + mc + '" stroke-width="' + (m.state !== 'deleted' ? 1.5 : 1) + '"/>';
+    if (m.state === 'deleted') {
+      // strikethrough
+      out += '<line x1="' + (msx + 5) + '" y1="' + (msy + msgH / 2) + '" x2="' + (msx + msgW - 5) + '" y2="' + (msy + msgH / 2) + '" stroke="#555" stroke-width="1.5"/>';
+      out += '<text x="' + (msx + msgW / 2) + '" y="' + (msy + 17) + '" text-anchor="middle" font-size="8" fill="#555">' + m.id + '</text>';
+    } else {
+      out += '<text x="' + (msx + msgW / 2) + '" y="' + (msy + 17) + '" text-anchor="middle" font-size="8.5" font-weight="600" fill="' + mc + '">' + m.id + '</text>';
+    }
+    if (m.state === 'invisible') {
+      out += '<text x="' + (msx + msgW / 2) + '" y="' + (msy + msgH + 10) + '" text-anchor="middle" font-size="6.5" fill="' + C.blue + '">hidden</text>';
+    }
+    if (m.dedup) {
+      out += '<text x="' + (msx + msgW / 2) + '" y="' + (msy + msgH + 10) + '" text-anchor="middle" font-size="6.5" fill="' + C.red + '">dup!</text>';
+    }
+    if (m.seq && mode === 'fifo') {
+      out += '<text x="' + (msx + msgW - 4) + '" y="' + (msy + 8) + '" text-anchor="end" font-size="6.5" fill="#666">#' + m.seq + '</text>';
+    }
+    msx += msgW + mgap;
+  });
+
+  // DLQ (if any)
+  if (step.dlq && step.dlq.length > 0) {
+    var dqx = qx, dqy = qy + qh + 8, dqw = 100, dqh = 34;
+    out += '<rect x="' + dqx + '" y="' + dqy + '" width="' + dqw + '" height="' + dqh + '" rx="4" fill="#2e1010" stroke="' + C.red + '" stroke-width="1.5"/>';
+    out += '<text x="' + (dqx + dqw / 2) + '" y="' + (dqy + 13) + '" text-anchor="middle" font-size="8" fill="' + C.red + '">DLQ</text>';
+    var dlqMsgs = step.dlq.map(function(m){ return m.id; }).join(', ');
+    out += '<text x="' + (dqx + dqw / 2) + '" y="' + (dqy + 25) + '" text-anchor="middle" font-size="7.5" fill="' + C.red + '">' + dlqMsgs + '</text>';
+  }
+
+  // Arrow from queue to consumers
+  var cons = step.consumers;
+  var cW = 100, cH = 44;
+  var totalCH = cons.length * cH + (cons.length - 1) * 8;
+  var csY = 90 - totalCH / 2 + 25;
+  var csX = 310;
+
+  out += '<defs><marker id="ah-poll" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="#666"/></marker></defs>';
+
+  cons.forEach(function(c) {
+    var cc = consColor(c.state);
+    var cf = consFill(c.state);
+    out += '<rect x="' + csX + '" y="' + csY + '" width="' + cW + '" height="' + cH + '" rx="4" fill="' + cf + '" stroke="' + cc + '" stroke-width="' + (c.state !== 'idle' ? 2 : 1) + '"/>';
+    out += '<rect x="' + csX + '" y="' + csY + '" width="' + cW + '" height="13" rx="4" fill="' + C.header + '"/>';
+    out += '<rect x="' + csX + '" y="' + (csY + 9) + '" width="' + cW + '" height="4" fill="' + C.header + '"/>';
+    out += '<text x="' + (csX + cW / 2) + '" y="' + (csY + 9) + '" text-anchor="middle" font-size="7.5" fill="#aaa">CONSUMER</text>';
+    out += '<text x="' + (csX + cW / 2) + '" y="' + (csY + 26) + '" text-anchor="middle" font-size="8.5" font-weight="600" fill="' + cc + '">' + c.id + '</text>';
+    if (c.handling) {
+      out += '<text x="' + (csX + cW / 2) + '" y="' + (csY + 38) + '" text-anchor="middle" font-size="7" fill="#777">' + c.handling + '</text>';
+    }
+    // Arrow from queue to consumer
+    var arrowColor = cc !== C.border ? cc : '#555';
+    out += '<defs><marker id="ah-con-' + c.id + '" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="' + arrowColor + '"/></marker></defs>';
+    out += '<line x1="' + (qx + qw) + '" y1="' + (csY + cH / 2) + '" x2="' + csX + '" y2="' + (csY + cH / 2) + '" stroke="' + arrowColor + '" stroke-width="1.5" marker-end="url(#ah-con-' + c.id + ')"/>';
+    csY += cH + 8;
+  });
+
+  // Note badge
+  if (step.note) {
+    out += '<rect x="8" y="' + (H - 20) + '" width="' + (step.note.length * 5.3 + 14) + '" height="16" rx="3" fill="#1a2a1a" stroke="' + C.green + '" stroke-width="1"/>';
+    out += '<text x="15" y="' + (H - 9) + '" font-size="7.5" fill="' + C.green + '">' + step.note + '</text>';
+  }
+
+  out += '</svg>';
+  return out;
+}
+
+function render() {
+  var steps = getSteps();
+  var step = steps[idx];
+  document.getElementById('diagram').innerHTML = renderSVG(step);
+  document.getElementById('stat').textContent = step.msg;
+  var isLast = idx >= steps.length - 1;
+  document.getElementById('btn-step').disabled = isLast;
+  document.getElementById('btn-step').textContent = isLast ? 'Done ✓' : 'Step →';
+  document.getElementById('btn-back').disabled = idx === 0;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
+}
+
+function setMode(m) {
+  mode = m;
+  idx = 0;
+  document.getElementById('mbtn-std').className  = 'mode-btn' + (m === 'std'  ? ' active' : '');
+  document.getElementById('mbtn-fifo').className = 'mode-btn' + (m === 'fifo' ? ' active' : '');
+  render();
+}
+
+document.getElementById('btn-step').onclick  = function() { if (idx < getSteps().length - 1) { idx++; render(); } };
+document.getElementById('btn-back').onclick  = function() { if (idx > 0) { idx--; render(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; render(); };
+
+render();
+</script>
+</body>
+</html>

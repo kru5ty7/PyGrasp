@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S3 Event Notifications - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .5rem;
+  }
+  #selector {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: .75rem;
+    flex-wrap: wrap;
+  }
+  .sel-btn {
+    padding: .3rem .65rem;
+    border: 1.5px solid #393639;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .8rem;
+    background: #2a2a2e;
+    color: #d4d4d4;
+    transition: all .15s;
+  }
+  .sel-btn.active {
+    background: #284b63;
+    border-color: #007bff;
+    color: #fff;
+  }
+  .sel-btn:hover:not(.active) { border-color: #646464; }
+  #diagram { margin-bottom: .75rem; }
+  svg { display: block; width: 100%; height: auto; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>S3 Event Notifications</h4>
+  <div id="selector">
+    <button class="sel-btn active" data-dest="lambda">Lambda</button>
+    <button class="sel-btn" data-dest="sqs">SQS</button>
+    <button class="sel-btn" data-dest="sns">SNS</button>
+  </div>
+  <div id="diagram"></div>
+  <div id="stat"></div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var C = {
+  bg: '#2a2a2e',
+  border: '#393639',
+  header: '#284b63',
+  amber: '#f0a500',
+  green: '#28a745',
+  red: '#dc3545',
+  blue: '#007bff',
+  text: '#d4d4d4',
+  dim: '#555',
+  panelBg: '#393639',
+  purple: '#7b5ea7'
+};
+
+// viewBox: 560 x 290
+// Lambda layout: S3 (left-center) → Lambda (center) → Result Bucket (right)
+// SQS layout:    S3 (left) → SQS Queue (center) → Consumer (right)
+// SNS layout:    S3 (left) → SNS Topic (center) → Lambda/Email/SQS (right, fanned out)
+
+// ---- Node definitions per destination ----
+var nodesMap = {
+  lambda: {
+    bucket:  { x: 20,  y: 100, w: 100, h: 50, label: 'S3 Bucket\nmy-app-uploads' },
+    lambda:  { x: 220, y: 100, w: 110, h: 50, label: 'Lambda\nProcessUpload' },
+    result:  { x: 420, y: 100, w: 110, h: 50, label: 'S3 Bucket\nmy-app-thumbs' }
+  },
+  sqs: {
+    bucket:  { x: 20,  y: 100, w: 100, h: 50, label: 'S3 Bucket\nmy-app-uploads' },
+    queue:   { x: 210, y: 100, w: 110, h: 50, label: 'SQS Queue\ns3-events-queue' },
+    consumer:{ x: 410, y: 100, w: 120, h: 50, label: 'Consumer\n(Lambda/EC2)' }
+  },
+  sns: {
+    bucket:  { x: 20,  y: 112, w: 100, h: 50, label: 'S3 Bucket\nmy-app-uploads' },
+    topic:   { x: 200, y: 112, w: 100, h: 50, label: 'SNS Topic\ns3-events' },
+    sublambda:{ x: 390, y: 60,  w: 110, h: 40, label: 'Lambda\n(process)' },
+    subemail: { x: 390, y: 118, w: 110, h: 40, label: 'Email\n(notify@co)' },
+    subsqs:   { x: 390, y: 176, w: 110, h: 40, label: 'SQS Queue\n(archive)' }
+  }
+};
+
+// ---- Steps per destination ----
+var scenariosMap = {
+  lambda: [
+    {
+      msg: 'Lambda destination: S3 → Lambda (synchronous invoke). Object created in bucket triggers image resize. Press Step.',
+      hi: {}, arrows: []
+    },
+    {
+      msg: 'Step 1/5: User uploads image to S3 bucket "my-app-uploads". PUT request completes.',
+      hi: { bucket: 'active' }, arrows: [],
+      note: { node: 'bucket', text: 'PUT photo.jpg', color: C.amber }
+    },
+    {
+      msg: 'Step 2/5: S3 fires s3:ObjectCreated event. S3 invokes Lambda synchronously with the event payload (bucket name, key, size, ETag).',
+      hi: { bucket: 'done', lambda: 'active' },
+      arrows: [{ from: 'bucket', to: 'lambda', color: C.amber, label: 's3:ObjectCreated', above: true }]
+    },
+    {
+      msg: 'Step 3/5: Lambda reads event payload, downloads the image from S3, and resizes it to thumbnail dimensions.',
+      hi: { lambda: 'active' }, arrows: [],
+      note: { node: 'lambda', text: 'resize image', color: C.blue }
+    },
+    {
+      msg: 'Step 4/5: Lambda writes resized thumbnails to the result bucket "my-app-thumbs".',
+      hi: { lambda: 'done', result: 'active' },
+      arrows: [{ from: 'lambda', to: 'result', color: C.green, label: 'PUT thumbnails', above: true }]
+    },
+    {
+      msg: 'Step 5/5: Done. Upload event drove the full pipeline asynchronously. No polling loop needed.',
+      hi: { bucket: 'done', lambda: 'done', result: 'done' }, arrows: []
+    }
+  ],
+  sqs: [
+    {
+      msg: 'SQS destination: S3 → SQS Queue → Consumer. Object deleted event queued for processing. Press Step.',
+      hi: {}, arrows: []
+    },
+    {
+      msg: 'Step 1/5: Object deleted from S3 bucket (DELETE request or lifecycle expiry).',
+      hi: { bucket: 'active' }, arrows: [],
+      note: { node: 'bucket', text: 'DELETE key', color: C.red }
+    },
+    {
+      msg: 'Step 2/5: s3:ObjectRemoved event fires. S3 sends a message to the SQS queue — message contains bucket name, key, event time.',
+      hi: { bucket: 'done', queue: 'active' },
+      arrows: [{ from: 'bucket', to: 'queue', color: C.amber, label: 's3:ObjectRemoved', above: true }]
+    },
+    {
+      msg: 'Step 3/5: Message sits in SQS queue. Consumer polls queue (long-polling, up to 20s wait). SQS enables backpressure and retry.',
+      hi: { queue: 'active', consumer: 'active' },
+      arrows: [{ from: 'consumer', to: 'queue', color: C.blue, label: 'ReceiveMessage (poll)', above: false }],
+      note: { node: 'queue', text: 'msg queued', color: C.amber }
+    },
+    {
+      msg: 'Step 4/5: Consumer processes the message — cleans up related resources, updates database, sends audit log.',
+      hi: { consumer: 'active' }, arrows: [],
+      note: { node: 'consumer', text: 'processing', color: C.blue }
+    },
+    {
+      msg: 'Step 5/5: Consumer deletes message from SQS (acknowledges success). If processing fails, message remains and retries via DLQ.',
+      hi: { queue: 'done', consumer: 'done' },
+      arrows: [{ from: 'consumer', to: 'queue', color: C.green, label: 'DeleteMessage', above: false }]
+    }
+  ],
+  sns: [
+    {
+      msg: 'SNS destination: S3 → SNS Topic → fan out to Lambda + Email + SQS simultaneously. Press Step.',
+      hi: {}, arrows: []
+    },
+    {
+      msg: 'Step 1/3: Object created in S3 — s3:ObjectCreated event fires.',
+      hi: { bucket: 'active' }, arrows: [],
+      note: { node: 'bucket', text: 'ObjectCreated', color: C.amber }
+    },
+    {
+      msg: 'Step 2/3: S3 publishes the event to the SNS topic. SNS receives the message and prepares to fan out to all subscribers.',
+      hi: { bucket: 'done', topic: 'active' },
+      arrows: [{ from: 'bucket', to: 'topic', color: C.amber, label: 'publish event', above: true }]
+    },
+    {
+      msg: 'Step 3/3: SNS fans out simultaneously to Lambda (process), Email (notify), and SQS (archive). All three receive the same event at the same time.',
+      hi: { topic: 'done', sublambda: 'done', subemail: 'done', subsqs: 'done' },
+      arrows: [
+        { from: 'topic', to: 'sublambda', color: C.green, label: '' },
+        { from: 'topic', to: 'subemail',  color: C.green, label: '' },
+        { from: 'topic', to: 'subsqs',    color: C.green, label: '' }
+      ],
+      fanout: true
+    }
+  ]
+};
+
+var currentDest = 'lambda';
+var idx = 0;
+
+function totalSteps() { return scenariosMap[currentDest].length - 1; }
+
+function getNodes() { return nodesMap[currentDest]; }
+
+function cx(node) { return node.x + node.w / 2; }
+function cy(node) { return node.y + node.h / 2; }
+
+function nodeColor(key, hi) {
+  var s = hi[key];
+  if (s === 'active') return C.amber;
+  if (s === 'done')   return C.green;
+  if (s === 'error')  return C.red;
+  return C.border;
+}
+function headerColor(key, hi) {
+  var s = hi[key];
+  if (s === 'active') return C.amber;
+  if (s === 'done')   return C.green;
+  if (s === 'error')  return C.red;
+  return C.header;
+}
+
+function mkArrow(a, nodes) {
+  var from = nodes[a.from];
+  var to   = nodes[a.to];
+  if (!from || !to) return '';
+  var x1 = from.x + from.w;
+  var y1 = cy(from);
+  var x2 = to.x;
+  var y2 = cy(to);
+  var midX = (x1 + x2) / 2;
+  var yOff = a.above ? -10 : 12;
+  var id = 'arr-' + a.from + '-' + a.to + '-' + idx;
+
+  var g = '<g>';
+  g += '<defs><marker id="' + id + '" markerWidth="7" markerHeight="5" refX="5" refY="2.5" orient="auto">'
+     + '<polygon points="0 0,7 2.5,0 5" fill="' + a.color + '"/></marker></defs>';
+  g += '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + (x2-1) + '" y2="' + y2 + '"'
+     + ' stroke="' + a.color + '" stroke-width="2"'
+     + ' marker-end="url(#' + id + ')"/>';
+  if (a.label) {
+    g += '<text x="' + midX + '" y="' + (y1 + yOff) + '" text-anchor="middle"'
+       + ' font-size="9" fill="' + a.color + '">' + a.label + '</text>';
+  }
+  g += '</g>';
+  return g;
+}
+
+function mkFanArrow(fromNode, toNode, color, i) {
+  var x1 = fromNode.x + fromNode.w;
+  var y1 = cy(fromNode);
+  var x2 = toNode.x;
+  var y2 = cy(toNode);
+  var id = 'arr-fan-' + i;
+  var g = '<g>';
+  g += '<defs><marker id="' + id + '" markerWidth="7" markerHeight="5" refX="5" refY="2.5" orient="auto">'
+     + '<polygon points="0 0,7 2.5,0 5" fill="' + color + '"/></marker></defs>';
+  g += '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + (x2-1) + '" y2="' + y2 + '"'
+     + ' stroke="' + color + '" stroke-width="1.8"'
+     + ' marker-end="url(#' + id + ')"/>';
+  g += '</g>';
+  return g;
+}
+
+function renderNode(key, node, hi) {
+  var bColor = nodeColor(key, hi);
+  var hColor = headerColor(key, hi);
+  var s = '';
+  s += '<rect x="' + node.x + '" y="' + node.y + '" width="' + node.w + '" height="' + node.h + '"'
+     + ' rx="5" fill="' + C.bg + '" stroke="' + bColor + '" stroke-width="1.5"/>';
+  s += '<rect x="' + (node.x+1) + '" y="' + (node.y+1) + '" width="' + (node.w-2) + '" height="12"'
+     + ' rx="4" fill="' + hColor + '"/>';
+  var lines = node.label.split('\n');
+  var baseY = node.y + 12 + (node.h - 12) / 2 - (lines.length - 1) * 6;
+  lines.forEach(function(line, i) {
+    s += '<text x="' + cx(node) + '" y="' + (baseY + i * 12) + '" text-anchor="middle"'
+       + ' font-size="10" fill="' + C.text + '">' + line + '</text>';
+  });
+  return s;
+}
+
+function render() {
+  var steps = scenariosMap[currentDest];
+  var step  = steps[idx];
+  var hi    = step.hi || {};
+  var nodes = getNodes();
+  var TOTAL = totalSteps();
+
+  var s = '<svg viewBox="0 0 560 270" xmlns="http://www.w3.org/2000/svg">';
+
+  // Draw all nodes for current dest
+  Object.keys(nodes).forEach(function(key) {
+    s += renderNode(key, nodes[key], hi);
+  });
+
+  // Draw arrows
+  if (step.fanout) {
+    // SNS fan-out: draw from topic center to each sub
+    var topic = nodes['topic'];
+    ['sublambda','subemail','subsqs'].forEach(function(k, i) {
+      if (nodes[k]) s += mkFanArrow(topic, nodes[k], C.green, i);
+    });
+  } else {
+    (step.arrows || []).forEach(function(a) { s += mkArrow(a, nodes); });
+  }
+
+  // Note badge
+  if (step.note && nodes[step.note.node]) {
+    var nn = nodes[step.note.node];
+    s += '<rect x="' + (nn.x + nn.w/2 - 30) + '" y="' + (nn.y + nn.h + 4) + '"'
+       + ' width="60" height="15" rx="3" fill="' + step.note.color + '" opacity="0.18"/>';
+    s += '<text x="' + cx(nn) + '" y="' + (nn.y + nn.h + 15) + '"'
+       + ' text-anchor="middle" font-size="9" fill="' + step.note.color + '">'
+       + step.note.text + '</text>';
+  }
+
+  // Fan-out label for SNS
+  if (currentDest === 'sns' && idx === 3) {
+    s += '<text x="280" y="252" text-anchor="middle" font-size="9" fill="' + C.dim + '">'
+       + 'All three subscribers receive the same event simultaneously</text>';
+  }
+
+  s += '</svg>';
+  document.getElementById('diagram').innerHTML = s;
+  document.getElementById('stat').textContent = step.msg;
+
+  var isLast = idx >= TOTAL;
+  document.getElementById('btn-step').disabled = isLast;
+  document.getElementById('btn-step').textContent = isLast ? 'Done ✓' : 'Step →';
+  document.getElementById('btn-back').disabled = idx === 0;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + TOTAL;
+}
+
+document.querySelectorAll('.sel-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.sel-btn').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    currentDest = btn.dataset.dest;
+    idx = 0;
+    render();
+  });
+});
+
+document.getElementById('btn-step').addEventListener('click', function() {
+  if (idx < totalSteps()) { idx++; render(); }
+});
+document.getElementById('btn-back').addEventListener('click', function() {
+  if (idx > 0) { idx--; render(); }
+});
+document.getElementById('btn-reset').addEventListener('click', function() {
+  idx = 0; render();
+});
+
+render();
+</script>
+</body>
+</html>

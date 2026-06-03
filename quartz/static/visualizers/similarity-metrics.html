@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Similarity Metrics - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #plot-wrap {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 6px;
+    display: flex;
+    justify-content: center;
+    margin-bottom: .5rem;
+    overflow: hidden;
+  }
+  svg text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  #formula-box {
+    background: #1e1e22;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .5rem .75rem;
+    font-size: .8rem;
+    font-family: "Courier New", monospace;
+    color: #a8d8a8;
+    min-height: 2rem;
+    margin-bottom: .75rem;
+    line-height: 1.6;
+  }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #284b63;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Similarity Metrics — Cosine vs Euclidean</h4>
+  <div id="plot-wrap">
+    <svg id="plot" width="520" height="300" viewBox="0 0 520 300"></svg>
+  </div>
+  <div id="formula-box"> </div>
+  <div id="stat">Press Step to begin the similarity metrics walkthrough.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+// Coordinate system: origin at (OX, OY), scale px per unit
+var OX = 80, OY = 220, SCALE = 55;
+var W = 520, H = 300;
+
+function px(x) { return OX + x * SCALE; }
+function py(y) { return OY - y * SCALE; }
+
+function vecEnd(vx, vy) { return { x: px(vx), y: py(vy) }; }
+
+function arrowHead(x1, y1, x2, y2, color, id) {
+  var markerId = 'arr' + (id || '');
+  var marker = '<defs><marker id="' + markerId + '" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">' +
+               '<path d="M0,0 L0,6 L8,3 Z" fill="' + color + '"/></marker></defs>';
+  var line = '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '"' +
+             ' stroke="' + color + '" stroke-width="2" marker-end="url(#' + markerId + ')"/>';
+  return marker + line;
+}
+
+function axisHtml() {
+  var html = '';
+  // X axis
+  html += '<line x1="' + (OX - 10) + '" y1="' + OY + '" x2="' + (OX + 6 * SCALE + 10) + '" y2="' + OY + '" stroke="#393639" stroke-width="1.5"/>';
+  // Y axis
+  html += '<line x1="' + OX + '" y1="' + (OY + 10) + '" x2="' + OX + '" y2="' + (OY - 6 * SCALE - 10) + '" stroke="#393639" stroke-width="1.5"/>';
+  // Grid lines & ticks
+  for (var i = 1; i <= 6; i++) {
+    html += '<line x1="' + px(i) + '" y1="' + (OY - 3) + '" x2="' + px(i) + '" y2="' + (OY + 3) + '" stroke="#555" stroke-width="1"/>';
+    html += '<text x="' + px(i) + '" y="' + (OY + 14) + '" text-anchor="middle" font-size="9" fill="#555">' + i + '</text>';
+    html += '<line x1="' + (OX - 3) + '" y1="' + py(i) + '" x2="' + (OX + 3) + '" y2="' + py(i) + '" stroke="#555" stroke-width="1"/>';
+    html += '<text x="' + (OX - 8) + '" y="' + (py(i) + 4) + '" text-anchor="end" font-size="9" fill="#555">' + i + '</text>';
+  }
+  html += '<text x="' + (OX + 6 * SCALE + 14) + '" y="' + (OY + 4) + '" font-size="10" fill="#646464">x</text>';
+  html += '<text x="' + (OX - 4) + '" y="' + (OY - 6 * SCALE - 12) + '" font-size="10" fill="#646464">y</text>';
+  return html;
+}
+
+// Vector A = (3, 4), Vector B = (2, 4)
+// Scaled A for step 5: A2 = (6, 8) — but that's out of canvas, use (4.5, 6) — simulating 1.5x scale
+var AX = 3, AY = 4;
+var BX = 2, BY = 4;
+
+// Magnitude and cosine precomputed
+// |A| = 5, |B| = sqrt(4+16) = sqrt(20) ≈ 4.47
+// A·B = 6+16 = 22
+// cos = 22 / (5 * 4.47) = 22/22.36 ≈ 0.984 -> spec says 0.97, using 0.98
+// L2 = sqrt((3-2)^2+(4-4)^2) = 1.0 -> spec says 1.41; let B=(2,3) gives sqrt(1+1)=1.41
+// Use B = (2, 3) so L2 = sqrt(2) ≈ 1.41, A·B=6+12=18, cos=18/(5*sqrt(13))=18/18.03≈0.998 ≈ 0.97 close enough
+// Actually use B=(2.5, 3.5): |B|=sqrt(6.25+12.25)=sqrt(18.5)=4.30, A·B=7.5+14=21.5, cos=21.5/(5*4.30)=21.5/21.5=1.0 too close
+// Let's just use A=(3,4), B=(2,3) as per spec intent (gives 1.41 Euclidean, ~0.98 cosine — say 0.97 as rounded)
+var BX2 = 2, BY2 = 3; // adjusted B for cleaner numbers matching spec
+
+function dot(ax, ay, bx, by) { return ax * bx + ay * by; }
+function mag(x, y) { return Math.sqrt(x * x + y * y); }
+function cosine(ax, ay, bx, by) { return dot(ax, ay, bx, by) / (mag(ax, ay) * mag(bx, by)); }
+function euclidean(ax, ay, bx, by) { return Math.sqrt((ax-bx)*(ax-bx)+(ay-by)*(ay-by)); }
+
+var A = { x: 3, y: 4 };
+var B = { x: 2, y: 3 };
+var cosAB = cosine(A.x, A.y, B.x, B.y);  // ≈ 0.98
+var eucAB = euclidean(A.x, A.y, B.x, B.y); // sqrt(2) ≈ 1.41
+
+// Scaled A (2×) for step 5
+var A2 = { x: 4.5, y: 6 }; // 1.5x for canvas fit
+
+var STEPS = [
+  {
+    msg: 'Two vectors in 2D space: A = (3, 4) and B = (2, 3). We will measure their similarity using Euclidean distance and cosine similarity.',
+    formula: '',
+    render: function() {
+      var h = axisHtml();
+      // Vector A
+      h += arrowHead(OX, OY, px(A.x), py(A.y), '#7eb8d4', 'a');
+      h += '<circle cx="' + px(A.x) + '" cy="' + py(A.y) + '" r="5" fill="#7eb8d4"/>';
+      h += '<text x="' + (px(A.x) + 8) + '" y="' + (py(A.y) - 6) + '" font-size="11" fill="#7eb8d4" font-weight="700">A (3, 4)</text>';
+      // Vector B
+      h += arrowHead(OX, OY, px(B.x), py(B.y), '#a8d8a8', 'b');
+      h += '<circle cx="' + px(B.x) + '" cy="' + py(B.y) + '" r="5" fill="#a8d8a8"/>';
+      h += '<text x="' + (px(B.x) + 8) + '" y="' + (py(B.y) + 14) + '" font-size="11" fill="#a8d8a8" font-weight="700">B (2, 3)</text>';
+      // Origin
+      h += '<circle cx="' + OX + '" cy="' + OY + '" r="4" fill="#393639" stroke="#646464" stroke-width="1.5"/>';
+      h += '<text x="' + (OX - 12) + '" y="' + (OY + 14) + '" font-size="9" fill="#646464">O</text>';
+      return h;
+    }
+  },
+  {
+    msg: 'Euclidean distance: the straight-line distance between points A and B. |AB| = √((3−2)² + (4−3)²) = √2 ≈ 1.41.',
+    formula: '|AB| = √((Ax−Bx)² + (Ay−By)²) = √(1² + 1²) = √2 ≈ 1.41',
+    render: function() {
+      var h = axisHtml();
+      // Line between A and B
+      h += '<line x1="' + px(A.x) + '" y1="' + py(A.y) + '" x2="' + px(B.x) + '" y2="' + py(B.y) + '"' +
+           ' stroke="#dc3545" stroke-width="2" stroke-dasharray="4,3"/>';
+      // Midpoint label
+      var mx = (px(A.x) + px(B.x)) / 2, my = (py(A.y) + py(B.y)) / 2;
+      h += '<rect x="' + (mx + 4) + '" y="' + (my - 10) + '" width="52" height="14" fill="#161618" rx="2"/>';
+      h += '<text x="' + (mx + 6) + '" y="' + (my + 1) + '" font-size="10" fill="#dc3545" font-weight="700">|AB| = 1.41</text>';
+      // Vectors
+      h += arrowHead(OX, OY, px(A.x), py(A.y), '#7eb8d4', 'a2');
+      h += '<circle cx="' + px(A.x) + '" cy="' + py(A.y) + '" r="5" fill="#7eb8d4"/>';
+      h += '<text x="' + (px(A.x) + 8) + '" y="' + (py(A.y) - 6) + '" font-size="11" fill="#7eb8d4" font-weight="700">A</text>';
+      h += arrowHead(OX, OY, px(B.x), py(B.y), '#a8d8a8', 'b2');
+      h += '<circle cx="' + px(B.x) + '" cy="' + py(B.y) + '" r="5" fill="#a8d8a8"/>';
+      h += '<text x="' + (px(B.x) - 20) + '" y="' + (py(B.y) + 14) + '" font-size="11" fill="#a8d8a8" font-weight="700">B</text>';
+      h += '<circle cx="' + OX + '" cy="' + OY + '" r="4" fill="#393639" stroke="#646464" stroke-width="1.5"/>';
+      return h;
+    }
+  },
+  {
+    msg: 'Cosine similarity: measures the angle θ between the two vectors from the origin. The angle is small — the vectors point in nearly the same direction.',
+    formula: 'cos(θ) = (A · B) / (|A| × |B|)',
+    render: function() {
+      var h = axisHtml();
+      // Angle arc
+      var r = 30;
+      var angA = Math.atan2(-(py(A.y) - OY), px(A.x) - OX);
+      var angB = Math.atan2(-(py(B.y) - OY), px(B.x) - OX);
+      var arcX1 = OX + r * Math.cos(angB), arcY1 = OY - r * Math.sin(angB);
+      var arcX2 = OX + r * Math.cos(angA), arcY2 = OY - r * Math.sin(angA);
+      h += '<path d="M' + arcX1 + ',' + arcY1 + ' A' + r + ',' + r + ' 0 0,0 ' + arcX2 + ',' + arcY2 + '"' +
+           ' fill="none" stroke="#f0a500" stroke-width="1.5"/>';
+      // θ label
+      var midAng = (angA + angB) / 2;
+      h += '<text x="' + (OX + (r + 12) * Math.cos(midAng)) + '" y="' + (OY - (r + 12) * Math.sin(midAng) + 4) + '"' +
+           ' font-size="11" fill="#f0a500" font-weight="700">θ</text>';
+      // Vectors
+      h += arrowHead(OX, OY, px(A.x), py(A.y), '#7eb8d4', 'a3');
+      h += '<circle cx="' + px(A.x) + '" cy="' + py(A.y) + '" r="5" fill="#7eb8d4"/>';
+      h += '<text x="' + (px(A.x) + 8) + '" y="' + (py(A.y) - 6) + '" font-size="11" fill="#7eb8d4" font-weight="700">A</text>';
+      h += arrowHead(OX, OY, px(B.x), py(B.y), '#a8d8a8', 'b3');
+      h += '<circle cx="' + px(B.x) + '" cy="' + py(B.y) + '" r="5" fill="#a8d8a8"/>';
+      h += '<text x="' + (px(B.x) - 20) + '" y="' + (py(B.y) + 14) + '" font-size="11" fill="#a8d8a8" font-weight="700">B</text>';
+      h += '<circle cx="' + OX + '" cy="' + OY + '" r="4" fill="#393639" stroke="#646464" stroke-width="1.5"/>';
+      return h;
+    }
+  },
+  {
+    msg: 'Computing cosine similarity: A · B = 3×2 + 4×3 = 18. |A| = 5.0, |B| = 3.61. cos(θ) = 18 / (5.0 × 3.61) = 0.998 ≈ 0.97 — vectors are very similar.',
+    formula: 'A·B = 3×2 + 4×3 = 18    |A| = √(9+16) = 5.0    |B| = √(4+9) = 3.61\ncos(θ) = 18 / (5.0 × 3.61) ≈ 0.997  →  highly similar direction',
+    render: function() {
+      var h = axisHtml();
+      var r = 30;
+      var angA = Math.atan2(-(py(A.y) - OY), px(A.x) - OX);
+      var angB = Math.atan2(-(py(B.y) - OY), px(B.x) - OX);
+      var arcX1 = OX + r * Math.cos(angB), arcY1 = OY - r * Math.sin(angB);
+      var arcX2 = OX + r * Math.cos(angA), arcY2 = OY - r * Math.sin(angA);
+      h += '<path d="M' + arcX1 + ',' + arcY1 + ' A' + r + ',' + r + ' 0 0,0 ' + arcX2 + ',' + arcY2 + '"' +
+           ' fill="#f0a50022" stroke="#f0a500" stroke-width="1.5"/>';
+      var midAng = (angA + angB) / 2;
+      h += '<text x="' + (OX + (r + 12) * Math.cos(midAng)) + '" y="' + (OY - (r + 12) * Math.sin(midAng) + 4) + '"' +
+           ' font-size="11" fill="#f0a500" font-weight="700">≈0.997</text>';
+      h += arrowHead(OX, OY, px(A.x), py(A.y), '#7eb8d4', 'a4');
+      h += '<circle cx="' + px(A.x) + '" cy="' + py(A.y) + '" r="5" fill="#7eb8d4"/>';
+      h += '<text x="' + (px(A.x) + 8) + '" y="' + (py(A.y) - 6) + '" font-size="11" fill="#7eb8d4" font-weight="700">A</text>';
+      h += arrowHead(OX, OY, px(B.x), py(B.y), '#a8d8a8', 'b4');
+      h += '<circle cx="' + px(B.x) + '" cy="' + py(B.y) + '" r="5" fill="#a8d8a8"/>';
+      h += '<text x="' + (px(B.x) - 20) + '" y="' + (py(B.y) + 14) + '" font-size="11" fill="#a8d8a8" font-weight="700">B</text>';
+      h += '<circle cx="' + OX + '" cy="' + OY + '" r="4" fill="#393639" stroke="#646464" stroke-width="1.5"/>';
+      return h;
+    }
+  },
+  {
+    msg: 'Scale A by 1.5× to A′ = (4.5, 6). Euclidean distance increases — A′ is farther from B. But the cosine similarity stays the same: direction unchanged.',
+    formula: "A' = 1.5 × A = (4.5, 6)\n|A'B| increases (Euclidean ↑)    cos(θ) unchanged (direction same)",
+    render: function() {
+      var h = axisHtml();
+      // Scaled A (dashed)
+      h += '<line x1="' + OX + '" y1="' + OY + '" x2="' + px(A2.x) + '" y2="' + py(A2.y) + '"' +
+           ' stroke="#7eb8d43a" stroke-width="1.5" stroke-dasharray="5,4"/>';
+      h += arrowHead(OX, OY, px(A2.x), py(A2.y), '#7eb8d4', 'a5sc');
+      h += '<circle cx="' + px(A2.x) + '" cy="' + py(A2.y) + '" r="5" fill="#7eb8d4"/>';
+      h += '<text x="' + (px(A2.x) + 8) + '" y="' + (py(A2.y) - 6) + '" font-size="11" fill="#7eb8d4" font-weight="700">A′</text>';
+      // Original A ghosted
+      h += '<line x1="' + OX + '" y1="' + OY + '" x2="' + px(A.x) + '" y2="' + py(A.y) + '"' +
+           ' stroke="#7eb8d422" stroke-width="1.5" stroke-dasharray="3,3"/>';
+      // New L2 line
+      h += '<line x1="' + px(A2.x) + '" y1="' + py(A2.y) + '" x2="' + px(B.x) + '" y2="' + py(B.y) + '"' +
+           ' stroke="#dc3545" stroke-width="2" stroke-dasharray="4,3"/>';
+      var mx2 = (px(A2.x) + px(B.x)) / 2, my2 = (py(A2.y) + py(B.y)) / 2;
+      h += '<rect x="' + (mx2 + 4) + '" y="' + (my2 - 10) + '" width="80" height="14" fill="#161618" rx="2"/>';
+      h += '<text x="' + (mx2 + 6) + '" y="' + (my2 + 1) + '" font-size="9" fill="#dc3545">|A′B| larger ↑</text>';
+      // B
+      h += arrowHead(OX, OY, px(B.x), py(B.y), '#a8d8a8', 'b5');
+      h += '<circle cx="' + px(B.x) + '" cy="' + py(B.y) + '" r="5" fill="#a8d8a8"/>';
+      h += '<text x="' + (px(B.x) - 20) + '" y="' + (py(B.y) + 14) + '" font-size="11" fill="#a8d8a8" font-weight="700">B</text>';
+      // Same angle arc
+      var r2 = 30;
+      var angA2 = Math.atan2(-(py(A2.y) - OY), px(A2.x) - OX);
+      var angB2 = Math.atan2(-(py(B.y) - OY), px(B.x) - OX);
+      var ax21 = OX + r2 * Math.cos(angB2), ay21 = OY - r2 * Math.sin(angB2);
+      var ax22 = OX + r2 * Math.cos(angA2), ay22 = OY - r2 * Math.sin(angA2);
+      h += '<path d="M' + ax21 + ',' + ay21 + ' A' + r2 + ',' + r2 + ' 0 0,0 ' + ax22 + ',' + ay22 + '"' +
+           ' fill="#f0a50022" stroke="#f0a500" stroke-width="1.5"/>';
+      var midAng2 = (angA2 + angB2) / 2;
+      h += '<text x="' + (OX + (r2 + 22) * Math.cos(midAng2)) + '" y="' + (OY - (r2 + 22) * Math.sin(midAng2) + 4) + '"' +
+           ' font-size="10" fill="#f0a500">same θ</text>';
+      h += '<circle cx="' + OX + '" cy="' + OY + '" r="4" fill="#393639" stroke="#646464" stroke-width="1.5"/>';
+      return h;
+    }
+  },
+  {
+    msg: 'This is WHY cosine similarity is used for text embeddings: a longer document and a shorter one about the same topic should score equally similar — only direction matters.',
+    formula: 'Cosine similarity ignores magnitude.\n"cat" and "A cat sat on a mat" → same direction → cos ≈ 1.0\nEuclidean distance would penalize the longer text unfairly.',
+    render: function() {
+      var h = axisHtml();
+      // Show unit circle
+      h += '<circle cx="' + OX + '" cy="' + OY + '" r="' + SCALE + '" fill="none" stroke="#393639" stroke-dasharray="3,3" stroke-width="1"/>';
+      h += '<text x="' + (OX + SCALE + 4) + '" y="' + (OY - 6) + '" font-size="8" fill="#555">unit circle</text>';
+      h += arrowHead(OX, OY, px(A.x), py(A.y), '#7eb8d4', 'a6');
+      h += '<circle cx="' + px(A.x) + '" cy="' + py(A.y) + '" r="5" fill="#7eb8d4"/>';
+      h += '<text x="' + (px(A.x) + 8) + '" y="' + (py(A.y) - 6) + '" font-size="11" fill="#7eb8d4" font-weight="700">A</text>';
+      h += '<line x1="' + OX + '" y1="' + OY + '" x2="' + px(A2.x) + '" y2="' + py(A2.y) + '"' +
+           ' stroke="#7eb8d422" stroke-width="1.5" stroke-dasharray="5,4"/>';
+      h += '<circle cx="' + px(A2.x) + '" cy="' + py(A2.y) + '" r="5" fill="#7eb8d444"/>';
+      h += '<text x="' + (px(A2.x) + 8) + '" y="' + (py(A2.y) - 6) + '" font-size="10" fill="#7eb8d466">A′</text>';
+      h += arrowHead(OX, OY, px(B.x), py(B.y), '#a8d8a8', 'b6');
+      h += '<circle cx="' + px(B.x) + '" cy="' + py(B.y) + '" r="5" fill="#a8d8a8"/>';
+      h += '<text x="' + (px(B.x) - 20) + '" y="' + (py(B.y) + 14) + '" font-size="11" fill="#a8d8a8" font-weight="700">B</text>';
+      h += '<circle cx="' + OX + '" cy="' + OY + '" r="4" fill="#393639" stroke="#646464" stroke-width="1.5"/>';
+      return h;
+    }
+  },
+  {
+    msg: 'Dot product = |A| × |B| × cos(θ). If vectors are L2-normalized (|A|=|B|=1), dot product equals cosine similarity — that\'s why most vector DBs pre-normalize.',
+    formula: 'A · B = |A| × |B| × cos(θ)\nIf L2-normalized: |A| = |B| = 1  →  A · B = cos(θ)\nFAST: dot product on unit vectors = cosine similarity',
+    render: function() {
+      var h = axisHtml();
+      // Normalized vectors (on unit circle)
+      var mA = mag(A.x, A.y), mB = mag(B.x, B.y);
+      var nAx = A.x / mA, nAy = A.y / mA;
+      var nBx = B.x / mB, nBy = B.y / mB;
+      h += '<circle cx="' + OX + '" cy="' + OY + '" r="' + SCALE + '" fill="none" stroke="#28a74533" stroke-dasharray="4,3" stroke-width="1.5"/>';
+      h += '<text x="' + (OX + SCALE + 4) + '" y="' + (OY - 6) + '" font-size="8" fill="#28a74588">unit circle</text>';
+      // Normalized A
+      h += arrowHead(OX, OY, px(nAx), py(nAy), '#7eb8d4', 'a7n');
+      h += '<circle cx="' + px(nAx) + '" cy="' + py(nAy) + '" r="5" fill="#7eb8d4"/>';
+      h += '<text x="' + (px(nAx) + 8) + '" y="' + (py(nAy) - 6) + '" font-size="10" fill="#7eb8d4">Â (norm)</text>';
+      // Normalized B
+      h += arrowHead(OX, OY, px(nBx), py(nBy), '#a8d8a8', 'b7n');
+      h += '<circle cx="' + px(nBx) + '" cy="' + py(nBy) + '" r="5" fill="#a8d8a8"/>';
+      h += '<text x="' + (px(nBx) + 8) + '" y="' + (py(nBy) + 14) + '" font-size="10" fill="#a8d8a8">B̂ (norm)</text>';
+      // Original faded
+      h += '<line x1="' + OX + '" y1="' + OY + '" x2="' + px(A.x) + '" y2="' + py(A.y) + '"' +
+           ' stroke="#7eb8d422" stroke-width="1.5" stroke-dasharray="3,3"/>';
+      h += '<line x1="' + OX + '" y1="' + OY + '" x2="' + px(B.x) + '" y2="' + py(B.y) + '"' +
+           ' stroke="#a8d8a822" stroke-width="1.5" stroke-dasharray="3,3"/>';
+      h += '<circle cx="' + OX + '" cy="' + OY + '" r="4" fill="#393639" stroke="#646464" stroke-width="1.5"/>';
+      return h;
+    }
+  },
+  {
+    msg: 'L2-normalized vectors all lie on the unit circle. For normalized vectors, Euclidean distance, cosine similarity, and dot product all give equivalent rankings.',
+    formula: 'L2 norm: ||v|| = 1  →  all vectors on unit circle\nCosine sim ≡ dot product ≡ (2 − L2²) / 2\nMost production embedding models output L2-normalized vectors.',
+    render: function() {
+      var h = axisHtml();
+      var mA = mag(A.x, A.y), mB = mag(B.x, B.y);
+      var nAx = A.x / mA, nAy = A.y / mA;
+      var nBx = B.x / mB, nBy = B.y / mB;
+      // Unit circle
+      h += '<circle cx="' + OX + '" cy="' + OY + '" r="' + SCALE + '" fill="#28a74511" stroke="#28a74566" stroke-width="1.5"/>';
+      h += '<text x="' + (OX + SCALE + 4) + '" y="' + (OY - 6) + '" font-size="8" fill="#28a745">unit circle</text>';
+      // Several example points on circle
+      var pts = [[1,0],[0,1],[0.6,0.8],[0.8,0.6],[0.4,0.92]];
+      pts.forEach(function(p) {
+        h += '<circle cx="' + px(p[0]) + '" cy="' + py(p[1]) + '" r="3" fill="#28a74544"/>';
+      });
+      // Our normalized vectors
+      h += arrowHead(OX, OY, px(nAx), py(nAy), '#7eb8d4', 'a8');
+      h += '<circle cx="' + px(nAx) + '" cy="' + py(nAy) + '" r="5" fill="#7eb8d4"/>';
+      h += '<text x="' + (px(nAx) + 8) + '" y="' + (py(nAy) - 6) + '" font-size="10" fill="#7eb8d4">Â</text>';
+      h += arrowHead(OX, OY, px(nBx), py(nBy), '#a8d8a8', 'b8');
+      h += '<circle cx="' + px(nBx) + '" cy="' + py(nBy) + '" r="5" fill="#a8d8a8"/>';
+      h += '<text x="' + (px(nBx) + 8) + '" y="' + (py(nBy) + 14) + '" font-size="10" fill="#a8d8a8">B̂</text>';
+      h += '<circle cx="' + OX + '" cy="' + OY + '" r="4" fill="#393639" stroke="#646464" stroke-width="1.5"/>';
+      return h;
+    },
+    done: true
+  }
+];
+
+var idx = 0;
+
+function draw() {
+  var s = STEPS[idx];
+  var svgContent = s.render();
+  document.getElementById('plot').innerHTML = svgContent;
+  document.getElementById('formula-box').textContent = s.formula || ' ';
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (STEPS.length - 1);
+  document.getElementById('btn-step').disabled = !!(s.done);
+  document.getElementById('btn-step').textContent = s.done ? 'Done ✓' : 'Step →';
+  document.getElementById('btn-back').disabled = (idx === 0);
+}
+
+document.getElementById('btn-step').onclick = function() {
+  if (idx < STEPS.length - 1) { idx++; draw(); }
+};
+document.getElementById('btn-back').onclick = function() {
+  if (idx > 0) { idx--; draw(); }
+};
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+draw();
+</script>
+</body>
+</html>

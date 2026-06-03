@@ -106,6 +106,12 @@ while True:
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/react-pattern.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="ReAct Pattern Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 `create_react_agent` is the LangGraph implementation of the ReAct pattern.

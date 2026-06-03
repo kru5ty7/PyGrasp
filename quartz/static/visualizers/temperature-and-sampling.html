@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Temperature and Sampling - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #vis-area {
+    background: #2a2a2e;
+    border-radius: 6px;
+    padding: .75rem;
+    min-height: 200px;
+    margin-bottom: .5rem;
+  }
+  .vis-label {
+    font-size: .68rem;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: #646464;
+    margin-bottom: .4rem;
+  }
+  /* bar chart */
+  .bar-chart { display: flex; flex-direction: column; gap: .3rem; }
+  .bar-row { display: flex; gap: .5rem; align-items: center; }
+  .bar-label { font-size: .8rem; font-family: monospace; min-width: 48px; color: #d4d4d4; }
+  .bar-track { flex: 1; height: 18px; background: #1e1e20; border-radius: 3px; overflow: hidden; position: relative; }
+  .bar-fill { height: 100%; border-radius: 3px; transition: width .35s ease; }
+  .bar-fill.winner { background: #28a745; }
+  .bar-fill.normal { background: #284b63; }
+  .bar-fill.sampled { background: #f0a500; }
+  .bar-fill.zeroed { background: #393639; opacity: .4; }
+  .bar-fill.nucleus { background: #007bff; }
+  .bar-pct { font-size: .75rem; color: #646464; min-width: 40px; text-align: right; font-family: monospace; }
+  /* temp buttons */
+  .temp-row { display: flex; gap: .35rem; margin-bottom: .5rem; flex-wrap: wrap; }
+  .temp-btn {
+    padding: .25rem .55rem; border: 1px solid #393639; border-radius: 4px;
+    cursor: pointer; font-size: .8rem; font-family: monospace;
+    background: #2a2a2e; color: #d4d4d4; transition: all .15s;
+  }
+  .temp-btn.active { background: #284b63; border-color: #7b97aa; color: #fff; }
+  .temp-btn:hover:not(.active) { opacity: .75; }
+  /* info */
+  .info-box {
+    background: #1e1e20;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .4rem .6rem;
+    font-size: .78rem;
+    line-height: 1.5;
+    margin-top: .4rem;
+  }
+  /* nucleus highlight */
+  .nucleus-sum { font-size: .75rem; padding: .2rem .4rem; background: #007bff22; border: 1px solid #007bff44; border-radius: 3px; color: #7bbfff; margin-top: .35rem; }
+  #stat {
+    padding: .45rem .75rem; background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem; line-height: 1.5;
+    min-height: 2.2rem; margin-bottom: .5rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem; border: none; border-radius: 4px;
+    cursor: pointer; font-size: .82rem;
+    background: #393639; color: #d4d4d4; transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Temperature &amp; Sampling — Next Token Distribution</h4>
+  <div id="vis-area"></div>
+  <div id="stat">Press Step to begin.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+// Base logits (unnormalized scores)
+var WORDS = ['mat', 'floor', 'chair', 'rug', 'couch'];
+var BASE_LOGITS = [2.20, 1.61, 1.10, 0.70, 0.00];
+
+function softmax(logits, temp) {
+  if (temp === 0) {
+    // argmax
+    var maxIdx = 0;
+    logits.forEach(function(v, i) { if (v > logits[maxIdx]) maxIdx = i; });
+    return logits.map(function(v, i) { return i === maxIdx ? 1.0 : 0.0; });
+  }
+  var scaled = logits.map(function(v) { return v / temp; });
+  var maxV = Math.max.apply(null, scaled);
+  var exps = scaled.map(function(v) { return Math.exp(v - maxV); });
+  var sum = exps.reduce(function(a, b) { return a + b; }, 0);
+  return exps.map(function(v) { return v / sum; });
+}
+
+function renderBars(probs, mode, topK, topP) {
+  // mode: 'normal' | 'winner' | 'topk' | 'topp'
+  var h = '<div class="bar-chart">';
+  var cumulative = 0;
+  var nucleusThreshold = topP || 0;
+  var cumArr = [];
+  var sorted = probs.slice().map(function(p, i) { return {p: p, i: i}; }).sort(function(a,b) { return b.p - a.p; });
+  var nucleusSet = {};
+  if (mode === 'topp') {
+    var cum = 0;
+    sorted.forEach(function(item) {
+      if (cum < topP) { nucleusSet[item.i] = true; cum += item.p; }
+    });
+  }
+  var topKSet = {};
+  if (mode === 'topk') {
+    sorted.slice(0, topK).forEach(function(item) { topKSet[item.i] = true; });
+  }
+
+  WORDS.forEach(function(w, i) {
+    var p = probs[i];
+    var pctW = (p * 100).toFixed(1);
+    var barClass = 'normal';
+    if (mode === 'winner') barClass = (i === 0 ? 'winner' : 'normal');
+    if (mode === 'topk') barClass = topKSet[i] ? 'sampled' : 'zeroed';
+    if (mode === 'topp') barClass = nucleusSet[i] ? 'nucleus' : 'zeroed';
+    var isZeroed = (barClass === 'zeroed');
+    h += '<div class="bar-row">';
+    h += '<span class="bar-label">' + w + (mode === 'winner' && i === 0 ? ' ✓' : '') + '</span>';
+    h += '<div class="bar-track"><div class="bar-fill ' + barClass + '" style="width:' + (p*100) + '%' + (isZeroed ? ';opacity:.3' : '') + '"></div></div>';
+    h += '<span class="bar-pct">' + (isZeroed ? '—' : pctW + '%') + '</span>';
+    h += '</div>';
+  });
+  h += '</div>';
+  return h;
+}
+
+function renderTempButtons(activeTemp) {
+  var temps = ['0.0', '0.5', '1.0', '2.0'];
+  var h = '<div class="temp-row">';
+  temps.forEach(function(t) {
+    h += '<button class="temp-btn' + (t === String(activeTemp) ? ' active' : '') + '" onclick="jumpToTemp(' + t + ')">T=' + t + '</button>';
+  });
+  h += '</div>';
+  return h;
+}
+
+var STEPS = [
+  {
+    render: function() {
+      var h = '<div class="vis-label">Raw logits — unnormalized model scores</div>';
+      h += '<div class="bar-chart">';
+      var maxL = Math.max.apply(null, BASE_LOGITS);
+      BASE_LOGITS.forEach(function(l, i) {
+        var w = ((l - (-1)) / (maxL - (-1)) * 100).toFixed(1);
+        h += '<div class="bar-row">';
+        h += '<span class="bar-label">' + WORDS[i] + '</span>';
+        h += '<div class="bar-track"><div class="bar-fill normal" style="width:' + w + '%"></div></div>';
+        h += '<span class="bar-pct" style="color:#d4d4d4">' + l.toFixed(1) + '</span>';
+        h += '</div>';
+      });
+      h += '</div>';
+      h += '<div class="info-box">Logits are raw scores — not probabilities. They can be any real number. Softmax converts them to a probability distribution that sums to 1.</div>';
+      return h;
+    },
+    msg: 'Raw logits: model output before softmax. "mat"=2.20, "floor"=1.61, "chair"=1.10, "rug"=0.70, "couch"=0.00.'
+  },
+  {
+    render: function() {
+      var probs = softmax(BASE_LOGITS, 1.0);
+      var h = '<div class="vis-label">Temperature = 1.0 — default distribution</div>';
+      h += renderBars(probs, 'normal');
+      h += '<div class="info-box">Softmax at T=1.0: each logit becomes a probability. "mat" wins with 45% but other tokens still have meaningful probability.</div>';
+      return h;
+    },
+    msg: 'T=1.0: softmax applied to logits. Probabilities: mat 45%, floor 25%, chair 15%, rug 10%, couch 5%.'
+  },
+  {
+    render: function() {
+      var probs = softmax(BASE_LOGITS, 0.0);
+      var h = '<div class="vis-label">Temperature = 0.0 — argmax (deterministic)</div>';
+      h += renderTempButtons('0.0');
+      h += renderBars(probs, 'winner');
+      h += '<div class="info-box"><strong style="color:#28a745">T=0:</strong> always picks the highest-probability token. Output is near-deterministic. Best for factual tasks, code generation, structured output.</div>';
+      return h;
+    },
+    msg: 'T=0.0: argmax — "mat" always chosen. Zero variance. Use for extraction, classification, JSON output.'
+  },
+  {
+    render: function() {
+      var probs = softmax(BASE_LOGITS, 0.5);
+      var h = '<div class="vis-label">Temperature = 0.5 — sharpened distribution</div>';
+      h += renderTempButtons('0.5');
+      h += renderBars(probs, 'normal');
+      h += '<div class="info-box"><strong style="color:#284b63">T=0.5:</strong> gaps between bars become larger. Top token probability increases, lower tokens shrink. More predictable than T=1 but still allows variation.</div>';
+      return h;
+    },
+    msg: 'T=0.5: distribution sharpens. "mat" probability rises above 60%. Good for Q&A where some variety is acceptable.'
+  },
+  {
+    render: function() {
+      var probs = softmax(BASE_LOGITS, 1.0);
+      var h = '<div class="vis-label">Temperature = 1.0 — original distribution</div>';
+      h += renderTempButtons('1.0');
+      h += renderBars(probs, 'normal');
+      h += '<div class="info-box"><strong>T=1.0:</strong> softmax applied unchanged. The default. Balances coherence and variety. Good for conversation and general tasks.</div>';
+      return h;
+    },
+    msg: 'T=1.0: unmodified distribution. The model\'s "natural" probability distribution from training.'
+  },
+  {
+    render: function() {
+      var probs = softmax(BASE_LOGITS, 2.0);
+      var h = '<div class="vis-label">Temperature = 2.0 — flattened distribution</div>';
+      h += renderTempButtons('2.0');
+      h += renderBars(probs, 'normal');
+      h += '<div class="info-box"><strong style="color:#dc3545">T=2.0:</strong> distribution flattens — all tokens become more equally likely. Higher diversity but risks incoherence. Rarely used above 1.5.</div>';
+      return h;
+    },
+    msg: 'T=2.0: distribution nearly uniform. "mat" drops to ~30%. Higher chance of unexpected tokens. Rarely useful.'
+  },
+  {
+    render: function() {
+      var probs = softmax(BASE_LOGITS, 1.0);
+      var h = '<div class="vis-label">Top-K sampling — K=3, others zeroed</div>';
+      h += renderBars(probs, 'topk', 3);
+      h += '<div class="info-box"><strong style="color:#f0a500">Top-K=3:</strong> only the top 3 tokens are eligible for sampling. "rug" and "couch" are excluded (zeroed). The 3 remaining token probabilities are renormalized to sum to 1.<br><br>Prevents sampling from the long tail of unlikely tokens.</div>';
+      return h;
+    },
+    msg: 'Top-K=3: only "mat", "floor", "chair" eligible. "rug" and "couch" zeroed out and excluded from sampling.'
+  },
+  {
+    render: function() {
+      var probs = softmax(BASE_LOGITS, 1.0);
+      var h = '<div class="vis-label">Top-P (nucleus) sampling — P=0.9</div>';
+      h += renderBars(probs, 'topp', null, 0.9);
+      // cumulative: mat(0.45)+floor(0.25)+chair(0.15)=0.85 < 0.9, +rug(0.10)=0.95 ≥ 0.9 → mat+floor+chair+rug in nucleus; couch excluded
+      h += '<div class="nucleus-sum">Nucleus: mat(45%) + floor(25%) + chair(15%) + rug(10%) = 95% ≥ 90% ✓</div>';
+      h += '<div class="info-box"><strong style="color:#007bff">Top-P=0.9:</strong> take tokens in descending order until cumulative probability ≥ 0.9. Dynamic — large nucleus when uncertain, small when confident.</div>';
+      return h;
+    },
+    msg: 'Top-P=0.9 (nucleus): include tokens until cumulative probability ≥ 0.9. "couch" excluded (cumulative already 95% without it).'
+  },
+  {
+    render: function() {
+      var h = '<div class="vis-label">Temperature guide by task type</div>';
+      var tasks = [
+        {task: 'Data extraction / SQL / JSON', temp: '0.0 – 0.2', color: '#28a745'},
+        {task: 'Q&A over documents', temp: '0.0 – 0.3', color: '#28a745'},
+        {task: 'Summarization', temp: '0.3 – 0.5', color: '#284b63'},
+        {task: 'General conversation', temp: '0.7 – 1.0', color: '#f0a500'},
+        {task: 'Creative writing', temp: '0.8 – 1.0', color: '#f0a500'},
+        {task: 'Poetry / brainstorm', temp: '1.0 – 1.2', color: '#dc3545'},
+      ];
+      tasks.forEach(function(t) {
+        h += '<div style="display:flex;justify-content:space-between;padding:.2rem .4rem;border-bottom:1px solid #2a2a2e;font-size:.78rem">';
+        h += '<span>' + t.task + '</span>';
+        h += '<span style="font-family:monospace;color:' + t.color + '">' + t.temp + '</span>';
+        h += '</div>';
+      });
+      return h;
+    },
+    msg: 'Done ✓ — Temperature guide: 0 for factual/code, 1.0 for conversation, 0.8-1.0 for creative. Higher = more variety, not more quality.'
+  }
+];
+
+// Temperature jump function (called by buttons during steps 3-6)
+function jumpToTemp(t) {
+  var tempStepMap = {'0.0': 2, '0.5': 3, '1.0': 4, '2.0': 5};
+  var target = tempStepMap[String(t)];
+  if (target !== undefined) { idx = target; draw(); }
+}
+
+var idx = 0;
+
+function draw() {
+  var s = STEPS[idx];
+  var isDone = (idx === STEPS.length - 1);
+  document.getElementById('vis-area').innerHTML = s.render();
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (STEPS.length - 1);
+  document.getElementById('btn-step').disabled = isDone;
+  document.getElementById('btn-step').textContent = isDone ? 'Done ✓' : 'Step →';
+  document.getElementById('btn-back').disabled = idx === 0;
+}
+
+document.getElementById('btn-step').onclick = function() { if (idx < STEPS.length - 1) { idx++; draw(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+draw();
+</script>
+</body>
+</html>

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>LangGraph Core Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 0;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  .header {
+    background: #284b63;
+    padding: .55rem 1rem;
+    font-size: .78rem;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: #d4d4d4;
+  }
+  .body { padding: .85rem 1rem .75rem; }
+  /* graph */
+  .graph-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: .55rem;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+  .node {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 5px;
+    padding: .3rem .45rem;
+    text-align: center;
+    flex: 1;
+    min-width: 0;
+    transition: border-color .25s, background .25s;
+    font-size: .73rem;
+    font-weight: 600;
+  }
+  .node .nlbl { font-size: .58rem; text-transform: uppercase; letter-spacing: .04em; color: #646464; margin-bottom: .1rem; }
+  .node.active { border-color: #f0a500; background: #2a2518; }
+  .node.done   { border-color: #28a745; }
+  .node.end    { border-color: #dc3545; font-size: .68rem; }
+  .arr { color: #646464; font-size: .82rem; flex-shrink: 0; }
+  .arr.amber { color: #f0a500; }
+  .arr.red   { color: #dc3545; }
+  .arr.green { color: #28a745; }
+  /* conditional row */
+  .cond-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 4px;
+    margin-bottom: .55rem;
+  }
+  .cond-badge {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .25rem .45rem;
+    font-size: .65rem;
+    color: #888;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+  .cond-badge.active { border-color: #f0a500; color: #f0a500; }
+  .cond-badge.red    { border-color: #dc3545; color: #dc3545; }
+  .cond-badge.green  { border-color: #28a745; color: #28a745; }
+  /* state panel */
+  .state-panel {
+    background: #1a1a20;
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: .38rem .55rem;
+    font-size: .68rem;
+    font-family: monospace;
+    color: #c9d1d9;
+    margin-bottom: .55rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-all;
+    display: none;
+  }
+  .state-panel.show { display: block; }
+  .state-panel .slbl { font-size: .6rem; text-transform: uppercase; letter-spacing: .06em; margin-bottom: .2rem; color: #888; }
+  /* status */
+  #stat {
+    padding: .45rem .65rem;
+    background: #393639;
+    border-left: 3px solid #284b63;
+    border-radius: 0 4px 4px 0;
+    font-size: .8rem;
+    line-height: 1.5;
+    min-height: 2.2rem;
+    margin-bottom: .65rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .3rem .7rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .8rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .7rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">LangGraph Core - Visualizer</div>
+  <div class="body">
+
+    <!-- Graph nodes row -->
+    <div class="graph-row">
+      <div class="node" id="n-sw"><div class="nlbl">Node</div>search_web</div>
+      <div class="arr" id="e-sw-ei">→</div>
+      <div class="node" id="n-ei"><div class="nlbl">Node</div>extract_info</div>
+      <div class="arr" id="e-ei-sy">→</div>
+      <div class="node" id="n-sy"><div class="nlbl">Node</div>synthesize</div>
+      <div class="arr" id="e-sy-rv">→</div>
+      <div class="node" id="n-rv"><div class="nlbl">Node</div>review</div>
+      <div class="arr" id="e-rv">→</div>
+      <div class="node" id="n-out"><div class="nlbl">Node</div>output</div>
+    </div>
+
+    <!-- Conditional edge indicator -->
+    <div class="cond-row">
+      <div class="cond-badge" id="cond-rv">review → conditional edge</div>
+      <div style="flex:1"></div>
+      <div class="cond-badge" id="cond-app">approve → output</div>
+      <div class="cond-badge" id="cond-rev">revise → synthesize</div>
+    </div>
+
+    <!-- State panel -->
+    <div class="state-panel show" id="state-panel">
+      <div class="slbl">Graph State</div>
+      <span id="state-txt">{query: "AI research assistant", results: [], draft: null, approved: false}</span>
+    </div>
+
+    <div id="stat">Press Step to begin.</div>
+
+    <div id="ctrl">
+      <button id="btn-back" disabled>&#9664; Back</button>
+      <button id="btn-step">Step &#9654;</button>
+      <button id="btn-reset">&#8635; Reset</button>
+      <span id="counter">Step 0 / 9</span>
+    </div>
+  </div>
+</div>
+<script>
+var STEPS = [
+  {
+    nodes: {sw:'',ei:'',sy:'',rv:'',out:''},
+    edges: {swEi:'',eiSy:'',syRv:'',rv:''},
+    cond: {rv:'',app:'',rev:''},
+    state: '{query: "AI research assistant", results: [], draft: null, approved: false}',
+    msg: 'Initial state created. Graph defined with 5 nodes: search_web, extract_info, synthesize, review, output.'
+  },
+  {
+    nodes: {sw:'active',ei:'',sy:'',rv:'',out:''},
+    edges: {swEi:'amber',eiSy:'',syRv:'',rv:''},
+    cond: {rv:'',app:'',rev:''},
+    state: '{query: "AI research assistant", results: ["LLMs...", "Agents...", "RAG..."], draft: null, approved: false}',
+    msg: 'Enter search_web node: web search executed. State updated with results array.'
+  },
+  {
+    nodes: {sw:'done',ei:'active',sy:'',rv:'',out:''},
+    edges: {swEi:'amber',eiSy:'amber',syRv:'',rv:''},
+    cond: {rv:'',app:'',rev:''},
+    state: '{query: "AI research assistant", results: ["LLMs...", "Agents...", "RAG..."], facts: ["LLMs power agents", "RAG improves accuracy"], draft: null, approved: false}',
+    msg: 'Move to extract_info: parse results, extract key facts into state.'
+  },
+  {
+    nodes: {sw:'done',ei:'done',sy:'active',rv:'',out:''},
+    edges: {swEi:'',eiSy:'amber',syRv:'amber',rv:''},
+    cond: {rv:'',app:'',rev:''},
+    state: '{query: "AI research assistant", facts: [...], draft: "AI research assistants leverage LLMs...", approved: false}',
+    msg: 'Move to synthesize: draft written using extracted facts.'
+  },
+  {
+    nodes: {sw:'done',ei:'done',sy:'done',rv:'active',out:''},
+    edges: {swEi:'',eiSy:'',syRv:'amber',rv:'amber'},
+    cond: {rv:'active',app:'',rev:''},
+    state: '{..., draft: "AI research assistants...", review_result: null, approved: false}',
+    msg: 'Move to review: LLM evaluates draft quality. Conditional edge will determine next node.'
+  },
+  {
+    nodes: {sw:'done',ei:'done',sy:'active',rv:'done',out:''},
+    edges: {swEi:'',eiSy:'',syRv:'',rv:'red'},
+    cond: {rv:'',app:'',rev:'red'},
+    state: '{..., draft: "AI research assistants...", review_result: "revise", approved: false}',
+    msg: 'Conditional edge: review returns "revise" → loop back to synthesize (red arrow). Draft needs improvement.'
+  },
+  {
+    nodes: {sw:'done',ei:'done',sy:'active',rv:'',out:''},
+    edges: {swEi:'',eiSy:'',syRv:'amber',rv:''},
+    cond: {rv:'',app:'',rev:''},
+    state: '{..., draft: "AI research assistants use LLMs with tools to autonomously retrieve...", approved: false}',
+    msg: 'Second synthesis: improved draft written with more detail and better structure.'
+  },
+  {
+    nodes: {sw:'done',ei:'done',sy:'done',rv:'active',out:''},
+    edges: {swEi:'',eiSy:'',syRv:'amber',rv:'amber'},
+    cond: {rv:'active',app:'',rev:''},
+    state: '{..., draft: "[improved draft]", review_result: null, approved: false}',
+    msg: 'Review node runs again on improved draft.'
+  },
+  {
+    nodes: {sw:'done',ei:'done',sy:'done',rv:'done',out:'active'},
+    edges: {swEi:'',eiSy:'',syRv:'',rv:'green'},
+    cond: {rv:'',app:'green',rev:''},
+    state: '{..., review_result: "approve", approved: true}',
+    msg: 'Review returns "approve" → move to output node (green arrow).'
+  },
+  {
+    nodes: {sw:'done',ei:'done',sy:'done',rv:'done',out:'done'},
+    edges: {swEi:'',eiSy:'',syRv:'',rv:''},
+    cond: {rv:'',app:'',rev:''},
+    state: '{query: "...", results: [...], facts: [...], draft: "[final report]", approved: true, output: "Final Answer returned."}',
+    msg: 'output node executed. Final answer returned. Graph terminates (reaches END).'
+  }
+];
+
+var idx = 0;
+
+function arrCls(v) {
+  if (v === 'amber') return 'arr amber';
+  if (v === 'red')   return 'arr red';
+  if (v === 'green') return 'arr green';
+  return 'arr';
+}
+function condCls(v) {
+  if (v === 'active') return 'cond-badge active';
+  if (v === 'red')    return 'cond-badge red';
+  if (v === 'green')  return 'cond-badge green';
+  return 'cond-badge';
+}
+function nodeCls(v) {
+  if (v === 'active') return 'node active';
+  if (v === 'done')   return 'node done';
+  return 'node';
+}
+
+function draw() {
+  var s = STEPS[idx];
+  document.getElementById('n-sw').className  = nodeCls(s.nodes.sw);
+  document.getElementById('n-ei').className  = nodeCls(s.nodes.ei);
+  document.getElementById('n-sy').className  = nodeCls(s.nodes.sy);
+  document.getElementById('n-rv').className  = nodeCls(s.nodes.rv);
+  document.getElementById('n-out').className = nodeCls(s.nodes.out);
+
+  document.getElementById('e-sw-ei').className = arrCls(s.edges.swEi);
+  document.getElementById('e-ei-sy').className = arrCls(s.edges.eiSy);
+  document.getElementById('e-sy-rv').className = arrCls(s.edges.syRv);
+  document.getElementById('e-rv').className    = arrCls(s.edges.rv);
+
+  document.getElementById('cond-rv').className  = condCls(s.cond.rv);
+  document.getElementById('cond-app').className = condCls(s.cond.app);
+  document.getElementById('cond-rev').className = condCls(s.cond.rev);
+
+  document.getElementById('state-txt').textContent = s.state;
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (STEPS.length - 1);
+  var stepBtn = document.getElementById('btn-step');
+  if (idx === STEPS.length - 1) {
+    stepBtn.textContent = 'Done ✓';
+    stepBtn.disabled = true;
+  } else {
+    stepBtn.textContent = 'Step ►';
+    stepBtn.disabled = false;
+  }
+  document.getElementById('btn-back').disabled = idx === 0;
+}
+
+document.getElementById('btn-step').onclick = function() { if (idx < STEPS.length - 1) { idx++; draw(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+draw();
+</script>
+</body>
+</html>

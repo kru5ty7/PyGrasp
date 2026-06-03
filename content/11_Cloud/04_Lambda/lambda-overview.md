@@ -100,6 +100,12 @@ aws lambda invoke \
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/lambda-overview.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Lambda Overview Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Lambda does not exist in isolation. Execution permissions flow from an IAM role attached to the function, and understanding that role model is a prerequisite for writing Lambda functions that can safely call other AWS services.

@@ -170,6 +170,12 @@ response = s3.list_objects_v2(Bucket='my-app-bucket')
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/iam-roles.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="IAM Roles Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Roles are the mechanism by which all IAM policies become useful for application code. The note on how boto3 uses roles explains the practical behaviour - how boto3 picks up the role credentials automatically without configuration.

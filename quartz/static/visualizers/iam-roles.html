@@ -1,0 +1,350 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IAM Roles Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #diagram { margin-bottom: .75rem; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+
+  /* Diagram styles */
+  .role-box {
+    border: 2px solid #28a745;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: .5rem;
+  }
+  .role-header {
+    background: #1a3a22;
+    color: #28a745;
+    font-weight: 700;
+    font-size: .78rem;
+    padding: .25rem .6rem;
+    letter-spacing: .04em;
+  }
+  .role-section {
+    border-top: 1px solid #2a4a2e;
+    padding: .3rem .6rem;
+    font-size: .78rem;
+  }
+  .role-section-label {
+    font-size: .68rem;
+    color: #646464;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    margin-bottom: .15rem;
+  }
+  .role-section-value {
+    color: #d4d4d4;
+    font-size: .78rem;
+  }
+  .role-section.trust { background: #1a1a2a; }
+  .role-section.perms { background: #1a2a1a; }
+  .role-section.arn { background: #1e1e22; }
+  .row { display: flex; gap: .5rem; margin-bottom: .4rem; }
+  .principal-box {
+    flex: 1;
+    background: #2a2a2e;
+    border: 1px solid #3a3a3e;
+    border-radius: 6px;
+    padding: .3rem .5rem;
+    font-size: .75rem;
+    text-align: center;
+    opacity: 0;
+    transition: all .3s;
+  }
+  .principal-box.show { opacity: 1; }
+  .principal-box.active { border-color: #f0a500; }
+  .principal-label {
+    font-size: .68rem;
+    color: #646464;
+    text-transform: uppercase;
+    margin-bottom: .1rem;
+  }
+  .arrow-line {
+    text-align: center;
+    font-size: .72rem;
+    color: #646464;
+    margin: .15rem 0;
+    opacity: 0;
+    transition: opacity .3s;
+  }
+  .arrow-line.show { opacity: 1; }
+  .token-box {
+    background: #2a2a1a;
+    border: 1px solid #f0a500;
+    border-radius: 5px;
+    padding: .3rem .5rem;
+    font-size: .72rem;
+    margin: .3rem 0;
+    opacity: 0;
+    transition: opacity .3s;
+  }
+  .token-box.show { opacity: 1; }
+  .result-ok {
+    background: #1a3a22;
+    color: #28a745;
+    border: 1px solid #28a745;
+    border-radius: 5px;
+    padding: .25rem .5rem;
+    font-size: .75rem;
+    text-align: center;
+    margin-top: .25rem;
+    opacity: 0;
+    transition: opacity .3s;
+  }
+  .result-ok.show { opacity: 1; }
+  .result-fail {
+    background: #3a1a1a;
+    color: #dc3545;
+    border: 1px solid #dc3545;
+    border-radius: 5px;
+    padding: .25rem .5rem;
+    font-size: .75rem;
+    text-align: center;
+    margin-top: .25rem;
+    opacity: 0;
+    transition: opacity .3s;
+  }
+  .result-fail.show { opacity: 1; }
+  .account-boundary {
+    border: 1px dashed #555;
+    border-radius: 6px;
+    padding: .4rem .5rem;
+    margin-bottom: .3rem;
+  }
+  .account-label {
+    font-size: .68rem;
+    color: #646464;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    margin-bottom: .3rem;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>IAM Roles — Anatomy and AssumeRole Flow</h4>
+  <div id="diagram"></div>
+  <div id="stat"></div>
+  <div id="ctrl">
+    <button id="btn-back">Back</button>
+    <button id="btn-step">Step</button>
+    <button id="btn-reset">Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+const steps = [
+  {
+    status: "Role anatomy: every IAM role has three parts — a Trust Policy (who can assume it), a Permissions Policy (what it can do), and a Role ARN (its unique identity).",
+    render: () => `
+      <div class="role-box">
+        <div class="role-header">IAM Role: ec2-s3-reader</div>
+        <div class="role-section trust">
+          <div class="role-section-label">Trust Policy (who can assume)</div>
+          <div class="role-section-value">Principal: "ec2.amazonaws.com"</div>
+        </div>
+        <div class="role-section perms">
+          <div class="role-section-label">Permissions Policy (what it can do)</div>
+          <div class="role-section-value">s3:GetObject on arn:aws:s3:::my-bucket/*</div>
+        </div>
+        <div class="role-section arn">
+          <div class="role-section-label">Role ARN</div>
+          <div class="role-section-value" style="color:#9a9aaa;font-size:.7rem;">arn:aws:iam::123456789012:role/ec2-s3-reader</div>
+        </div>
+      </div>
+      <div style="font-size:.72rem;color:#646464;margin-top:.2rem;">Three principals that can assume roles: IAM User, AWS Service, Cross-account entity</div>`
+  },
+  {
+    status: "EC2 instance requests to assume the role. It calls sts:AssumeRole with the role ARN.",
+    render: () => `
+      <div class="role-box">
+        <div class="role-header">IAM Role: ec2-s3-reader</div>
+        <div class="role-section trust">
+          <div class="role-section-label">Trust Policy</div>
+          <div class="role-section-value">Principal: "ec2.amazonaws.com"</div>
+        </div>
+        <div class="role-section perms">
+          <div class="role-section-label">Permissions Policy</div>
+          <div class="role-section-value">s3:GetObject on my-bucket/*</div>
+        </div>
+      </div>
+      <div class="arrow-line show">↑ sts:AssumeRole request</div>
+      <div class="row" style="margin-bottom:0;">
+        <div class="principal-box show active">
+          <div class="principal-label">AWS Service</div>
+          EC2 Instance
+        </div>
+      </div>`
+  },
+  {
+    status: "STS validates the trust policy. The role's Principal field lists 'ec2.amazonaws.com' — match found. Assumption approved.",
+    render: () => `
+      <div class="role-box">
+        <div class="role-header">IAM Role: ec2-s3-reader</div>
+        <div class="role-section trust" style="background:#1a2a3a;border-color:#007bff;">
+          <div class="role-section-label" style="color:#007bff;">Trust Policy — CHECKING</div>
+          <div class="role-section-value">Principal: "ec2.amazonaws.com" ✓ match</div>
+        </div>
+        <div class="role-section perms">
+          <div class="role-section-label">Permissions Policy</div>
+          <div class="role-section-value">s3:GetObject on my-bucket/*</div>
+        </div>
+      </div>
+      <div style="text-align:center;font-size:.75rem;color:#28a745;margin:.2rem 0;">STS: trust policy validated</div>
+      <div class="principal-box show active" style="text-align:center;">EC2 Instance</div>`
+  },
+  {
+    status: "STS issues temporary credentials: AccessKeyId (ASIA…), SecretAccessKey, and SessionToken. These expire after TTL.",
+    render: () => `
+      <div class="role-box">
+        <div class="role-header">IAM Role: ec2-s3-reader</div>
+        <div class="role-section trust">
+          <div class="role-section-label">Trust Policy — validated</div>
+          <div class="role-section-value" style="color:#28a745;">ec2.amazonaws.com ✓</div>
+        </div>
+        <div class="role-section perms">
+          <div class="role-section-label">Permissions Policy</div>
+          <div class="role-section-value">s3:GetObject on my-bucket/*</div>
+        </div>
+      </div>
+      <div class="token-box show">
+        <div style="color:#f0a500;font-weight:600;margin-bottom:.2rem;">Temporary Credentials (STS)</div>
+        <div>AccessKeyId: ASIA3EXAMPLE...</div>
+        <div>SecretAccessKey: ●●●●●●●●●●●●</div>
+        <div>SessionToken: AQoXnyc4...</div>
+        <div style="color:#dc3545;margin-top:.15rem;">Expires: +1 hour (TTL)</div>
+      </div>
+      <div class="principal-box show" style="text-align:center;border-color:#28a745;">EC2 Instance — credentials received</div>`
+  },
+  {
+    status: "EC2 uses the temporary credentials to call S3. The request includes all three credential components.",
+    render: () => `
+      <div class="principal-box show" style="text-align:center;border-color:#007bff;margin-bottom:.35rem;">EC2 Instance</div>
+      <div class="arrow-line show">↓ s3:GetObject (using temp credentials)</div>
+      <div style="background:#2a2a2e;border:1px solid #3a3a3e;border-radius:6px;padding:.35rem .6rem;font-size:.8rem;text-align:center;margin-bottom:.3rem;">
+        <div style="color:#9a9aaa;font-size:.7rem;text-transform:uppercase;letter-spacing:.04em;">S3 Service</div>
+        <div>bucket: my-bucket / key: data.csv</div>
+      </div>
+      <div class="arrow-line show">↓ validates assumed-role ARN</div>
+      <div class="role-box" style="margin-bottom:0;">
+        <div class="role-header">Role Permissions — s3:GetObject on my-bucket/* ✓</div>
+      </div>`
+  },
+  {
+    status: "S3 validates the permissions policy on the assumed role — s3:GetObject on my-bucket/* is allowed. Request succeeds.",
+    render: () => `
+      <div class="principal-box show" style="text-align:center;border-color:#28a745;margin-bottom:.3rem;">EC2 Instance — s3:GetObject</div>
+      <div class="arrow-line show" style="color:#28a745;">↓ allowed</div>
+      <div style="background:#1a3a22;border:1px solid #28a745;border-radius:6px;padding:.35rem .6rem;font-size:.8rem;text-align:center;">
+        <div style="color:#28a745;font-weight:600;">S3: Request Allowed</div>
+        <div style="font-size:.72rem;color:#9a9a9a;margin-top:.1rem;">my-bucket/data.csv returned</div>
+      </div>`
+  },
+  {
+    status: "Credentials expire after TTL. The next request is rejected with ExpiredTokenException. EC2 must re-assume the role to get fresh credentials.",
+    render: () => `
+      <div class="principal-box show active" style="text-align:center;margin-bottom:.3rem;">EC2 Instance</div>
+      <div class="token-box show" style="border-color:#dc3545;background:#3a1a1a;">
+        <div style="color:#dc3545;font-weight:600;">Credentials EXPIRED</div>
+        <div style="font-size:.72rem;margin-top:.1rem;">SessionToken is no longer valid</div>
+      </div>
+      <div class="arrow-line show" style="color:#dc3545;">↓ s3:GetObject attempt</div>
+      <div class="result-fail show">ExpiredTokenException — must re-assume role via STS</div>`
+  },
+  {
+    status: "Cross-account: User in Account B assumes a role in Account A. The trust policy in Account A must explicitly allow Account B's principal.",
+    render: () => `
+      <div class="account-boundary">
+        <div class="account-label">Account B (source)</div>
+        <div class="principal-box show" style="text-align:center;border-color:#007bff;">IAM User: auditor@account-b</div>
+      </div>
+      <div class="arrow-line show" style="color:#007bff;">↓ sts:AssumeRole → Account A role ARN</div>
+      <div class="account-boundary">
+        <div class="account-label">Account A (target)</div>
+        <div class="role-box" style="margin-bottom:0;">
+          <div class="role-header">Role: cross-account-reader</div>
+          <div class="role-section trust">
+            <div class="role-section-label">Trust Policy</div>
+            <div class="role-section-value">Principal: arn:aws:iam::ACCOUNT-B-ID:user/auditor</div>
+          </div>
+          <div class="role-section perms">
+            <div class="role-section-label">Permissions</div>
+            <div class="role-section-value">s3:GetObject, ec2:Describe*</div>
+          </div>
+        </div>
+      </div>
+      <div class="result-ok show">Cross-account assumption permitted — trust policy matches</div>`
+  }
+];
+
+let idx = 0;
+
+function render() {
+  document.getElementById('diagram').innerHTML = steps[idx].render();
+  document.getElementById('stat').textContent = steps[idx].status;
+  document.getElementById('counter').textContent = `Step ${idx + 1} / ${steps.length}`;
+  document.getElementById('btn-back').disabled = idx === 0;
+  const stepBtn = document.getElementById('btn-step');
+  if (idx === steps.length - 1) {
+    stepBtn.textContent = 'Done ✓';
+    stepBtn.disabled = true;
+  } else {
+    stepBtn.textContent = 'Step';
+    stepBtn.disabled = false;
+  }
+}
+
+document.getElementById('btn-step').addEventListener('click', () => { if (idx < steps.length - 1) { idx++; render(); } });
+document.getElementById('btn-back').addEventListener('click', () => { if (idx > 0) { idx--; render(); } });
+document.getElementById('btn-reset').addEventListener('click', () => { idx = 0; render(); });
+
+render();
+</script>
+</body>
+</html>

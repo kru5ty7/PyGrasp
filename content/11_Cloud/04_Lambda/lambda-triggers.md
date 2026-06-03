@@ -142,6 +142,12 @@ def process_message(body):
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/lambda-triggers.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Lambda Triggers Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 SQS as a trigger source is inseparable from an understanding of the SQS queue itself - its message retention, visibility timeout, and dead-letter queue configuration all affect how Lambda behaves when processing it.

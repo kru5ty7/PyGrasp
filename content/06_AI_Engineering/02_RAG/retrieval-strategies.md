@@ -113,6 +113,12 @@ def parent_retrieve(query: str, top_k: int = 5) -> list[dict]:
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/retrieval-strategies.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Retrieval Strategies Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Retrieval strategies build on basic RAG retrieval  -  they improve the quality of what gets passed to the LLM.

@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Advanced RAG - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .6rem;
+  }
+  .mode-bar {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: .75rem;
+  }
+  .mode-btn {
+    flex: 1;
+    padding: .3rem .5rem;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    background: #2a2a2e;
+    color: #888;
+    cursor: pointer;
+    font-size: .78rem;
+    text-align: center;
+    transition: all .15s;
+  }
+  .mode-btn.active { background: #284b63; border-color: #284b63; color: #fff; }
+  .mode-btn:hover:not(.active) { border-color: #555; color: #d4d4d4; }
+
+  /* Flow diagram */
+  .flow {
+    display: flex;
+    flex-direction: column;
+    gap: .3rem;
+    margin-bottom: .6rem;
+    padding: .6rem .65rem;
+    background: #1e1e20;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    min-height: 140px;
+  }
+  .flow-row {
+    display: flex;
+    align-items: center;
+    gap: .3rem;
+  }
+  .node {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .25rem .52rem;
+    font-size: .73rem;
+    white-space: nowrap;
+    transition: border-color .25s, background .25s, color .25s;
+  }
+  .node.active {
+    border-color: #f0a500;
+    background: #3a2a00;
+    color: #f0c060;
+    font-weight: 700;
+  }
+  .node.done {
+    border-color: #28a745;
+    background: #1a3a1a;
+    color: #5dd97a;
+  }
+  .node.special {
+    border-color: #007bff;
+    background: #002a4a;
+    color: #60b0ff;
+    font-style: italic;
+  }
+  .arrow {
+    font-size: .82rem;
+    color: #555;
+    flex-shrink: 0;
+  }
+  .arrow.lit { color: #7b97aa; }
+  .arrow.down { text-align: center; font-size: .8rem; color: #555; }
+  .arrow.down.lit { color: #7b97aa; }
+
+  .tag {
+    display: inline-block;
+    font-size: .65rem;
+    padding: .08rem .32rem;
+    border-radius: 3px;
+    margin-right: .2rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+  }
+  .tag-ok { background: #1a3a1a; color: #28a745; border: 1px solid #28a745; }
+  .tag-info { background: #1e2e38; color: #7eb8d4; border: 1px solid #284b63; }
+  .tag-amber { background: #3a2a00; color: #f0a500; border: 1px solid #f0a500; }
+  .tag-ptr { background: #002a4a; color: #007bff; border: 1px solid #007bff; }
+
+  .detail {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .45rem .65rem;
+    font-size: .75rem;
+    line-height: 1.55;
+    margin-bottom: .6rem;
+    min-height: 44px;
+  }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .82rem;
+    line-height: 1.5;
+    min-height: 2.6rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Advanced RAG Techniques</h4>
+  <div class="mode-bar">
+    <button class="mode-btn active" id="mb-hyde" onclick="selectMode('hyde')">HyDE</button>
+    <button class="mode-btn" id="mb-pc" onclick="selectMode('pc')">Parent-Child</button>
+    <button class="mode-btn" id="mb-qr" onclick="selectMode('qr')">Query Rewriting</button>
+  </div>
+
+  <div class="flow" id="flow"></div>
+  <div class="detail" id="detail"></div>
+
+  <div id="stat">Press Step to begin.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#x2192;</button>
+    <button id="btn-reset">&#x21BA; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var MODES = {
+  hyde: [
+    {
+      rows: [
+        { nodes: ['Query'], arrows: [], active: ['Query'], done: [] }
+      ],
+      detail: 'Query: <em>"What causes Python GIL contention?"</em> — a technical question using vocabulary that may differ from how documentation is written.',
+      msg: 'HyDE Step 1 — Query received. The challenge: the question embedding may not be close to the answer document embedding in the vector space.'
+    },
+    {
+      rows: [
+        { nodes: ['Query'], arrows: ['→'], active: [], done: ['Query'] },
+        { nodes: ['→'], arrows: [], active: [], done: [] },
+        { nodes: ['LLM generates hypothetical doc'], arrows: [], active: ['LLM generates hypothetical doc'], done: [] }
+      ],
+      detail: '<span class="tag tag-info">LLM CALL</span> LLM generates a hypothetical answer document: <em>"GIL (Global Interpreter Lock) contention occurs when multiple threads compete to acquire the lock. CPU-bound tasks cause the most contention because..."</em>',
+      msg: 'HyDE Step 2 — An LLM generates a hypothetical answer document. This fake document is written in the same style and vocabulary as real documentation.'
+    },
+    {
+      rows: [
+        { nodes: ['Query'], arrows: ['→'], active: [], done: ['Query'] },
+        { nodes: ['Hypothetical Doc'], arrows: ['→'], active: ['Hypothetical Doc'], done: [] },
+        { nodes: ['Embed Model'], arrows: [], active: ['Embed Model'], done: [] }
+      ],
+      detail: '<span class="tag tag-amber">KEY INSIGHT</span> The hypothetical document — not the original query — is embedded. Its vector is in the same embedding subspace as real documentation.',
+      msg: 'HyDE Step 3 — The hypothetical document is embedded. We use this vector for search instead of the query vector.'
+    },
+    {
+      rows: [
+        { nodes: ['Hypothetical Doc Vector'], arrows: ['→'], active: ['Hypothetical Doc Vector'], done: [] },
+        { nodes: ['Vector DB Search'], arrows: [], active: ['Vector DB Search'], done: [] }
+      ],
+      detail: 'Similarity search runs using the hypothetical doc vector. Documents about "GIL", "thread lock", "Python concurrency" score highly because the hypothetical doc uses similar vocabulary.',
+      msg: 'HyDE Step 4 — Searching with the hypothetical doc vector. The semantic gap between question and documentation is bridged by the fake answer.'
+    },
+    {
+      rows: [
+        { nodes: ['Hypothetical Doc Vector'], arrows: ['→'], active: [], done: ['Hypothetical Doc Vector'] },
+        { nodes: ['Better retrieval'], arrows: [], active: ['Better retrieval'], done: [] }
+      ],
+      detail: '<span class="tag tag-ok">IMPROVED</span> Retrieval precision improves because the hypothetical document is in the same embedding space as real documents. Baseline similarity: 0.54 → HyDE similarity: 0.81.',
+      msg: 'HyDE Step 5 — Better retrieval because the hypothetical doc vector is closer to real document vectors than the original question vector was.'
+    },
+    {
+      rows: [
+        { nodes: ['Retrieved Docs (real)'], arrows: ['→'], active: ['Retrieved Docs (real)'], done: [] },
+        { nodes: ['LLM'], arrows: [], active: ['LLM'], done: [] }
+      ],
+      detail: '<span class="tag tag-ok">IMPORTANT</span> The LLM receives the <strong>actual retrieved documents</strong>, not the hypothetical one. The hypothetical doc was only used as a search vehicle — it is discarded after retrieval.',
+      msg: 'HyDE Step 6 — The real retrieved documents are passed to the LLM for generation. The hypothetical document is never shown to the user or used in the answer.'
+    }
+  ],
+  pc: [
+    {
+      rows: [
+        { nodes: ['Document'], arrows: [], active: ['Document'], done: [] }
+      ],
+      detail: 'Full document ingested. It will be split at two granularities: large parent chunks for context, small child chunks for precision retrieval.',
+      msg: 'Parent-Child Step 1 — Document ingested. The key idea: embed small for precision, return large for context quality.'
+    },
+    {
+      rows: [
+        { nodes: ['Document'], arrows: ['→'], active: [], done: ['Document'] },
+        { nodes: ['Parent Chunks (500 tokens)'], arrows: [], active: ['Parent Chunks (500 tokens)'], done: [] }
+      ],
+      detail: '<span class="tag tag-info">500 TOKENS</span> Document split into large parent chunks. These capture full paragraphs and coherent sections. Not embedded — stored in a document store keyed by ID.',
+      msg: 'Parent-Child Step 2 — Document split into large parent chunks (500 tokens each). These are stored in a docstore, not embedded.'
+    },
+    {
+      rows: [
+        { nodes: ['Parent Chunks (500 tokens)'], arrows: ['→'], active: [], done: ['Parent Chunks (500 tokens)'] },
+        { nodes: ['Child Chunks (100 tokens)'], arrows: [], active: ['Child Chunks (100 tokens)'], done: [] }
+      ],
+      detail: '<span class="tag tag-info">100 TOKENS</span> Each parent chunk is further split into small child chunks. Each child stores a <code>parent_id</code> metadata key linking back to its parent. Child chunks are embedded and indexed.',
+      msg: 'Parent-Child Step 3 — Parents split into small child chunks (100 tokens). Children are embedded and stored in the vector index with a parent_id reference.'
+    },
+    {
+      rows: [
+        { nodes: ['Query'], arrows: ['→'], active: [], done: [] },
+        { nodes: ['Child Chunk Index'], arrows: [], active: ['Child Chunk Index'], done: [] }
+      ],
+      detail: 'Query embedded and similarity search run against the child chunk index. Small chunks provide precise semantic matching — the relevant sentence or fact is isolated.',
+      msg: 'Parent-Child Step 4 — Query retrieves top-3 child chunks by similarity. Small chunks yield high-precision matches.'
+    },
+    {
+      rows: [
+        { nodes: ['Matched Child Chunks'], arrows: ['→'], active: [], done: ['Matched Child Chunks'] },
+        { nodes: ['Fetch Parent Chunks'], arrows: [], active: ['Fetch Parent Chunks'], done: [] }
+      ],
+      detail: '<span class="tag tag-ptr">LOOKUP</span> For each matched child chunk, the <code>parent_id</code> is used to fetch the full parent chunk from the docstore. Duplicate parents (multiple children from same parent) are deduplicated.',
+      msg: 'Parent-Child Step 5 — Parent chunks fetched from docstore using the parent_id from each matched child. Deduplication ensures each parent appears once.'
+    },
+    {
+      rows: [
+        { nodes: ['Parent Chunks (context)'], arrows: ['→'], active: ['Parent Chunks (context)'], done: [] },
+        { nodes: ['LLM'], arrows: [], active: ['LLM'], done: [] }
+      ],
+      detail: '<span class="tag tag-ok">BEST OF BOTH</span> LLM receives the full 500-token parent chunks (rich context) selected by the precision of 100-token child chunk matching. No chunking artifacts — the answer is always within a coherent passage.',
+      msg: 'Parent-Child Step 6 — LLM receives parent chunks: full context precision without the chunking artifact problem. High recall + high precision.'
+    }
+  ],
+  qr: [
+    {
+      rows: [
+        { nodes: ['Original Query'], arrows: [], active: ['Original Query'], done: [] }
+      ],
+      detail: 'Original query: <em>"What\'s that Python thing that prevents real parallelism?"</em> — vague, colloquial. Direct embedding retrieves poorly because documents don\'t use this phrasing.',
+      msg: 'Query Rewriting Step 1 — Original query received. It is vague and uses colloquial language that will not match technical documentation.'
+    },
+    {
+      rows: [
+        { nodes: ['Original Query'], arrows: ['→'], active: [], done: ['Original Query'] },
+        { nodes: ['LLM Rewriter'], arrows: [], active: ['LLM Rewriter'], done: [] }
+      ],
+      detail: '<span class="tag tag-info">LLM CALL</span> A rewriter LLM is prompted to generate multiple specific, technical sub-queries that cover the same intent from different angles.',
+      msg: 'Query Rewriting Step 2 — LLM rewrites the query into multiple targeted sub-queries covering the same intent with technical vocabulary.'
+    },
+    {
+      rows: [
+        { nodes: ['Sub-query 1: "Python GIL"'], arrows: [], active: ['Sub-query 1: "Python GIL"'], done: [] },
+        { nodes: ['Sub-query 2: "Global Interpreter Lock"'], arrows: [], active: ['Sub-query 2: "Global Interpreter Lock"'], done: [] },
+        { nodes: ['Sub-query 3: "Python thread parallelism"'], arrows: [], active: ['Sub-query 3: "Python thread parallelism"'], done: [] }
+      ],
+      detail: 'Three sub-queries generated:<br>1. "Python GIL"<br>2. "Python Global Interpreter Lock"<br>3. "Python thread parallelism"<br><br>Each targets a different vocabulary angle of the same concept.',
+      msg: 'Query Rewriting Step 3 — Three distinct sub-queries generated. Each will be embedded and searched independently against the vector index.'
+    },
+    {
+      rows: [
+        { nodes: ['Sub-query 1'], arrows: ['→'], active: [], done: ['Sub-query 1'] },
+        { nodes: ['Sub-query 2'], arrows: ['→'], active: [], done: ['Sub-query 2'] },
+        { nodes: ['Sub-query 3'], arrows: ['→'], active: [], done: ['Sub-query 3'] },
+        { nodes: ['3× Vector DB Search'], arrows: [], active: ['3× Vector DB Search'], done: [] }
+      ],
+      detail: 'Three parallel vector searches. Each sub-query embedded and searched independently. Results from all three retrieved (with potential overlap).',
+      msg: 'Query Rewriting Step 4 — Retrieval runs for each sub-query. 3× the search calls but covers 3× more of the semantic space.'
+    },
+    {
+      rows: [
+        { nodes: ['Merge + Dedup + Rerank'], arrows: [], active: ['Merge + Dedup + Rerank'], done: [] }
+      ],
+      detail: '<span class="tag tag-ok">DEDUPLICATION</span> Results from all three searches merged. Duplicate chunks (retrieved by multiple sub-queries) removed. Results optionally reranked by relevance. Typically 8–12 unique chunks remain after dedup.',
+      msg: 'Query Rewriting Step 5 — Results merged, duplicates removed, results reranked. The union covers more of the corpus than any single query could.'
+    },
+    {
+      rows: [
+        { nodes: ['Rich Context'], arrows: ['→'], active: ['Rich Context'], done: [] },
+        { nodes: ['LLM'], arrows: [], active: ['LLM'], done: [] }
+      ],
+      detail: '<span class="tag tag-ok">RICHER CONTEXT</span> LLM receives context from 3 semantic angles: GIL mechanics, lock implementation details, and thread parallelism limitations. Answer is more complete and accurate than single-query retrieval would produce.',
+      msg: 'Done — LLM answers with context from all sub-query angles. Query rewriting improves recall when the original question is ambiguous or colloquial.'
+    }
+  ]
+};
+
+var mode = 'hyde';
+var idx = 0;
+
+function renderFlow(rows) {
+  var flow = document.getElementById('flow');
+  flow.innerHTML = '';
+  rows.forEach(function(row) {
+    var rowEl = document.createElement('div');
+    rowEl.className = 'flow-row';
+    // For rows with just an arrow (direction indicator)
+    if (row.nodes.length === 1 && row.nodes[0] === '→') {
+      var a = document.createElement('span');
+      a.className = 'arrow down lit';
+      a.textContent = '↓';
+      rowEl.appendChild(a);
+      flow.appendChild(rowEl);
+      return;
+    }
+    row.nodes.forEach(function(label, i) {
+      if (i > 0) {
+        var a = document.createElement('span');
+        a.className = 'arrow' + (row.arrows && row.arrows[i-1] ? ' lit' : '');
+        a.textContent = row.arrows && row.arrows[i-1] ? row.arrows[i-1] : '→';
+        rowEl.appendChild(a);
+      }
+      var n = document.createElement('div');
+      var cls = 'node';
+      if (row.active && row.active.indexOf(label) !== -1) cls += ' active';
+      else if (row.done && row.done.indexOf(label) !== -1) cls += ' done';
+      n.className = cls;
+      n.textContent = label;
+      rowEl.appendChild(n);
+    });
+    flow.appendChild(rowEl);
+  });
+}
+
+function draw() {
+  var steps = MODES[mode];
+  var s = steps[idx];
+  renderFlow(s.rows);
+  document.getElementById('detail').innerHTML = s.detail;
+  document.getElementById('stat').textContent = s.msg;
+  var done = idx === steps.length - 1;
+  var stepBtn = document.getElementById('btn-step');
+  stepBtn.disabled = done;
+  stepBtn.textContent = done ? 'Done ✓' : 'Step →';
+  document.getElementById('btn-back').disabled = idx === 0;
+  document.getElementById('counter').textContent = 'Step ' + (idx + 1) + ' / ' + steps.length;
+}
+
+function selectMode(m) {
+  mode = m;
+  idx = 0;
+  ['hyde','pc','qr'].forEach(function(id) {
+    document.getElementById('mb-' + id).className = 'mode-btn' + (id === m ? ' active' : '');
+  });
+  draw();
+}
+
+document.getElementById('btn-step').onclick = function() {
+  if (idx < MODES[mode].length - 1) { idx++; draw(); }
+};
+document.getElementById('btn-back').onclick = function() {
+  if (idx > 0) { idx--; draw(); }
+};
+document.getElementById('btn-reset').onclick = function() {
+  idx = 0; draw();
+};
+
+draw();
+</script>
+</body>
+</html>

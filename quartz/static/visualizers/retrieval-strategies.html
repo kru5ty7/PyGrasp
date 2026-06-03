@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Retrieval Strategies - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .6rem;
+  }
+  .mode-bar {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: .75rem;
+  }
+  .mode-btn {
+    flex: 1;
+    padding: .3rem .5rem;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    background: #2a2a2e;
+    color: #888;
+    cursor: pointer;
+    font-size: .78rem;
+    text-align: center;
+    transition: all .15s;
+  }
+  .mode-btn.active { background: #284b63; border-color: #284b63; color: #fff; }
+  .mode-btn:hover:not(.active) { border-color: #555; color: #d4d4d4; }
+
+  /* Result list */
+  .result-list {
+    background: #1e1e20;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .5rem .6rem;
+    margin-bottom: .6rem;
+    min-height: 100px;
+  }
+  .result-item {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    padding: .22rem 0;
+    border-bottom: 1px solid #2a2a2e;
+    font-size: .73rem;
+    transition: all .25s;
+  }
+  .result-item:last-child { border-bottom: none; }
+  .result-rank {
+    width: 20px;
+    flex-shrink: 0;
+    font-size: .65rem;
+    color: #555;
+    text-align: right;
+  }
+  .result-label { flex: 1; color: #d4d4d4; }
+  .result-label.dim { color: #555; }
+  .result-label.active { color: #f0c060; font-weight: 700; }
+  .result-label.done { color: #5dd97a; }
+  .result-label.warn { color: #dc3545; }
+  .result-label.ptr { color: #60b0ff; }
+  .bar-wrap { width: 80px; flex-shrink: 0; background: #2a2a2e; border-radius: 2px; height: 7px; overflow: hidden; }
+  .bar { height: 100%; border-radius: 2px; }
+  .bar-high { background: #28a745; }
+  .bar-med { background: #f0a500; }
+  .bar-low { background: #dc3545; }
+  .bar-blue { background: #007bff; }
+  .sim-val { width: 30px; flex-shrink: 0; font-size: .65rem; color: #888; text-align: right; }
+  .src-tag {
+    font-size: .62rem;
+    padding: .05rem .25rem;
+    border-radius: 3px;
+    border: 1px solid #393639;
+    color: #888;
+    flex-shrink: 0;
+  }
+  .src-tag.same { border-color: #dc3545; color: #f07070; background: #3a1a1a; }
+  .src-tag.diff { border-color: #28a745; color: #5dd97a; background: #1a3a1a; }
+
+  .panel {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .45rem .65rem;
+    font-size: .75rem;
+    line-height: 1.55;
+    margin-bottom: .6rem;
+    min-height: 44px;
+  }
+  .tag {
+    display: inline-block;
+    font-size: .65rem;
+    padding: .08rem .32rem;
+    border-radius: 3px;
+    margin-right: .2rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+  }
+  .tag-ok { background: #1a3a1a; color: #28a745; border: 1px solid #28a745; }
+  .tag-err { background: #3a1a1a; color: #dc3545; border: 1px solid #dc3545; }
+  .tag-warn { background: #3a2a00; color: #f0a500; border: 1px solid #f0a500; }
+  .tag-info { background: #1e2e38; color: #7eb8d4; border: 1px solid #284b63; }
+  .tag-ptr { background: #002a4a; color: #007bff; border: 1px solid #007bff; }
+
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .82rem;
+    line-height: 1.5;
+    min-height: 2.6rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Retrieval Strategies Comparison</h4>
+  <div class="mode-bar">
+    <button class="mode-btn active" id="mb-sim" onclick="selectMode('sim')">Similarity</button>
+    <button class="mode-btn" id="mb-mmr" onclick="selectMode('mmr')">MMR</button>
+    <button class="mode-btn" id="mb-sq" onclick="selectMode('sq')">Self-Query</button>
+  </div>
+
+  <div class="result-list" id="result-list"></div>
+  <div class="panel" id="panel"></div>
+
+  <div id="stat">Press Step to begin.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#x2192;</button>
+    <button id="btn-reset">&#x21BA; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var MODES = {
+  sim: [
+    {
+      results: [],
+      panel: 'Query: <em>"Python performance optimization"</em><br>Query vector computed. About to search top-5 nearest chunk vectors in the index.',
+      msg: 'Similarity (k-NN) Step 1 — Query vector computed. Searching for top-5 nearest neighbors in the vector index by cosine similarity.'
+    },
+    {
+      results: [
+        { rank: 1, label: 'Python perf: profiling tools', sim: 0.91, barCls: 'bar-high', src: 'python-perf.pdf', srcCls: 'same' },
+        { rank: 2, label: 'Python perf: loop optimizations', sim: 0.88, barCls: 'bar-high', src: 'python-perf.pdf', srcCls: 'same' },
+        { rank: 3, label: 'Python perf: memory management', sim: 0.85, barCls: 'bar-high', src: 'python-perf.pdf', srcCls: 'same' },
+        { rank: 4, label: 'Python perf: concurrency', sim: 0.82, barCls: 'bar-med', src: 'python-perf.pdf', srcCls: 'same' },
+        { rank: 5, label: 'Python perf: C extensions', sim: 0.79, barCls: 'bar-med', src: 'python-perf.pdf', srcCls: 'same' }
+      ],
+      panel: '<span class="tag tag-err">REDUNDANT</span> All 5 results from the same document. High similarity scores but low diversity. The LLM context is flooded with one perspective.',
+      msg: 'Similarity Step 2 — Top-5 retrieved. Problem: all from the same "Python performance" article. Redundant context — 5 chunks saying similar things.'
+    },
+    {
+      results: [
+        { rank: 1, label: 'Python perf: profiling tools', sim: 0.91, barCls: 'bar-high', src: 'python-perf.pdf', srcCls: 'same', active: false },
+        { rank: 2, label: 'Python perf: loop optimizations', sim: 0.88, barCls: 'bar-high', src: 'python-perf.pdf', srcCls: 'same' },
+        { rank: 3, label: 'Python perf: memory management', sim: 0.85, barCls: 'bar-high', src: 'python-perf.pdf', srcCls: 'same' },
+        { rank: 4, label: 'Python perf: concurrency', sim: 0.82, barCls: 'bar-med', src: 'python-perf.pdf', srcCls: 'same' },
+        { rank: 5, label: 'Python perf: C extensions', sim: 0.79, barCls: 'bar-med', src: 'python-perf.pdf', srcCls: 'same' }
+      ],
+      panel: '<span class="tag tag-err">PROBLEM</span> k-NN has no diversity mechanism — it simply returns the most similar vectors regardless of overlap between results. When one document dominates the embedding space for the query, all top-k results come from it.',
+      msg: 'Similarity — limitation exposed. Pure cosine similarity has no concept of result diversity. MMR was designed specifically to fix this problem.'
+    }
+  ],
+  mmr: [
+    {
+      results: [],
+      panel: 'Same query: <em>"Python performance optimization"</em><br>MMR retrieves top-20 candidates first, then iteratively selects results that balance relevance AND diversity.',
+      msg: 'MMR Step 1 — Same query. MMR first retrieves a larger candidate pool (top-20) before selecting the final results.'
+    },
+    {
+      results: [
+        { rank: '…', label: '20 candidate chunks retrieved', sim: null, barCls: '', src: '', srcCls: '', dimLabel: false, ptr: true }
+      ],
+      panel: '<span class="tag tag-info">TOP-20 CANDIDATES</span> 20 chunks retrieved by similarity. MMR will now select 5 from these 20 using the MMR scoring formula: λ × sim(query, doc) − (1-λ) × max_sim(doc, selected).',
+      msg: 'MMR Step 2 — 20 candidates retrieved. MMR now iteratively picks the next result that is both relevant to the query AND dissimilar to already-selected results.'
+    },
+    {
+      results: [
+        { rank: 1, label: 'Python perf: profiling tools', sim: 0.91, barCls: 'bar-high', src: 'python-perf.pdf', srcCls: 'same', note: 'highest sim to query' }
+      ],
+      panel: '<span class="tag tag-ok">SELECTED #1</span> First selection is always the highest-similarity result — same as k-NN. MMR diverges from step 2 onward.',
+      msg: 'MMR Step 3 — First result selected: highest cosine similarity to query. Now MMR penalizes chunks similar to this one.'
+    },
+    {
+      results: [
+        { rank: 1, label: 'Python perf: profiling tools', sim: 0.91, barCls: 'bar-high', src: 'python-perf.pdf', srcCls: 'same', done: true },
+        { rank: 2, label: 'NumPy vectorization guide', sim: 0.77, barCls: 'bar-med', src: 'numpy-guide.pdf', srcCls: 'diff', note: 'diverse' }
+      ],
+      panel: '<span class="tag tag-ok">SELECTED #2</span> "NumPy vectorization guide" — relevant to query (0.77) AND not similar to result #1 (different source, different content). MMR score beats the next "python-perf.pdf" chunk.',
+      msg: 'MMR Step 4 — Second result: relevant but NOT similar to result #1. MMR chose a different source document to maximize diversity.'
+    },
+    {
+      results: [
+        { rank: 1, label: 'Python perf: profiling tools', sim: 0.91, barCls: 'bar-high', src: 'python-perf.pdf', srcCls: 'same', done: true },
+        { rank: 2, label: 'NumPy vectorization guide', sim: 0.77, barCls: 'bar-med', src: 'numpy-guide.pdf', srcCls: 'diff', done: true },
+        { rank: 3, label: 'Cython tutorial: typed memoryviews', sim: 0.73, barCls: 'bar-med', src: 'cython-docs.pdf', srcCls: 'diff' },
+        { rank: 4, label: 'Python GIL and threading', sim: 0.70, barCls: 'bar-med', src: 'concurrency.pdf', srcCls: 'diff' },
+        { rank: 5, label: 'Algorithm complexity: Big-O', sim: 0.66, barCls: 'bar-med', src: 'algorithms.pdf', srcCls: 'diff' }
+      ],
+      panel: '<span class="tag tag-ok">5 DIVERSE RESULTS</span> Final 5 results span 5 different source documents. Lower average similarity than k-NN but much higher context diversity. LLM receives broader, richer context.',
+      msg: 'Done — MMR selected 5 results from 5 different sources. Broader context vs pure k-NN which gave all 5 from one document.'
+    }
+  ],
+  sq: [
+    {
+      results: [],
+      panel: 'Query: <em>"What did OpenAI release in 2023?"</em><br>Self-Query will parse this into a structured filter + semantic search, rather than embedding the raw question.',
+      msg: 'Self-Query Step 1 — Query received. Self-Query uses an LLM to extract metadata filters from the natural language query before running vector search.'
+    },
+    {
+      results: [],
+      panel: '<span class="tag tag-info">LLM PARSE</span> LLM extracts structured filter from query:<br><code style="font-size:.7rem;color:#9fc5d8;display:block;margin-top:.3rem">{ "filter": { "year": 2023, "source": "OpenAI" }, "query": "product release announcement" }</code>',
+      msg: 'Self-Query Step 2 — LLM parses the query into a structured metadata filter (year=2023, source=OpenAI) plus a semantic query string for vector search.'
+    },
+    {
+      results: [
+        { rank: '✗', label: 'OpenAI GPT-3 paper (2020)', sim: null, barCls: '', src: '2020', srcCls: 'same', dimLabel: true, filtered: true },
+        { rank: '✗', label: 'Google Bard launch (2023)', sim: null, barCls: '', src: '2023', srcCls: 'same', dimLabel: true, filtered: true },
+        { rank: '✗', label: 'OpenAI DALL-E 2 (2022)', sim: null, barCls: '', src: '2022', srcCls: 'same', dimLabel: true, filtered: true }
+      ],
+      panel: '<span class="tag tag-err">FILTERED OUT</span> Metadata filter applied first: documents where year ≠ 2023 OR source ≠ "OpenAI" are excluded from vector search. Drastically reduces search space.',
+      msg: 'Self-Query Step 3 — Metadata filter applied. Wrong year or wrong source documents are excluded before any vector similarity is computed.'
+    },
+    {
+      results: [
+        { rank: '✗', label: 'OpenAI GPT-3 paper (2020)', sim: null, barCls: '', src: '2020', srcCls: 'same', dimLabel: true, filtered: true },
+        { rank: '✗', label: 'Google Bard launch (2023)', sim: null, barCls: '', src: '2023', srcCls: 'same', dimLabel: true, filtered: true },
+        { rank: '✗', label: 'OpenAI DALL-E 2 (2022)', sim: null, barCls: '', src: '2022', srcCls: 'same', dimLabel: true, filtered: true },
+        { rank: 1, label: 'OpenAI GPT-4 release (2023)', sim: 0.93, barCls: 'bar-high', src: 'OpenAI/2023', srcCls: 'diff', note: 'passes filter' },
+        { rank: 2, label: 'OpenAI ChatGPT plugins (2023)', sim: 0.88, barCls: 'bar-high', src: 'OpenAI/2023', srcCls: 'diff', note: 'passes filter' },
+        { rank: 3, label: 'OpenAI API pricing update (2023)', sim: 0.81, barCls: 'bar-med', src: 'OpenAI/2023', srcCls: 'diff', note: 'passes filter' }
+      ],
+      panel: '<span class="tag tag-ok">HIGH PRECISION</span> Vector search runs only within the filtered subset. All 3 results are from OpenAI in 2023. No 2022 articles. No competitor announcements. Precision 1.0.',
+      msg: 'Self-Query Step 4 — Similarity search within filtered subset. All results satisfy both the metadata constraints AND semantic relevance.'
+    },
+    {
+      results: [
+        { rank: 1, label: 'OpenAI GPT-4 release (2023)', sim: 0.93, barCls: 'bar-high', src: 'OpenAI/2023', srcCls: 'diff' },
+        { rank: 2, label: 'OpenAI ChatGPT plugins (2023)', sim: 0.88, barCls: 'bar-high', src: 'OpenAI/2023', srcCls: 'diff' },
+        { rank: 3, label: 'OpenAI API pricing update (2023)', sim: 0.81, barCls: 'bar-med', src: 'OpenAI/2023', srcCls: 'diff' }
+      ],
+      panel: '<span class="tag tag-ok">PRECISION 1.0</span> All 3 results are exactly what the user wanted. No cross-year contamination, no wrong company. Self-Query shines for queries with implicit temporal or categorical constraints.',
+      msg: 'Done — Self-Query delivered precision retrieval by combining metadata filtering with semantic search. Works best when queries contain implicit metadata constraints like dates, authors, or categories.'
+    }
+  ]
+};
+
+var mode = 'sim';
+var idx = 0;
+
+function renderResults(results) {
+  var el = document.getElementById('result-list');
+  if (!results || results.length === 0) {
+    el.innerHTML = '<div style="color:#555;font-size:.73rem;padding:.3rem 0">No results yet.</div>';
+    return;
+  }
+  var html = '';
+  results.forEach(function(r) {
+    var labelCls = 'result-label';
+    if (r.done) labelCls += ' done';
+    else if (r.filtered) labelCls += ' dim';
+    else if (r.ptr) labelCls += ' ptr';
+
+    var simHtml = '';
+    if (r.sim !== null && r.sim !== undefined) {
+      simHtml = '<div class="bar-wrap"><div class="bar ' + r.barCls + '" style="width:' + Math.round(r.sim * 100) + '%"></div></div><span class="sim-val">' + r.sim.toFixed(2) + '</span>';
+    } else if (r.filtered) {
+      simHtml = '<span style="font-size:.65rem;color:#dc3545">excluded</span>';
+    }
+
+    var srcHtml = '';
+    if (r.src) {
+      srcHtml = '<span class="src-tag ' + (r.srcCls || '') + '">' + r.src + '</span>';
+    }
+
+    var noteHtml = r.note ? '<span style="font-size:.62rem;color:#555;margin-left:.2rem">(' + r.note + ')</span>' : '';
+
+    html += '<div class="result-item">';
+    html += '<span class="result-rank">' + r.rank + '</span>';
+    html += '<span class="' + labelCls + '">' + r.label + noteHtml + '</span>';
+    html += simHtml;
+    html += srcHtml;
+    html += '</div>';
+  });
+  el.innerHTML = html;
+}
+
+function draw() {
+  var steps = MODES[mode];
+  var s = steps[idx];
+  renderResults(s.results);
+  document.getElementById('panel').innerHTML = s.panel;
+  document.getElementById('stat').textContent = s.msg;
+  var done = idx === steps.length - 1;
+  var stepBtn = document.getElementById('btn-step');
+  stepBtn.disabled = done;
+  stepBtn.textContent = done ? 'Done ✓' : 'Step →';
+  document.getElementById('btn-back').disabled = idx === 0;
+  document.getElementById('counter').textContent = 'Step ' + (idx + 1) + ' / ' + steps.length;
+}
+
+function selectMode(m) {
+  mode = m;
+  idx = 0;
+  ['sim','mmr','sq'].forEach(function(id) {
+    document.getElementById('mb-' + id).className = 'mode-btn' + (id === m ? ' active' : '');
+  });
+  draw();
+}
+
+document.getElementById('btn-step').onclick = function() {
+  if (idx < MODES[mode].length - 1) { idx++; draw(); }
+};
+document.getElementById('btn-back').onclick = function() {
+  if (idx > 0) { idx--; draw(); }
+};
+document.getElementById('btn-reset').onclick = function() {
+  idx = 0; draw();
+};
+
+draw();
+</script>
+</body>
+</html>

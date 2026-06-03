@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IAM AssumeRole Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #diagram { margin-bottom: .75rem; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+
+  /* Diagram styles */
+  .component {
+    background: #2a2a2e;
+    border: 1px solid #3a3a3e;
+    border-radius: 6px;
+    padding: .35rem .6rem;
+    font-size: .8rem;
+    margin-bottom: .3rem;
+  }
+  .component-label {
+    font-size: .68rem;
+    color: #646464;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    margin-bottom: .1rem;
+  }
+  .component-name { font-weight: 600; }
+  .component.caller { border-color: #007bff; }
+  .component.sts { border-color: #f0a500; }
+  .component.target-role { border-color: #28a745; }
+  .component.target-service { border-color: #9a4a9a; }
+  .arrow {
+    text-align: center;
+    font-size: .72rem;
+    color: #646464;
+    margin: .1rem 0;
+    opacity: 0;
+    transition: opacity .3s;
+  }
+  .arrow.show { opacity: 1; }
+  .arrow.blue { color: #007bff; }
+  .arrow.amber { color: #f0a500; }
+  .arrow.green { color: #28a745; }
+  .arrow.red { color: #dc3545; }
+  .token-box {
+    background: #2a2a1a;
+    border: 1px solid #f0a500;
+    border-radius: 5px;
+    padding: .3rem .6rem;
+    font-size: .72rem;
+    margin: .25rem 0;
+    opacity: 0;
+    transition: opacity .3s;
+  }
+  .token-box.show { opacity: 1; }
+  .token-box.expired {
+    border-color: #dc3545;
+    background: #3a1a1a;
+  }
+  .check-row {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    padding: .25rem .5rem;
+    background: #1a2a3a;
+    border: 1px solid #007bff;
+    border-radius: 5px;
+    font-size: .75rem;
+    margin: .2rem 0;
+    opacity: 0;
+    transition: opacity .3s;
+  }
+  .check-row.show { opacity: 1; }
+  .check-badge {
+    font-size: .7rem;
+    font-weight: 700;
+    padding: .1rem .3rem;
+    border-radius: 3px;
+  }
+  .check-badge.yes { background: #1a3a22; color: #28a745; }
+  .check-badge.no { background: #3a1a1a; color: #dc3545; }
+  .result-ok {
+    background: #1a3a22;
+    color: #28a745;
+    border: 1px solid #28a745;
+    border-radius: 5px;
+    padding: .25rem .5rem;
+    font-size: .75rem;
+    text-align: center;
+    margin: .2rem 0;
+    opacity: 0;
+    transition: opacity .3s;
+  }
+  .result-ok.show { opacity: 1; }
+  .result-fail {
+    background: #3a1a1a;
+    color: #dc3545;
+    border: 1px solid #dc3545;
+    border-radius: 5px;
+    padding: .25rem .5rem;
+    font-size: .75rem;
+    text-align: center;
+    margin: .2rem 0;
+    opacity: 0;
+    transition: opacity .3s;
+  }
+  .result-fail.show { opacity: 1; }
+  .clock {
+    display: inline-block;
+    font-size: .8rem;
+    margin-left: .3rem;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>IAM AssumeRole — STS Flow</h4>
+  <div id="diagram"></div>
+  <div id="stat"></div>
+  <div id="ctrl">
+    <button id="btn-back">Back</button>
+    <button id="btn-step">Step</button>
+    <button id="btn-reset">Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+const steps = [
+  {
+    status: "Lambda function has an execution role attached. The execution role grants permission to call sts:AssumeRole for the cross-account role.",
+    render: () => `
+      <div class="component caller">
+        <div class="component-label">Caller</div>
+        <div class="component-name">Lambda: data-ingestion</div>
+        <div style="font-size:.72rem;color:#646464;margin-top:.1rem;">execution role: lambda-exec-role</div>
+      </div>
+      <div style="font-size:.72rem;color:#646464;margin:.3rem 0 .2rem 0;">Components in this flow:</div>
+      <div class="component sts">
+        <div class="component-label">STS Service</div>
+        <div class="component-name">AWS Security Token Service</div>
+      </div>
+      <div class="component target-role">
+        <div class="component-label">Target Role</div>
+        <div class="component-name">cross-account-reader (Account B)</div>
+      </div>
+      <div class="component target-service">
+        <div class="component-label">Target Service</div>
+        <div class="component-name">S3 Bucket (Account B)</div>
+      </div>`
+  },
+  {
+    status: "Lambda calls sts:AssumeRole with the target role ARN and a session name. The session name appears in CloudTrail logs.",
+    render: () => `
+      <div class="component caller">
+        <div class="component-label">Caller</div>
+        <div class="component-name">Lambda: data-ingestion</div>
+      </div>
+      <div class="arrow show blue">↓ sts:AssumeRole("arn:aws:iam::ACCT-B:role/cross-account-reader", session="ingestion-job")</div>
+      <div class="component sts">
+        <div class="component-label">STS Service</div>
+        <div class="component-name">Receiving AssumeRole request...</div>
+      </div>`
+  },
+  {
+    status: "STS checks the trust policy of the target role. Does it trust Lambda's account (Account A)? Trust policy Principal must list Account A.",
+    render: () => `
+      <div class="component caller">
+        <div class="component-label">Caller</div>
+        <div class="component-name">Lambda: data-ingestion (Account A)</div>
+      </div>
+      <div class="arrow show amber">↓ trust policy check</div>
+      <div class="component sts">
+        <div class="component-label">STS — Validating Trust Policy</div>
+        <div class="component-name">cross-account-reader</div>
+      </div>
+      <div class="check-row show">
+        <span>Does trust policy allow Account A?</span>
+        <span class="check-badge yes">YES</span>
+      </div>
+      <div style="font-size:.72rem;color:#28a745;text-align:center;margin:.1rem 0;">Principal: arn:aws:iam::ACCT-A:role/lambda-exec-role ✓</div>`
+  },
+  {
+    status: "Trust policy validated. STS issues temporary credentials with an expiry clock. Token starts at full TTL.",
+    render: () => `
+      <div class="component caller">
+        <div class="component-label">Caller</div>
+        <div class="component-name">Lambda: data-ingestion</div>
+      </div>
+      <div class="arrow show green">↓ credentials issued</div>
+      <div class="token-box show">
+        <div style="color:#f0a500;font-weight:600;margin-bottom:.2rem;">Temporary Credentials <span class="clock">⏱ TTL: 3600s</span></div>
+        <div>AccessKeyId: ASIA4EXAMPLE...</div>
+        <div>SecretAccessKey: ●●●●●●●●●●●●</div>
+        <div>SessionToken: AQoXnyc4EXAMPLE...</div>
+        <div style="color:#28a745;margin-top:.15rem;font-size:.7rem;">Assumed role: arn:aws:sts::ACCT-B:assumed-role/cross-account-reader/ingestion-job</div>
+      </div>`
+  },
+  {
+    status: "Lambda uses the temporary credentials to call S3 in Account B. All three credential components (key, secret, token) are required.",
+    render: () => `
+      <div class="component caller">
+        <div class="component-label">Caller</div>
+        <div class="component-name">Lambda (using temp credentials)</div>
+      </div>
+      <div class="arrow show blue">↓ s3:GetObject (AccessKeyId + SecretKey + SessionToken)</div>
+      <div class="component target-service">
+        <div class="component-label">Target Service</div>
+        <div class="component-name">S3: partner-data-bucket (Account B)</div>
+      </div>
+      <div class="arrow show">↓ S3 validates source identity</div>
+      <div class="component target-role" style="background:#1a2a1a;">
+        <div class="component-label">Permission Check</div>
+        <div class="component-name">assumed-role/cross-account-reader → s3:GetObject ✓</div>
+      </div>`
+  },
+  {
+    status: "S3 validates the assumed role ARN. The source matches cross-account-reader, which has s3:GetObject permissions. Request allowed.",
+    render: () => `
+      <div class="component caller">
+        <div class="component-label">Caller</div>
+        <div class="component-name">Lambda: data-ingestion</div>
+      </div>
+      <div class="arrow show green">↓ s3:GetObject</div>
+      <div class="component target-service" style="background:#1a3a22;border-color:#28a745;">
+        <div class="component-label">S3 (Account B)</div>
+        <div class="component-name">partner-data-bucket/data.csv</div>
+      </div>
+      <div class="result-ok show">Request allowed — assumed role ARN matches permission policy</div>`
+  },
+  {
+    status: "Token TTL counts down to zero. The clock expires. The next API call is rejected with ExpiredTokenException.",
+    render: () => `
+      <div class="component caller">
+        <div class="component-label">Caller</div>
+        <div class="component-name">Lambda: data-ingestion</div>
+      </div>
+      <div class="token-box show expired">
+        <div style="color:#dc3545;font-weight:600;">Token EXPIRED <span class="clock">⏱ TTL: 0s</span></div>
+        <div style="font-size:.7rem;margin-top:.1rem;">SessionToken is no longer valid</div>
+      </div>
+      <div class="arrow show red">↓ s3:GetObject attempt with expired token</div>
+      <div class="result-fail show">ExpiredTokenException: The security token included in the request is expired</div>`
+  },
+  {
+    status: "Lambda must re-call sts:AssumeRole to get fresh credentials. The flow repeats from step 2 — STS issues a new token with a fresh TTL.",
+    render: () => `
+      <div class="component caller">
+        <div class="component-label">Caller</div>
+        <div class="component-name">Lambda: data-ingestion</div>
+      </div>
+      <div class="arrow show blue">↓ sts:AssumeRole (re-authenticate)</div>
+      <div class="component sts">
+        <div class="component-label">STS Service</div>
+        <div class="component-name">Issuing new credentials...</div>
+      </div>
+      <div class="token-box show">
+        <div style="color:#f0a500;font-weight:600;">New Temporary Credentials <span class="clock">⏱ TTL: 3600s</span></div>
+        <div style="font-size:.7rem;color:#9a9a9a;margin-top:.1rem;">New ASIA key — old token permanently invalid</div>
+      </div>
+      <div class="result-ok show">Fresh credentials obtained — Lambda can resume S3 calls</div>`
+  }
+];
+
+let idx = 0;
+
+function render() {
+  document.getElementById('diagram').innerHTML = steps[idx].render();
+  document.getElementById('stat').textContent = steps[idx].status;
+  document.getElementById('counter').textContent = `Step ${idx + 1} / ${steps.length}`;
+  document.getElementById('btn-back').disabled = idx === 0;
+  const stepBtn = document.getElementById('btn-step');
+  if (idx === steps.length - 1) {
+    stepBtn.textContent = 'Done ✓';
+    stepBtn.disabled = true;
+  } else {
+    stepBtn.textContent = 'Step';
+    stepBtn.disabled = false;
+  }
+}
+
+document.getElementById('btn-step').addEventListener('click', () => { if (idx < steps.length - 1) { idx++; render(); } });
+document.getElementById('btn-back').addEventListener('click', () => { if (idx > 0) { idx--; render(); } });
+document.getElementById('btn-reset').addEventListener('click', () => { idx = 0; render(); });
+
+render();
+</script>
+</body>
+</html>

@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tool Calling Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 0;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  .header {
+    background: #284b63;
+    padding: .55rem 1rem;
+    font-size: .78rem;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: #d4d4d4;
+  }
+  .body { padding: .85rem 1rem .75rem; }
+  /* pipeline */
+  .pipe {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: .6rem;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+  .pipe-box {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .3rem .45rem;
+    text-align: center;
+    flex: 1;
+    min-width: 0;
+    transition: border-color .2s;
+  }
+  .pipe-box .lbl { font-size: .58rem; text-transform: uppercase; letter-spacing: .04em; color: #646464; margin-bottom: .12rem; }
+  .pipe-box .nm  { font-size: .75rem; font-weight: 600; }
+  .pipe-box .st  { font-size: .62rem; color: #888; margin-top: .1rem; min-height: .85rem; }
+  .pipe-box.active { border-color: #f0a500; }
+  .pipe-box.done   { border-color: #28a745; }
+  .pipe-box.blink  { border-color: #007bff; }
+  .arr { color: #646464; font-size: .85rem; flex-shrink: 0; }
+  .arr.lit { color: #f0a500; }
+  /* code panel */
+  .code-panel {
+    background: #1a1a20;
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: .38rem .55rem;
+    font-size: .7rem;
+    font-family: monospace;
+    color: #c9d1d9;
+    margin-bottom: .55rem;
+    display: none;
+    white-space: pre-wrap;
+    word-break: break-all;
+    line-height: 1.5;
+  }
+  .code-panel.show { display: block; }
+  .code-panel.blue  { border-color: #007bff; color: #7bb3f0; }
+  .code-panel.green { border-color: #28a745; color: #7ecf82; }
+  .code-panel .clbl {
+    font-size: .6rem;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    margin-bottom: .2rem;
+    opacity: .7;
+  }
+  /* parallel box */
+  .parallel-row {
+    display: flex;
+    gap: 6px;
+    margin-bottom: .55rem;
+    display: none;
+  }
+  .parallel-row.show { display: flex; }
+  .par-box {
+    flex: 1;
+    background: #1a1e2a;
+    border: 1px solid #007bff;
+    border-radius: 4px;
+    padding: .35rem .5rem;
+    font-size: .68rem;
+    font-family: monospace;
+    color: #7bb3f0;
+    line-height: 1.4;
+  }
+  .par-box .par-lbl { font-size: .58rem; text-transform: uppercase; letter-spacing: .06em; margin-bottom: .15rem; color: #888; }
+  /* status */
+  #stat {
+    padding: .45rem .65rem;
+    background: #393639;
+    border-left: 3px solid #284b63;
+    border-radius: 0 4px 4px 0;
+    font-size: .8rem;
+    line-height: 1.5;
+    min-height: 2.2rem;
+    margin-bottom: .65rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .3rem .7rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .8rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .7rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">Tool Calling - Visualizer</div>
+  <div class="body">
+
+    <div class="pipe" id="pipe">
+      <div class="pipe-box" id="b-user">
+        <div class="lbl">User</div>
+        <div class="nm">User</div>
+        <div class="st" id="s-user"></div>
+      </div>
+      <div class="arr" id="a1">→</div>
+      <div class="pipe-box" id="b-llm">
+        <div class="lbl">LLM</div>
+        <div class="nm">LLM</div>
+        <div class="st" id="s-llm"></div>
+      </div>
+      <div class="arr" id="a2">→</div>
+      <div class="pipe-box" id="b-parser">
+        <div class="lbl">Parser</div>
+        <div class="nm">Parser</div>
+        <div class="st" id="s-parser"></div>
+      </div>
+      <div class="arr" id="a3">→</div>
+      <div class="pipe-box" id="b-exec">
+        <div class="lbl">Executor</div>
+        <div class="nm">Executor</div>
+        <div class="st" id="s-exec"></div>
+      </div>
+      <div class="arr" id="a4">→</div>
+      <div class="pipe-box" id="b-llm2">
+        <div class="lbl">LLM (2)</div>
+        <div class="nm">LLM</div>
+        <div class="st" id="s-llm2"></div>
+      </div>
+    </div>
+
+    <div class="code-panel" id="code1"></div>
+    <div class="code-panel" id="code2"></div>
+    <div class="parallel-row" id="par-row">
+      <div class="par-box">
+        <div class="par-lbl">Tool 1: Weather</div>
+        get_weather("London")<br>→ {"temp":"15°C","condition":"Cloudy"}
+      </div>
+      <div class="par-box">
+        <div class="par-lbl">Tool 2: News</div>
+        get_news("London")<br>→ {"headline":"UK budget talks…"}
+      </div>
+    </div>
+
+    <div id="stat">Press Step to begin.</div>
+
+    <div id="ctrl">
+      <button id="btn-back" disabled>&#9664; Back</button>
+      <button id="btn-step">Step &#9654;</button>
+      <button id="btn-reset">&#8635; Reset</button>
+      <span id="counter">Step 0 / 9</span>
+    </div>
+  </div>
+</div>
+<script>
+var STEPS = [
+  {
+    user:{cls:'blink',st:'Asking...'}, llm:{cls:'',st:''}, parser:{cls:'',st:''}, exec:{cls:'',st:''}, llm2:{cls:'',st:''},
+    a:[true,false,false,false],
+    c1:{show:true,cls:'blue',lbl:'User Message',text:'User: "What\'s the weather in London right now?"'},
+    c2:{show:false},
+    par:false,
+    msg:'User sends message: "What\'s the weather in London right now?"'
+  },
+  {
+    user:{cls:'done',st:'Sent'}, llm:{cls:'active',st:'Reasoning...'}, parser:{cls:'',st:''}, exec:{cls:'',st:''}, llm2:{cls:'',st:''},
+    a:[false,false,false,false],
+    c1:{show:true,cls:'blue',lbl:'Tool Definition (registered)',text:'get_weather(city: str) -> WeatherData\n  "Returns current weather for a given city."'},
+    c2:{show:false},
+    par:false,
+    msg:'LLM receives message + tool definitions. It reads get_weather(city: str) -> WeatherData and reasons about whether a tool is needed.'
+  },
+  {
+    user:{cls:'',st:''}, llm:{cls:'done',st:'Tool needed'}, parser:{cls:'',st:''}, exec:{cls:'',st:''}, llm2:{cls:'',st:''},
+    a:[false,true,false,false],
+    c1:{show:true,cls:'blue',lbl:'LLM Output (tool call JSON)',text:'{\n  "tool": "get_weather",\n  "args": {"city": "London"}\n}'},
+    c2:{show:false},
+    par:false,
+    msg:'LLM decides tool is needed. Outputs structured JSON tool call instead of text (finish_reason: "tool_calls").'
+  },
+  {
+    user:{cls:'',st:''}, llm:{cls:'',st:''}, parser:{cls:'active',st:'Validating...'}, exec:{cls:'',st:''}, llm2:{cls:'',st:''},
+    a:[false,false,false,false],
+    c1:{show:true,cls:'blue',lbl:'Parser: extract + validate',text:'tool_name = "get_weather"  ✓\nargs = {"city": "London"}  ✓ (matches schema)'},
+    c2:{show:false},
+    par:false,
+    msg:'Parser extracts tool call, validates against JSON Schema. Tool name and arguments match the registered schema.'
+  },
+  {
+    user:{cls:'',st:''}, llm:{cls:'',st:''}, parser:{cls:'done',st:'Valid'}, exec:{cls:'active',st:'Calling API...'}, llm2:{cls:'',st:''},
+    a:[false,false,true,false],
+    c1:{show:false},
+    c2:{show:true,cls:'green',lbl:'Tool Result',text:'get_weather("London") =>\n{\n  "temp": "15°C",\n  "condition": "Cloudy",\n  "humidity": "82%"\n}'},
+    par:false,
+    msg:'Tool executor calls the real weather API. Returns result as ToolMessage.'
+  },
+  {
+    user:{cls:'',st:''}, llm:{cls:'',st:''}, parser:{cls:'',st:''}, exec:{cls:'done',st:'Done'}, llm2:{cls:'active',st:'Reading result...'},
+    a:[false,false,false,true],
+    c1:{show:true,cls:'',lbl:'Conversation (injected tool result)',text:'[HumanMessage]: "What\'s the weather in London?"\n[AIMessage]:    tool_call: get_weather("London")\n[ToolMessage]:  {"temp":"15°C","condition":"Cloudy"}'},
+    c2:{show:false},
+    par:false,
+    msg:'Tool result injected back into conversation as ToolMessage. Full history sent to LLM.'
+  },
+  {
+    user:{cls:'',st:''}, llm:{cls:'',st:''}, parser:{cls:'',st:''}, exec:{cls:'',st:''}, llm2:{cls:'active',st:'Generating...'},
+    a:[false,false,false,false],
+    c1:{show:true,cls:'',lbl:'LLM (2) sees full context',text:'Original query + tool result → generating natural language response...'},
+    c2:{show:false},
+    par:false,
+    msg:'LLM receives original query + tool result. Generates natural language answer (no more tool calls).'
+  },
+  {
+    user:{cls:'done',st:'Answer received'}, llm:{cls:'',st:''}, parser:{cls:'',st:''}, exec:{cls:'',st:''}, llm2:{cls:'done',st:'Done'},
+    a:[false,false,false,false],
+    c1:{show:true,cls:'green',lbl:'Final Response',text:'"It\'s currently 15°C and cloudy in London."'},
+    c2:{show:false},
+    par:false,
+    msg:'"It\'s currently 15°C and cloudy in London." — natural language response delivered to user.'
+  },
+  {
+    user:{cls:'blink',st:'Parallel query'}, llm:{cls:'active',st:'Parallel calls'}, parser:{cls:'active',st:'Dispatching'}, exec:{cls:'active',st:'2 tools'}, llm2:{cls:'',st:''},
+    a:[true,true,true,false],
+    c1:{show:false},
+    c2:{show:false},
+    par:true,
+    msg:'Bonus: Parallel tool calls. LLM outputs 2 tool calls simultaneously — get_weather + get_news. Both execute concurrently via asyncio.gather().'
+  }
+];
+
+var idx = 0;
+var TOTAL = STEPS.length - 1;
+
+function draw() {
+  var s = STEPS[idx];
+  var ids = ['user','llm','parser','exec','llm2'];
+  var bIds = ['b-user','b-llm','b-parser','b-exec','b-llm2'];
+  var sIds = ['s-user','s-llm','s-parser','s-exec','s-llm2'];
+  for (var i = 0; i < ids.length; i++) {
+    document.getElementById(bIds[i]).className = 'pipe-box' + (s[ids[i]].cls ? ' ' + s[ids[i]].cls : '');
+    document.getElementById(sIds[i]).textContent = s[ids[i]].st;
+  }
+  var arrIds = ['a1','a2','a3','a4'];
+  for (var j = 0; j < 4; j++) {
+    document.getElementById(arrIds[j]).className = 'arr' + (s.a[j] ? ' lit' : '');
+  }
+  var c1 = document.getElementById('code1');
+  c1.className = 'code-panel' + (s.c1.show ? ' show' : '') + (s.c1.cls ? ' ' + s.c1.cls : '');
+  c1.innerHTML = s.c1.show ? '<div class="clbl">' + s.c1.lbl + '</div>' + escHtml(s.c1.text) : '';
+
+  var c2 = document.getElementById('code2');
+  c2.className = 'code-panel' + (s.c2.show ? ' show' : '') + (s.c2.cls ? ' ' + s.c2.cls : '');
+  c2.innerHTML = s.c2.show ? '<div class="clbl">' + s.c2.lbl + '</div>' + escHtml(s.c2.text) : '';
+
+  document.getElementById('par-row').className = 'parallel-row' + (s.par ? ' show' : '');
+
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + TOTAL;
+  var stepBtn = document.getElementById('btn-step');
+  if (idx === TOTAL) {
+    stepBtn.textContent = 'Done ✓';
+    stepBtn.disabled = true;
+  } else {
+    stepBtn.textContent = 'Step ►';
+    stepBtn.disabled = false;
+  }
+  document.getElementById('btn-back').disabled = idx === 0;
+}
+
+function escHtml(t) {
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+
+document.getElementById('btn-step').onclick = function() { if (idx < TOTAL) { idx++; draw(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+draw();
+</script>
+</body>
+</html>

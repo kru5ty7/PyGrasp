@@ -90,6 +90,12 @@ top_k = np.argsort(similarities)[::-1][:5]       # top 5 indices
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/similarity-metrics.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Similarity Metrics Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Similarity metrics are used in vector search to rank retrieved documents  -  the metric must match what the embedding model was trained with.

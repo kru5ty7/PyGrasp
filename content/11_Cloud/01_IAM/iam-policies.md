@@ -163,6 +163,12 @@ for result in sim_result['EvaluationResults']:
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/iam-policies.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="IAM Policies Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Policies define the permission boundary for every IAM entity - users, groups, and roles are only meaningful in combination with the policies attached to them. Policy evaluation is what determines whether any boto3 call or CLI command succeeds.

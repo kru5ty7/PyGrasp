@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lambda Cold Start - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #diagram { margin-bottom: .75rem; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Lambda Cold Start vs Warm Start</h4>
+  <div id="diagram"></div>
+  <div id="stat"></div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var C = {
+  bg: '#2a2a2e', border: '#393639', header: '#284b63',
+  amber: '#f0a500', green: '#28a745', red: '#dc3545',
+  blue: '#007bff', text: '#d4d4d4', dim: '#333', panelBg: '#393639'
+};
+
+// Timeline: horizontal bars in two rows
+// Cold row: y=60, Warm row: y=160
+// Each phase has an x offset and a width proportional to ms duration
+// Total cold = 650ms, warm = 50ms. Scale: 1px = ~0.7ms, total width 480px
+
+var SCALE = 0.68; // px per ms, total 650ms = ~440px fits in 480 canvas
+var LEFT = 30;    // left margin for row labels
+
+// Cold start phases
+var coldPhases = [
+  { key: 'download', label: 'Download Code',   ms: 200, color: C.blue  },
+  { key: 'runtime',  label: 'Init Runtime',    ms: 100, color: C.amber },
+  { key: 'init',     label: 'Init Function',   ms: 300, color: '#9b59b6' },
+  { key: 'handler',  label: 'Execute Handler', ms: 50,  color: C.green }
+];
+
+// Warm start phases
+var warmPhases = [
+  { key: 'whandler', label: 'Execute Handler', ms: 50, color: C.green }
+];
+
+// Java comparison: much larger
+var javaPhases = [
+  { key: 'jdownload', label: 'Download',     ms: 400,  color: C.blue  },
+  { key: 'jruntime',  label: 'Init JVM',     ms: 1200, color: C.amber },
+  { key: 'jinit',     label: 'Init Fn',      ms: 600,  color: '#9b59b6' },
+  { key: 'jhandler',  label: 'Handler',      ms: 50,   color: C.green }
+];
+
+// Compute x positions for phases
+function computeX(phases) {
+  var x = LEFT;
+  return phases.map(function(p) {
+    var start = x;
+    x += p.ms * SCALE;
+    return { phase: p, x: start, w: p.ms * SCALE };
+  });
+}
+
+var coldLayout = computeX(coldPhases);
+var warmLayout = computeX(warmPhases);
+
+// Java scale: fit 2250ms in same 480px space
+var JAVA_SCALE = 0.19;
+function computeJavaX(phases) {
+  var x = LEFT;
+  return phases.map(function(p) {
+    var start = x;
+    x += p.ms * JAVA_SCALE;
+    return { phase: p, x: start, w: p.ms * JAVA_SCALE };
+  });
+}
+var javaLayout = computeJavaX(javaPhases);
+
+// steps
+var steps = [
+  {
+    msg: 'Cold start vs warm start timeline. Two rows: cold (top) and warm (bottom). Press Step to walk through phases.',
+    coldActive: [], warmActive: [], showCumulative: false, showWarm: false, showJava: false, idle: false
+  },
+  {
+    msg: 'Step 1/8: First invocation ever — cold start begins. Lambda must build the execution environment from scratch.',
+    coldActive: [], warmActive: [], showCumulative: false, showWarm: false, showJava: false, idle: false
+  },
+  {
+    msg: 'Step 2/8: Phase 1 — Download code package from S3 to the execution environment. ~200ms depending on package size.',
+    coldActive: ['download'], warmActive: [], showCumulative: false, showWarm: false, showJava: false, idle: false
+  },
+  {
+    msg: 'Step 3/8: Phase 2 — Initialize the runtime (Python interpreter startup, standard library loading). ~100ms for Python.',
+    coldActive: ['download','runtime'], warmActive: [], showCumulative: false, showWarm: false, showJava: false, idle: false
+  },
+  {
+    msg: 'Step 4/8: Phase 3 — Run module-level init code (global variables, DB connections, boto3 clients). ~300ms if heavy imports.',
+    coldActive: ['download','runtime','init'], warmActive: [], showCumulative: false, showWarm: false, showJava: false, idle: false
+  },
+  {
+    msg: 'Step 5/8: Phase 4 — Execute handler function with event + context. ~50ms for the actual business logic.',
+    coldActive: ['download','runtime','init','handler'], warmActive: [], showCumulative: false, showWarm: false, showJava: false, idle: false
+  },
+  {
+    msg: 'Step 6/8: Total cold start: ~650ms cumulative. The handler ran for only 50ms — 600ms was overhead.',
+    coldActive: ['download','runtime','init','handler'], warmActive: [], showCumulative: true, showWarm: false, showJava: false, idle: false
+  },
+  {
+    msg: 'Step 7/8: Second invocation — warm. Environment reused. Everything cached. Only the handler runs: ~50ms. 13x faster.',
+    coldActive: ['download','runtime','init','handler'], warmActive: ['whandler'], showCumulative: true, showWarm: true, showJava: false, idle: false
+  },
+  {
+    msg: 'Step 8/8: Java vs Python comparison. Java cold start (~2250ms) is ~3.5x slower due to JVM startup and class loading.',
+    coldActive: [], warmActive: [], showCumulative: false, showWarm: false, showJava: true, idle: false
+  }
+];
+
+var idx = 0;
+
+function renderSVG(step) {
+  var W = 520, H = 270;
+  var out = '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">';
+
+  if (step.showJava) {
+    // Java vs Python comparison view
+    var rows = [
+      { label: 'Python', layout: coldLayout,  y: 50,  scale: SCALE,      total: 650 },
+      { label: 'Java',   layout: javaLayout,  y: 130, scale: JAVA_SCALE, total: 2250 }
+    ];
+    rows.forEach(function(row) {
+      out += '<text x="' + (LEFT - 5) + '" y="' + (row.y + 8) + '" text-anchor="end" font-size="9" fill="#aaa">' + row.label + '</text>';
+      row.layout.forEach(function(item) {
+        var bw = Math.max(item.w, 2);
+        out += '<rect x="' + item.x + '" y="' + row.y + '" width="' + bw + '" height="22" rx="2" fill="' + item.phase.color + '" opacity="0.85"/>';
+        if (bw > 28) {
+          out += '<text x="' + (item.x + bw/2) + '" y="' + (row.y + 14) + '" text-anchor="middle" font-size="7" fill="#fff">' + item.phase.label + '</text>';
+        }
+      });
+      // total label
+      var totalX = LEFT + row.total * row.scale;
+      out += '<text x="' + (totalX + 4) + '" y="' + (row.y + 14) + '" font-size="8.5" fill="#aaa">' + row.total + 'ms</text>';
+    });
+    // Legend
+    var legendY = 200;
+    var lItems = [
+      { color: C.blue, label: 'Download code' },
+      { color: C.amber, label: 'Init runtime' },
+      { color: '#9b59b6', label: 'Init function' },
+      { color: C.green, label: 'Execute handler' }
+    ];
+    lItems.forEach(function(li, i) {
+      var lx = 30 + i * 120;
+      out += '<rect x="' + lx + '" y="' + legendY + '" width="10" height="10" rx="2" fill="' + li.color + '"/>';
+      out += '<text x="' + (lx + 14) + '" y="' + (legendY + 9) + '" font-size="8" fill="#888">' + li.label + '</text>';
+    });
+    out += '</svg>';
+    return out;
+  }
+
+  // Normal cold/warm view
+  var coldY = 50, warmY = 155;
+
+  // Row labels
+  out += '<text x="25" y="' + (coldY - 8) + '" font-size="8.5" fill="#aaa">COLD START</text>';
+  out += '<text x="25" y="' + (warmY - 8) + '" font-size="8.5" fill="#aaa">WARM START</text>';
+
+  // Cold phases
+  coldLayout.forEach(function(item) {
+    var active = step.coldActive.indexOf(item.phase.key) >= 0;
+    var bw = Math.max(item.w, 2);
+    var opacity = active ? '1' : '0.2';
+    var sw = active ? '1.5' : '0';
+    out += '<rect x="' + item.x + '" y="' + coldY + '" width="' + bw + '" height="28" rx="3" fill="' + item.phase.color + '" opacity="' + opacity + '" stroke="' + (active ? '#fff' : 'none') + '" stroke-width="' + sw + '"/>';
+    if (bw > 20) {
+      var textOpacity = active ? '1' : '0.35';
+      out += '<text x="' + (item.x + bw/2) + '" y="' + (coldY + 11) + '" text-anchor="middle" font-size="7.5" fill="#fff" opacity="' + textOpacity + '">' + item.phase.label + '</text>';
+      out += '<text x="' + (item.x + bw/2) + '" y="' + (coldY + 22) + '" text-anchor="middle" font-size="7" fill="#fff" opacity="' + textOpacity + '">' + item.phase.ms + 'ms</text>';
+    }
+  });
+
+  // Cumulative total label
+  if (step.showCumulative) {
+    var totalW = 650 * SCALE;
+    out += '<text x="' + (LEFT + totalW + 4) + '" y="' + (coldY + 17) + '" font-size="8.5" fill="' + C.red + '" font-weight="bold">650ms total</text>';
+    out += '<line x1="' + (LEFT + totalW) + '" y1="' + (coldY - 4) + '" x2="' + (LEFT + totalW) + '" y2="' + (coldY + 32) + '" stroke="' + C.red + '" stroke-width="1.5" stroke-dasharray="3,2"/>';
+  }
+
+  // Warm phases
+  if (step.showWarm) {
+    warmLayout.forEach(function(item) {
+      var bw = Math.max(item.w, 2);
+      out += '<rect x="' + item.x + '" y="' + warmY + '" width="' + bw + '" height="28" rx="3" fill="' + item.phase.color + '" opacity="0.9"/>';
+      out += '<text x="' + (item.x + bw/2) + '" y="' + (warmY + 11) + '" text-anchor="middle" font-size="7.5" fill="#fff">' + item.phase.label + '</text>';
+      out += '<text x="' + (item.x + bw/2) + '" y="' + (warmY + 22) + '" text-anchor="middle" font-size="7" fill="#fff">' + item.phase.ms + 'ms</text>';
+    });
+    out += '<text x="' + (LEFT + 50 * SCALE + 4) + '" y="' + (warmY + 17) + '" font-size="8.5" fill="' + C.green + '" font-weight="bold">50ms total</text>';
+    // Cached label
+    out += '<text x="' + (LEFT + 50 * SCALE + 60) + '" y="' + (warmY - 6) + '" font-size="8" fill="#555">Download / Runtime / Init — cached ✓</text>';
+  } else {
+    // Show empty warm row placeholder
+    out += '<rect x="' + LEFT + '" y="' + warmY + '" width="440" height="28" rx="3" fill="#1a1a1c" stroke="#2a2a2e" stroke-width="1"/>';
+    out += '<text x="' + (LEFT + 220) + '" y="' + (warmY + 17) + '" text-anchor="middle" font-size="8" fill="#444">2nd invocation — warm (shown after cold start completes)</text>';
+  }
+
+  // Scale axis
+  var axY = 110;
+  out += '<line x1="' + LEFT + '" y1="' + axY + '" x2="' + (LEFT + 440) + '" y2="' + axY + '" stroke="#333" stroke-width="1"/>';
+  [0, 100, 200, 300, 400, 500, 600].forEach(function(ms) {
+    var tx = LEFT + ms * SCALE;
+    out += '<line x1="' + tx + '" y1="' + (axY - 2) + '" x2="' + tx + '" y2="' + (axY + 2) + '" stroke="#555" stroke-width="1"/>';
+    out += '<text x="' + tx + '" y="' + (axY + 11) + '" text-anchor="middle" font-size="7" fill="#555">' + ms + 'ms</text>';
+  });
+
+  out += '</svg>';
+  return out;
+}
+
+function render() {
+  var step = steps[idx];
+  document.getElementById('diagram').innerHTML = renderSVG(step);
+  document.getElementById('stat').textContent = step.msg;
+  var isLast = idx >= steps.length - 1;
+  document.getElementById('btn-step').disabled = isLast;
+  document.getElementById('btn-step').textContent = isLast ? 'Done ✓' : 'Step →';
+  document.getElementById('btn-back').disabled = idx === 0;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
+}
+
+document.getElementById('btn-step').onclick = function() { if (idx < steps.length - 1) { idx++; render(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; render(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; render(); };
+render();
+</script>
+</body>
+</html>

@@ -110,6 +110,12 @@ with open("photo.jpg", "rb") as f:
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/s3-presigned-urls.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="S3 Presigned URLs Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Presigned URLs bypass IAM evaluation for the object access itself - the IAM permissions that matter are those of the identity that generates the URL, not those of the recipient. The generating identity must have `s3:GetObject` (for GET presigned URLs) or `s3:PutObject` (for PUT presigned URLs) on the relevant key.

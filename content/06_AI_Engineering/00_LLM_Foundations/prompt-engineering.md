@@ -106,6 +106,12 @@ data = json.loads(response.content[0].text)
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/prompt-engineering.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Prompt Engineering Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Structured outputs pair with Pydantic  -  the model generates JSON that is then validated by a Pydantic model.

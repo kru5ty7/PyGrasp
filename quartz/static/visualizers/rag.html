@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG Overview - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  .phase-label {
+    font-size: .7rem;
+    font-weight: 700;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    padding: .18rem .5rem;
+    border-radius: 3px;
+    display: inline-block;
+    margin-bottom: .5rem;
+  }
+  .phase-index { background: #1e2e38; color: #7eb8d4; border: 1px solid #284b63; }
+  .phase-query { background: #2a1a00; color: #f0c060; border: 1px solid #f0a500; }
+
+  .pipeline {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: .25rem;
+    margin-bottom: .5rem;
+    padding: .5rem .6rem;
+    background: #1e1e20;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    min-height: 54px;
+  }
+  .node {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .28rem .55rem;
+    font-size: .75rem;
+    white-space: nowrap;
+    transition: border-color .25s, background .25s, color .25s;
+  }
+  .node.active {
+    border-color: #f0a500;
+    background: #3a2a00;
+    color: #f0c060;
+  }
+  .node.done {
+    border-color: #28a745;
+    background: #1a3a1a;
+    color: #5dd97a;
+  }
+  .arrow {
+    font-size: .85rem;
+    color: #555;
+    flex-shrink: 0;
+  }
+  .arrow.lit { color: #7b97aa; }
+
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .82rem;
+    line-height: 1.5;
+    min-height: 2.6rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; margin-bottom: .75rem; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>RAG — Indexing &amp; Query Pipeline</h4>
+
+  <div class="phase-label phase-index" id="phase-lbl">Indexing Phase (offline)</div>
+
+  <div id="pipeline-index" class="pipeline">
+    <div class="node" id="n-docs">Docs</div>
+    <div class="arrow" id="a1">→</div>
+    <div class="node" id="n-chunk">Chunker</div>
+    <div class="arrow" id="a2">→</div>
+    <div class="node" id="n-chunks">Chunks</div>
+    <div class="arrow" id="a3">→</div>
+    <div class="node" id="n-embed">Embed Model</div>
+    <div class="arrow" id="a4">→</div>
+    <div class="node" id="n-vec">Vectors</div>
+    <div class="arrow" id="a5">→</div>
+    <div class="node" id="n-vdb">Vector DB</div>
+  </div>
+
+  <div id="pipeline-query" class="pipeline">
+    <div class="node" id="n-user">User Query</div>
+    <div class="arrow" id="a6">→</div>
+    <div class="node" id="n-qembed">Embed Model</div>
+    <div class="arrow" id="a7">→</div>
+    <div class="node" id="n-qvec">Query Vector</div>
+    <div class="arrow" id="a8">→</div>
+    <div class="node" id="n-search">Vector DB Search</div>
+    <div class="arrow" id="a9">→</div>
+    <div class="node" id="n-ctx">Context</div>
+    <div class="arrow" id="a10">→</div>
+    <div class="node" id="n-llm">LLM</div>
+    <div class="arrow" id="a11">→</div>
+    <div class="node" id="n-ans">Answer</div>
+  </div>
+
+  <div id="stat">Press Step to begin.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#x2192;</button>
+    <button id="btn-reset">&#x21BA; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var STEPS = [
+  {
+    phase: 'index',
+    active: ['n-docs'],
+    done: [],
+    arrows: [],
+    msg: 'Step 1 of 9 — Indexing starts. Raw documents (PDFs, docs) are loaded and fed into the chunker.'
+  },
+  {
+    phase: 'index',
+    active: ['n-chunk'],
+    done: ['n-docs'],
+    arrows: ['a1'],
+    msg: 'Step 2 of 9 — Chunker splits documents into overlapping text chunks (e.g. 512 tokens, 50-token overlap). Each chunk is a coherent passage.'
+  },
+  {
+    phase: 'index',
+    active: ['n-embed'],
+    done: ['n-docs','n-chunk','n-chunks'],
+    arrows: ['a2','a3'],
+    msg: 'Step 3 of 9 — Each chunk is sent to the embedding model, which converts the text into a dense vector (e.g. 1536-dimensional float array).'
+  },
+  {
+    phase: 'index',
+    active: ['n-vec','n-vdb'],
+    done: ['n-docs','n-chunk','n-chunks','n-embed'],
+    arrows: ['a2','a3','a4','a5'],
+    msg: 'Indexing complete — Vectors and their chunk text are stored in the Vector DB. The index is now ready to serve queries. This phase runs once (or on updates).'
+  },
+  {
+    phase: 'query',
+    active: ['n-user'],
+    done: [],
+    arrows: [],
+    msg: 'Step 5 of 9 — Query phase begins. User asks: "What is the refund policy?" The question is passed to the same embedding model used at index time.'
+  },
+  {
+    phase: 'query',
+    active: ['n-qembed','n-qvec'],
+    done: ['n-user'],
+    arrows: ['a6','a7'],
+    msg: 'Step 6 of 9 — The question is embedded into a query vector. Same embedding space as the stored chunk vectors — this is what enables similarity matching.'
+  },
+  {
+    phase: 'query',
+    active: ['n-search'],
+    done: ['n-user','n-qembed','n-qvec'],
+    arrows: ['a6','a7','a8'],
+    msg: 'Step 7 of 9 — Vector DB performs ANN (approximate nearest neighbor) similarity search. Top-3 closest chunk vectors are identified and their texts retrieved.'
+  },
+  {
+    phase: 'query',
+    active: ['n-ctx','n-llm'],
+    done: ['n-user','n-qembed','n-qvec','n-search'],
+    arrows: ['a6','a7','a8','a9','a10'],
+    msg: 'Step 8 of 9 — Context assembled: [System prompt + retrieved chunk 1 + retrieved chunk 2 + retrieved chunk 3 + user question]. Prompt sent to LLM.'
+  },
+  {
+    phase: 'query',
+    active: ['n-ans'],
+    done: ['n-user','n-qembed','n-qvec','n-search','n-ctx','n-llm'],
+    arrows: ['a6','a7','a8','a9','a10','a11'],
+    msg: 'Done — Answer returned to user, grounded in the retrieved context. Source citations reference the original document chunks used to generate the answer.'
+  }
+];
+
+var idx = 0;
+
+var allIndexNodes = ['n-docs','n-chunk','n-chunks','n-embed','n-vec','n-vdb'];
+var allQueryNodes = ['n-user','n-qembed','n-qvec','n-search','n-ctx','n-llm','n-ans'];
+var allArrows = ['a1','a2','a3','a4','a5','a6','a7','a8','a9','a10','a11'];
+
+function draw() {
+  var s = STEPS[idx];
+
+  // Reset all nodes and arrows
+  allIndexNodes.concat(allQueryNodes).forEach(function(id) {
+    var el = document.getElementById(id);
+    el.className = 'node';
+  });
+  allArrows.forEach(function(id) {
+    document.getElementById(id).className = 'arrow';
+  });
+
+  // Apply done
+  (s.done || []).forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.className = 'node done';
+  });
+  // Apply active
+  (s.active || []).forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.className = 'node active';
+  });
+  // Light arrows
+  (s.arrows || []).forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.className = 'arrow lit';
+  });
+
+  // Phase label
+  var lbl = document.getElementById('phase-lbl');
+  if (s.phase === 'index') {
+    lbl.className = 'phase-label phase-index';
+    lbl.textContent = 'Indexing Phase (offline)';
+  } else {
+    lbl.className = 'phase-label phase-query';
+    lbl.textContent = 'Query Phase (online)';
+  }
+
+  document.getElementById('stat').textContent = s.msg;
+  var done = idx === STEPS.length - 1;
+  var stepBtn = document.getElementById('btn-step');
+  stepBtn.disabled = done;
+  stepBtn.textContent = done ? 'Done ✓' : 'Step →';
+  document.getElementById('btn-back').disabled = idx === 0;
+  document.getElementById('counter').textContent = 'Step ' + (idx + 1) + ' / ' + STEPS.length;
+}
+
+document.getElementById('btn-step').onclick = function() {
+  if (idx < STEPS.length - 1) { idx++; draw(); }
+};
+document.getElementById('btn-back').onclick = function() {
+  if (idx > 0) { idx--; draw(); }
+};
+document.getElementById('btn-reset').onclick = function() {
+  idx = 0; draw();
+};
+
+draw();
+</script>
+</body>
+</html>

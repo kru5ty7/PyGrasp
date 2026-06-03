@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>State Graph Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 0;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  .header {
+    background: #284b63;
+    padding: .55rem 1rem;
+    font-size: .78rem;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: #d4d4d4;
+  }
+  .body { padding: .85rem 1rem .75rem; }
+  /* node row */
+  .node-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: .5rem;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+  .node {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 5px;
+    padding: .3rem .45rem;
+    text-align: center;
+    flex: 1;
+    min-width: 0;
+    font-size: .73rem;
+    font-weight: 600;
+    transition: border-color .25s, background .25s;
+  }
+  .node .nlbl { font-size: .58rem; text-transform: uppercase; letter-spacing: .04em; color: #646464; margin-bottom: .1rem; }
+  .node .nst  { font-size: .6rem; color: #888; margin-top: .1rem; min-height: .75rem; }
+  .node.active { border-color: #f0a500; background: #2a2518; }
+  .node.done   { border-color: #28a745; }
+  .arr { color: #646464; font-size: .82rem; flex-shrink: 0; }
+  .arr.lit { color: #f0a500; }
+  /* schema panel */
+  .schema-panel {
+    background: #1a1a20;
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: .38rem .55rem;
+    font-size: .68rem;
+    font-family: monospace;
+    color: #c9d1d9;
+    margin-bottom: .5rem;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+  .schema-panel .slbl { font-size: .6rem; text-transform: uppercase; letter-spacing: .06em; margin-bottom: .18rem; color: #888; }
+  .hl-amber { color: #f0d070; }
+  .hl-green { color: #7ecf82; }
+  .hl-blue  { color: #7bb3f0; }
+  /* state diff */
+  .state-row {
+    display: flex;
+    gap: 5px;
+    margin-bottom: .5rem;
+  }
+  .state-col {
+    flex: 1;
+    background: #1a1a20;
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: .32rem .5rem;
+    font-size: .65rem;
+    font-family: monospace;
+    color: #c9d1d9;
+    line-height: 1.45;
+    white-space: pre-wrap;
+    word-break: break-all;
+    display: none;
+  }
+  .state-col.show { display: block; }
+  .state-col .sclbl { font-size: .58rem; text-transform: uppercase; letter-spacing: .06em; margin-bottom: .15rem; color: #888; }
+  /* reducer note */
+  .reducer-note {
+    background: #2a2518;
+    border: 1px solid #f0a500;
+    border-radius: 4px;
+    padding: .32rem .55rem;
+    font-size: .72rem;
+    color: #f0d070;
+    margin-bottom: .5rem;
+    display: none;
+  }
+  .reducer-note.show { display: block; }
+  /* status */
+  #stat {
+    padding: .45rem .65rem;
+    background: #393639;
+    border-left: 3px solid #284b63;
+    border-radius: 0 4px 4px 0;
+    font-size: .8rem;
+    line-height: 1.5;
+    min-height: 2.2rem;
+    margin-bottom: .65rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .3rem .7rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .8rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .7rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">State Graph - Visualizer</div>
+  <div class="body">
+
+    <!-- node pipeline -->
+    <div class="node-row">
+      <div class="node" id="n-cl"><div class="nlbl">Node 1</div>classify<div class="nst" id="nst-cl"></div></div>
+      <div class="arr" id="e1">→</div>
+      <div class="node" id="n-gr"><div class="nlbl">Node 2a</div>greet_node<div class="nst" id="nst-gr"></div></div>
+      <div class="arr" id="e2">→</div>
+      <div class="node" id="n-an"><div class="nlbl">Node 2b</div>answer_node<div class="nst" id="nst-an"></div></div>
+      <div class="arr" id="e3">→</div>
+      <div class="node" id="n-end"><div class="nlbl">END</div>END<div class="nst" id="nst-end"></div></div>
+    </div>
+
+    <!-- schema -->
+    <div class="schema-panel" id="schema-panel">
+      <div class="slbl" id="schema-lbl">State Schema</div>
+      <div id="schema-txt">class AgentState(TypedDict):
+    messages: list
+    step: int
+    result: str</div>
+    </div>
+
+    <!-- state diff view -->
+    <div class="state-row" id="state-row">
+      <div class="state-col" id="sc-before">
+        <div class="sclbl">Before node</div>
+        <div id="sc-before-txt"></div>
+      </div>
+      <div class="state-col" id="sc-after">
+        <div class="sclbl">After node</div>
+        <div id="sc-after-txt"></div>
+      </div>
+    </div>
+
+    <!-- reducer note -->
+    <div class="reducer-note" id="reducer-note"></div>
+
+    <div id="stat">Press Step to begin.</div>
+
+    <div id="ctrl">
+      <button id="btn-back" disabled>&#9664; Back</button>
+      <button id="btn-step">Step &#9654;</button>
+      <button id="btn-reset">&#8635; Reset</button>
+      <span id="counter">Step 0 / 8</span>
+    </div>
+  </div>
+</div>
+<script>
+var STEPS = [
+  {
+    nodes:{cl:'',gr:'',an:'',end:''},
+    e1:'',e2:'',e3:'',
+    schema:{lbl:'State Schema',txt:'class AgentState(TypedDict):\n    messages: list\n    step: int\n    result: str'},
+    before:{show:false,txt:''},
+    after:{show:false,txt:''},
+    reducer:{show:false,txt:''},
+    msg:'Step 1: Define state schema. AgentState has 3 fields: messages (list), step (int), result (str).'
+  },
+  {
+    nodes:{cl:'',gr:'',an:'',end:''},
+    e1:'',e2:'',e3:'',
+    schema:{lbl:'Initial State',txt:'{\n    messages: ["user: hello"],\n    step: 0,\n    result: ""\n}'},
+    before:{show:false,txt:''},
+    after:{show:false,txt:''},
+    reducer:{show:false,txt:''},
+    msg:'Step 2: Initial state passed to graph.invoke(). messages has one entry, step=0, result="".'
+  },
+  {
+    nodes:{cl:'active',gr:'',an:'',end:''},
+    e1:'lit',e2:'',e3:'',
+    schema:{lbl:'State entering classify',txt:'{\n    messages: ["user: hello"],\n    step: 0,\n    result: ""\n}'},
+    before:{show:true,txt:'messages: ["user: hello"]\nstep: 0\nresult: ""'},
+    after:{show:true,txt:'messages: ["user: hello"]\nstep: 0\nresult: ""\nintent: "greeting"'},
+    reducer:{show:false,txt:''},
+    msg:'Step 3: Node 1 (classify) reads messages, adds classification. Returns {intent: "greeting"}.'
+  },
+  {
+    nodes:{cl:'done',gr:'',an:'',end:''},
+    e1:'',e2:'',e3:'',
+    schema:{lbl:'Conditional routing',txt:'if intent == "greeting":\n    → greet_node\nif intent == "question":\n    → answer_node'},
+    before:{show:false,txt:''},
+    after:{show:false,txt:''},
+    reducer:{show:false,txt:''},
+    msg:'Step 4: Conditional edge checks state.intent. "greeting" → route to greet_node.'
+  },
+  {
+    nodes:{cl:'done',gr:'active',an:'',end:''},
+    e1:'',e2:'lit',e3:'',
+    schema:{lbl:'greet_node executing',txt:'def greet_node(state):\n    return {\n        "messages": ["assistant: Hello!"],\n        "step": state["step"] + 1\n    }'},
+    before:{show:true,txt:'messages: ["user: hello"]\nstep: 0'},
+    after:{show:true,txt:'messages: ["user: hello",\n          "assistant: Hello!"]\nstep: 1'},
+    reducer:{show:false,txt:''},
+    msg:'Step 5: greet_node executes. Returns update: appends "Hello!" to messages, increments step.'
+  },
+  {
+    nodes:{cl:'done',gr:'done',an:'',end:''},
+    e1:'',e2:'',e3:'',
+    schema:{lbl:'Immutability: node sees a copy',txt:'# Node receives copy of state\n# Node returns UPDATES only (not full state)\n# LangGraph merges updates into state'},
+    before:{show:false,txt:''},
+    after:{show:false,txt:''},
+    reducer:{show:true,txt:'State is IMMUTABLE per step: node receives copy, returns partial updates. LangGraph applies the merge.'},
+    msg:'Step 6: State is immutable in each step. Node receives a copy, returns only the keys it changes.'
+  },
+  {
+    nodes:{cl:'done',gr:'done',an:'',end:''},
+    e1:'',e2:'',e3:'',
+    schema:{lbl:'add_messages reducer',txt:'# messages uses add_messages reducer\n# add_messages APPENDS, not replaces\n\n# Before: ["user: hello"]\n# Node returns: ["assistant: Hello!"]\n# After:  ["user: hello", "assistant: Hello!"]'},
+    before:{show:false,txt:''},
+    after:{show:false,txt:''},
+    reducer:{show:true,txt:'messages reducer: add_messages APPENDS (not replaces). Messages accumulate across the full workflow.'},
+    msg:'Step 7: messages reducer behavior. add_messages appends new messages to the list rather than replacing it.'
+  },
+  {
+    nodes:{cl:'done',gr:'done',an:'',end:'active'},
+    e1:'',e2:'',e3:'lit',
+    schema:{lbl:'Final State',txt:'{\n    messages: [\n        "user: hello",\n        "assistant: Hello!"\n    ],\n    step: 2,\n    result: "done",\n    intent: "greeting"\n}'},
+    before:{show:false,txt:''},
+    after:{show:false,txt:''},
+    reducer:{show:false,txt:''},
+    msg:'Step 8: Final state after all nodes. messages has both turns, step=2, result="done". Graph reaches END.'
+  }
+];
+
+var idx = 0;
+
+function draw() {
+  var s = STEPS[idx];
+  var nmap = {'cl':'n-cl','gr':'n-gr','an':'n-an','end':'n-end'};
+  for (var k in nmap) {
+    var el = document.getElementById(nmap[k]);
+    var v = s.nodes[k];
+    el.className = 'node' + (v === 'active' ? ' active' : v === 'done' ? ' done' : '');
+  }
+  document.getElementById('e1').className = 'arr' + (s.e1 === 'lit' ? ' lit' : '');
+  document.getElementById('e2').className = 'arr' + (s.e2 === 'lit' ? ' lit' : '');
+  document.getElementById('e3').className = 'arr' + (s.e3 === 'lit' ? ' lit' : '');
+
+  document.getElementById('schema-lbl').textContent = s.schema.lbl;
+  document.getElementById('schema-txt').textContent = s.schema.txt;
+
+  var scb = document.getElementById('sc-before');
+  var sca = document.getElementById('sc-after');
+  scb.className = 'state-col' + (s.before.show ? ' show' : '');
+  sca.className = 'state-col' + (s.after.show ? ' show' : '');
+  document.getElementById('sc-before-txt').textContent = s.before.txt;
+  document.getElementById('sc-after-txt').textContent = s.after.txt;
+
+  var rn = document.getElementById('reducer-note');
+  rn.className = 'reducer-note' + (s.reducer.show ? ' show' : '');
+  rn.textContent = s.reducer.txt;
+
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (STEPS.length - 1);
+  var stepBtn = document.getElementById('btn-step');
+  if (idx === STEPS.length - 1) {
+    stepBtn.textContent = 'Done ✓';
+    stepBtn.disabled = true;
+  } else {
+    stepBtn.textContent = 'Step ►';
+    stepBtn.disabled = false;
+  }
+  document.getElementById('btn-back').disabled = idx === 0;
+}
+
+document.getElementById('btn-step').onclick = function() { if (idx < STEPS.length - 1) { idx++; draw(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+draw();
+</script>
+</body>
+</html>

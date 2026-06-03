@@ -96,6 +96,12 @@ if response.input_tokens < 180_000:  # Claude's context window
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/tokenization-llm.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="LLM Tokenization Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Token count determines how much text fits in the context window  -  understanding tokens is required to reason about context limits.

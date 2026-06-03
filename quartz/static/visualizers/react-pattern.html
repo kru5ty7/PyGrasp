@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReAct Pattern Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 0;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  .header {
+    background: #284b63;
+    padding: .55rem 1rem;
+    font-size: .78rem;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: #d4d4d4;
+  }
+  .body { padding: .85rem 1rem .75rem; }
+  /* question */
+  .question {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .4rem .65rem;
+    font-size: .75rem;
+    color: #888;
+    margin-bottom: .65rem;
+  }
+  .question strong { color: #d4d4d4; }
+  /* trace */
+  .trace { display: flex; flex-direction: column; gap: 5px; margin-bottom: .65rem; }
+  .trace-step {
+    border-radius: 4px;
+    padding: .38rem .6rem;
+    font-size: .75rem;
+    line-height: 1.45;
+    border: 1px solid transparent;
+    display: none;
+    word-break: break-word;
+  }
+  .trace-step.show { display: block; }
+  .trace-step.thought {
+    background: #2a2518;
+    border-color: #f0a500;
+    color: #f0d070;
+  }
+  .trace-step.action {
+    background: #181e2a;
+    border-color: #007bff;
+    color: #7bb3f0;
+  }
+  .trace-step.observation {
+    background: #222224;
+    border-color: #555;
+    color: #b0b0b0;
+  }
+  .trace-step.answer {
+    background: #182218;
+    border-color: #28a745;
+    color: #7ecf82;
+  }
+  .trace-step .kind {
+    font-size: .62rem;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    font-weight: 700;
+    margin-bottom: .2rem;
+    opacity: .8;
+  }
+  /* status */
+  #stat {
+    padding: .45rem .65rem;
+    background: #393639;
+    border-left: 3px solid #284b63;
+    border-radius: 0 4px 4px 0;
+    font-size: .8rem;
+    line-height: 1.5;
+    min-height: 2.2rem;
+    margin-bottom: .65rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .3rem .7rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .8rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .7rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">ReAct Pattern - Visualizer</div>
+  <div class="body">
+
+    <div class="question">
+      <strong>Query:</strong> "What is the capital of the country that won the 2022 World Cup?"
+    </div>
+
+    <div class="trace" id="trace">
+      <div class="trace-step thought" id="step-0">
+        <div class="kind">Thought</div>
+        I need to find who won the 2022 World Cup.
+      </div>
+      <div class="trace-step action" id="step-1">
+        <div class="kind">Action</div>
+        search("2022 FIFA World Cup winner")
+      </div>
+      <div class="trace-step observation" id="step-2">
+        <div class="kind">Observation</div>
+        Argentina won the 2022 FIFA World Cup, defeating France in the final.
+      </div>
+      <div class="trace-step thought" id="step-3">
+        <div class="kind">Thought</div>
+        Now I need to find the capital of Argentina.
+      </div>
+      <div class="trace-step action" id="step-4">
+        <div class="kind">Action</div>
+        search("capital of Argentina")
+      </div>
+      <div class="trace-step observation" id="step-5">
+        <div class="kind">Observation</div>
+        The capital of Argentina is Buenos Aires.
+      </div>
+      <div class="trace-step thought" id="step-6">
+        <div class="kind">Thought</div>
+        I have all the information needed to answer the question.
+      </div>
+      <div class="trace-step answer" id="step-7">
+        <div class="kind">Final Answer</div>
+        Buenos Aires
+      </div>
+    </div>
+
+    <div id="stat">Press Step to begin.</div>
+
+    <div id="ctrl">
+      <button id="btn-back" disabled>&#9664; Back</button>
+      <button id="btn-step">Step &#9654;</button>
+      <button id="btn-reset">&#8635; Reset</button>
+      <span id="counter">Step 0 / 8</span>
+    </div>
+  </div>
+</div>
+<script>
+var MSGS = [
+  'Starting ReAct trace. The agent must answer: "What is the capital of the country that won the 2022 World Cup?"',
+  'Thought: Agent reasons about what it needs — must first identify the World Cup winner.',
+  'Action: Agent calls search("2022 FIFA World Cup winner") to retrieve factual data.',
+  'Observation: Tool returns — Argentina won the 2022 FIFA World Cup.',
+  'Thought: Agent reasons again — now needs to find Argentina\'s capital.',
+  'Action: Agent calls search("capital of Argentina").',
+  'Observation: Tool returns — the capital of Argentina is Buenos Aires.',
+  'Thought: Agent reasons — it now has all needed information.',
+  'Final Answer: "Buenos Aires". ReAct loop complete after 2 Thought-Action-Observation cycles.'
+];
+
+var TOTAL = 8;
+var idx = 0;
+
+function draw() {
+  for (var i = 0; i < TOTAL; i++) {
+    var el = document.getElementById('step-' + i);
+    if (el) el.className = el.className.replace(' show', '') + (i < idx ? ' show' : '');
+  }
+  document.getElementById('stat').textContent = MSGS[idx];
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + TOTAL;
+  var stepBtn = document.getElementById('btn-step');
+  if (idx === TOTAL) {
+    stepBtn.textContent = 'Done ✓';
+    stepBtn.disabled = true;
+  } else {
+    stepBtn.textContent = 'Step ►';
+    stepBtn.disabled = false;
+  }
+  document.getElementById('btn-back').disabled = idx === 0;
+}
+
+document.getElementById('btn-step').onclick = function() { if (idx < TOTAL) { idx++; draw(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+draw();
+</script>
+</body>
+</html>

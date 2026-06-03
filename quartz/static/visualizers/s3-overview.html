@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S3 Overview - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #diagram { margin-bottom: .75rem; }
+  svg { display: block; width: 100%; height: auto; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>S3 Data Model</h4>
+  <div id="diagram"></div>
+  <div id="stat"></div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var C = {
+  bg: '#2a2a2e',
+  border: '#393639',
+  header: '#284b63',
+  amber: '#f0a500',
+  green: '#28a745',
+  red: '#dc3545',
+  blue: '#007bff',
+  text: '#d4d4d4',
+  dim: '#555',
+  panelBg: '#393639'
+};
+
+// viewBox 560 x 310
+// Layout: Region (top) → Bucket (inside) → Object(s) (inside bucket)
+// AZ boxes for redundancy step (row at bottom)
+
+var STEPS = [
+  // 0 - empty
+  {
+    msg: 'Empty AWS account — no buckets, no objects, no regions configured. Press Step to begin.',
+    showRegion: true,
+    showBucket: false,
+    showObjects: [],
+    showAZs: false,
+    showGetArrow: false,
+    showVersions: false,
+    showDeleteMarker: false
+  },
+  // 1 - bucket created
+  {
+    msg: 'Step 1/8: Bucket "my-app-uploads" created in us-east-1. A bucket is a container scoped to one region.',
+    showRegion: true,
+    showBucket: true,
+    showObjects: [],
+    showAZs: false,
+    showGetArrow: false,
+    showVersions: false,
+    showDeleteMarker: false
+  },
+  // 2 - object uploaded
+  {
+    msg: 'Step 2/8: Object uploaded — key="images/2024/photo.jpg", size=2.3 MB. The key is the full path string; S3 has no real directories.',
+    showRegion: true,
+    showBucket: true,
+    showObjects: [{ key: 'images/2024/photo.jpg', size: '2.3 MB', state: 'active', vid: null }],
+    showAZs: false,
+    showGetArrow: false,
+    showVersions: false,
+    showDeleteMarker: false
+  },
+  // 3 - AZ redundancy
+  {
+    msg: 'Step 3/8: S3 synchronously replicates the object across 3 Availability Zones before confirming write. 11 nines durability.',
+    showRegion: true,
+    showBucket: true,
+    showObjects: [{ key: 'images/2024/photo.jpg', size: '2.3 MB', state: 'active', vid: null }],
+    showAZs: true,
+    showGetArrow: false,
+    showVersions: false,
+    showDeleteMarker: false
+  },
+  // 4 - GET request
+  {
+    msg: 'Step 4/8: GET request — S3 returns object + metadata: ETag (MD5 hash), Last-Modified, Content-Length.',
+    showRegion: true,
+    showBucket: true,
+    showObjects: [{ key: 'images/2024/photo.jpg', size: '2.3 MB', state: 'done', vid: null }],
+    showAZs: false,
+    showGetArrow: true,
+    showVersions: false,
+    showDeleteMarker: false
+  },
+  // 5 - versioning ON, new version uploaded
+  {
+    msg: 'Step 5/8: Versioning enabled on bucket. New version of the same key uploaded — both versions exist with unique version IDs.',
+    showRegion: true,
+    showBucket: true,
+    showObjects: [
+      { key: 'images/2024/photo.jpg', size: '2.3 MB', state: 'done', vid: 'v1-aB3x' },
+      { key: 'images/2024/photo.jpg', size: '3.1 MB', state: 'active', vid: 'v2-cD7y' }
+    ],
+    showAZs: false,
+    showGetArrow: false,
+    showVersions: true,
+    showDeleteMarker: false
+  },
+  // 6 - delete with versioning → delete marker
+  {
+    msg: 'Step 6/8: DELETE key with versioning ON — a delete marker is added. Both versions still exist underneath.',
+    showRegion: true,
+    showBucket: true,
+    showObjects: [
+      { key: 'images/2024/photo.jpg', size: '2.3 MB', state: 'done', vid: 'v1-aB3x' },
+      { key: 'images/2024/photo.jpg', size: '3.1 MB', state: 'done', vid: 'v2-cD7y' }
+    ],
+    showAZs: false,
+    showGetArrow: false,
+    showVersions: true,
+    showDeleteMarker: true
+  },
+  // 7 - delete specific version
+  {
+    msg: 'Step 7/8: Delete specific version v2-cD7y — that version is permanently removed. v1-aB3x remains intact.',
+    showRegion: true,
+    showBucket: true,
+    showObjects: [
+      { key: 'images/2024/photo.jpg', size: '2.3 MB', state: 'done', vid: 'v1-aB3x' }
+    ],
+    showAZs: false,
+    showGetArrow: false,
+    showVersions: true,
+    showDeleteMarker: false
+  },
+  // 8 - final state
+  {
+    msg: 'Step 8/8: Final state — one version of the object remains. Versioning protects against accidental deletion by keeping history.',
+    showRegion: true,
+    showBucket: true,
+    showObjects: [
+      { key: 'images/2024/photo.jpg', size: '2.3 MB', state: 'done', vid: 'v1-aB3x' }
+    ],
+    showAZs: false,
+    showGetArrow: false,
+    showVersions: true,
+    showDeleteMarker: false
+  }
+];
+
+var idx = 0;
+var TOTAL = STEPS.length - 1;
+
+function render() {
+  var step = STEPS[idx];
+  var VB_W = 560, VB_H = 310;
+  var s = '<svg viewBox="0 0 ' + VB_W + ' ' + VB_H + '" xmlns="http://www.w3.org/2000/svg">';
+
+  // Region box
+  if (step.showRegion) {
+    s += '<rect x="10" y="8" width="540" height="200" rx="6" fill="' + C.bg + '" stroke="#284b63" stroke-width="1.5" stroke-dasharray="6,3"/>';
+    s += '<text x="22" y="23" font-size="9" fill="#284b63">AWS Region: us-east-1</text>';
+  }
+
+  // Bucket box
+  if (step.showBucket) {
+    s += '<rect x="30" y="32" width="480" height="168" rx="5" fill="#1e1e22" stroke="' + C.amber + '" stroke-width="1.5"/>';
+    s += '<rect x="31" y="33" width="478" height="14" rx="4" fill="' + C.amber + '" opacity="0.25"/>';
+    s += '<text x="42" y="44" font-size="9" fill="' + C.amber + '">Bucket: my-app-uploads</text>';
+
+    // Versioning badge
+    if (step.showVersions) {
+      s += '<rect x="390" y="35" width="90" height="14" rx="3" fill="' + C.amber + '" opacity="0.2"/>';
+      s += '<text x="435" y="45" text-anchor="middle" font-size="8" fill="' + C.amber + '">Versioning: ON</text>';
+    }
+  }
+
+  // Objects
+  var objs = step.showObjects;
+  if (objs.length > 0) {
+    var startY = 62;
+    objs.forEach(function(obj, i) {
+      var oy = startY + i * 50;
+      var color = obj.state === 'active' ? C.amber : obj.state === 'done' ? C.green : C.border;
+      s += '<rect x="50" y="' + oy + '" width="420" height="38" rx="4" fill="' + C.bg + '" stroke="' + color + '" stroke-width="1.5"/>';
+      s += '<rect x="51" y="' + (oy+1) + '" width="418" height="12" rx="3" fill="' + color + '" opacity="0.2"/>';
+      // Key
+      s += '<text x="62" y="' + (oy+11) + '" font-size="9" fill="' + color + '">Key: ' + obj.key + '</text>';
+      // Size
+      s += '<text x="62" y="' + (oy+24) + '" font-size="9" fill="' + C.dim + '">Size: ' + obj.size + '</text>';
+      // Version ID
+      if (obj.vid) {
+        s += '<text x="200" y="' + (oy+24) + '" font-size="9" fill="' + C.blue + '">VersionId: ' + obj.vid + '</text>';
+      }
+      // Metadata (shown on GET step)
+      if (step.showGetArrow) {
+        s += '<text x="340" y="' + (oy+24) + '" font-size="8" fill="' + C.dim + '">ETag · Last-Modified</text>';
+      }
+    });
+  }
+
+  // Delete marker
+  if (step.showDeleteMarker && step.showBucket) {
+    var dmY = 62 + step.showObjects.length * 50;
+    s += '<rect x="50" y="' + dmY + '" width="200" height="28" rx="4" fill="#2a1a1a" stroke="' + C.red + '" stroke-width="1.5" stroke-dasharray="4,2"/>';
+    s += '<text x="150" y="' + (dmY+18) + '" text-anchor="middle" font-size="9" fill="' + C.red + '">Delete Marker (latest)</text>';
+  }
+
+  // GET arrow (floating, below bucket)
+  if (step.showGetArrow) {
+    s += '<defs><marker id="arr-get" markerWidth="7" markerHeight="5" refX="5" refY="2.5" orient="auto">'
+       + '<polygon points="0 0,7 2.5,0 5" fill="' + C.blue + '"/></marker></defs>';
+    s += '<line x1="510" y1="70" x2="480" y2="70" stroke="' + C.blue + '" stroke-width="1.8" marker-end="url(#arr-get)"/>';
+    s += '<text x="530" y="65" text-anchor="middle" font-size="9" fill="' + C.blue + '">GET</text>';
+    s += '<defs><marker id="arr-resp" markerWidth="7" markerHeight="5" refX="5" refY="2.5" orient="auto">'
+       + '<polygon points="0 0,7 2.5,0 5" fill="' + C.green + '"/></marker></defs>';
+    s += '<line x1="480" y1="80" x2="510" y2="80" stroke="' + C.green + '" stroke-width="1.8" marker-end="url(#arr-resp)"/>';
+    s += '<text x="530" y="95" text-anchor="middle" font-size="8" fill="' + C.green + '">200+</text>';
+    s += '<text x="530" y="105" text-anchor="middle" font-size="8" fill="' + C.green + '">meta</text>';
+  }
+
+  // AZ redundancy
+  if (step.showAZs) {
+    var azY = 222;
+    var azW = 130, azH = 40;
+    var azXs = [40, 210, 380];
+    var azLabels = ['AZ-1 (use1-az1)', 'AZ-2 (use1-az2)', 'AZ-3 (use1-az4)'];
+    azXs.forEach(function(ax, i) {
+      s += '<rect x="' + ax + '" y="' + azY + '" width="' + azW + '" height="' + azH + '"'
+         + ' rx="4" fill="' + C.bg + '" stroke="' + C.green + '" stroke-width="1.2"/>';
+      s += '<text x="' + (ax + azW/2) + '" y="' + (azY + 24) + '" text-anchor="middle"'
+         + ' font-size="9" fill="' + C.green + '">' + azLabels[i] + '</text>';
+      // Dotted line from object to AZ
+      var objCX = 260, objCY = 81;
+      var azCX = ax + azW/2;
+      var azTopY = azY;
+      s += '<line x1="' + objCX + '" y1="' + objCY + '" x2="' + azCX + '" y2="' + azTopY + '"'
+         + ' stroke="' + C.green + '" stroke-width="1" stroke-dasharray="4,3" opacity="0.6"/>';
+    });
+    s += '<text x="280" y="296" text-anchor="middle" font-size="9" fill="' + C.dim + '">'
+       + 'Synchronous write to 3 AZs before 200 OK returned</text>';
+  }
+
+  s += '</svg>';
+  document.getElementById('diagram').innerHTML = s;
+  document.getElementById('stat').textContent = step.msg;
+
+  var isLast = idx >= TOTAL;
+  document.getElementById('btn-step').disabled = isLast;
+  document.getElementById('btn-step').textContent = isLast ? 'Done ✓' : 'Step →';
+  document.getElementById('btn-back').disabled = idx === 0;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + TOTAL;
+}
+
+document.getElementById('btn-step').addEventListener('click', function() {
+  if (idx < TOTAL) { idx++; render(); }
+});
+document.getElementById('btn-back').addEventListener('click', function() {
+  if (idx > 0) { idx--; render(); }
+});
+document.getElementById('btn-reset').addEventListener('click', function() {
+  idx = 0; render();
+});
+
+render();
+</script>
+</body>
+</html>

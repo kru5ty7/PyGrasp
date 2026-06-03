@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EC2 Overview - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #diagram { margin-bottom: .75rem; }
+  svg { display: block; width: 100%; height: auto; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>EC2 Instance Lifecycle</h4>
+  <div id="diagram"></div>
+  <div id="stat"></div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var C = {
+  bg: '#2a2a2e',
+  border: '#393639',
+  header: '#284b63',
+  amber: '#f0a500',
+  green: '#28a745',
+  red: '#dc3545',
+  blue: '#007bff',
+  text: '#d4d4d4',
+  dim: '#555'
+};
+
+// State machine layout - nodes with positions
+// Layout: Pending (top-left), Running (top-right), Rebooting (far-right)
+//         Stopping (mid-left), Stopped (bottom-left)
+//         Shutting-down (mid-right), Terminated (bottom-right)
+var nodes = {
+  pending:     { x: 60,  y: 30,  w: 110, h: 34, label: 'Pending' },
+  running:     { x: 220, y: 30,  w: 110, h: 34, label: 'Running' },
+  rebooting:   { x: 380, y: 30,  w: 110, h: 34, label: 'Rebooting' },
+  stopping:    { x: 60,  y: 120, w: 110, h: 34, label: 'Stopping' },
+  stopped:     { x: 60,  y: 210, w: 110, h: 34, label: 'Stopped' },
+  shutting:    { x: 220, y: 120, w: 130, h: 34, label: 'Shutting-down' },
+  terminated:  { x: 220, y: 210, w: 110, h: 34, label: 'Terminated' }
+};
+
+// Static structural arrows always shown
+var staticArrows = [
+  { from: 'pending',  to: 'running',   color: C.dim, label: 'boot' },
+  { from: 'running',  to: 'rebooting', color: C.dim, label: 'reboot' },
+  { from: 'rebooting',to: 'running',   color: C.dim, label: '' },
+  { from: 'running',  to: 'stopping',  color: C.dim, label: 'stop' },
+  { from: 'stopping', to: 'stopped',   color: C.dim, label: '' },
+  { from: 'stopped',  to: 'pending',   color: C.dim, label: 'start' },
+  { from: 'running',  to: 'shutting',  color: C.dim, label: 'terminate' },
+  { from: 'shutting', to: 'terminated',color: C.dim, label: '' }
+];
+
+// Steps: which nodes are highlighted and active arrows with colors
+var steps = [
+  {
+    msg: 'EC2 instance lifecycle state machine. Press Step to begin the walkthrough.',
+    hi: {},
+    activeArrows: [],
+    badges: []
+  },
+  {
+    msg: 'Step 1: Launch instance — EC2 moves to Pending state. AWS is provisioning hardware and bootstrapping the OS.',
+    hi: { pending: 'active' },
+    activeArrows: [],
+    badges: []
+  },
+  {
+    msg: 'Step 2: Boot completes — instance transitions to Running. Compute billing starts (per-second for Linux).',
+    hi: { pending: 'done', running: 'active' },
+    activeArrows: [{ from: 'pending', to: 'running', color: C.green, label: 'boot complete' }],
+    badges: []
+  },
+  {
+    msg: 'Step 3: Stop instance — transitions through Stopping then Stopped. EBS root volume is preserved. Compute billing stops; EBS storage charges continue.',
+    hi: { running: 'done', stopping: 'active', stopped: 'active' },
+    activeArrows: [
+      { from: 'running',  to: 'stopping', color: C.blue, label: 'stop' },
+      { from: 'stopping', to: 'stopped',  color: C.blue, label: '' }
+    ],
+    badges: []
+  },
+  {
+    msg: 'Step 4: Start again — instance goes Pending → Running. Note: public IP changes (unless Elastic IP is attached).',
+    hi: { stopped: 'done', pending: 'active', running: 'active' },
+    activeArrows: [
+      { from: 'stopped', to: 'pending', color: C.amber, label: 'start' },
+      { from: 'pending', to: 'running', color: C.amber, label: 'boot' }
+    ],
+    badges: []
+  },
+  {
+    msg: 'Step 5: Reboot — stays in Running for billing and networking purposes. OS restarts but instance ID, private IP, and EBS data are preserved.',
+    hi: { running: 'active', rebooting: 'active' },
+    activeArrows: [
+      { from: 'running',   to: 'rebooting', color: C.amber, label: 'reboot' },
+      { from: 'rebooting', to: 'running',   color: C.amber, label: 'back' }
+    ],
+    badges: []
+  },
+  {
+    msg: 'Step 6: Terminate — instance moves to Shutting-down then Terminated (red). Cannot restart. Root EBS deleted by default (DeleteOnTermination=true).',
+    hi: { running: 'done', shutting: 'active', terminated: 'error' },
+    activeArrows: [
+      { from: 'running',  to: 'shutting',   color: C.red, label: 'terminate' },
+      { from: 'shutting', to: 'terminated', color: C.red, label: '' }
+    ],
+    badges: []
+  },
+  {
+    msg: 'Step 7: Key facts — EBS persists across stop/start. Instance store (ephemeral) is lost on stop. Public IP changes unless Elastic IP is used.',
+    hi: { running: 'done', stopped: 'done', terminated: 'error' },
+    activeArrows: [],
+    badges: ['EBS persists across stop', 'Ephemeral store lost on stop', 'Public IP changes on restart']
+  }
+];
+
+var idx = 0;
+
+function nodeColor(key, hi) {
+  var s = hi[key];
+  if (s === 'active') return C.amber;
+  if (s === 'done')   return C.green;
+  if (s === 'error')  return C.red;
+  return C.border;
+}
+
+function nodeFill(key, hi) {
+  var s = hi[key];
+  if (s === 'active') return '#2e2810';
+  if (s === 'done')   return '#0e2018';
+  if (s === 'error')  return '#2e1010';
+  return C.bg;
+}
+
+function nodeCenter(key) {
+  var n = nodes[key];
+  return { x: n.x + n.w / 2, y: n.y + n.h / 2 };
+}
+
+function edgePoint(key, toward) {
+  var nc = nodeCenter(key);
+  var tc = nodeCenter(toward);
+  var n = nodes[key];
+  var dx = tc.x - nc.x, dy = tc.y - nc.y;
+  var hw = n.w / 2, hh = n.h / 2;
+  var absDx = Math.abs(dx), absDy = Math.abs(dy);
+  if (absDx * hh > absDy * hw) {
+    var sx = dx > 0 ? 1 : -1;
+    return { x: nc.x + sx * hw, y: nc.y + (absDx > 0 ? dy * hw / absDx : 0) };
+  } else {
+    var sy = dy > 0 ? 1 : -1;
+    return { x: nc.x + (absDy > 0 ? dx * hh / absDy : 0), y: nc.y + sy * hh };
+  }
+}
+
+function makeArrowDef(color) {
+  var id = 'ah-' + color.replace('#', '');
+  return '<defs><marker id="' + id + '" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">'
+       + '<polygon points="0 0, 8 3, 0 6" fill="' + color + '"/></marker></defs>';
+}
+
+function drawArrow(arr) {
+  var p1 = edgePoint(arr.from, arr.to);
+  var p2 = edgePoint(arr.to, arr.from);
+  var mid = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+  var id = 'ah-' + arr.color.replace('#', '');
+  var out = makeArrowDef(arr.color);
+  out += '<line x1="' + p1.x + '" y1="' + p1.y + '" x2="' + p2.x + '" y2="' + p2.y
+       + '" stroke="' + arr.color + '" stroke-width="1.5" marker-end="url(#' + id + ')"/>';
+  if (arr.label) {
+    out += '<rect x="' + (mid.x - 38) + '" y="' + (mid.y - 8) + '" width="76" height="14" rx="3" fill="#161618" opacity="0.9"/>';
+    out += '<text x="' + mid.x + '" y="' + (mid.y + 3) + '" text-anchor="middle" font-size="8" fill="' + arr.color + '">' + arr.label + '</text>';
+  }
+  return out;
+}
+
+function renderSVG(step) {
+  var W = 510, H = 270;
+  var out = '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">';
+
+  // Draw static dim arrows first
+  staticArrows.forEach(function(arr) {
+    // Don't draw static if active arrows override this pair
+    var overridden = step.activeArrows.some(function(a) {
+      return (a.from === arr.from && a.to === arr.to) || (a.from === arr.to && a.to === arr.from);
+    });
+    if (!overridden) {
+      out += makeArrowDef(arr.color);
+      var p1 = edgePoint(arr.from, arr.to);
+      var p2 = edgePoint(arr.to, arr.from);
+      var mid = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+      var id = 'ah-' + arr.color.replace('#', '');
+      out += '<line x1="' + p1.x + '" y1="' + p1.y + '" x2="' + p2.x + '" y2="' + p2.y
+           + '" stroke="' + arr.color + '" stroke-width="1" stroke-dasharray="3,3" marker-end="url(#' + id + ')"/>';
+      if (arr.label) {
+        out += '<text x="' + mid.x + '" y="' + (mid.y - 3) + '" text-anchor="middle" font-size="7" fill="#444">' + arr.label + '</text>';
+      }
+    }
+  });
+
+  // Draw active arrows (colored, solid)
+  step.activeArrows.forEach(function(arr) {
+    out += drawArrow(arr);
+  });
+
+  // Draw nodes
+  Object.keys(nodes).forEach(function(key) {
+    var n = nodes[key];
+    var bc = nodeColor(key, step.hi);
+    var bf = nodeFill(key, step.hi);
+    var sw = step.hi[key] ? 2 : 1;
+    out += '<rect x="' + n.x + '" y="' + n.y + '" width="' + n.w + '" height="' + n.h + '" rx="5" fill="' + bf + '" stroke="' + bc + '" stroke-width="' + sw + '"/>';
+    var headerH = 13;
+    out += '<rect x="' + n.x + '" y="' + n.y + '" width="' + n.w + '" height="' + headerH + '" rx="5" fill="' + C.header + '"/>';
+    out += '<rect x="' + n.x + '" y="' + (n.y + headerH - 4) + '" width="' + n.w + '" height="4" fill="' + C.header + '"/>';
+    var tc = step.hi[key] === 'active' ? C.amber : (step.hi[key] === 'done' ? C.green : (step.hi[key] === 'error' ? C.red : C.text));
+    out += '<text x="' + (n.x + n.w / 2) + '" y="' + (n.y + n.h / 2 + 7) + '" text-anchor="middle" font-size="9.5" font-weight="600" fill="' + tc + '">' + n.label + '</text>';
+  });
+
+  // Badges row
+  if (step.badges && step.badges.length) {
+    var by = H - 28;
+    var bx = 10;
+    step.badges.forEach(function(b) {
+      var bw = b.length * 5.5 + 12;
+      out += '<rect x="' + bx + '" y="' + by + '" width="' + bw + '" height="16" rx="3" fill="#1a2a1a" stroke="#28a745" stroke-width="1"/>';
+      out += '<text x="' + (bx + bw / 2) + '" y="' + (by + 11) + '" text-anchor="middle" font-size="7.5" fill="#28a745">' + b + '</text>';
+      bx += bw + 6;
+    });
+  }
+
+  out += '</svg>';
+  return out;
+}
+
+function render() {
+  var step = steps[idx];
+  document.getElementById('diagram').innerHTML = renderSVG(step);
+  document.getElementById('stat').textContent = step.msg;
+  var isLast = idx >= steps.length - 1;
+  document.getElementById('btn-step').disabled = isLast;
+  document.getElementById('btn-step').textContent = isLast ? 'Done ✓' : 'Step →';
+  document.getElementById('btn-back').disabled = idx === 0;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
+}
+
+document.getElementById('btn-step').onclick  = function() { if (idx < steps.length - 1) { idx++; render(); } };
+document.getElementById('btn-back').onclick  = function() { if (idx > 0) { idx--; render(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; render(); };
+
+render();
+</script>
+</body>
+</html>

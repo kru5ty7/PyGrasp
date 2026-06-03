@@ -106,6 +106,12 @@ parent_graph.add_conditional_edges(
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/multi-agent-systems.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Multi-Agent Systems Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 The supervisor pattern is the most common multi-agent architecture  -  a supervisor routes between worker agents.

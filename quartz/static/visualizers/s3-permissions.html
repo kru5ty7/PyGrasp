@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S3 Permissions - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .5rem;
+  }
+  #selector {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: .75rem;
+    flex-wrap: wrap;
+  }
+  .sel-btn {
+    padding: .3rem .65rem;
+    border: 1.5px solid #393639;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .8rem;
+    background: #2a2a2e;
+    color: #d4d4d4;
+    transition: all .15s;
+  }
+  .sel-btn.active {
+    background: #284b63;
+    border-color: #007bff;
+    color: #fff;
+  }
+  .sel-btn:hover:not(.active) { border-color: #646464; }
+  #diagram { margin-bottom: .75rem; }
+  svg { display: block; width: 100%; height: auto; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>S3 Access Control Evaluation</h4>
+  <div id="selector">
+    <button class="sel-btn active" data-scenario="same">Same Account Access</button>
+    <button class="sel-btn" data-scenario="cross">Cross-Account Access</button>
+  </div>
+  <div id="diagram"></div>
+  <div id="stat"></div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var C = {
+  bg: '#2a2a2e',
+  border: '#393639',
+  header: '#284b63',
+  amber: '#f0a500',
+  green: '#28a745',
+  red: '#dc3545',
+  blue: '#007bff',
+  text: '#d4d4d4',
+  dim: '#555',
+  panelBg: '#393639'
+};
+
+// Layout: viewBox 560 x 290
+// Eval pipeline (left to right): Requester → BucketPolicy → IAMPolicy → ACL → Decision
+var pipeNodes = {
+  req:    { x: 10,  y: 108, w: 72,  h: 56, label: 'IAM User\nAccount A' },
+  bucket: { x: 110, y: 108, w: 80,  h: 56, label: 'Bucket\nPolicy' },
+  iam:    { x: 218, y: 108, w: 80,  h: 56, label: 'IAM\nPolicy' },
+  acl:    { x: 326, y: 108, w: 60,  h: 56, label: 'ACL\n(legacy)' },
+  dec:    { x: 414, y: 108, w: 80,  h: 56, label: 'Decision' }
+};
+
+var scenarios = {
+  same: [
+    {
+      msg: 'Same-account scenario. IAM User in Account A calls s3:GetObject on a bucket in Account A. Press Step to walk through evaluation.',
+      hi: {}, arrows: [], dec: null
+    },
+    {
+      msg: 'Step 1/5: IAM User in Account A calls s3:GetObject.',
+      hi: { req: 'active' }, arrows: [], dec: null
+    },
+    {
+      msg: 'Step 2/5: Check bucket policy — no explicit Deny, no explicit Allow. Fall through to IAM policy.',
+      hi: { req: 'active', bucket: 'active' },
+      arrows: [{ from: 'req', to: 'bucket', color: C.amber, label: 'evaluate', above: true }],
+      dec: null,
+      note: { node: 'bucket', text: 'no match', color: C.dim }
+    },
+    {
+      msg: 'Step 3/5: Check IAM policy — explicit Allow for s3:GetObject on this bucket.',
+      hi: { bucket: 'done', iam: 'active' },
+      arrows: [{ from: 'bucket', to: 'iam', color: C.amber, label: 'fall through', above: true }],
+      dec: null,
+      note: { node: 'iam', text: 'ALLOW', color: C.green }
+    },
+    {
+      msg: 'Step 4/5: IAM policy allows the action. ACL check skipped (BucketOwnerEnforced mode).',
+      hi: { iam: 'done', acl: 'active' },
+      arrows: [{ from: 'iam', to: 'acl', color: C.green, label: 'allowed', above: true }],
+      dec: null,
+      note: { node: 'acl', text: 'skipped', color: C.dim }
+    },
+    {
+      msg: 'Step 5/5: ACCESS GRANTED. Same-account access: IAM policy alone is sufficient.',
+      hi: { req: 'done', iam: 'done', dec: 'done' },
+      arrows: [{ from: 'acl', to: 'dec', color: C.green, label: 'grant', above: true }],
+      dec: 'GRANTED',
+      note: null
+    }
+  ],
+  cross: [
+    {
+      msg: 'Cross-account scenario. IAM User in Account B calls s3:GetObject on a bucket owned by Account A. Press Step to walk through evaluation.',
+      hi: {}, arrows: [], dec: null
+    },
+    {
+      msg: 'Step 1/5: IAM User in Account B calls s3:GetObject on Account A\'s bucket.',
+      hi: { req: 'active' }, arrows: [], dec: null,
+      reqLabel: 'IAM User\nAccount B'
+    },
+    {
+      msg: 'Step 2/5: Check bucket policy in Account A — must explicitly allow Account B. Bucket policy has no statement for Account B.',
+      hi: { req: 'active', bucket: 'active' },
+      arrows: [{ from: 'req', to: 'bucket', color: C.amber, label: 'evaluate', above: true }],
+      dec: null,
+      note: { node: 'bucket', text: 'no allow', color: C.red },
+      reqLabel: 'IAM User\nAccount B'
+    },
+    {
+      msg: 'Step 3/5: Bucket policy DENIES access for Account B (no explicit allow = implicit deny for cross-account). Evaluation stops.',
+      hi: { bucket: 'error', dec: 'error' },
+      arrows: [{ from: 'bucket', to: 'dec', color: C.red, label: 'implicit deny', above: false }],
+      dec: 'DENIED',
+      note: { node: 'iam', text: 'not reached', color: C.dim },
+      reqLabel: 'IAM User\nAccount B'
+    },
+    {
+      msg: 'Step 4/5: Fix: add Account B\'s ARN to bucket policy with explicit Allow for s3:GetObject.',
+      hi: { bucket: 'active' }, arrows: [], dec: null,
+      note: { node: 'bucket', text: 'ALLOW B', color: C.green },
+      reqLabel: 'IAM User\nAccount B'
+    },
+    {
+      msg: 'Step 5/5: Both bucket policy (Account A) and IAM policy (Account B) allow the action — ACCESS GRANTED.',
+      hi: { req: 'done', bucket: 'done', iam: 'done', dec: 'done' },
+      arrows: [
+        { from: 'req', to: 'bucket', color: C.green, label: 'check', above: true },
+        { from: 'bucket', to: 'iam', color: C.green, label: 'check', above: true },
+        { from: 'iam', to: 'dec', color: C.green, label: 'grant', above: true }
+      ],
+      dec: 'GRANTED',
+      reqLabel: 'IAM User\nAccount B'
+    }
+  ]
+};
+
+var currentScenario = 'same';
+var idx = 0;
+
+function totalSteps() { return scenarios[currentScenario].length - 1; }
+
+function cx(node) { return node.x + node.w / 2; }
+function cy(node) { return node.y + node.h / 2; }
+
+function nodeColor(key, hi) {
+  var s = hi[key];
+  if (s === 'active') return C.amber;
+  if (s === 'done')   return C.green;
+  if (s === 'error')  return C.red;
+  return C.border;
+}
+
+function headerColor(key, hi) {
+  var s = hi[key];
+  if (s === 'active') return C.amber;
+  if (s === 'done')   return C.green;
+  if (s === 'error')  return C.red;
+  return C.header;
+}
+
+function mkArrow(a) {
+  var from = pipeNodes[a.from];
+  var to   = pipeNodes[a.to];
+  var y1   = cy(from);
+  var x1   = from.x + from.w;
+  var x2   = to.x;
+  var y2   = cy(to);
+  var midX = (x1 + x2) / 2;
+  var yOff = a.above ? -10 : 12;
+
+  var id = 'arr-' + a.from + a.to + idx;
+  var g = '<g>';
+  g += '<defs><marker id="' + id + '" markerWidth="7" markerHeight="5" refX="5" refY="2.5" orient="auto">'
+     + '<polygon points="0 0,7 2.5,0 5" fill="' + a.color + '"/></marker></defs>';
+  g += '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + (x2-1) + '" y2="' + y2 + '"'
+     + ' stroke="' + a.color + '" stroke-width="1.8"'
+     + ' marker-end="url(#' + id + ')"/>';
+  if (a.label) {
+    g += '<text x="' + midX + '" y="' + (y1 + yOff) + '" text-anchor="middle"'
+       + ' font-size="9" fill="' + a.color + '">' + a.label + '</text>';
+  }
+  g += '</g>';
+  return g;
+}
+
+function render() {
+  var steps = scenarios[currentScenario];
+  var step  = steps[idx];
+  var hi    = step.hi || {};
+  var TOTAL = totalSteps();
+
+  var s = '<svg viewBox="0 0 560 290" xmlns="http://www.w3.org/2000/svg">';
+
+  // Draw eval pipeline header
+  s += '<text x="280" y="22" text-anchor="middle" font-size="10" fill="' + C.dim + '">Permission Evaluation Pipeline</text>';
+
+  // Draw pipeline connector line
+  s += '<line x1="46" y1="136" x2="494" y2="136" stroke="' + C.border + '" stroke-width="1" stroke-dasharray="3,3"/>';
+
+  // Draw nodes
+  Object.keys(pipeNodes).forEach(function(key) {
+    var n = pipeNodes[key];
+    var label = (key === 'req' && step.reqLabel) ? step.reqLabel : n.label;
+    var bColor = nodeColor(key, hi);
+    var hColor = headerColor(key, hi);
+
+    // Decision node has special rendering
+    if (key === 'dec' && step.dec) {
+      var decColor = step.dec === 'GRANTED' ? C.green : C.red;
+      s += '<rect x="' + n.x + '" y="' + n.y + '" width="' + n.w + '" height="' + n.h + '"'
+         + ' rx="5" fill="' + C.bg + '" stroke="' + decColor + '" stroke-width="2"/>';
+      s += '<rect x="' + (n.x+1) + '" y="' + (n.y+1) + '" width="' + (n.w-2) + '" height="13"'
+         + ' rx="4" fill="' + decColor + '"/>';
+      s += '<text x="' + cx(n) + '" y="' + (n.y + 36) + '" text-anchor="middle"'
+         + ' font-size="11" font-weight="bold" fill="' + decColor + '">' + step.dec + '</text>';
+    } else {
+      s += '<rect x="' + n.x + '" y="' + n.y + '" width="' + n.w + '" height="' + n.h + '"'
+         + ' rx="5" fill="' + C.bg + '" stroke="' + bColor + '" stroke-width="1.5"/>';
+      s += '<rect x="' + (n.x+1) + '" y="' + (n.y+1) + '" width="' + (n.w-2) + '" height="13"'
+         + ' rx="4" fill="' + hColor + '"/>';
+      var lines = label.split('\n');
+      var baseY = n.y + 14 + (n.h - 14) / 2 - (lines.length - 1) * 6;
+      lines.forEach(function(line, i) {
+        s += '<text x="' + cx(n) + '" y="' + (baseY + i * 12) + '" text-anchor="middle"'
+           + ' font-size="10" fill="' + C.text + '">' + line + '</text>';
+      });
+    }
+  });
+
+  // Draw arrows
+  (step.arrows || []).forEach(function(a) { s += mkArrow(a); });
+
+  // Note badge (node annotation)
+  if (step.note) {
+    var nn = pipeNodes[step.note.node];
+    s += '<rect x="' + (nn.x + nn.w/2 - 26) + '" y="' + (nn.y + nn.h + 4) + '"'
+       + ' width="52" height="16" rx="3" fill="' + step.note.color + '" opacity="0.18"/>';
+    s += '<text x="' + cx(nn) + '" y="' + (nn.y + nn.h + 16) + '"'
+       + ' text-anchor="middle" font-size="9" fill="' + step.note.color + '">'
+       + step.note.text + '</text>';
+  }
+
+  // Cross-account note
+  if (currentScenario === 'cross' && idx > 0) {
+    s += '<text x="280" y="258" text-anchor="middle" font-size="9" fill="' + C.dim + '">'
+       + 'Cross-account: bucket policy (Account A) AND IAM policy (Account B) must both allow</text>';
+  }
+  if (currentScenario === 'same' && idx > 0) {
+    s += '<text x="280" y="258" text-anchor="middle" font-size="9" fill="' + C.dim + '">'
+       + 'Same-account: IAM policy OR bucket policy allow is sufficient (no explicit deny)</text>';
+  }
+
+  s += '</svg>';
+  document.getElementById('diagram').innerHTML = s;
+  document.getElementById('stat').textContent = step.msg;
+
+  var isLast = idx >= TOTAL;
+  document.getElementById('btn-step').disabled = isLast;
+  document.getElementById('btn-step').textContent = isLast ? 'Done ✓' : 'Step →';
+  document.getElementById('btn-back').disabled = idx === 0;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + TOTAL;
+}
+
+// Selector
+document.querySelectorAll('.sel-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.sel-btn').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    currentScenario = btn.dataset.scenario;
+    idx = 0;
+    render();
+  });
+});
+
+document.getElementById('btn-step').addEventListener('click', function() {
+  if (idx < totalSteps()) { idx++; render(); }
+});
+document.getElementById('btn-back').addEventListener('click', function() {
+  if (idx > 0) { idx--; render(); }
+});
+document.getElementById('btn-reset').addEventListener('click', function() {
+  idx = 0; render();
+});
+
+render();
+</script>
+</body>
+</html>

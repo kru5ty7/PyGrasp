@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vector Search - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  .mode-row {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: .75rem;
+  }
+  .mode-btn {
+    flex: 1;
+    padding: .35rem .5rem;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .78rem;
+    background: #2a2a2e;
+    color: #646464;
+    transition: all .15s;
+  }
+  .mode-btn.active {
+    background: #284b63;
+    color: #fff;
+    border-color: #284b63;
+  }
+  .mode-btn:hover:not(.active) { border-color: #555; color: #d4d4d4; }
+  #viz-area {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 6px;
+    min-height: 220px;
+    margin-bottom: .75rem;
+    padding: .75rem;
+    overflow: hidden;
+  }
+  /* Brute force progress bar */
+  .progress-track {
+    background: #393639;
+    border-radius: 3px;
+    height: 14px;
+    width: 100%;
+    margin: .5rem 0;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width .3s;
+    background: #007bff;
+  }
+  /* Result list */
+  .result-list { list-style: none; margin-top: .5rem; }
+  .result-list li {
+    padding: .3rem .6rem;
+    border-radius: 4px;
+    margin-bottom: .25rem;
+    font-size: .8rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #393639;
+  }
+  .result-list li .badge {
+    font-size: .7rem;
+    padding: .1rem .4rem;
+    border-radius: 3px;
+  }
+  .badge-green { background: #28a74522; color: #28a745; border: 1px solid #28a74544; }
+  .badge-amber { background: #f0a50022; color: #f0a500; border: 1px solid #f0a50044; }
+  /* HNSW graph */
+  .hnsw-layers { display: flex; flex-direction: column; gap: .5rem; }
+  .hnsw-layer {
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .4rem .5rem;
+    background: #1e1e22;
+    position: relative;
+  }
+  .hnsw-layer-label {
+    font-size: .68rem;
+    color: #646464;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: .3rem;
+  }
+  .hnsw-nodes {
+    display: flex;
+    gap: .35rem;
+    flex-wrap: wrap;
+    align-items: center;
+    min-height: 28px;
+  }
+  .hnsw-node {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid #393639;
+    background: #2a2a2e;
+    font-size: .68rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #888;
+    font-weight: 600;
+    transition: all .2s;
+    position: relative;
+  }
+  .hnsw-node.active { background: #f0a500; border-color: #f0a500; color: #000; }
+  .hnsw-node.visited { background: #28474e; border-color: #007bff44; color: #7bb8d4; }
+  .hnsw-node.result { background: #1e3a1e; border-color: #28a745; color: #28a745; }
+  .hnsw-node.query { background: #284b63; border-color: #007bff; color: #7bbfff; }
+  .tradeoff-bar {
+    display: flex;
+    gap: .5rem;
+    margin-top: .6rem;
+    font-size: .75rem;
+    align-items: center;
+  }
+  .tradeoff-label { color: #646464; white-space: nowrap; }
+  .tradeoff-track {
+    flex: 1;
+    height: 8px;
+    border-radius: 4px;
+    background: linear-gradient(to right, #28a745, #dc3545);
+  }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #284b63;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button.ctrl-btn {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button.ctrl-btn:disabled { opacity: .3; cursor: default; }
+  button.ctrl-btn:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Vector Search — ANN vs Brute Force</h4>
+  <div class="mode-row">
+    <button class="mode-btn active" id="mode-bf">Exact (Brute Force)</button>
+    <button class="mode-btn" id="mode-hnsw">Approximate (HNSW)</button>
+  </div>
+  <div id="viz-area"></div>
+  <div id="stat">Select a mode above, then press Step.</div>
+  <div id="ctrl">
+    <button class="ctrl-btn" id="btn-back" disabled>&#9664; Back</button>
+    <button class="ctrl-btn" id="btn-step">Step &#8594;</button>
+    <button class="ctrl-btn" id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var mode = 'bf';
+var idx = 0;
+
+// --- Brute Force Steps ---
+var BF_STEPS = [
+  {
+    msg: 'Query: "How to cook pasta?" — embedded into a 1536-dim query vector q.',
+    render: function() {
+      return '<div style="text-align:center;padding:1rem 0;">' +
+        '<div style="display:inline-block;padding:.5rem 1rem;background:#284b63;border-radius:6px;font-size:.85rem;color:#7bbfff;">' +
+        '🔍 "How to cook pasta?" → q = [0.21, -0.08, ..., 0.14]</div>' +
+        '<div style="margin-top:.75rem;color:#646464;font-size:.78rem;">Query vector ready. Starting brute-force scan...</div>' +
+        '</div>';
+    }
+  },
+  {
+    msg: 'Brute-force: comparing query against ALL 1,000,000 stored vectors. O(N) — each vector gets a cosine similarity score.',
+    render: function() {
+      return '<div style="padding:.25rem 0;">' +
+        '<div style="font-size:.78rem;color:#646464;margin-bottom:.4rem;">Scanning corpus: 1,000,000 vectors</div>' +
+        '<div class="progress-track"><div class="progress-fill" style="width:45%;background:#007bff;"></div></div>' +
+        '<div style="font-size:.75rem;color:#007bff;margin:.3rem 0;">450,000 / 1,000,000 compared...</div>' +
+        '<div style="font-size:.75rem;color:#646464;margin-top:.5rem;">Time complexity: <span style="color:#dc3545;">O(N · d)</span> — N=docs, d=dimensions</div>' +
+        '</div>';
+    }
+  },
+  {
+    msg: 'Scan complete. All 1M similarity scores computed. Now sorting to find the top-5 nearest neighbors.',
+    render: function() {
+      return '<div style="padding:.25rem 0;">' +
+        '<div class="progress-track"><div class="progress-fill" style="width:100%;background:#28a745;"></div></div>' +
+        '<div style="font-size:.75rem;color:#28a745;margin:.3rem 0;">1,000,000 / 1,000,000 ✓ — Sorting by score...</div>' +
+        '</div>';
+    }
+  },
+  {
+    msg: 'Top-5 results returned — ranked by cosine similarity. 100% accurate: no result was missed.',
+    render: function() {
+      var items = [
+        { rank: 1, text: 'Italian pasta cooking guide', sim: '0.94' },
+        { rank: 2, text: 'Pasta shapes and sauces explained', sim: '0.91' },
+        { rank: 3, text: 'How to boil pasta perfectly', sim: '0.89' },
+        { rank: 4, text: 'Traditional Roman pasta recipes', sim: '0.86' },
+        { rank: 5, text: 'Pasta water: salt and starch tips', sim: '0.83' },
+      ];
+      return '<ul class="result-list">' + items.map(function(it) {
+        return '<li><span>#' + it.rank + ' ' + it.text + '</span>' +
+               '<span class="badge badge-green">sim=' + it.sim + '</span></li>';
+      }).join('') + '</ul>';
+    }
+  },
+  {
+    msg: 'Brute force: 100% recall, but scanning 1M vectors takes ~500ms. Too slow for production query latency. HNSW solves this.',
+    render: function() {
+      return '<div style="padding:.5rem 0;">' +
+        '<div style="display:flex;gap:1rem;justify-content:center;margin-bottom:.75rem;">' +
+        '<div style="text-align:center;"><div style="font-size:1.2rem;font-weight:700;color:#28a745;">100%</div><div style="font-size:.72rem;color:#646464;">Accuracy</div></div>' +
+        '<div style="text-align:center;"><div style="font-size:1.2rem;font-weight:700;color:#dc3545;">~500ms</div><div style="font-size:.72rem;color:#646464;">Latency</div></div>' +
+        '<div style="text-align:center;"><div style="font-size:1.2rem;font-weight:700;color:#dc3545;">O(N)</div><div style="font-size:.72rem;color:#646464;">Complexity</div></div>' +
+        '</div>' +
+        '<div style="font-size:.78rem;color:#dc3545;text-align:center;">❌ Not suitable for real-time production use</div>' +
+        '</div>';
+    },
+    done: true
+  }
+];
+
+// --- HNSW Steps ---
+// Nodes per layer: layer 2 (sparse, 4 nodes), layer 1 (8 nodes), layer 0 (16 nodes)
+var HNSW_NODES = {
+  2: ['A','B','C','D'],
+  1: ['A','B','C','D','E','F','G','H'],
+  0: ['A','B','C','D','E','F','G','H','I','J','K','L','M','N','O','P']
+};
+
+function hnswLayer(layerIdx, activeNode, visitedNodes, resultNodes, queryShown) {
+  var nodes = HNSW_NODES[layerIdx];
+  var label = layerIdx === 2 ? 'Layer 2 — sparse (few long-range connections)' :
+              layerIdx === 1 ? 'Layer 1 — medium density' :
+                               'Layer 0 — dense (every node, local connections)';
+  var nodesHtml = '';
+  if (queryShown) {
+    nodesHtml += '<div class="hnsw-node query" title="Query vector">Q</div>';
+  }
+  nodes.forEach(function(n) {
+    var cls = 'hnsw-node';
+    if (resultNodes && resultNodes.indexOf(n) !== -1) cls += ' result';
+    else if (n === activeNode) cls += ' active';
+    else if (visitedNodes && visitedNodes.indexOf(n) !== -1) cls += ' visited';
+    nodesHtml += '<div class="' + cls + '">' + n + '</div>';
+  });
+  return '<div class="hnsw-layer"><div class="hnsw-layer-label">' + label + '</div>' +
+         '<div class="hnsw-nodes">' + nodesHtml + '</div></div>';
+}
+
+var HNSW_STEPS = [
+  {
+    msg: 'HNSW: a multi-layer graph. Layer 2 is sparse with few nodes (long-range connections). Layer 0 has all nodes (dense local graph).',
+    render: function() {
+      return '<div class="hnsw-layers">' +
+        hnswLayer(2, null, null, null, false) +
+        hnswLayer(1, null, null, null, false) +
+        hnswLayer(0, null, null, null, false) + '</div>';
+    }
+  },
+  {
+    msg: 'Query vector enters at Layer 2 (top). Greedy traversal: start at entry node A, check neighbors, move to the closest one — node C.',
+    render: function() {
+      return '<div class="hnsw-layers">' +
+        hnswLayer(2, 'C', ['A','B'], null, true) +
+        hnswLayer(1, null, null, null, false) +
+        hnswLayer(0, null, null, null, false) + '</div>';
+    }
+  },
+  {
+    msg: 'Drop to Layer 1. Resume greedy search from node C. Explored neighbors, advanced to F — closer to query in this layer.',
+    render: function() {
+      return '<div class="hnsw-layers">' +
+        hnswLayer(2, null, ['A','B','C','D'], null, false) +
+        hnswLayer(1, 'F', ['C','D','E'], null, true) +
+        hnswLayer(0, null, null, null, false) + '</div>';
+    }
+  },
+  {
+    msg: 'Layer 0 — full dense graph. Starting from F, exploring local neighborhood. Narrowing in on nearest neighbors.',
+    render: function() {
+      return '<div class="hnsw-layers">' +
+        hnswLayer(2, null, ['A','B','C','D'], null, false) +
+        hnswLayer(1, null, ['C','D','E','F','G','H'], null, false) +
+        hnswLayer(0, 'J', ['F','G','H','I'], null, true) + '</div>';
+    }
+  },
+  {
+    msg: 'Layer 0 search converges. Top-5 approximate nearest neighbors found: I, J, K, L, M — no need to check remaining 995K vectors.',
+    render: function() {
+      return '<div class="hnsw-layers">' +
+        hnswLayer(2, null, ['A','B','C','D'], null, false) +
+        hnswLayer(1, null, ['C','D','E','F','G','H'], null, false) +
+        hnswLayer(0, null, ['F','G','H','I','J'], ['I','J','K','L','M'], true) + '</div>';
+    }
+  },
+  {
+    msg: 'Top-5 approximate results returned — 99%+ recall vs brute force. Only ~30 nodes visited out of 1,000,000.',
+    render: function() {
+      var items = [
+        { rank: 1, text: 'Italian pasta cooking guide', sim: '0.94' },
+        { rank: 2, text: 'Pasta shapes and sauces explained', sim: '0.91' },
+        { rank: 3, text: 'How to boil pasta perfectly', sim: '0.89' },
+        { rank: 4, text: 'Traditional Roman pasta recipes', sim: '0.86' },
+        { rank: 5, text: 'Pasta water: salt and starch tips', sim: '0.83' },
+      ];
+      return '<ul class="result-list">' + items.map(function(it) {
+        return '<li><span>#' + it.rank + ' ' + it.text + '</span>' +
+               '<span class="badge badge-amber">~' + it.sim + '</span></li>';
+      }).join('') + '</ul>';
+    }
+  },
+  {
+    msg: 'O(log N) — HNSW query latency is ~2ms vs ~500ms brute force. 99%+ recall. The small accuracy trade-off is worth the 250× speed gain.',
+    render: function() {
+      return '<div style="padding:.5rem 0;">' +
+        '<div style="display:flex;gap:1rem;justify-content:center;margin-bottom:.75rem;">' +
+        '<div style="text-align:center;"><div style="font-size:1.2rem;font-weight:700;color:#f0a500;">~99%</div><div style="font-size:.72rem;color:#646464;">Recall</div></div>' +
+        '<div style="text-align:center;"><div style="font-size:1.2rem;font-weight:700;color:#28a745;">~2ms</div><div style="font-size:.72rem;color:#646464;">Latency</div></div>' +
+        '<div style="text-align:center;"><div style="font-size:1.2rem;font-weight:700;color:#28a745;">O(log N)</div><div style="font-size:.72rem;color:#646464;">Complexity</div></div>' +
+        '</div>' +
+        '<div class="tradeoff-bar"><span class="tradeoff-label">Fast</span><div class="tradeoff-track"></div><span class="tradeoff-label">Accurate</span></div>' +
+        '<div style="font-size:.78rem;color:#28a745;text-align:center;margin-top:.5rem;">✓ Production-ready — tunable via ef_search parameter</div>' +
+        '</div>';
+    },
+    done: true
+  }
+];
+
+function getSteps() { return mode === 'bf' ? BF_STEPS : HNSW_STEPS; }
+
+function draw() {
+  var steps = getSteps();
+  var s = steps[idx];
+  document.getElementById('viz-area').innerHTML = s.render();
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
+  document.getElementById('btn-step').disabled = !!(s.done);
+  document.getElementById('btn-step').textContent = s.done ? 'Done ✓' : 'Step →';
+  document.getElementById('btn-back').disabled = (idx === 0);
+}
+
+function setMode(m) {
+  mode = m;
+  idx = 0;
+  document.getElementById('mode-bf').classList.toggle('active', m === 'bf');
+  document.getElementById('mode-hnsw').classList.toggle('active', m === 'hnsw');
+  draw();
+}
+
+document.getElementById('mode-bf').onclick = function() { setMode('bf'); };
+document.getElementById('mode-hnsw').onclick = function() { setMode('hnsw'); };
+document.getElementById('btn-step').onclick = function() {
+  var steps = getSteps();
+  if (idx < steps.length - 1) { idx++; draw(); }
+};
+document.getElementById('btn-back').onclick = function() {
+  if (idx > 0) { idx--; draw(); }
+};
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+draw();
+</script>
+</body>
+</html>

@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ECS - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .5rem;
+  }
+  #mode-row {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: .75rem;
+  }
+  .mode-btn {
+    padding: .28rem .65rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .8rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: background .15s;
+  }
+  .mode-btn.active { background: #284b63; color: #fff; }
+  #diagram { margin-bottom: .75rem; }
+  svg { display: block; width: 100%; height: auto; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>ECS — Container Orchestration</h4>
+  <div id="mode-row">
+    <button class="mode-btn active" id="mbtn-ec2" onclick="setMode('ec2')">EC2 Launch Type</button>
+    <button class="mode-btn" id="mbtn-fg" onclick="setMode('fargate')">Fargate Launch Type</button>
+  </div>
+  <div id="diagram"></div>
+  <div id="stat"></div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var C = {
+  bg: '#2a2a2e', border: '#393639', header: '#284b63',
+  amber: '#f0a500', green: '#28a745', red: '#dc3545',
+  blue: '#007bff', text: '#d4d4d4', dim: '#444'
+};
+
+var mode = 'ec2';
+var idx = 0;
+
+// Each step: hi maps component keys to states, arrows array, and a badge note
+var MODES = {
+  ec2: [
+    {
+      msg: 'EC2 Launch Type — Step 1/7: ECS Cluster with 3 EC2 container host instances running the ECS agent.',
+      cluster: 'active', instances: ['running','running','running'], service: null, tasks: [], alb: null,
+      note: null
+    },
+    {
+      msg: 'EC2 Launch Type — Step 2/7: Define Task Definition — Docker image (ECR URI), CPU/memory, port mappings, log config.',
+      cluster: 'active', instances: ['running','running','running'], service: null, tasks: [], alb: null,
+      taskDef: 'active',
+      note: 'image: 123.dkr.ecr.us-east-1.amazonaws.com/app:v1'
+    },
+    {
+      msg: 'EC2 Launch Type — Step 3/7: Create Service with desired count = 2. ECS scheduler places tasks on cluster instances.',
+      cluster: 'done', instances: ['running','running','running'], service: 'active', tasks: [], alb: null,
+      taskDef: 'done',
+      note: 'desiredCount=2, minimumHealthyPercent=50'
+    },
+    {
+      msg: 'EC2 Launch Type — Step 4/7: ECS schedules 2 Tasks using bin-packing across EC2 instances. Tasks start.',
+      cluster: 'done', instances: ['active','active','running'], service: 'done', tasks: ['running','running'], alb: null,
+      taskDef: 'done',
+      note: 'Bin packing: CPU/memory aware placement'
+    },
+    {
+      msg: 'EC2 Launch Type — Step 5/7: ALB registers task container IPs as targets. Health check passes. Traffic flows.',
+      cluster: 'done', instances: ['active','active','running'], service: 'done', tasks: ['running','running'], alb: 'active',
+      taskDef: 'done',
+      note: 'ALB target group: container port 8000'
+    },
+    {
+      msg: 'EC2 Launch Type — Step 6/7: Task crashes — ECS detects unhealthy. Service launches replacement task automatically.',
+      cluster: 'done', instances: ['active','error','running'], service: 'active', tasks: ['running','pending'], alb: 'active',
+      taskDef: 'done',
+      note: 'Self-healing: ECS replaces crashed task'
+    },
+    {
+      msg: 'EC2 Launch Type — Step 7/7: Deploy new image — rolling update. New tasks start, old tasks drain and stop. Zero downtime.',
+      cluster: 'done', instances: ['active','active','active'], service: 'done', tasks: ['running','running'], alb: 'done',
+      taskDef: 'active',
+      note: 'Rolling update: new tasks → health check → drain old tasks'
+    }
+  ],
+  fargate: [
+    {
+      msg: 'Fargate Launch Type — Step 1/5: No EC2 instances to manage. Fargate handles compute provisioning entirely.',
+      cluster: 'active', fargateCloud: 'active', service: null, tasks: [], alb: null,
+      note: 'No EC2 cluster management'
+    },
+    {
+      msg: 'Fargate Launch Type — Step 2/5: Task Definition: same structure as EC2 (image, CPU, memory, ports) but FARGATE compatibility.',
+      cluster: 'active', fargateCloud: 'active', service: null, tasks: [], alb: null,
+      taskDef: 'active',
+      note: 'requiresCompatibilities: [FARGATE], networkMode: awsvpc'
+    },
+    {
+      msg: 'Fargate Launch Type — Step 3/5: ECS allocates serverless compute automatically. Tasks get dedicated ENIs (VPC networking).',
+      cluster: 'done', fargateCloud: 'active', service: 'active', tasks: ['running','running'], alb: null,
+      taskDef: 'done',
+      note: 'Managed compute: no visibility into host'
+    },
+    {
+      msg: 'Fargate Launch Type — Step 4/5: Pay per task CPU/memory per second. Only charged while task runs — no idle host cost.',
+      cluster: 'done', fargateCloud: 'done', service: 'done', tasks: ['running','running'], alb: 'active',
+      taskDef: 'done',
+      note: 'Billing: vCPU-sec + GB-sec per running task'
+    },
+    {
+      msg: 'Fargate Launch Type — Step 5/5: Cold start slightly slower (no pre-warmed hosts) but zero cluster management overhead.',
+      cluster: 'done', fargateCloud: 'done', service: 'done', tasks: ['running','running'], alb: 'done',
+      taskDef: 'done',
+      note: 'Trade-off: cold start vs management overhead'
+    }
+  ]
+};
+
+function getSteps() { return MODES[mode]; }
+
+function hiColor(state) {
+  if (state === 'active') return C.amber;
+  if (state === 'done')   return C.green;
+  if (state === 'error')  return C.red;
+  return C.border;
+}
+function hiFill(state) {
+  if (state === 'active') return '#2e2810';
+  if (state === 'done')   return '#0e2018';
+  if (state === 'error')  return '#2e1010';
+  return C.bg;
+}
+
+function drawBox(out, x, y, w, h, label, sub, state) {
+  var bc = hiColor(state);
+  var bf = hiFill(state);
+  var sw = state && state !== 'idle' ? 2 : 1;
+  out += '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="' + h + '" rx="4" fill="' + bf + '" stroke="' + bc + '" stroke-width="' + sw + '"/>';
+  out += '<rect x="' + x + '" y="' + y + '" width="' + w + '" height="13" rx="4" fill="' + C.header + '"/>';
+  out += '<rect x="' + x + '" y="' + (y + 9) + '" width="' + w + '" height="4" fill="' + C.header + '"/>';
+  var tc = bc !== C.border ? bc : C.text;
+  out += '<text x="' + (x + w / 2) + '" y="' + (y + 25) + '" text-anchor="middle" font-size="8.5" font-weight="600" fill="' + tc + '">' + label + '</text>';
+  if (sub) {
+    out += '<text x="' + (x + w / 2) + '" y="' + (y + 36) + '" text-anchor="middle" font-size="7" fill="#666">' + sub + '</text>';
+  }
+  return out;
+}
+
+function renderSVG(step) {
+  var W = 510, H = 240;
+  var out = ['<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">'];
+  var s = '';
+
+  // --- EC2 Mode Layout ---
+  if (mode === 'ec2') {
+    // ECS Cluster boundary
+    var clX = 8, clY = 8, clW = 210, clH = 140;
+    var clBC = hiColor(step.cluster);
+    s += '<rect x="' + clX + '" y="' + clY + '" width="' + clW + '" height="' + clH + '" rx="6" fill="#1a1a1e" stroke="' + clBC + '" stroke-width="' + (step.cluster ? 2 : 1) + '" stroke-dasharray="4,2"/>';
+    s += '<text x="' + (clX + clW / 2) + '" y="' + (clY + 13) + '" text-anchor="middle" font-size="8" fill="' + clBC + '">ECS Cluster</text>';
+
+    // EC2 instances in cluster
+    var iW = 56, iH = 44, igap = 6;
+    var isx = clX + 10, isy = clY + 20;
+    (step.instances || []).forEach(function(state, i) {
+      var ibc = hiColor(state);
+      var ibf = hiFill(state);
+      s += '<rect x="' + (isx + i * (iW + igap)) + '" y="' + isy + '" width="' + iW + '" height="' + iH + '" rx="3" fill="' + ibf + '" stroke="' + ibc + '" stroke-width="' + (state !== 'running' ? 2 : 1) + '"/>';
+      s += '<text x="' + (isx + i * (iW + igap) + iW / 2) + '" y="' + (isy + 16) + '" text-anchor="middle" font-size="7.5" fill="#aaa">EC2</text>';
+      s += '<text x="' + (isx + i * (iW + igap) + iW / 2) + '" y="' + (isy + 30) + '" text-anchor="middle" font-size="8" font-weight="600" fill="' + ibc + '">' + (i + 1) + '</text>';
+    });
+
+    // Tasks running on cluster
+    if (step.tasks && step.tasks.length > 0) {
+      var tsy = isy + iH + 8;
+      step.tasks.forEach(function(tstate, i) {
+        var tbc = hiColor(tstate);
+        var tbf = hiFill(tstate);
+        var tx = isx + i * (iW + igap);
+        s += '<rect x="' + tx + '" y="' + tsy + '" width="' + iW + '" height="32" rx="3" fill="' + tbf + '" stroke="' + tbc + '" stroke-width="1.5"/>';
+        s += '<text x="' + (tx + iW / 2) + '" y="' + (tsy + 12) + '" text-anchor="middle" font-size="7" fill="#aaa">Task</text>';
+        s += '<text x="' + (tx + iW / 2) + '" y="' + (tsy + 24) + '" text-anchor="middle" font-size="8" fill="' + tbc + '">' + (tstate === 'pending' ? 'Pending' : 'Running') + '</text>';
+      });
+    }
+
+    // Task Definition box
+    if (step.taskDef) {
+      var tdX = 240, tdY = 8, tdW = 120, tdH = 55;
+      s = drawBox(s, tdX, tdY, tdW, tdH, 'Task Definition', 'image, CPU, mem, ports', step.taskDef);
+    }
+
+    // Service box
+    if (step.service) {
+      var svX = 240, svY = 75, svW = 120, svH = 44;
+      s = drawBox(s, svX, svY, svW, svH, 'ECS Service', 'desiredCount=2', step.service);
+    }
+
+    // ALB box
+    if (step.alb) {
+      var albX = 390, albY = 75, albW = 100, albH = 44;
+      s = drawBox(s, albX, albY, albW, albH, 'ALB', 'target group', step.alb);
+      // Arrow from service to ALB
+      s += '<defs><marker id="ah-green2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="' + C.green + '"/></marker></defs>';
+      s += '<line x1="' + (svX + svW) + '" y1="' + (svY + svH / 2) + '" x2="' + albX + '" y2="' + (albY + albH / 2) + '" stroke="' + C.green + '" stroke-width="1.5" marker-end="url(#ah-green2)"/>';
+    }
+  }
+
+  // --- Fargate Mode Layout ---
+  if (mode === 'fargate') {
+    // Managed compute cloud box
+    var fcX = 8, fcY = 8, fcW = 190, fcH = 140;
+    var fcBC = hiColor(step.fargateCloud);
+    s += '<rect x="' + fcX + '" y="' + fcY + '" width="' + fcW + '" height="' + fcH + '" rx="6" fill="#1a1e1a" stroke="' + fcBC + '" stroke-width="2" stroke-dasharray="5,2"/>';
+    s += '<text x="' + (fcX + fcW / 2) + '" y="' + (fcY + 13) + '" text-anchor="middle" font-size="8" fill="' + fcBC + '">Fargate Managed Compute</text>';
+    s += '<text x="' + (fcX + fcW / 2) + '" y="' + (fcY + 28) + '" text-anchor="middle" font-size="7.5" fill="#555">(no EC2 instances visible)</text>';
+
+    // Tasks inside fargate cloud
+    if (step.tasks && step.tasks.length > 0) {
+      var tW = 72, tH = 50, tgap = 10;
+      var tsx = fcX + (fcW - step.tasks.length * tW - (step.tasks.length - 1) * tgap) / 2;
+      var tsy2 = fcY + 40;
+      step.tasks.forEach(function(tstate, i) {
+        var tbc = hiColor(tstate);
+        var tbf = hiFill(tstate);
+        var tx = tsx + i * (tW + tgap);
+        s += '<rect x="' + tx + '" y="' + tsy2 + '" width="' + tW + '" height="' + tH + '" rx="4" fill="' + tbf + '" stroke="' + tbc + '" stroke-width="2"/>';
+        s += '<rect x="' + tx + '" y="' + tsy2 + '" width="' + tW + '" height="13" rx="4" fill="' + C.header + '"/>';
+        s += '<rect x="' + tx + '" y="' + (tsy2 + 9) + '" width="' + tW + '" height="4" fill="' + C.header + '"/>';
+        s += '<text x="' + (tx + tW / 2) + '" y="' + (tsy2 + 9) + '" text-anchor="middle" font-size="7" fill="#aaa">Task</text>';
+        s += '<text x="' + (tx + tW / 2) + '" y="' + (tsy2 + 26) + '" text-anchor="middle" font-size="8.5" font-weight="600" fill="' + tbc + '">' + (i + 1) + '</text>';
+        s += '<text x="' + (tx + tW / 2) + '" y="' + (tsy2 + 39) + '" text-anchor="middle" font-size="7" fill="#666">container</text>';
+      });
+    }
+
+    // Task Definition
+    if (step.taskDef) {
+      var tdX2 = 220, tdY2 = 8, tdW2 = 120, tdH2 = 55;
+      s = drawBox(s, tdX2, tdY2, tdW2, tdH2, 'Task Definition', 'FARGATE compat', step.taskDef);
+    }
+
+    // Service
+    if (step.service) {
+      var svX2 = 220, svY2 = 75, svW2 = 120, svH2 = 44;
+      s = drawBox(s, svX2, svY2, svW2, svH2, 'ECS Service', 'desiredCount=2', step.service);
+    }
+
+    // ALB
+    if (step.alb) {
+      var albX2 = 370, albY2 = 75, albW2 = 100, albH2 = 44;
+      s = drawBox(s, albX2, albY2, albW2, albH2, 'ALB', 'target group', step.alb);
+      s += '<defs><marker id="ah-alb2" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="' + C.green + '"/></marker></defs>';
+      s += '<line x1="' + (220 + 120) + '" y1="97" x2="' + albX2 + '" y2="97" stroke="' + C.green + '" stroke-width="1.5" marker-end="url(#ah-alb2)"/>';
+    }
+  }
+
+  // Note badge
+  if (step.note) {
+    var nlen = step.note.length;
+    var nw = nlen * 5.2 + 16;
+    s += '<rect x="8" y="' + (H - 22) + '" width="' + nw + '" height="16" rx="3" fill="#1a2a1a" stroke="' + C.green + '" stroke-width="1"/>';
+    s += '<text x="16" y="' + (H - 10) + '" font-size="7.5" fill="' + C.green + '">' + step.note + '</text>';
+  }
+
+  out.push(s);
+  out.push('</svg>');
+  return out.join('');
+}
+
+function render() {
+  var steps = getSteps();
+  var step = steps[idx];
+  document.getElementById('diagram').innerHTML = renderSVG(step);
+  document.getElementById('stat').textContent = step.msg;
+  var isLast = idx >= steps.length - 1;
+  document.getElementById('btn-step').disabled = isLast;
+  document.getElementById('btn-step').textContent = isLast ? 'Done ✓' : 'Step →';
+  document.getElementById('btn-back').disabled = idx === 0;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
+}
+
+function setMode(m) {
+  mode = m;
+  idx = 0;
+  document.getElementById('mbtn-ec2').className = 'mode-btn' + (m === 'ec2'     ? ' active' : '');
+  document.getElementById('mbtn-fg').className  = 'mode-btn' + (m === 'fargate' ? ' active' : '');
+  render();
+}
+
+document.getElementById('btn-step').onclick  = function() { if (idx < getSteps().length - 1) { idx++; render(); } };
+document.getElementById('btn-back').onclick  = function() { if (idx > 0) { idx--; render(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; render(); };
+
+render();
+</script>
+</body>
+</html>

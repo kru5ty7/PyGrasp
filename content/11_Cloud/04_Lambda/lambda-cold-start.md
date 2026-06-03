@@ -121,6 +121,12 @@ def handler(event, context):
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/lambda-cold-start.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Lambda Cold Start Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Cold start latency is directly linked to deployment package size. Container images can carry much larger dependency trees than ZIP packages but do not eliminate the cold start - they can increase it if the image is large.

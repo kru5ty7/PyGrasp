@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EC2 ELB - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .5rem;
+  }
+  #mode-row {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: .75rem;
+  }
+  .mode-btn {
+    padding: .28rem .65rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .8rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: background .15s;
+  }
+  .mode-btn.active { background: #284b63; color: #fff; }
+  #diagram { margin-bottom: .75rem; }
+  svg { display: block; width: 100%; height: auto; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>ELB Types Comparison</h4>
+  <div id="mode-row">
+    <button class="mode-btn active" id="mbtn-alb" onclick="setMode('alb')">ALB (Layer 7)</button>
+    <button class="mode-btn" id="mbtn-nlb" onclick="setMode('nlb')">NLB (Layer 4)</button>
+    <button class="mode-btn" id="mbtn-clb" onclick="setMode('clb')">CLB (Legacy)</button>
+  </div>
+  <div id="diagram"></div>
+  <div id="stat"></div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var C = {
+  bg: '#2a2a2e', border: '#393639', header: '#284b63',
+  amber: '#f0a500', green: '#28a745', red: '#dc3545',
+  blue: '#007bff', text: '#d4d4d4', dim: '#444'
+};
+
+var mode = 'alb';
+var idx = 0;
+
+// SVG node specs per mode
+// Each step: highlights on nodes and arrows
+var MODES = {
+  alb: {
+    title: 'ALB — Application Load Balancer (Layer 7)',
+    nodes: {
+      client:  { x: 10,  y: 105, w: 70,  h: 34, label: 'Client' },
+      alb:     { x: 120, y: 105, w: 90,  h: 34, label: 'ALB' },
+      apiTg:   { x: 270, y: 60,  w: 110, h: 34, label: 'API Target Group' },
+      staticTg:{ x: 270, y: 150, w: 110, h: 34, label: 'Static Target Group' }
+    },
+    steps: [
+      { msg: 'ALB Step 1/7: HTTPS request arrives at the ALB from the internet.',
+        hi: { client: 'active', alb: 'active' },
+        arrows: [{ from: 'client', to: 'alb', color: '#f0a500', label: 'HTTPS' }] },
+      { msg: 'ALB Step 2/7: ALB terminates TLS. The ALB decrypts the HTTPS connection using the ACM certificate.',
+        hi: { alb: 'active' },
+        arrows: [] },
+      { msg: 'ALB Step 3/7: ALB inspects HTTP headers and request path — operating at Layer 7 (application layer).',
+        hi: { alb: 'active' },
+        arrows: [] },
+      { msg: 'ALB Step 4/7: Rule matches: /api/* path — forwarded to API Target Group.',
+        hi: { alb: 'active', apiTg: 'active' },
+        arrows: [{ from: 'alb', to: 'apiTg', color: '#007bff', label: '/api/*' }] },
+      { msg: 'ALB Step 5/7: Rule matches: /static/* path — forwarded to Static Target Group.',
+        hi: { alb: 'active', staticTg: 'active' },
+        arrows: [{ from: 'alb', to: 'staticTg', color: '#f0a500', label: '/static/*' }] },
+      { msg: 'ALB Step 6/7: Health check — HTTP GET /health → 200 OK. Target marked healthy and added to rotation.',
+        hi: { alb: 'done', apiTg: 'done', staticTg: 'done' },
+        arrows: [
+          { from: 'alb', to: 'apiTg',    color: '#28a745', label: 'GET /health' },
+          { from: 'alb', to: 'staticTg', color: '#28a745', label: 'GET /health' }
+        ] },
+      { msg: 'ALB Step 7/7: Features — sticky sessions, WebSockets, gRPC support, path/host routing. SSL termination at ALB level.',
+        hi: { alb: 'done', apiTg: 'done', staticTg: 'done' },
+        arrows: [],
+        badges: ['Sticky sessions', 'WebSockets', 'gRPC', 'Path routing'] }
+    ]
+  },
+  nlb: {
+    title: 'NLB — Network Load Balancer (Layer 4)',
+    nodes: {
+      client:  { x: 10,  y: 105, w: 70, h: 34, label: 'Client' },
+      nlb:     { x: 120, y: 105, w: 90, h: 34, label: 'NLB' },
+      target1: { x: 270, y: 70,  w: 100, h: 34, label: 'Target 1' },
+      target2: { x: 270, y: 140, w: 100, h: 34, label: 'Target 2' }
+    },
+    steps: [
+      { msg: 'NLB Step 1/5: TCP connection arrives at the NLB.',
+        hi: { client: 'active', nlb: 'active' },
+        arrows: [{ from: 'client', to: 'nlb', color: '#f0a500', label: 'TCP' }] },
+      { msg: 'NLB Step 2/5: NLB routes based on IP and port only — no TLS termination, no HTTP parsing.',
+        hi: { nlb: 'active' },
+        arrows: [] },
+      { msg: 'NLB Step 3/5: Connection forwarded to backend target. NLB preserves original source IP (unlike ALB).',
+        hi: { nlb: 'active', target1: 'active' },
+        arrows: [{ from: 'nlb', to: 'target1', color: '#007bff', label: 'src IP preserved' }] },
+      { msg: 'NLB Step 4/5: Ultra-low latency — no HTTP parsing overhead. Ideal for gaming, financial trading, IoT.',
+        hi: { nlb: 'done', target1: 'done', target2: 'done' },
+        arrows: [
+          { from: 'nlb', to: 'target1', color: '#28a745', label: '<1ms' },
+          { from: 'nlb', to: 'target2', color: '#28a745', label: '<1ms' }
+        ] },
+      { msg: 'NLB Step 5/5: NLB preserves source IP — backend sees real client IP directly. Static IP per AZ available.',
+        hi: { nlb: 'done', target1: 'done', target2: 'done' },
+        arrows: [],
+        badges: ['Source IP preserved', 'Static IP / Elastic IP', 'Ultra-low latency', 'TCP/UDP/TLS'] }
+    ]
+  },
+  clb: {
+    title: 'CLB — Classic Load Balancer (Legacy)',
+    nodes: {
+      client:   { x: 10,  y: 105, w: 70,  h: 34, label: 'Client' },
+      clb:      { x: 120, y: 105, w: 90,  h: 34, label: 'CLB' },
+      target1:  { x: 280, y: 90,  w: 100, h: 34, label: 'Instance 1' },
+      target2:  { x: 280, y: 140, w: 100, h: 34, label: 'Instance 2' }
+    },
+    steps: [
+      { msg: 'CLB Step 1/4: Classic single-tier routing. CLB predates the VPC-native ALB/NLB design.',
+        hi: { client: 'active', clb: 'active' },
+        arrows: [{ from: 'client', to: 'clb', color: '#f0a500', label: 'request' }] },
+      { msg: 'CLB Step 2/4: No path-based routing. All traffic goes to the same backend pool regardless of URL.',
+        hi: { clb: 'active', target1: 'active', target2: 'active' },
+        arrows: [
+          { from: 'clb', to: 'target1', color: '#444', label: '' },
+          { from: 'clb', to: 'target2', color: '#444', label: '' }
+        ] },
+      { msg: 'CLB Step 3/4: Being deprecated by AWS. Missing Layer 7 features, WebSocket support, and Lambda targets.',
+        hi: { clb: 'error' },
+        arrows: [] },
+      { msg: 'CLB Step 4/4: Use ALB for HTTP/HTTPS workloads, NLB for TCP/UDP. Migrate away from CLB in all new deployments.',
+        hi: { clb: 'error' },
+        arrows: [],
+        badges: ['Use ALB for HTTP', 'Use NLB for TCP/UDP', 'Migrate from CLB'] }
+    ]
+  }
+};
+
+function getSteps() { return MODES[mode].steps; }
+function getNodes()  { return MODES[mode].nodes; }
+
+function nodeColor(key, hi) {
+  var s = hi[key];
+  if (s === 'active') return C.amber;
+  if (s === 'done')   return C.green;
+  if (s === 'error')  return C.red;
+  return C.border;
+}
+function nodeFill(key, hi) {
+  var s = hi[key];
+  if (s === 'active') return '#2e2810';
+  if (s === 'done')   return '#0e2018';
+  if (s === 'error')  return '#2e1010';
+  return C.bg;
+}
+function nodeCenter(key, nodes) {
+  var n = nodes[key];
+  return { x: n.x + n.w / 2, y: n.y + n.h / 2 };
+}
+function edgePoint(key, toward, nodes) {
+  var nc = nodeCenter(key, nodes);
+  var tc = nodeCenter(toward, nodes);
+  var n = nodes[key];
+  var dx = tc.x - nc.x, dy = tc.y - nc.y;
+  var hw = n.w / 2, hh = n.h / 2;
+  var absDx = Math.abs(dx), absDy = Math.abs(dy);
+  if (absDx * hh > absDy * hw) {
+    var sx = dx > 0 ? 1 : -1;
+    return { x: nc.x + sx * hw, y: nc.y + (absDx > 0 ? dy * hw / absDx : 0) };
+  } else {
+    var sy = dy > 0 ? 1 : -1;
+    return { x: nc.x + (absDy > 0 ? dx * hh / absDy : 0), y: nc.y + sy * hh };
+  }
+}
+
+function renderSVG(step) {
+  var W = 510, H = 240;
+  var nodes = getNodes();
+  var out = '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">';
+
+  // Title
+  out += '<text x="' + W / 2 + '" y="14" text-anchor="middle" font-size="9" fill="#666">' + MODES[mode].title + '</text>';
+
+  // Arrows
+  (step.arrows || []).forEach(function(arr) {
+    var id = 'ah-' + arr.color.replace('#','');
+    var p1 = edgePoint(arr.from, arr.to, nodes);
+    var p2 = edgePoint(arr.to, arr.from, nodes);
+    var mid = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+    out += '<defs><marker id="' + id + '" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="' + arr.color + '"/></marker></defs>';
+    out += '<line x1="' + p1.x + '" y1="' + p1.y + '" x2="' + p2.x + '" y2="' + p2.y + '" stroke="' + arr.color + '" stroke-width="1.5" marker-end="url(#' + id + ')"/>';
+    if (arr.label) {
+      out += '<rect x="' + (mid.x - 38) + '" y="' + (mid.y - 8) + '" width="76" height="14" rx="3" fill="#161618" opacity="0.9"/>';
+      out += '<text x="' + mid.x + '" y="' + (mid.y + 3) + '" text-anchor="middle" font-size="8" fill="' + arr.color + '">' + arr.label + '</text>';
+    }
+  });
+
+  // Nodes
+  Object.keys(nodes).forEach(function(key) {
+    var n = nodes[key];
+    var bc = nodeColor(key, step.hi);
+    var bf = nodeFill(key, step.hi);
+    var sw = step.hi[key] ? 2 : 1;
+    var headerH = 13;
+    out += '<rect x="' + n.x + '" y="' + n.y + '" width="' + n.w + '" height="' + n.h + '" rx="5" fill="' + bf + '" stroke="' + bc + '" stroke-width="' + sw + '"/>';
+    out += '<rect x="' + n.x + '" y="' + n.y + '" width="' + n.w + '" height="' + headerH + '" rx="5" fill="' + C.header + '"/>';
+    out += '<rect x="' + n.x + '" y="' + (n.y + headerH - 4) + '" width="' + n.w + '" height="4" fill="' + C.header + '"/>';
+    var tc = bc !== C.border ? bc : C.text;
+    out += '<text x="' + (n.x + n.w / 2) + '" y="' + (n.y + n.h / 2 + 7) + '" text-anchor="middle" font-size="9.5" font-weight="600" fill="' + tc + '">' + n.label + '</text>';
+  });
+
+  // Badges
+  if (step.badges && step.badges.length) {
+    var by = H - 24;
+    var bx = 8;
+    step.badges.forEach(function(b) {
+      var bw = b.length * 5.2 + 12;
+      out += '<rect x="' + bx + '" y="' + by + '" width="' + bw + '" height="16" rx="3" fill="#1a2a1a" stroke="#28a745" stroke-width="1"/>';
+      out += '<text x="' + (bx + bw / 2) + '" y="' + (by + 11) + '" text-anchor="middle" font-size="7.5" fill="#28a745">' + b + '</text>';
+      bx += bw + 5;
+    });
+  }
+
+  out += '</svg>';
+  return out;
+}
+
+function render() {
+  var steps = getSteps();
+  var step = steps[idx];
+  document.getElementById('diagram').innerHTML = renderSVG(step);
+  document.getElementById('stat').textContent = step.msg;
+  var isLast = idx >= steps.length - 1;
+  document.getElementById('btn-step').disabled = isLast;
+  document.getElementById('btn-step').textContent = isLast ? 'Done ✓' : 'Step →';
+  document.getElementById('btn-back').disabled = idx === 0;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
+}
+
+function setMode(m) {
+  mode = m;
+  idx = 0;
+  document.getElementById('mbtn-alb').className = 'mode-btn' + (m === 'alb' ? ' active' : '');
+  document.getElementById('mbtn-nlb').className = 'mode-btn' + (m === 'nlb' ? ' active' : '');
+  document.getElementById('mbtn-clb').className = 'mode-btn' + (m === 'clb' ? ' active' : '');
+  render();
+}
+
+document.getElementById('btn-step').onclick  = function() { if (idx < getSteps().length - 1) { idx++; render(); } };
+document.getElementById('btn-back').onclick  = function() { if (idx > 0) { idx--; render(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; render(); };
+
+render();
+</script>
+</body>
+</html>

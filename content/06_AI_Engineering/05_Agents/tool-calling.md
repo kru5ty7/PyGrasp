@@ -55,6 +55,12 @@ LangChain's `@tool` decorator simplifies tool definition. Decorating a function 
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/tool-calling.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Tool Calling Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Tool calling is the mechanism that gives agents the ability to act. The agent loop in LangGraph alternates between calling the LLM (which may produce tool calls) and executing those tool calls (via `ToolNode` or custom dispatch). Understanding tool calling is understanding the actuator side of the LLM-as-brain, tools-as-hands agent architecture.

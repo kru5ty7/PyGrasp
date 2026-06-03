@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hybrid Search - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #viz-area {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 6px;
+    min-height: 220px;
+    margin-bottom: .75rem;
+    padding: .75rem;
+  }
+  /* Query box */
+  .query-box {
+    background: #284b63;
+    border-radius: 6px;
+    padding: .5rem .75rem;
+    font-size: .82rem;
+    color: #7bbfff;
+    text-align: center;
+    margin-bottom: .6rem;
+  }
+  /* Pipeline fork */
+  .fork-wrap {
+    display: flex;
+    gap: .5rem;
+  }
+  .pipeline {
+    flex: 1;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .4rem .5rem;
+    background: #1e1e22;
+  }
+  .pipeline-label {
+    font-size: .7rem;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: .4rem;
+    font-weight: 700;
+  }
+  .pipeline-dense .pipeline-label { color: #7eb8d4; border-bottom: 1px solid #7eb8d433; padding-bottom: .25rem; }
+  .pipeline-sparse .pipeline-label { color: #a8d8a8; border-bottom: 1px solid #a8d8a833; padding-bottom: .25rem; }
+  .pipeline-step {
+    font-size: .7rem;
+    padding: .2rem .3rem;
+    border-radius: 3px;
+    margin-bottom: .2rem;
+    color: #888;
+    line-height: 1.4;
+  }
+  .pipeline-step.active { background: #393639; color: #d4d4d4; }
+  .pipeline-step.done { background: #1e3a1e; color: #28a745; }
+  /* Result cards */
+  .result-card {
+    padding: .3rem .5rem;
+    border-radius: 3px;
+    margin-bottom: .2rem;
+    font-size: .75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border: 1px solid transparent;
+  }
+  .result-card .rank { color: #646464; font-size: .68rem; width: 24px; flex-shrink: 0; }
+  .result-card .title { flex: 1; }
+  .result-card .badge {
+    font-size: .65rem;
+    padding: 1px 5px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  .badge-dense { background: #7eb8d422; color: #7eb8d4; border: 1px solid #7eb8d433; }
+  .badge-sparse { background: #a8d8a822; color: #a8d8a8; border: 1px solid #a8d8a833; }
+  .badge-both { background: #28a74522; color: #28a745; border: 1px solid #28a74544; }
+  /* RRF formula */
+  .formula-box {
+    background: #1e1e22;
+    border: 1px solid #393639;
+    border-radius: 3px;
+    padding: .4rem .6rem;
+    font-size: .75rem;
+    font-family: "Courier New", monospace;
+    color: #a8d8a8;
+    margin: .4rem 0;
+    line-height: 1.6;
+  }
+  /* Score table */
+  .score-table { width: 100%; border-collapse: collapse; font-size: .72rem; margin-top: .3rem; }
+  .score-table th { background: #2a2a2e; padding: .2rem .4rem; text-align: left; color: #646464; font-weight: 600; }
+  .score-table td { padding: .2rem .4rem; border-top: 1px solid #393639; }
+  .score-table tr.top td { color: #28a745; font-weight: 600; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #284b63;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Hybrid Search — Dense + Sparse Fusion</h4>
+  <div id="viz-area"></div>
+  <div id="stat">Press Step to begin the hybrid search walkthrough.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+// Precomputed document rankings for the query "What causes memory leaks in Python?"
+var DENSE_RESULTS = [
+  { id: 'D1', title: 'Python garbage collection internals', rank: 1 },
+  { id: 'D2', title: 'Reference counting in CPython', rank: 2 },
+  { id: 'D3', title: 'Object lifecycle and deallocation', rank: 3 },
+  { id: 'D4', title: 'Weak references and circular refs', rank: 4 },
+  { id: 'D5', title: 'Memory profiling with tracemalloc', rank: 5 },
+];
+
+var SPARSE_RESULTS = [
+  { id: 'D5', title: 'Memory profiling with tracemalloc', rank: 1 },
+  { id: 'D6', title: 'Common Python memory leak patterns', rank: 2 },
+  { id: 'D1', title: 'Python garbage collection internals', rank: 3 },
+  { id: 'D7', title: 'Debugging memory leaks in Python apps', rank: 4 },
+  { id: 'D8', title: 'Python memory management guide', rank: 5 },
+];
+
+// RRF: score = 1/(60+rank_dense) + 1/(60+rank_sparse)
+// k=60
+var K = 60;
+function rrf(denseRank, sparseRank) {
+  var score = 0;
+  if (denseRank !== null) score += 1 / (K + denseRank);
+  if (sparseRank !== null) score += 1 / (K + sparseRank);
+  return score;
+}
+
+// Build merged RRF table
+var allIds = {};
+DENSE_RESULTS.forEach(function(r) { allIds[r.id] = { id: r.id, title: r.title, denseRank: r.rank, sparseRank: null }; });
+SPARSE_RESULTS.forEach(function(r) {
+  if (allIds[r.id]) { allIds[r.id].sparseRank = r.rank; }
+  else { allIds[r.id] = { id: r.id, title: r.title, denseRank: null, sparseRank: r.rank }; }
+});
+var merged = Object.keys(allIds).map(function(id) {
+  var d = allIds[id];
+  d.score = rrf(d.denseRank, d.sparseRank);
+  d.pipeline = d.denseRank !== null && d.sparseRank !== null ? 'both' :
+               d.denseRank !== null ? 'dense' : 'sparse';
+  return d;
+});
+merged.sort(function(a, b) { return b.score - a.score; });
+
+function pipelineCard(step, activeStep, doneStep) {
+  var denseSteps = [
+    'embed query → dense vector',
+    'vector similarity search',
+    'top-5 semantic results ✓'
+  ];
+  var sparseSteps = [
+    'extract keywords: "memory", "leak", "Python"',
+    'inverted index (BM25) lookup',
+    'top-5 keyword results ✓'
+  ];
+  function stepClass(i, active, done) {
+    if (i < done) return 'done';
+    if (i === active) return 'active';
+    return '';
+  }
+  var denseActive = step >= 2 ? Math.min(step - 2, denseSteps.length - 1) : -1;
+  var sparseActive = step >= 2 ? Math.min(step - 2, sparseSteps.length - 1) : -1;
+  var denseDone = step >= 4 ? denseSteps.length : denseActive;
+  var sparseDone = step >= 4 ? sparseSteps.length : sparseActive;
+
+  return '<div class="fork-wrap">' +
+    '<div class="pipeline pipeline-dense">' +
+    '<div class="pipeline-label">Dense (Semantic)</div>' +
+    denseSteps.map(function(s, i) {
+      var cls = 'pipeline-step';
+      if (i < denseDone) cls += ' done';
+      else if (i === denseActive) cls += ' active';
+      return '<div class="' + cls + '">' + s + '</div>';
+    }).join('') +
+    '</div>' +
+    '<div class="pipeline pipeline-sparse">' +
+    '<div class="pipeline-label">Sparse (BM25)</div>' +
+    sparseSteps.map(function(s, i) {
+      var cls = 'pipeline-step';
+      if (i < sparseDone) cls += ' done';
+      else if (i === sparseActive) cls += ' active';
+      return '<div class="' + cls + '">' + s + '</div>';
+    }).join('') +
+    '</div></div>';
+}
+
+function resultList(results, badgeType) {
+  return '<div style="margin-top:.4rem;">' + results.map(function(r) {
+    var badgeCls = 'badge badge-' + badgeType;
+    var label = badgeType === 'dense' ? 'Dense' : 'Sparse';
+    return '<div class="result-card" style="background:#1e1e22;border-color:#39363966;">' +
+      '<span class="rank">#' + r.rank + '</span>' +
+      '<span class="title">' + r.title + '</span>' +
+      '<span class="' + badgeCls + '">' + label + '</span>' +
+      '</div>';
+  }).join('') + '</div>';
+}
+
+var STEPS = [
+  {
+    msg: 'User query: "What causes memory leaks in Python?" — enters the hybrid search pipeline.',
+    render: function() {
+      return '<div class="query-box">🔍 "What causes memory leaks in Python?"</div>' +
+        '<div style="text-align:center;color:#646464;font-size:.78rem;margin-top:.4rem;">Splitting into two parallel retrieval paths...</div>';
+    }
+  },
+  {
+    msg: 'Query forks into two parallel pipelines: Dense (semantic vector search) and Sparse (BM25 keyword matching). Both run simultaneously.',
+    render: function() {
+      return '<div class="query-box">🔍 "What causes memory leaks in Python?"</div>' +
+        pipelineCard(1, -1, 0);
+    }
+  },
+  {
+    msg: 'Dense pipeline: query embedded → vector search finds semantically related docs about garbage collection and reference counting.',
+    render: function() {
+      return '<div class="query-box">🔍 "What causes memory leaks in Python?"</div>' +
+        pipelineCard(2, 0, -1);
+    }
+  },
+  {
+    msg: 'Dense results: 5 documents conceptually related to memory management, even if they don\'t contain the exact words "memory leak".',
+    render: function() {
+      return '<div class="query-box">🔍 "What causes memory leaks in Python?"</div>' +
+        pipelineCard(4, 2, 3) +
+        resultList(DENSE_RESULTS, 'dense');
+    }
+  },
+  {
+    msg: 'Sparse pipeline: keywords "memory", "leak", "Python" extracted → BM25 inverted index returns docs with exact term matches.',
+    render: function() {
+      return '<div class="query-box">🔍 "What causes memory leaks in Python?"</div>' +
+        '<div class="formula-box">BM25 keywords: ["memory", "leak", "Python"]\nInverted index lookup → score by TF-IDF weights</div>' +
+        resultList(SPARSE_RESULTS, 'sparse');
+    }
+  },
+  {
+    msg: 'RRF fusion: for each document, score = 1/(rank_dense + 60) + 1/(rank_sparse + 60). Documents appearing in both pipelines score highest.',
+    render: function() {
+      var topDocs = merged.slice(0, 6);
+      var html = '<div class="formula-box">RRF score = 1/(rank_dense + 60) + 1/(rank_sparse + 60)\nk = 60  (dampens dominance of rank-1 results)</div>';
+      html += '<table class="score-table"><thead><tr><th>Document</th><th>Dense</th><th>Sparse</th><th>RRF</th></tr></thead><tbody>';
+      topDocs.forEach(function(d) {
+        var isTop = d.score === merged[0].score;
+        html += '<tr' + (isTop ? ' class="top"' : '') + '>' +
+          '<td>' + d.title.substring(0, 28) + (d.title.length > 28 ? '…' : '') + '</td>' +
+          '<td>' + (d.denseRank !== null ? '#' + d.denseRank : '—') + '</td>' +
+          '<td>' + (d.sparseRank !== null ? '#' + d.sparseRank : '—') + '</td>' +
+          '<td>' + d.score.toFixed(4) + '</td>' +
+          '</tr>';
+      });
+      html += '</tbody></table>';
+      return html;
+    }
+  },
+  {
+    msg: 'Final top-3 results: documents found by both pipelines rank highest. Pipeline badges show which retrieval path found each result.',
+    render: function() {
+      var top3 = merged.slice(0, 3);
+      var html = '<div style="margin-top:.25rem;">';
+      top3.forEach(function(d, i) {
+        var badgeCls = 'badge badge-' + d.pipeline;
+        var label = d.pipeline === 'both' ? 'Dense + Sparse' :
+                    d.pipeline === 'dense' ? 'Dense only' : 'Sparse only';
+        var borderColor = d.pipeline === 'both' ? '#28a745' :
+                          d.pipeline === 'dense' ? '#7eb8d4' : '#a8d8a8';
+        html += '<div class="result-card" style="background:#1e1e22;border-color:' + borderColor + '55;">' +
+          '<span class="rank" style="color:' + borderColor + ';font-weight:700;">#' + (i+1) + '</span>' +
+          '<span class="title">' + d.title + '</span>' +
+          '<span class="' + badgeCls + '">' + label + '</span>' +
+          '</div>';
+      });
+      html += '</div>';
+      html += '<div style="font-size:.72rem;color:#646464;margin-top:.6rem;">' +
+        '✓ Hybrid beats both pipelines alone: semantic context + exact keyword matching</div>';
+      return html;
+    },
+    done: true
+  }
+];
+
+var idx = 0;
+
+function draw() {
+  var s = STEPS[idx];
+  document.getElementById('viz-area').innerHTML = s.render();
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (STEPS.length - 1);
+  document.getElementById('btn-step').disabled = !!(s.done);
+  document.getElementById('btn-step').textContent = s.done ? 'Done ✓' : 'Step →';
+  document.getElementById('btn-back').disabled = (idx === 0);
+}
+
+document.getElementById('btn-step').onclick = function() {
+  if (idx < STEPS.length - 1) { idx++; draw(); }
+};
+document.getElementById('btn-back').onclick = function() {
+  if (idx > 0) { idx--; draw(); }
+};
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+draw();
+</script>
+</body>
+</html>

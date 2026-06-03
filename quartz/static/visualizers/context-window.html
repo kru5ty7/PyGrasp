@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Context Window and KV Cache - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #vis-area {
+    background: #2a2a2e;
+    border-radius: 6px;
+    padding: .75rem;
+    min-height: 180px;
+    margin-bottom: .5rem;
+  }
+  .vis-label {
+    font-size: .68rem;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: #646464;
+    margin-bottom: .4rem;
+  }
+  /* context bar */
+  .ctx-bar-wrap { position: relative; height: 32px; background: #1e1e20; border-radius: 4px; border: 1px solid #393639; overflow: hidden; margin-bottom: .3rem; }
+  .ctx-segment {
+    position: absolute;
+    top: 0; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: .65rem; font-weight: 600; overflow: hidden;
+    transition: width .35s ease;
+  }
+  .ctx-bar-label {
+    display: flex; justify-content: space-between;
+    font-size: .7rem; color: #646464; margin-bottom: .5rem;
+  }
+  .ctx-count {
+    font-size: .78rem; color: #f0a500; font-weight: 600;
+  }
+  /* legend */
+  .legend { display: flex; gap: .75rem; flex-wrap: wrap; font-size: .72rem; margin-bottom: .4rem; }
+  .leg { display: flex; align-items: center; gap: .3rem; }
+  .leg-dot { width: 10px; height: 10px; border-radius: 2px; }
+  /* message blocks */
+  .msg-block {
+    border-radius: 4px; padding: .3rem .5rem; margin-bottom: .25rem;
+    font-size: .78rem; line-height: 1.4;
+    display: flex; gap: .5rem; align-items: baseline;
+  }
+  .msg-role { font-size: .65rem; text-transform: uppercase; letter-spacing: .07em; min-width: 52px; opacity: .7; }
+  .msg-badge { font-size: .65rem; padding: .1rem .3rem; border-radius: 2px; white-space: nowrap; }
+  /* info */
+  .info-box {
+    background: #1e1e20;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .4rem .6rem;
+    font-size: .78rem;
+    line-height: 1.5;
+    margin-top: .35rem;
+  }
+  .kv-row { display: flex; gap: .4rem; align-items: center; font-size: .75rem; margin-top: .3rem; }
+  .kv-dot { width: 8px; height: 8px; border-radius: 50%; background: #28a745; }
+  .kv-dot.new { background: #f0a500; }
+  #stat {
+    padding: .45rem .75rem; background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem; line-height: 1.5;
+    min-height: 2.2rem; margin-bottom: .5rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem; border: none; border-radius: 4px;
+    cursor: pointer; font-size: .82rem;
+    background: #393639; color: #d4d4d4; transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Context Window &amp; KV Cache</h4>
+  <div id="vis-area"></div>
+  <div id="stat">Press Step to begin.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var LIMIT = 4096;
+
+function pct(n) { return (n / LIMIT * 100).toFixed(1); }
+
+function renderBar(segments, limit) {
+  var total = segments.reduce(function(a, s) { return a + s.tokens; }, 0);
+  var totalPct = (total / limit * 100).toFixed(0);
+  var h = '<div class="ctx-bar-label"><span>0</span><span class="ctx-count">' + total + ' / ' + limit + ' tokens (' + totalPct + '%)</span><span>' + limit + '</span></div>';
+  h += '<div class="ctx-bar-wrap">';
+  var left = 0;
+  segments.forEach(function(s) {
+    var w = (s.tokens / limit * 100).toFixed(2);
+    h += '<div class="ctx-segment" style="left:' + left + '%;width:' + w + '%;background:' + s.color + ';color:' + (s.textColor || '#fff') + '">';
+    if (s.tokens > 150) h += s.label;
+    h += '</div>';
+    left += parseFloat(w);
+  });
+  h += '</div>';
+  return h;
+}
+
+function renderMessages(msgs) {
+  var h = '';
+  msgs.forEach(function(m) {
+    h += '<div class="msg-block" style="background:' + m.bg + ';border-left:3px solid ' + m.border + '">';
+    h += '<span class="msg-role" style="color:' + m.border + '">' + m.role + '</span>';
+    h += '<span>' + m.text + '</span>';
+    h += '<span class="msg-badge" style="background:' + m.border + '33;color:' + m.border + '">' + m.tokens + ' tok</span>';
+    h += '</div>';
+  });
+  return h;
+}
+
+var STEPS = [
+  {
+    render: function() {
+      var h = '<div class="vis-label">Context window capacity</div>';
+      h += renderBar([{tokens: 0, color: '#393639', label: ''}], LIMIT);
+      h += '<div class="info-box">This model has a <strong style="color:#f0a500">4,096-token</strong> context window. Everything the model sees — system prompt, conversation history, documents, and its output — must fit within this limit.<br><br>Modern models: Claude 200k, GPT-4o 128k, Gemini 1M.</div>';
+      return h;
+    },
+    msg: 'Context window = 4,096 tokens. The model can only "see" what fits in this window per API call.'
+  },
+  {
+    render: function() {
+      var msgs = [{role:'system', text:'You are a helpful assistant that answers questions concisely and accurately.', tokens:18, bg:'#1a2233', border:'#284b63'}];
+      var segs = [
+        {tokens: 500, color: '#284b63', label: 'System', textColor:'#7bafd4'},
+        {tokens: LIMIT-500, color: '#1e1e20', label: '', textColor:'#646464'}
+      ];
+      var h = '<div class="vis-label">System prompt loaded</div>';
+      h += renderBar(segs, LIMIT);
+      h += '<div class="legend"><span class="leg"><span class="leg-dot" style="background:#284b63"></span>System (500 tok)</span></div>';
+      h += renderMessages(msgs);
+      return h;
+    },
+    msg: 'System prompt (500 tokens) added. Sets behavior for all responses. Counts against context budget every call.'
+  },
+  {
+    render: function() {
+      var msgs = [
+        {role:'system', text:'You are a helpful assistant...', tokens:500, bg:'#1a2233', border:'#284b63'},
+        {role:'user 1', text:'What is the capital of France?', tokens:50, bg:'#1e1e20', border:'#f0a500'}
+      ];
+      var segs = [
+        {tokens:500, color:'#284b63', label:'Sys', textColor:'#7bafd4'},
+        {tokens:50, color:'#f0a500', label:'U1', textColor:'#000'},
+        {tokens:LIMIT-550, color:'#1e1e20', label:'', textColor:'#646464'}
+      ];
+      var h = '<div class="vis-label">User message 1 added — KV cache computed</div>';
+      h += renderBar(segs, LIMIT);
+      h += '<div class="legend"><span class="leg"><span class="leg-dot" style="background:#284b63"></span>System</span><span class="leg"><span class="leg-dot" style="background:#f0a500"></span>User (50 tok)</span></div>';
+      h += renderMessages(msgs);
+      h += '<div class="kv-row"><span class="kv-dot new"></span><span style="color:#f0a500">KV cache computed for all 550 tokens</span></div>';
+      return h;
+    },
+    msg: 'User message 1 (+50 tokens). Model processes all 550 tokens and stores Key-Value cache. Total: 550/4096.'
+  },
+  {
+    render: function() {
+      var msgs = [
+        {role:'system', text:'You are a helpful assistant...', tokens:500, bg:'#1a2233', border:'#284b63'},
+        {role:'user 1', text:'What is the capital of France?', tokens:50, bg:'#1e1e20', border:'#f0a500'},
+        {role:'assistant', text:'The capital of France is Paris.', tokens:200, bg:'#1a2233', border:'#28a745'}
+      ];
+      var segs = [
+        {tokens:500, color:'#284b63', label:'Sys', textColor:'#7bafd4'},
+        {tokens:50, color:'#f0a500', label:'U1', textColor:'#000'},
+        {tokens:200, color:'#28a745', label:'A1', textColor:'#000'},
+        {tokens:LIMIT-750, color:'#1e1e20', label:'', textColor:'#646464'}
+      ];
+      var h = '<div class="vis-label">Assistant response added</div>';
+      h += renderBar(segs, LIMIT);
+      h += '<div class="legend"><span class="leg"><span class="leg-dot" style="background:#284b63"></span>System</span><span class="leg"><span class="leg-dot" style="background:#f0a500"></span>User</span><span class="leg"><span class="leg-dot" style="background:#28a745"></span>Asst (200 tok)</span></div>';
+      h += renderMessages(msgs);
+      return h;
+    },
+    msg: 'Assistant response: 200 tokens. Cumulative context: 750/4096 tokens. Output tokens counted in context too.'
+  },
+  {
+    render: function() {
+      var msgs = [
+        {role:'system', text:'You are a helpful assistant...', tokens:500, bg:'#1a2233', border:'#284b63'},
+        {role:'user 1', text:'What is the capital of France?', tokens:50, bg:'#1e1e20', border:'#f0a500'},
+        {role:'assistant', text:'The capital of France is Paris.', tokens:200, bg:'#1a2233', border:'#28a745'},
+        {role:'user 2', text:'What is its population?', tokens:50, bg:'#1e1e20', border:'#007bff'}
+      ];
+      var segs = [
+        {tokens:500, color:'#284b63', label:'Sys', textColor:'#7bafd4'},
+        {tokens:50, color:'#f0a500', label:'', textColor:'#000'},
+        {tokens:200, color:'#28a745', label:'', textColor:'#000'},
+        {tokens:50, color:'#007bff', label:'U2', textColor:'#fff'},
+        {tokens:LIMIT-800, color:'#1e1e20', label:'', textColor:'#646464'}
+      ];
+      var h = '<div class="vis-label">User message 2 — KV cache reused</div>';
+      h += renderBar(segs, LIMIT);
+      h += '<div class="kv-row"><span class="kv-dot"></span><span style="color:#28a745">Tokens 1-750 reused from KV cache (no recompute)</span></div>';
+      h += '<div class="kv-row"><span class="kv-dot new"></span><span style="color:#f0a500">Only new 50 tokens need KV computed</span></div>';
+      h += renderMessages(msgs);
+      return h;
+    },
+    msg: 'KV cache reuse: tokens 1-750 already cached. Only new 50 tokens need forward pass. Saves 94% compute for this turn.'
+  },
+  {
+    render: function() {
+      var segs = [
+        {tokens:500, color:'#284b63', label:'Sys', textColor:'#7bafd4'},
+        {tokens:600, color:'#f0a500', label:'History', textColor:'#000'},
+        {tokens:1800, color:'#28a745', label:'Responses', textColor:'#000'},
+        {tokens:900, color:'#007bff', label:'Docs', textColor:'#fff'},
+        {tokens:296, color:'#dc3545', label:'!', textColor:'#fff'}
+      ];
+      var h = '<div class="vis-label">Context nearly full (4096 tokens)</div>';
+      h += renderBar(segs, LIMIT);
+      h += '<div class="legend"><span class="leg"><span class="leg-dot" style="background:#dc3545"></span>Only 296 tokens left!</span></div>';
+      h += '<div class="info-box" style="border-color:#dc3545;color:#dc3545">Context limit approaching. Next large response may cause truncation error. Must manage context.</div>';
+      h += '<div class="info-box" style="margin-top:.35rem"><strong>Cost:</strong> tokens in context = tokens processed = cost per call.<br>4096 input tokens × every call = expensive at scale.</div>';
+      return h;
+    },
+    msg: 'Context window nearly full at 3800/4096 tokens. Only 296 tokens remain. Must handle overflow.'
+  },
+  {
+    render: function() {
+      var segs = [
+        {tokens:500, color:'#284b63', label:'Sys', textColor:'#7bafd4'},
+        {tokens:1200, color:'#28a745', label:'Recent msgs (kept)', textColor:'#000'},
+        {tokens:LIMIT-1700, color:'#1e1e20', label:'(dropped)', textColor:'#646464'}
+      ];
+      var h = '<div class="vis-label">Solution 1: truncate oldest messages</div>';
+      h += renderBar(segs, LIMIT);
+      h += '<div class="info-box"><strong style="color:#28a745">Keep:</strong> system prompt (critical) + most recent N turns<br><strong style="color:#dc3545">Drop:</strong> oldest messages once limit is near<br><br>Simple but loses early context. User may repeat info.</div>';
+      return h;
+    },
+    msg: 'Strategy 1: drop oldest messages when context fills. Keep system prompt + recent turns. Simple but lossy.'
+  },
+  {
+    render: function() {
+      var segs1 = [
+        {tokens:500, color:'#284b63', label:'Sys', textColor:'#7bafd4'},
+        {tokens:1500, color:'#28a745', label:'Window (last 1500 tok)', textColor:'#000'},
+        {tokens:LIMIT-2000, color:'#1e1e20', label:'', textColor:'#646464'}
+      ];
+      var h = '<div class="vis-label">Solution 2: sliding window — keep last N tokens</div>';
+      h += renderBar(segs1, LIMIT);
+      h += '<div class="info-box"><strong>Sliding window:</strong> always include the system prompt + last K tokens of conversation. Older tokens fall off the left side as new ones are added.<br><br>Better than hard truncation — gradual, predictable.</div>';
+      return h;
+    },
+    msg: 'Strategy 2: sliding window — always keep system prompt + last K tokens. Predictable, no sudden drops.'
+  },
+  {
+    render: function() {
+      var h = '<div class="vis-label">Solution 3: use a model with larger context</div>';
+      var models = [
+        {name:'GPT-3.5', ctx:4096, color:'#393639'},
+        {name:'GPT-4o', ctx:128000, color:'#284b63'},
+        {name:'Claude 3.5', ctx:200000, color:'#1a3a2a'},
+        {name:'Gemini 1.5', ctx:1000000, color:'#3a2a1a'},
+      ];
+      models.forEach(function(m) {
+        var w = Math.min(100, m.ctx / 10000);
+        h += '<div style="margin-bottom:.3rem">';
+        h += '<div style="display:flex;justify-content:space-between;font-size:.72rem;margin-bottom:.15rem">';
+        h += '<span style="font-family:monospace">' + m.name + '</span>';
+        h += '<span style="color:#f0a500">' + (m.ctx / 1000).toFixed(0) + 'k tokens</span>';
+        h += '</div>';
+        h += '<div style="height:8px;background:#1e1e20;border-radius:3px;overflow:hidden">';
+        h += '<div style="height:100%;width:' + w + '%;background:' + m.color + ';border-radius:3px"></div>';
+        h += '</div></div>';
+      });
+      h += '<div class="info-box">Larger context = more expensive per call. 200k context request costs ~50× more than 4k. Use only what you need.</div>';
+      return h;
+    },
+    msg: 'Done ✓ — Strategy 3: use a model with larger context window. More expensive but eliminates truncation for most use cases.'
+  }
+];
+
+var idx = 0;
+
+function draw() {
+  var s = STEPS[idx];
+  var isDone = (idx === STEPS.length - 1);
+  document.getElementById('vis-area').innerHTML = s.render();
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (STEPS.length - 1);
+  document.getElementById('btn-step').disabled = isDone;
+  document.getElementById('btn-step').textContent = isDone ? 'Done ✓' : 'Step →';
+  document.getElementById('btn-back').disabled = idx === 0;
+}
+
+document.getElementById('btn-step').onclick = function() { if (idx < STEPS.length - 1) { idx++; draw(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+draw();
+</script>
+</body>
+</html>

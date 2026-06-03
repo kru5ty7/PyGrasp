@@ -166,6 +166,12 @@ for instance in asg["Instances"]:
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/ec2-auto-scaling.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="EC2 Auto Scaling Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Auto Scaling Groups work in conjunction with Elastic Load Balancers to form the standard scalable web application architecture. The ALB distributes traffic across ASG instances and performs health checks - instances that fail the ALB health check are marked unhealthy and replaced by the ASG.

@@ -104,6 +104,12 @@ messages = [
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/context-window.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Context Window Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 RAG retrieves relevant chunks to fit in the context window instead of stuffing all documents.

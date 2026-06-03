@@ -114,6 +114,12 @@ results = client.query_points(
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/hybrid-search.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Hybrid Search Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Hybrid search combines the outputs of vector search and BM25 retrieval  -  understanding both is prerequisite.

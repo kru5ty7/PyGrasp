@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SNS - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #diagram { margin-bottom: .75rem; }
+  svg { display: block; width: 100%; height: auto; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>SNS — Pub/Sub Fan-out</h4>
+  <div id="diagram"></div>
+  <div id="stat"></div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var C = {
+  bg: '#2a2a2e', border: '#393639', header: '#284b63',
+  amber: '#f0a500', green: '#28a745', red: '#dc3545',
+  blue: '#007bff', text: '#d4d4d4', dim: '#444'
+};
+
+// Layout:
+// Publisher (left) → SNS Topic (center) → Lambda (top-right)
+//                                        → SQS (mid-right)
+//                                        → HTTP (mid-right)
+//                                        → Email (bottom-right)
+//                                        → SMS (bottom-right)
+
+var NODES = {
+  publisher: { x: 10,  y: 120, w: 90,  h: 44, label: 'OrderService', sub: 'Publisher' },
+  topic:     { x: 145, y: 100, w: 95,  h: 60, label: 'SNS Topic', sub: 'order.confirmed' },
+  lambda:    { x: 300, y: 30,  w: 90,  h: 38, label: 'Lambda', sub: 'order-processor' },
+  sqs:       { x: 300, y: 85,  w: 90,  h: 38, label: 'SQS Queue', sub: 'order-queue' },
+  http:      { x: 300, y: 140, w: 90,  h: 38, label: 'HTTP Endpoint', sub: 'webhook' },
+  email:     { x: 300, y: 195, w: 90,  h: 38, label: 'Email', sub: 'ops@team.com' },
+  dlq:       { x: 420, y: 85,  w: 75,  h: 38, label: 'DLQ', sub: 'dead letters' }
+};
+
+var steps = [
+  {
+    msg: 'SNS fan-out. OrderService publishes one message; all subscribers receive it simultaneously. Press Step to begin.',
+    hi: {},
+    arrows: [],
+    filterNote: null
+  },
+  {
+    msg: 'Step 1/8: OrderService publishes "order.confirmed" message to SNS topic. One publish call — SNS handles delivery to all subscribers.',
+    hi: { publisher: 'active', topic: 'active' },
+    arrows: [{ from: 'publisher', to: 'topic', color: C.amber, label: 'publish msg' }],
+    filterNote: null
+  },
+  {
+    msg: 'Step 2/8: SNS delivers to Lambda subscriber. Lambda is invoked synchronously — function runs immediately.',
+    hi: { topic: 'active', lambda: 'active' },
+    arrows: [{ from: 'topic', to: 'lambda', color: C.green, label: 'invoke' }],
+    filterNote: null
+  },
+  {
+    msg: 'Step 3/8: SNS delivers to SQS subscriber. Message added to queue for durable buffered processing.',
+    hi: { topic: 'active', sqs: 'active' },
+    arrows: [{ from: 'topic', to: 'sqs', color: C.green, label: 'enqueue' }],
+    filterNote: null
+  },
+  {
+    msg: 'Step 4/8: SNS delivers to Email subscriber. Email sent to ops team. All 3 deliveries happen in parallel (fan-out).',
+    hi: { topic: 'active', lambda: 'done', sqs: 'done', email: 'active' },
+    arrows: [
+      { from: 'topic', to: 'lambda', color: C.green, label: '' },
+      { from: 'topic', to: 'sqs',    color: C.green, label: '' },
+      { from: 'topic', to: 'email',  color: C.green, label: 'send' }
+    ],
+    filterNote: 'Fan-out: all deliveries in parallel'
+  },
+  {
+    msg: 'Step 5/8: Lambda delivery fails. SNS retries up to 3 times with exponential backoff before giving up.',
+    hi: { topic: 'active', lambda: 'error' },
+    arrows: [{ from: 'topic', to: 'lambda', color: C.red, label: 'retry 1/3' }],
+    filterNote: null
+  },
+  {
+    msg: 'Step 6/8: SQS has a DLQ configured. After maxReceiveCount (3) failed processing attempts, the message moves to the DLQ.',
+    hi: { sqs: 'active', dlq: 'active' },
+    arrows: [{ from: 'sqs', to: 'dlq', color: C.red, label: 'DLQ after 3x' }],
+    filterNote: null
+  },
+  {
+    msg: 'Step 7/8: Filter policy on SQS subscription: {"type": ["order"]}. Only messages with type="order" are delivered; others are dropped.',
+    hi: { topic: 'active', sqs: 'active', http: 'error' },
+    arrows: [
+      { from: 'topic', to: 'sqs',  color: C.green, label: 'type=order ✓' },
+      { from: 'topic', to: 'http', color: C.red,   label: 'type=other ✗' }
+    ],
+    filterNote: 'Filter: {"type": ["order"]}'
+  },
+  {
+    msg: 'Step 8/8: Full fan-out complete. Publisher is fully decoupled — add new subscribers without changing OrderService.',
+    hi: { publisher: 'done', topic: 'done', lambda: 'done', sqs: 'done', email: 'done' },
+    arrows: [
+      { from: 'publisher', to: 'topic',  color: C.green, label: '' },
+      { from: 'topic', to: 'lambda', color: C.green, label: '' },
+      { from: 'topic', to: 'sqs',    color: C.green, label: '' },
+      { from: 'topic', to: 'email',  color: C.green, label: '' }
+    ],
+    filterNote: 'Decoupled pub/sub — add subscribers without changing publisher'
+  }
+];
+
+var idx = 0;
+
+function nodeColor(key, hi) {
+  var s = hi[key];
+  if (s === 'active') return C.amber;
+  if (s === 'done')   return C.green;
+  if (s === 'error')  return C.red;
+  return C.border;
+}
+function nodeFill(key, hi) {
+  var s = hi[key];
+  if (s === 'active') return '#2e2810';
+  if (s === 'done')   return '#0e2018';
+  if (s === 'error')  return '#2e1010';
+  return C.bg;
+}
+function nodeCenter(key) {
+  var n = NODES[key];
+  return { x: n.x + n.w / 2, y: n.y + n.h / 2 };
+}
+function edgePoint(key, toward) {
+  var nc = nodeCenter(key);
+  var tc = nodeCenter(toward);
+  var n = NODES[key];
+  var dx = tc.x - nc.x, dy = tc.y - nc.y;
+  var hw = n.w / 2, hh = n.h / 2;
+  var absDx = Math.abs(dx), absDy = Math.abs(dy);
+  if (absDx * hh > absDy * hw) {
+    var sx = dx > 0 ? 1 : -1;
+    return { x: nc.x + sx * hw, y: nc.y + (absDx > 0 ? dy * hw / absDx : 0) };
+  } else {
+    var sy = dy > 0 ? 1 : -1;
+    return { x: nc.x + (absDy > 0 ? dx * hh / absDy : 0), y: nc.y + sy * hh };
+  }
+}
+
+function renderSVG(step) {
+  var W = 510, H = 270;
+  var out = '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">';
+
+  // Arrows
+  step.arrows.forEach(function(arr) {
+    var id = 'ah-' + arr.color.replace('#','');
+    var p1 = edgePoint(arr.from, arr.to);
+    var p2 = edgePoint(arr.to, arr.from);
+    var mid = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+    out += '<defs><marker id="' + id + '" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="' + arr.color + '"/></marker></defs>';
+    out += '<line x1="' + p1.x + '" y1="' + p1.y + '" x2="' + p2.x + '" y2="' + p2.y + '" stroke="' + arr.color + '" stroke-width="1.5" marker-end="url(#' + id + ')"/>';
+    if (arr.label) {
+      out += '<rect x="' + (mid.x - 34) + '" y="' + (mid.y - 8) + '" width="68" height="13" rx="3" fill="#161618" opacity="0.9"/>';
+      out += '<text x="' + mid.x + '" y="' + (mid.y + 3) + '" text-anchor="middle" font-size="7.5" fill="' + arr.color + '">' + arr.label + '</text>';
+    }
+  });
+
+  // Nodes
+  Object.keys(NODES).forEach(function(key) {
+    var n = NODES[key];
+    var bc = nodeColor(key, step.hi);
+    var bf = nodeFill(key, step.hi);
+    var sw = step.hi[key] ? 2 : 1;
+    var headerH = 13;
+    out += '<rect x="' + n.x + '" y="' + n.y + '" width="' + n.w + '" height="' + n.h + '" rx="4" fill="' + bf + '" stroke="' + bc + '" stroke-width="' + sw + '"/>';
+    out += '<rect x="' + n.x + '" y="' + n.y + '" width="' + n.w + '" height="' + headerH + '" rx="4" fill="' + C.header + '"/>';
+    out += '<rect x="' + n.x + '" y="' + (n.y + headerH - 4) + '" width="' + n.w + '" height="4" fill="' + C.header + '"/>';
+    var tc = bc !== C.border ? bc : C.text;
+    out += '<text x="' + (n.x + n.w / 2) + '" y="' + (n.y + 24) + '" text-anchor="middle" font-size="8.5" font-weight="600" fill="' + tc + '">' + n.label + '</text>';
+    if (n.sub) {
+      out += '<text x="' + (n.x + n.w / 2) + '" y="' + (n.y + 35) + '" text-anchor="middle" font-size="7" fill="#666">' + n.sub + '</text>';
+    }
+  });
+
+  // Filter note
+  if (step.filterNote) {
+    var fy = H - 18;
+    out += '<rect x="8" y="' + (fy - 2) + '" width="' + (step.filterNote.length * 5.5 + 16) + '" height="16" rx="3" fill="#1a2a1a" stroke="' + C.green + '" stroke-width="1"/>';
+    out += '<text x="16" y="' + (fy + 10) + '" font-size="7.5" fill="' + C.green + '">' + step.filterNote + '</text>';
+  }
+
+  out += '</svg>';
+  return out;
+}
+
+function render() {
+  var step = steps[idx];
+  document.getElementById('diagram').innerHTML = renderSVG(step);
+  document.getElementById('stat').textContent = step.msg;
+  var isLast = idx >= steps.length - 1;
+  document.getElementById('btn-step').disabled = isLast;
+  document.getElementById('btn-step').textContent = isLast ? 'Done ✓' : 'Step →';
+  document.getElementById('btn-back').disabled = idx === 0;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
+}
+
+document.getElementById('btn-step').onclick  = function() { if (idx < steps.length - 1) { idx++; render(); } };
+document.getElementById('btn-back').onclick  = function() { if (idx > 0) { idx--; render(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; render(); };
+
+render();
+</script>
+</body>
+</html>

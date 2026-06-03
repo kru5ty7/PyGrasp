@@ -57,6 +57,12 @@ Vector database clients like Chroma (`chromadb`) provide a higher-level API: `co
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/vector-search.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Vector Search Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Embeddings are the vectors that vector search operates on. Every text must be embedded (converted to a vector) before it can be stored in a vector index, and the query must be embedded before it can be searched. The quality of retrieval depends entirely on the embedding model's ability to encode semantic similarity into geometric proximity.

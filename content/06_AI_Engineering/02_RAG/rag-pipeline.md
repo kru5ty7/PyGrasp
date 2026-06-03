@@ -116,6 +116,12 @@ def rag_query(question: str) -> str:
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/rag-pipeline.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="RAG Pipeline Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 The RAG pipeline's retrieval step is the practical application of vector search  -  the query embedding finds similar document embeddings.

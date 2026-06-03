@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lambda Handlers - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .5rem;
+  }
+  #modes { display: flex; gap: .4rem; margin-bottom: .6rem; }
+  .mode-btn {
+    padding: .28rem .65rem;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .78rem;
+    background: #2a2a2e;
+    color: #888;
+    transition: all .15s;
+  }
+  .mode-btn.active { background: #2e2810; border-color: #f0a500; color: #f0a500; font-weight: 600; }
+  .mode-btn:not(.active):hover { color: #d4d4d4; }
+  #diagram { margin-bottom: .75rem; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Lambda Handler Anatomy</h4>
+  <div id="modes">
+    <button class="mode-btn active" data-mode="python">Python</button>
+    <button class="mode-btn" data-mode="node">Node.js</button>
+  </div>
+  <div id="diagram"></div>
+  <div id="stat"></div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var C = {
+  bg: '#2a2a2e', border: '#393639', header: '#284b63',
+  amber: '#f0a500', green: '#28a745', red: '#dc3545',
+  blue: '#007bff', text: '#d4d4d4', dim: '#333', panelBg: '#393639'
+};
+
+// Each step: highlight specific lines in a code block
+// Also show context / event panel on the right
+
+var allModes = {
+  python: [
+    {
+      msg: 'Lambda handler anatomy for Python. Each invocation calls handler(event, context). Press Step to walk through.',
+      highlight: [], panel: null
+    },
+    {
+      msg: 'Step 1/7: Handler signature — def handler(event, context):  — configured as "main.handler" in the function settings.',
+      highlight: ['sig'], panel: null
+    },
+    {
+      msg: 'Step 2/7: event dict — the trigger payload. For API Gateway: event["body"], event["headers"], event["pathParameters"].',
+      highlight: ['event'], panel: { title: 'event (API Gateway)', lines: ['event["httpMethod"] = "POST"', 'event["path"] = "/items"', 'event["body"] = \'{"name":"book"}\'', 'event["headers"] = { ... }', 'event["pathParameters"] = {"id":"42"}'], color: C.blue }
+    },
+    {
+      msg: 'Step 3/7: context object — runtime metadata. context.function_name, context.aws_request_id, context.get_remaining_time_in_millis().',
+      highlight: ['context'], panel: { title: 'context', lines: ['context.function_name', 'context.aws_request_id', 'context.memory_limit_in_mb', 'context.get_remaining_time_in_millis()'], color: C.amber }
+    },
+    {
+      msg: 'Step 4/7: Return value must be a dict with statusCode, headers, body for API Gateway integrations.',
+      highlight: ['ret'], panel: { title: 'return value', lines: ['{ "statusCode": 200,', '  "headers": {"Content-Type": "application/json"},', '  "body": "{\\"result\\":\\"ok\\"}" }'], color: C.green }
+    },
+    {
+      msg: 'Step 5/7: Uncaught exception — Lambda marks the invocation failed. For async triggers (S3, EventBridge), Lambda retries up to 2x then DLQ.',
+      highlight: ['err'], panel: { title: 'error path', lines: ['raise ValueError("bad input")', '→ invocation FAILED', '→ async: retry 2x', '→ then DLQ (if configured)'], color: C.red }
+    },
+    {
+      msg: 'Step 6/7: Structured logging — print(json.dumps({...})) writes JSON to stdout, captured in CloudWatch Logs.',
+      highlight: ['log'], panel: { title: 'CloudWatch Logs', lines: ['{"level":"INFO","msg":"start","id":"abc123"}', '{"level":"ERROR","msg":"failed","err":"..."}'], color: '#888' }
+    },
+    {
+      msg: 'Step 7/7: Environment variables — os.environ["DB_URL"] — set at deploy time, encrypted at rest by KMS.',
+      highlight: ['env'], panel: { title: 'env vars', lines: ['os.environ["DB_URL"]', 'os.environ["STAGE"]', 'os.environ["SECRET_ARN"]', '(encrypted at rest)'], color: C.amber }
+    }
+  ],
+  node: [
+    {
+      msg: 'Lambda handler anatomy for Node.js. The handler is an async function or uses a callback. Press Step to walk through.',
+      highlight: [], panel: null
+    },
+    {
+      msg: 'Step 1/7: Handler signature — exports.handler = async (event, context) => { ... }  — configured as "index.handler".',
+      highlight: ['sig'], panel: null
+    },
+    {
+      msg: 'Step 2/7: event object — the trigger payload. For API Gateway: event.body, event.headers, event.pathParameters.',
+      highlight: ['event'], panel: { title: 'event (API Gateway)', lines: ['event.httpMethod = "POST"', 'event.path = "/items"', 'event.body = \'{"name":"book"}\'', 'event.headers = { ... }', 'event.pathParameters = {id: "42"}'], color: C.blue }
+    },
+    {
+      msg: 'Step 3/7: context object — context.functionName, context.awsRequestId, context.getRemainingTimeInMillis().',
+      highlight: ['context'], panel: { title: 'context', lines: ['context.functionName', 'context.awsRequestId', 'context.memoryLimitInMB', 'context.getRemainingTimeInMillis()'], color: C.amber }
+    },
+    {
+      msg: 'Step 4/7: Return value — resolve with a response object (statusCode + body). API Gateway requires a stringified body.',
+      highlight: ['ret'], panel: { title: 'return value', lines: ['return {', '  statusCode: 200,', '  headers: {"Content-Type": "application/json"},', '  body: JSON.stringify({ result: "ok" })', '};'], color: C.green }
+    },
+    {
+      msg: 'Step 5/7: Uncaught exception / rejected promise — Lambda marks invocation failed. Retries apply for async invocations.',
+      highlight: ['err'], panel: { title: 'error path', lines: ['throw new Error("bad input")', '→ invocation FAILED', '→ async: retry 2x', '→ then DLQ (if configured)'], color: C.red }
+    },
+    {
+      msg: 'Step 6/7: Structured logging — console.log(JSON.stringify({...})) writes JSON to stdout → CloudWatch Logs.',
+      highlight: ['log'], panel: { title: 'CloudWatch Logs', lines: ['{"level":"INFO","msg":"start","id":"abc123"}', '{"level":"ERROR","msg":"failed","err":"..."}'], color: '#888' }
+    },
+    {
+      msg: 'Step 7/7: Environment variables — process.env.DB_URL — set at deploy time, encrypted at rest by KMS.',
+      highlight: ['env'], panel: { title: 'env vars', lines: ['process.env.DB_URL', 'process.env.STAGE', 'process.env.SECRET_ARN', '(encrypted at rest)'], color: C.amber }
+    }
+  ]
+};
+
+var codeLines = {
+  python: [
+    { key: 'sig',     text: 'def handler(event, context):' },
+    { key: 'event',   text: '    body = event["body"]' },
+    { key: 'event',   text: '    headers = event["headers"]' },
+    { key: 'context', text: '    req_id = context.aws_request_id' },
+    { key: 'context', text: '    ms_left = context.get_remaining_time_in_millis()' },
+    { key: 'log',     text: '    print(json.dumps({"req": req_id}))' },
+    { key: 'env',     text: '    db_url = os.environ["DB_URL"]' },
+    { key: 'err',     text: '    # raises ValueError → invocation failed' },
+    { key: 'ret',     text: '    return {"statusCode": 200, "body": "{}"}' }
+  ],
+  node: [
+    { key: 'sig',     text: 'exports.handler = async (event, context) => {' },
+    { key: 'event',   text: '  const body = event.body;' },
+    { key: 'event',   text: '  const headers = event.headers;' },
+    { key: 'context', text: '  const reqId = context.awsRequestId;' },
+    { key: 'context', text: '  const msLeft = context.getRemainingTimeInMillis();' },
+    { key: 'log',     text: '  console.log(JSON.stringify({ req: reqId }));' },
+    { key: 'env',     text: '  const dbUrl = process.env.DB_URL;' },
+    { key: 'err',     text: '  // throw new Error(...) → invocation failed' },
+    { key: 'ret',     text: '  return { statusCode: 200, body: "{}" };' },
+    { key: 'sig',     text: '};' }
+  ]
+};
+
+var mode = 'python';
+var idx = 0;
+function steps() { return allModes[mode]; }
+
+function escapeXml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderSVG(step) {
+  var W = 520, H = 220;
+  var out = '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">';
+
+  // Code panel (left)
+  var cpX = 10, cpY = 10, cpW = 290, cpH = 200;
+  out += '<rect x="' + cpX + '" y="' + cpY + '" width="' + cpW + '" height="' + cpH + '" rx="4" fill="#1a1a1c" stroke="#2a2a2e" stroke-width="1"/>';
+  out += '<rect x="' + cpX + '" y="' + cpY + '" width="' + cpW + '" height="16" rx="4" fill="' + C.header + '"/>';
+  out += '<rect x="' + cpX + '" y="' + (cpY+12) + '" width="' + cpW + '" height="4" fill="' + C.header + '"/>';
+  out += '<text x="' + (cpX + cpW/2) + '" y="' + (cpY + 11) + '" text-anchor="middle" font-size="8" fill="#aaa" font-weight="bold">' + (mode === 'python' ? 'main.py' : 'index.js') + '</text>';
+
+  var lines = codeLines[mode];
+  var highlight = step.highlight || [];
+  lines.forEach(function(line, i) {
+    var ly = cpY + 26 + i * 16;
+    var isHi = highlight.indexOf(line.key) >= 0;
+    if (isHi) {
+      var hiColor = line.key === 'err' ? '#2e1010' : (line.key === 'ret' ? '#0e2018' : '#2e2810');
+      out += '<rect x="' + (cpX + 2) + '" y="' + (ly - 10) + '" width="' + (cpW - 4) + '" height="14" rx="2" fill="' + hiColor + '"/>';
+    }
+    var textColor = isHi ? (line.key === 'err' ? C.red : (line.key === 'ret' ? C.green : C.amber)) : '#666';
+    out += '<text x="' + (cpX + 8) + '" y="' + ly + '" font-size="8" fill="' + textColor + '" font-family="monospace">' + escapeXml(line.text) + '</text>';
+  });
+
+  // Info panel (right)
+  var panel = step.panel;
+  if (panel) {
+    var ppX = 310, ppY = 10, ppW = 200, ppH = 200;
+    out += '<rect x="' + ppX + '" y="' + ppY + '" width="' + ppW + '" height="' + ppH + '" rx="4" fill="' + C.bg + '" stroke="' + panel.color + '" stroke-width="1.5"/>';
+    out += '<rect x="' + ppX + '" y="' + ppY + '" width="' + ppW + '" height="16" rx="4" fill="' + panel.color + '" opacity="0.15"/>';
+    out += '<rect x="' + ppX + '" y="' + (ppY+12) + '" width="' + ppW + '" height="4" fill="' + panel.color + '" opacity="0.15"/>';
+    out += '<text x="' + (ppX + ppW/2) + '" y="' + (ppY + 11) + '" text-anchor="middle" font-size="8" fill="' + panel.color + '" font-weight="bold">' + escapeXml(panel.title) + '</text>';
+    panel.lines.forEach(function(l, i) {
+      var ly = ppY + 26 + i * 16;
+      out += '<text x="' + (ppX + 8) + '" y="' + ly + '" font-size="7.5" fill="' + panel.color + '" font-family="monospace">' + escapeXml(l) + '</text>';
+    });
+  } else {
+    // Empty panel placeholder
+    var ppX = 310, ppY = 10, ppW = 200, ppH = 200;
+    out += '<rect x="' + ppX + '" y="' + ppY + '" width="' + ppW + '" height="' + ppH + '" rx="4" fill="#1a1a1c" stroke="#2a2a2e" stroke-width="1"/>';
+    out += '<text x="' + (ppX + ppW/2) + '" y="' + (ppY + ppH/2) + '" text-anchor="middle" font-size="8" fill="#333">step through to see</text>';
+    out += '<text x="' + (ppX + ppW/2) + '" y="' + (ppY + ppH/2 + 14) + '" text-anchor="middle" font-size="8" fill="#333">event / context / return details</text>';
+  }
+
+  out += '</svg>';
+  return out;
+}
+
+function render() {
+  var st = steps();
+  var step = st[idx];
+  document.getElementById('diagram').innerHTML = renderSVG(step);
+  document.getElementById('stat').textContent = step.msg;
+  var isLast = idx >= st.length - 1;
+  document.getElementById('btn-step').disabled = isLast;
+  document.getElementById('btn-step').textContent = isLast ? 'Done ✓' : 'Step →';
+  document.getElementById('btn-back').disabled = idx === 0;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (st.length - 1);
+}
+
+document.querySelectorAll('.mode-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    mode = btn.dataset.mode;
+    idx = 0;
+    document.querySelectorAll('.mode-btn').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    render();
+  });
+});
+
+document.getElementById('btn-step').onclick = function() {
+  if (idx < steps().length - 1) { idx++; render(); }
+};
+document.getElementById('btn-back').onclick = function() {
+  if (idx > 0) { idx--; render(); }
+};
+document.getElementById('btn-reset').onclick = function() { idx = 0; render(); };
+
+render();
+</script>
+</body>
+</html>

@@ -130,6 +130,12 @@ elif "ongoing-request=\"false\"" in restore_status:
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/s3-storage-classes.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="S3 Storage Classes Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Storage classes are often managed with lifecycle policies, which are bucket-level rules that automate transitions and deletions. Understanding lifecycle policies is the operational complement to knowing the storage class options.

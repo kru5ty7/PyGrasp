@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Agents Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 0;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  .header {
+    background: #284b63;
+    padding: .55rem 1rem;
+    font-size: .78rem;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: #d4d4d4;
+  }
+  .body { padding: 1rem 1rem .75rem; }
+  .iter-badge {
+    display: inline-block;
+    background: #284b63;
+    color: #d4d4d4;
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    border-radius: 3px;
+    padding: .18rem .5rem;
+    margin-bottom: .65rem;
+  }
+  /* component row */
+  .comp-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin-bottom: .55rem;
+    flex-wrap: nowrap;
+  }
+  .comp-box {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .35rem .55rem;
+    text-align: center;
+    flex: 1;
+    min-width: 0;
+    transition: border-color .2s;
+  }
+  .comp-box .lbl { font-size: .6rem; text-transform: uppercase; letter-spacing: .05em; color: #646464; margin-bottom: .15rem; }
+  .comp-box .nm  { font-size: .8rem; font-weight: 600; }
+  .comp-box .st  { font-size: .65rem; color: #888; margin-top: .15rem; min-height: .9rem; }
+  .comp-box.active  { border-color: #f0a500; }
+  .comp-box.done    { border-color: #28a745; }
+  .comp-box.user-hi { border-color: #007bff; }
+  .arr { color: #646464; font-size: .9rem; flex-shrink: 0; }
+  .arr.lit { color: #f0a500; }
+  /* thought bubble */
+  .thought {
+    background: #2a2a2e;
+    border: 1px dashed #f0a500;
+    border-radius: 6px;
+    padding: .4rem .6rem;
+    font-size: .73rem;
+    color: #f0a500;
+    margin-bottom: .55rem;
+    min-height: 1.4rem;
+    display: none;
+    line-height: 1.45;
+  }
+  .thought.show { display: block; }
+  /* tool call */
+  .toolcall {
+    background: #1a1a20;
+    border: 1px solid #007bff;
+    border-radius: 4px;
+    padding: .35rem .55rem;
+    font-size: .7rem;
+    font-family: monospace;
+    color: #7bb3f0;
+    margin-bottom: .55rem;
+    display: none;
+    word-break: break-all;
+  }
+  .toolcall.show { display: block; }
+  /* result */
+  .result {
+    background: #1a201a;
+    border: 1px solid #28a745;
+    border-radius: 4px;
+    padding: .35rem .55rem;
+    font-size: .7rem;
+    font-family: monospace;
+    color: #7ecf82;
+    margin-bottom: .55rem;
+    display: none;
+    word-break: break-all;
+  }
+  .result.show { display: block; }
+  /* status */
+  #stat {
+    padding: .45rem .65rem;
+    background: #393639;
+    border-left: 3px solid #284b63;
+    border-radius: 0 4px 4px 0;
+    font-size: .8rem;
+    line-height: 1.5;
+    min-height: 2.2rem;
+    margin-bottom: .65rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .3rem .7rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .8rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .7rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">AI Agent Loop - Visualizer</div>
+  <div class="body">
+
+    <div id="iter-badge" class="iter-badge">Iteration 1</div>
+
+    <div class="comp-row">
+      <div class="comp-box" id="box-user">
+        <div class="lbl">User</div>
+        <div class="nm">User</div>
+        <div class="st" id="st-user"></div>
+      </div>
+      <div class="arr" id="arr-ua">→</div>
+      <div class="comp-box" id="box-agent">
+        <div class="lbl">Agent (LLM)</div>
+        <div class="nm">LLM</div>
+        <div class="st" id="st-agent"></div>
+      </div>
+      <div class="arr" id="arr-at">→</div>
+      <div class="comp-box" id="box-tools">
+        <div class="lbl">Tools</div>
+        <div class="nm">Tools</div>
+        <div class="st" id="st-tools"></div>
+      </div>
+      <div class="arr" id="arr-te">→</div>
+      <div class="comp-box" id="box-env">
+        <div class="lbl">Environment</div>
+        <div class="nm">Web</div>
+        <div class="st" id="st-env"></div>
+      </div>
+    </div>
+
+    <div id="thought" class="thought"></div>
+    <div id="toolcall" class="toolcall"></div>
+    <div id="result" class="result"></div>
+
+    <div id="stat">Press Step to begin.</div>
+
+    <div id="ctrl">
+      <button id="btn-back" disabled>&#9664; Back</button>
+      <button id="btn-step">Step &#9654;</button>
+      <button id="btn-reset">&#8635; Reset</button>
+      <span id="counter">Step 0 / 9</span>
+    </div>
+  </div>
+</div>
+<script>
+var STEPS = [
+  {
+    iter: 1,
+    user: {cls:'user-hi', st:'Sending task...'},
+    agent: {cls:'', st:''},
+    tools: {cls:'', st:''},
+    env:   {cls:'', st:''},
+    arrUA: true, arrAT: false, arrTE: false,
+    thought: '',
+    toolcall: '',
+    result: '',
+    msg: 'User sends task: "Research the latest Python performance improvements and summarize".'
+  },
+  {
+    iter: 1,
+    user: {cls:'', st:'Task sent'},
+    agent: {cls:'active', st:'Think phase'},
+    tools: {cls:'', st:''},
+    env:   {cls:'', st:''},
+    arrUA: false, arrAT: false, arrTE: false,
+    thought: 'Thought: I need to find current information about Python performance. I should search the web for Python 3.12 improvements.',
+    toolcall: '',
+    result: '',
+    msg: 'Agent receives task, enters Think phase. LLM reasons about what information is needed.'
+  },
+  {
+    iter: 1,
+    user: {cls:'', st:''},
+    agent: {cls:'active', st:'Deciding tool'},
+    tools: {cls:'', st:''},
+    env:   {cls:'', st:''},
+    arrUA: false, arrAT: false, arrTE: false,
+    thought: 'Thought: I should use web_search to find current Python performance data.',
+    toolcall: '',
+    result: '',
+    msg: 'Agent decides: use "web_search" tool to get current information.'
+  },
+  {
+    iter: 1,
+    user: {cls:'', st:''},
+    agent: {cls:'active', st:'Calling tool'},
+    tools: {cls:'active', st:'Executing...'},
+    env:   {cls:'', st:''},
+    arrUA: false, arrAT: true, arrTE: false,
+    thought: '',
+    toolcall: 'web_search("Python 3.12 performance improvements")',
+    result: '',
+    msg: 'Tool call: web_search("Python 3.12 performance improvements") dispatched to tool executor.'
+  },
+  {
+    iter: 1,
+    user: {cls:'', st:''},
+    agent: {cls:'', st:''},
+    tools: {cls:'done', st:'Done'},
+    env:   {cls:'active', st:'Fetching...'},
+    arrUA: false, arrAT: false, arrTE: true,
+    thought: '',
+    toolcall: 'web_search("Python 3.12 performance improvements")',
+    result: '[\n  {"title": "Python 3.12 is 60% faster", "url": "..."},\n  {"title": "Specializing adaptive interpreter", "url": "..."},\n  {"title": "Faster CPython project", "url": "..."}\n]',
+    msg: 'Tool returns list of web results (abbreviated JSON). Results appended to agent context.'
+  },
+  {
+    iter: 2,
+    user: {cls:'', st:''},
+    agent: {cls:'active', st:'Think again'},
+    tools: {cls:'', st:''},
+    env:   {cls:'', st:''},
+    arrUA: false, arrAT: false, arrTE: false,
+    thought: 'Thought: I have high-level results but need more detail on the specializing adaptive interpreter specifically.',
+    toolcall: '',
+    result: '',
+    msg: 'Agent processes results, thinks again: "Need more detail on specific improvements". Entering iteration 2.'
+  },
+  {
+    iter: 2,
+    user: {cls:'', st:''},
+    agent: {cls:'active', st:'Calling tool'},
+    tools: {cls:'active', st:'Executing...'},
+    env:   {cls:'active', st:'Fetching...'},
+    arrUA: false, arrAT: true, arrTE: true,
+    thought: '',
+    toolcall: 'web_search("Python 3.12 specializing adaptive interpreter")',
+    result: '',
+    msg: 'Agent calls tool again: web_search("Python 3.12 specializing adaptive interpreter").'
+  },
+  {
+    iter: 2,
+    user: {cls:'', st:''},
+    agent: {cls:'active', st:'Synthesizing'},
+    tools: {cls:'done', st:'Done'},
+    env:   {cls:'done', st:'Done'},
+    arrUA: false, arrAT: false, arrTE: false,
+    thought: 'Thought: I now have enough context to formulate a comprehensive answer about Python 3.12 performance.',
+    toolcall: '',
+    result: '',
+    msg: 'Agent has enough context. Formulating final answer from all gathered information.'
+  },
+  {
+    iter: 2,
+    user: {cls:'done', st:'Response received'},
+    agent: {cls:'done', st:'Done'},
+    tools: {cls:'', st:''},
+    env:   {cls:'', st:''},
+    arrUA: true, arrAT: false, arrTE: false,
+    thought: '',
+    toolcall: '',
+    result: '"Python 3.12 achieves ~60% speedup over 3.10 via the specializing adaptive interpreter (PEP 659), faster startup, improved memory use. [Sources: python.org, peps.python.org]"',
+    msg: 'Response returned to user with citations. Agent loop complete after 2 iterations.'
+  }
+];
+
+var idx = 0;
+
+function draw() {
+  var s = STEPS[idx];
+  document.getElementById('iter-badge').textContent = 'Iteration ' + s.iter;
+
+  var boxes = ['user','agent','tools','env'];
+  var ids   = ['box-user','box-agent','box-tools','box-env'];
+  var stIds = ['st-user','st-agent','st-tools','st-env'];
+  for (var i = 0; i < boxes.length; i++) {
+    var b = s[boxes[i]];
+    document.getElementById(ids[i]).className = 'comp-box' + (b.cls ? ' ' + b.cls : '');
+    document.getElementById(stIds[i]).textContent = b.st;
+  }
+
+  document.getElementById('arr-ua').className = 'arr' + (s.arrUA ? ' lit' : '');
+  document.getElementById('arr-at').className = 'arr' + (s.arrAT ? ' lit' : '');
+  document.getElementById('arr-te').className = 'arr' + (s.arrTE ? ' lit' : '');
+
+  var th = document.getElementById('thought');
+  th.textContent = s.thought;
+  th.className = 'thought' + (s.thought ? ' show' : '');
+
+  var tc = document.getElementById('toolcall');
+  tc.textContent = s.toolcall;
+  tc.className = 'toolcall' + (s.toolcall ? ' show' : '');
+
+  var re = document.getElementById('result');
+  re.textContent = s.result;
+  re.className = 'result' + (s.result ? ' show' : '');
+
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (STEPS.length - 1);
+  var stepBtn = document.getElementById('btn-step');
+  if (idx === STEPS.length - 1) {
+    stepBtn.textContent = 'Done ✓';
+    stepBtn.disabled = true;
+  } else {
+    stepBtn.textContent = 'Step ►';
+    stepBtn.disabled = false;
+  }
+  document.getElementById('btn-back').disabled = idx === 0;
+}
+
+document.getElementById('btn-step').onclick = function() { if (idx < STEPS.length - 1) { idx++; draw(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+draw();
+</script>
+</body>
+</html>

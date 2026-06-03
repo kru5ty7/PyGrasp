@@ -164,6 +164,12 @@ monitoring_client = boto3.client(
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/iam-assume-role.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="IAM AssumeRole Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Role assumption is the mechanism that makes IAM roles useful outside of the automatic execution-environment cases. Understanding the automatic case (Lambda, EC2) and the explicit case (STS AssumeRole) together gives the complete picture.

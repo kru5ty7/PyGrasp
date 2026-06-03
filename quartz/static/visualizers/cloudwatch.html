@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CloudWatch - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #diagram { margin-bottom: .75rem; }
+  svg { display: block; width: 100%; height: auto; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>CloudWatch — Metrics, Logs and Alarms Pipeline</h4>
+  <div id="diagram"></div>
+  <div id="stat"></div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var C = {
+  bg: '#2a2a2e', border: '#393639', header: '#284b63',
+  amber: '#f0a500', green: '#28a745', red: '#dc3545',
+  blue: '#007bff', text: '#d4d4d4', dim: '#444', grey: '#777'
+};
+
+// Pipeline nodes (horizontal flow with branching)
+// Layout:
+// [EC2] → [CW Logs] → [Metric Filter] → [Custom Metric] → [Alarm] → [SNS] → [Email]
+//           ↑                                               ↓                  [ASG Action]
+//     (CW Agent)                                    [OK/ALARM/INSUF]
+
+var steps = [
+  {
+    msg: 'CloudWatch pipeline. Press Step to walk through metrics, logs, and alarm flow.',
+    hi: {},
+    arrows: [],
+    alarmState: null
+  },
+  {
+    msg: 'Step 1/8: EC2 instance running. Publishing standard metrics to CloudWatch every 1 min — CPUUtilization, NetworkIn, DiskReadOps.',
+    hi: { ec2: 'active', cwMetrics: 'active' },
+    arrows: [{ from: 'ec2', to: 'cwMetrics', color: '#f0a500', label: 'metrics/min' }],
+    alarmState: 'ok'
+  },
+  {
+    msg: 'Step 2/8: Application logs shipped to CloudWatch Logs via CloudWatch Agent. Log group: /app/access.log.',
+    hi: { ec2: 'done', cwLogs: 'active' },
+    arrows: [{ from: 'ec2', to: 'cwLogs', color: '#007bff', label: 'log stream' }],
+    alarmState: 'ok'
+  },
+  {
+    msg: 'Step 3/8: Metric filter applied to log group — pattern "[ERROR]" extracts error count per minute from log data.',
+    hi: { cwLogs: 'done', metricFilter: 'active' },
+    arrows: [{ from: 'cwLogs', to: 'metricFilter', color: '#f0a500', label: 'filter: [ERROR]' }],
+    alarmState: 'ok'
+  },
+  {
+    msg: 'Step 4/8: Custom metric "ErrorCount" created in namespace "MyApp". Updated each time the filter matches a log line.',
+    hi: { metricFilter: 'done', cwMetrics: 'active' },
+    arrows: [{ from: 'metricFilter', to: 'cwMetrics', color: '#28a745', label: 'ErrorCount metric' }],
+    alarmState: 'ok'
+  },
+  {
+    msg: 'Step 5/8: Alarm: CPUUtilization > 80% for 3 consecutive datapoints (3 minutes). CPU spikes → Alarm enters ALARM state.',
+    hi: { cwMetrics: 'done', alarm: 'active' },
+    arrows: [{ from: 'cwMetrics', to: 'alarm', color: '#dc3545', label: 'CPU > 80%' }],
+    alarmState: 'alarm'
+  },
+  {
+    msg: 'Step 6/8: ALARM triggers SNS notification — message published to ops-alerts topic. Email sent to on-call team.',
+    hi: { alarm: 'active', sns: 'active', email: 'active' },
+    arrows: [
+      { from: 'alarm', to: 'sns',   color: '#dc3545', label: 'ALARM' },
+      { from: 'sns',   to: 'email', color: '#dc3545', label: 'email' }
+    ],
+    alarmState: 'alarm'
+  },
+  {
+    msg: 'Step 7/8: ALARM also triggers Auto Scaling action — ASG ScaleOut policy invoked. 2 new instances launched.',
+    hi: { alarm: 'active', asg: 'active' },
+    arrows: [{ from: 'alarm', to: 'asg', color: '#f0a500', label: 'ScaleOut' }],
+    alarmState: 'alarm'
+  },
+  {
+    msg: 'Step 8/8: CPU drops below threshold. Alarm transitions OK → scale-in. Alarm states: OK (green), ALARM (red), INSUFFICIENT_DATA (grey).',
+    hi: { alarm: 'done', cwMetrics: 'done', asg: 'done' },
+    arrows: [{ from: 'cwMetrics', to: 'alarm', color: '#28a745', label: 'CPU < 60%' }],
+    alarmState: 'ok',
+    showStates: true
+  }
+];
+
+var idx = 0;
+
+// Node layout
+var NODES = {
+  ec2:         { x: 10,  y: 60,  w: 75, h: 44 },
+  cwLogs:      { x: 115, y: 60,  w: 80, h: 44 },
+  metricFilter:{ x: 220, y: 60,  w: 80, h: 44 },
+  cwMetrics:   { x: 115, y: 155, w: 80, h: 44 },
+  alarm:       { x: 230, y: 155, w: 75, h: 44 },
+  sns:         { x: 335, y: 115, w: 70, h: 44 },
+  email:       { x: 430, y: 80,  w: 70, h: 34 },
+  asg:         { x: 430, y: 155, w: 70, h: 34 }
+};
+var NODE_LABELS = {
+  ec2:          'EC2',
+  cwLogs:       'CW Logs',
+  metricFilter: 'Metric Filter',
+  cwMetrics:    'CW Metrics',
+  alarm:        'Alarm',
+  sns:          'SNS Topic',
+  email:        'Email',
+  asg:          'ASG Action'
+};
+var NODE_SUB = {
+  ec2:          'CloudWatch Agent',
+  cwLogs:       '/app/access.log',
+  metricFilter: 'pattern: [ERROR]',
+  cwMetrics:    'CPUUtil, custom',
+  alarm:        'CPU > 80%, 3x',
+  sns:          'ops-alerts',
+  email:        'on-call team',
+  asg:          'ScaleOut policy'
+};
+
+function nodeColor(key, hi) {
+  var s = hi[key];
+  if (s === 'active') return C.amber;
+  if (s === 'done')   return C.green;
+  if (s === 'error')  return C.red;
+  return C.border;
+}
+function nodeFill(key, hi) {
+  var s = hi[key];
+  if (s === 'active') return '#2e2810';
+  if (s === 'done')   return '#0e2018';
+  if (s === 'error')  return '#2e1010';
+  return C.bg;
+}
+function nodeCenter(key) {
+  var n = NODES[key];
+  return { x: n.x + n.w / 2, y: n.y + n.h / 2 };
+}
+function edgePoint(key, toward) {
+  var nc = nodeCenter(key);
+  var tc = nodeCenter(toward);
+  var n = NODES[key];
+  var dx = tc.x - nc.x, dy = tc.y - nc.y;
+  var hw = n.w / 2, hh = n.h / 2;
+  var absDx = Math.abs(dx), absDy = Math.abs(dy);
+  if (absDx * hh > absDy * hw) {
+    var sx = dx > 0 ? 1 : -1;
+    return { x: nc.x + sx * hw, y: nc.y + (absDx > 0 ? dy * hw / absDx : 0) };
+  } else {
+    var sy = dy > 0 ? 1 : -1;
+    return { x: nc.x + (absDy > 0 ? dx * hh / absDy : 0), y: nc.y + sy * hh };
+  }
+}
+
+function renderSVG(step) {
+  var W = 510, H = 260;
+  var out = '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">';
+
+  // Arrows
+  step.arrows.forEach(function(arr) {
+    var id = 'ah-' + arr.color.replace('#','');
+    var p1 = edgePoint(arr.from, arr.to);
+    var p2 = edgePoint(arr.to, arr.from);
+    var mid = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+    out += '<defs><marker id="' + id + '" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto"><polygon points="0 0, 8 3, 0 6" fill="' + arr.color + '"/></marker></defs>';
+    out += '<line x1="' + p1.x + '" y1="' + p1.y + '" x2="' + p2.x + '" y2="' + p2.y + '" stroke="' + arr.color + '" stroke-width="1.5" marker-end="url(#' + id + ')"/>';
+    if (arr.label) {
+      out += '<rect x="' + (mid.x - 36) + '" y="' + (mid.y - 8) + '" width="72" height="13" rx="3" fill="#161618" opacity="0.9"/>';
+      out += '<text x="' + mid.x + '" y="' + (mid.y + 3) + '" text-anchor="middle" font-size="7.5" fill="' + arr.color + '">' + arr.label + '</text>';
+    }
+  });
+
+  // Draw nodes
+  Object.keys(NODES).forEach(function(key) {
+    var n = NODES[key];
+    var bc = nodeColor(key, step.hi);
+    var bf = nodeFill(key, step.hi);
+    var sw = step.hi[key] ? 2 : 1;
+    var headerH = 13;
+    out += '<rect x="' + n.x + '" y="' + n.y + '" width="' + n.w + '" height="' + n.h + '" rx="4" fill="' + bf + '" stroke="' + bc + '" stroke-width="' + sw + '"/>';
+    out += '<rect x="' + n.x + '" y="' + n.y + '" width="' + n.w + '" height="' + headerH + '" rx="4" fill="' + C.header + '"/>';
+    out += '<rect x="' + n.x + '" y="' + (n.y + headerH - 4) + '" width="' + n.w + '" height="4" fill="' + C.header + '"/>';
+    var tc = bc !== C.border ? bc : C.text;
+    out += '<text x="' + (n.x + n.w / 2) + '" y="' + (n.y + 23) + '" text-anchor="middle" font-size="8.5" font-weight="600" fill="' + tc + '">' + NODE_LABELS[key] + '</text>';
+    if (n.h >= 44) {
+      out += '<text x="' + (n.x + n.w / 2) + '" y="' + (n.y + 36) + '" text-anchor="middle" font-size="7" fill="#666">' + NODE_SUB[key] + '</text>';
+    }
+  });
+
+  // Alarm state display
+  if (step.alarmState) {
+    var states = ['INSUFFICIENT_DATA', 'OK', 'ALARM'];
+    var stColors = ['#777', '#28a745', '#dc3545'];
+    var stFills  = ['#1a1a1a', '#0e2018', '#2e1010'];
+    var sx = 8, sy = H - 34;
+    states.forEach(function(s, i) {
+      var active = (s === 'OK' && step.alarmState === 'ok') || (s === 'ALARM' && step.alarmState === 'alarm') || (s === 'INSUFFICIENT_DATA' && step.alarmState === 'insuf');
+      var bw = s.length * 6 + 10;
+      out += '<rect x="' + sx + '" y="' + sy + '" width="' + bw + '" height="16" rx="3" fill="' + (active ? stFills[i] : '#1a1a1a') + '" stroke="' + (active ? stColors[i] : '#333') + '" stroke-width="' + (active ? 2 : 1) + '"/>';
+      out += '<text x="' + (sx + bw / 2) + '" y="' + (sy + 11) + '" text-anchor="middle" font-size="7.5" font-weight="' + (active ? '700' : '400') + '" fill="' + (active ? stColors[i] : '#555') + '">' + s + '</text>';
+      sx += bw + 6;
+    });
+  }
+
+  out += '</svg>';
+  return out;
+}
+
+function render() {
+  var step = steps[idx];
+  document.getElementById('diagram').innerHTML = renderSVG(step);
+  document.getElementById('stat').textContent = step.msg;
+  var isLast = idx >= steps.length - 1;
+  document.getElementById('btn-step').disabled = isLast;
+  document.getElementById('btn-step').textContent = isLast ? 'Done ✓' : 'Step →';
+  document.getElementById('btn-back').disabled = idx === 0;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
+}
+
+document.getElementById('btn-step').onclick  = function() { if (idx < steps.length - 1) { idx++; render(); } };
+document.getElementById('btn-back').onclick  = function() { if (idx > 0) { idx--; render(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; render(); };
+
+render();
+</script>
+</body>
+</html>

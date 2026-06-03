@@ -119,6 +119,12 @@ aws application-autoscaling put-scaling-policy \
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/lambda-concurrency.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Lambda Concurrency Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Concurrency and cold starts are tightly coupled. Provisioned Concurrency is the answer to cold starts on latency-sensitive functions, but it requires publishing a function version. The cold start note describes the cost-benefit analysis of Provisioned Concurrency.

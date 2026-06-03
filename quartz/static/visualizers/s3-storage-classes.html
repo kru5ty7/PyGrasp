@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S3 Storage Classes - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #diagram { margin-bottom: .75rem; }
+  svg { display: block; width: 100%; height: auto; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>S3 Storage Class Tiers</h4>
+  <div id="diagram"></div>
+  <div id="stat"></div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var C = {
+  bg: '#2a2a2e',
+  border: '#393639',
+  header: '#284b63',
+  amber: '#f0a500',
+  green: '#28a745',
+  red: '#dc3545',
+  blue: '#007bff',
+  text: '#d4d4d4',
+  dim: '#555',
+  panelBg: '#393639'
+};
+
+// 7 tiers, top to bottom. viewBox 560 x 310
+var TIERS = [
+  { id: 0, label: 'S3 Standard',            cost: '$0.023/GB/mo', retrieval: 'ms (immediate)',    color: '#2a6b3a' },
+  { id: 1, label: 'S3 Intelligent-Tiering', cost: '$0.023/GB/mo', retrieval: 'ms (auto-tier)',    color: '#2a5a6b' },
+  { id: 2, label: 'S3 Standard-IA',         cost: '$0.0125/GB/mo',retrieval: 'ms + retrieval fee',color: '#4a5a2a' },
+  { id: 3, label: 'S3 One Zone-IA',         cost: '$0.01/GB/mo',  retrieval: 'ms (1 AZ only)',    color: '#5a4a2a' },
+  { id: 4, label: 'Glacier Instant',        cost: '$0.004/GB/mo', retrieval: 'ms',                color: '#4a2a5a' },
+  { id: 5, label: 'Glacier Flexible',       cost: '$0.0036/GB/mo',retrieval: '1-12 hrs',          color: '#5a2a4a' },
+  { id: 6, label: 'Glacier Deep Archive',   cost: '$0.00099/GB/mo',retrieval: '12 hrs',           color: '#3a2a2a' }
+];
+
+var TIER_Y_START = 14;
+var TIER_H = 32;
+var TIER_GAP = 5;
+var TIER_X = 10;
+var TIER_W = 380;
+
+function tierY(i) { return TIER_Y_START + i * (TIER_H + TIER_GAP); }
+
+// Object position (which tier it lives in), -1 = not shown
+// Step definitions
+var STEPS = [
+  {
+    msg: 'Seven storage classes from hot to cold. Each row shows cost/GB/month and retrieval speed. Press Step to begin.',
+    activeTiers: [0,1,2,3,4,5,6],
+    objectTier: -1,
+    retrievalStep: false,
+    itArrows: false,
+    costCompare: false,
+    pendingRestore: false
+  },
+  {
+    msg: 'Step 1/7: Object uploaded — starts in S3 Standard (hot data, frequent access). Highest cost, immediate retrieval.',
+    activeTiers: [0],
+    objectTier: 0,
+    retrievalStep: false,
+    itArrows: false,
+    costCompare: false,
+    pendingRestore: false
+  },
+  {
+    msg: 'Step 2/7: Lifecycle rule fires — no access in 30 days. Object transitions to Standard-IA (Infrequent Access). Storage cost drops but retrieval fee applies.',
+    activeTiers: [0,2],
+    objectTier: 2,
+    retrievalStep: false,
+    itArrows: false,
+    costCompare: false,
+    pendingRestore: false,
+    transitionArrow: { from: 0, to: 2, label: 'after 30 days' }
+  },
+  {
+    msg: 'Step 3/7: Lifecycle rule fires again — 90 days of no access. Object transitions to Glacier Flexible Retrieval. Very cheap storage, but retrieval takes 1-12 hours.',
+    activeTiers: [0,2,5],
+    objectTier: 5,
+    retrievalStep: false,
+    itArrows: false,
+    costCompare: false,
+    pendingRestore: false,
+    transitionArrow: { from: 2, to: 5, label: 'after 90 days' }
+  },
+  {
+    msg: 'Step 4/7: Retrieval from Glacier Flexible — submit restore job, choose tier. Standard tier: 3-5 hour wait. Object temporarily available once restored.',
+    activeTiers: [0,2,5],
+    objectTier: 5,
+    retrievalStep: true,
+    itArrows: false,
+    costCompare: false,
+    pendingRestore: true
+  },
+  {
+    msg: 'Step 5/7: Intelligent-Tiering — auto-moves objects between Frequent and Infrequent tiers based on actual access patterns. No retrieval fees, but per-object monitoring cost.',
+    activeTiers: [1],
+    objectTier: 1,
+    retrievalStep: false,
+    itArrows: true,
+    costCompare: false,
+    pendingRestore: false
+  },
+  {
+    msg: 'Step 6/7: Cost comparison — Standard: $0.023/GB/mo vs Deep Archive: $0.00099/GB/mo. Deep Archive is ~23x cheaper for data you almost never need.',
+    activeTiers: [0,6],
+    objectTier: -1,
+    retrievalStep: false,
+    itArrows: false,
+    costCompare: true,
+    pendingRestore: false
+  },
+  {
+    msg: 'Step 7/7: Choose your tier based on access frequency. Hot data → Standard. Cold archives → Glacier Deep Archive. Use lifecycle rules to automate transitions.',
+    activeTiers: [0,1,2,3,4,5,6],
+    objectTier: -1,
+    retrievalStep: false,
+    itArrows: false,
+    costCompare: false,
+    pendingRestore: false
+  }
+];
+
+var idx = 0;
+var TOTAL = STEPS.length - 1;
+
+function render() {
+  var step = STEPS[idx];
+  var s = '<svg viewBox="0 0 560 310" xmlns="http://www.w3.org/2000/svg">';
+
+  // Cost axis label
+  s += '<text x="400" y="12" font-size="8" fill="' + C.dim + '">Cost ↓ lower</text>';
+  s += '<text x="400" y="24" font-size="8" fill="' + C.dim + '">Retrieval ↓ slower</text>';
+
+  // Draw all tier rows
+  TIERS.forEach(function(tier, i) {
+    var ty = tierY(i);
+    var isActive = step.activeTiers.indexOf(i) !== -1;
+    var opacity = isActive ? 1 : 0.3;
+    var bColor = isActive ? tier.color : C.border;
+
+    s += '<g opacity="' + opacity + '">';
+    // Tier box
+    s += '<rect x="' + TIER_X + '" y="' + ty + '" width="' + TIER_W + '" height="' + TIER_H + '"'
+       + ' rx="4" fill="' + C.bg + '" stroke="' + bColor + '" stroke-width="1.5"/>';
+    // Left color bar
+    s += '<rect x="' + TIER_X + '" y="' + ty + '" width="4" height="' + TIER_H + '"'
+       + ' rx="2" fill="' + tier.color + '"/>';
+    // Label
+    s += '<text x="' + (TIER_X+14) + '" y="' + (ty+13) + '" font-size="10" font-weight="bold" fill="' + C.text + '">' + tier.label + '</text>';
+    // Cost badge
+    s += '<rect x="' + (TIER_X+14) + '" y="' + (ty+16) + '" width="88" height="12" rx="2" fill="' + tier.color + '" opacity="0.2"/>';
+    s += '<text x="' + (TIER_X+58) + '" y="' + (ty+25) + '" text-anchor="middle" font-size="8" fill="' + C.text + '">' + tier.cost + '</text>';
+    // Retrieval badge
+    s += '<text x="' + (TIER_X+120) + '" y="' + (ty+25) + '" font-size="8" fill="' + C.dim + '">Retrieval: ' + tier.retrieval + '</text>';
+    s += '</g>';
+  });
+
+  // Object indicator (dot on current tier)
+  if (step.objectTier >= 0) {
+    var ot = step.objectTier;
+    var oty = tierY(ot) + TIER_H/2;
+    s += '<circle cx="' + (TIER_X + TIER_W + 20) + '" cy="' + oty + '" r="8" fill="' + C.amber + '"/>';
+    s += '<text x="' + (TIER_X + TIER_W + 20) + '" y="' + (oty+4) + '" text-anchor="middle" font-size="9" fill="#000">obj</text>';
+  }
+
+  // Transition arrow
+  if (step.transitionArrow) {
+    var ta = step.transitionArrow;
+    var ax = TIER_X + TIER_W + 20;
+    var ay1 = tierY(ta.from) + TIER_H/2;
+    var ay2 = tierY(ta.to) + TIER_H/2;
+    s += '<defs><marker id="arr-tr" markerWidth="7" markerHeight="5" refX="5" refY="2.5" orient="auto">'
+       + '<polygon points="0 0,7 2.5,0 5" fill="' + C.amber + '"/></marker></defs>';
+    s += '<line x1="' + ax + '" y1="' + (ay1+10) + '" x2="' + ax + '" y2="' + (ay2-10) + '"'
+       + ' stroke="' + C.amber + '" stroke-width="2" marker-end="url(#arr-tr)"/>';
+    s += '<text x="' + (ax+12) + '" y="' + ((ay1+ay2)/2) + '" font-size="8" fill="' + C.amber + '">' + ta.label + '</text>';
+  }
+
+  // Retrieval pending state
+  if (step.retrievalStep) {
+    var rt = step.objectTier;
+    var rty = tierY(rt) + TIER_H/2;
+    // Restore request arrow to right
+    s += '<defs><marker id="arr-rest" markerWidth="7" markerHeight="5" refX="5" refY="2.5" orient="auto">'
+       + '<polygon points="0 0,7 2.5,0 5" fill="' + C.blue + '"/></marker></defs>';
+    s += '<line x1="' + (TIER_X+TIER_W+30) + '" y1="' + rty + '" x2="530" y2="' + rty + '"'
+       + ' stroke="' + C.blue + '" stroke-width="1.8" marker-end="url(#arr-rest)"/>';
+    s += '<rect x="490" y="' + (rty-20) + '" width="60" height="16" rx="3" fill="#1a1a2a"/>';
+    s += '<text x="520" y="' + (rty-9) + '" text-anchor="middle" font-size="8" fill="' + C.blue + '">Restore</text>';
+    s += '<text x="520" y="' + (rty-9+10) + '" text-anchor="middle" font-size="8" fill="' + C.blue + '">request</text>';
+    if (step.pendingRestore) {
+      s += '<rect x="490" y="' + (rty+4) + '" width="60" height="22" rx="3" fill="#2a1a1a"/>';
+      s += '<text x="520" y="' + (rty+14) + '" text-anchor="middle" font-size="8" fill="' + C.amber + '">3-5 hr</text>';
+      s += '<text x="520" y="' + (rty+24) + '" text-anchor="middle" font-size="8" fill="' + C.amber + '">wait</text>';
+    }
+  }
+
+  // Intelligent-Tiering bidirectional arrows
+  if (step.itArrows) {
+    var itY = tierY(1) + TIER_H/2;
+    var itX = TIER_X + TIER_W + 20;
+    // Frequent label above
+    s += '<rect x="' + (itX-24) + '" y="' + (itY-32) + '" width="48" height="14" rx="3" fill="#2a3a2a"/>';
+    s += '<text x="' + itX + '" y="' + (itY-22) + '" text-anchor="middle" font-size="8" fill="' + C.green + '">Frequent</text>';
+    // Infrequent label below
+    s += '<rect x="' + (itX-28) + '" y="' + (itY+18) + '" width="56" height="14" rx="3" fill="#2a2a3a"/>';
+    s += '<text x="' + itX + '" y="' + (itY+28) + '" text-anchor="middle" font-size="8" fill="' + C.blue + '">Infrequent</text>';
+    // Up arrow
+    s += '<defs><marker id="arr-up" markerWidth="6" markerHeight="5" refX="3" refY="2.5" orient="auto">'
+       + '<polygon points="0 5,3 0,6 5" fill="' + C.green + '"/></marker></defs>';
+    s += '<line x1="' + (itX-6) + '" y1="' + (itY+16) + '" x2="' + (itX-6) + '" y2="' + (itY-18) + '"'
+       + ' stroke="' + C.green + '" stroke-width="1.5" marker-end="url(#arr-up)"/>';
+    // Down arrow
+    s += '<defs><marker id="arr-dn" markerWidth="6" markerHeight="5" refX="3" refY="2.5" orient="auto">'
+       + '<polygon points="0 0,3 5,6 0" fill="' + C.blue + '"/></marker></defs>';
+    s += '<line x1="' + (itX+6) + '" y1="' + (itY-18) + '" x2="' + (itX+6) + '" y2="' + (itY+16) + '"'
+       + ' stroke="' + C.blue + '" stroke-width="1.5" marker-end="url(#arr-dn)"/>';
+    s += '<text x="' + (itX+20) + '" y="' + itY + '" font-size="8" fill="' + C.dim + '">auto</text>';
+  }
+
+  // Cost comparison callout
+  if (step.costCompare) {
+    s += '<rect x="400" y="40" width="148" height="72" rx="5" fill="#1a1a2a" stroke="' + C.amber + '" stroke-width="1"/>';
+    s += '<text x="474" y="56" text-anchor="middle" font-size="9" font-weight="bold" fill="' + C.amber + '">Cost Comparison</text>';
+    s += '<text x="410" y="70" font-size="8" fill="' + C.green + '">Standard: $0.023/GB</text>';
+    s += '<text x="410" y="83" font-size="8" fill="' + C.red + '">Deep Archive: $0.00099/GB</text>';
+    s += '<rect x="410" y="90" width="130" height="14" rx="3" fill="#2a1a1a"/>';
+    s += '<text x="474" y="101" text-anchor="middle" font-size="8" fill="' + C.amber + '">~23x cheaper for cold data</text>';
+  }
+
+  s += '</svg>';
+  document.getElementById('diagram').innerHTML = s;
+  document.getElementById('stat').textContent = step.msg;
+
+  var isLast = idx >= TOTAL;
+  document.getElementById('btn-step').disabled = isLast;
+  document.getElementById('btn-step').textContent = isLast ? 'Done ✓' : 'Step →';
+  document.getElementById('btn-back').disabled = idx === 0;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + TOTAL;
+}
+
+document.getElementById('btn-step').addEventListener('click', function() {
+  if (idx < TOTAL) { idx++; render(); }
+});
+document.getElementById('btn-back').addEventListener('click', function() {
+  if (idx > 0) { idx--; render(); }
+});
+document.getElementById('btn-reset').addEventListener('click', function() {
+  idx = 0; render();
+});
+
+render();
+</script>
+</body>
+</html>

@@ -172,6 +172,12 @@ aws lambda update-event-source-mapping \
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/lambda-handlers.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Lambda Handlers Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 The handler patterns described here depend on the trigger type. API Gateway, S3, and SQS are the three most common trigger sources for Python Lambda functions, and each has its own invocation semantics.

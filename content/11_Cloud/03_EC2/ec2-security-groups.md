@@ -156,6 +156,12 @@ for rule in rules["SecurityGroupRules"]:
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/ec2-security-groups.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="EC2 Security Groups Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Security groups are the network boundary that protects EC2 instances. They work in conjunction with IAM - IAM controls what the instance can do (API permissions), security groups control what can reach the instance (network access). Both must be configured correctly for a production deployment.

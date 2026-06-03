@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Multi-Agent Systems Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 0;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  .header {
+    background: #284b63;
+    padding: .55rem 1rem;
+    font-size: .78rem;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: #d4d4d4;
+  }
+  .body { padding: .85rem 1rem .75rem; }
+  /* mode selector */
+  .mode-row {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: .65rem;
+  }
+  .mode-btn {
+    flex: 1;
+    padding: .32rem .5rem;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .78rem;
+    background: #2a2a2e;
+    color: #888;
+    text-align: center;
+    transition: all .15s;
+  }
+  .mode-btn.active {
+    background: #284b63;
+    border-color: #284b63;
+    color: #fff;
+    font-weight: 600;
+  }
+  .mode-btn:hover:not(.active) { color: #d4d4d4; }
+  /* diagram */
+  .diagram { margin-bottom: .6rem; }
+  /* supervisor layout */
+  .sup-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+  .agent-row {
+    display: flex;
+    gap: 5px;
+    align-items: center;
+  }
+  .agent-box {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .32rem .5rem;
+    text-align: center;
+    transition: border-color .2s, opacity .2s;
+    flex: 1;
+  }
+  .agent-box .lbl { font-size: .58rem; text-transform: uppercase; letter-spacing: .04em; color: #646464; margin-bottom: .1rem; }
+  .agent-box .nm  { font-size: .78rem; font-weight: 600; }
+  .agent-box .st  { font-size: .62rem; color: #888; margin-top: .1rem; min-height: .8rem; }
+  .agent-box.active  { border-color: #f0a500; }
+  .agent-box.done    { border-color: #28a745; }
+  .agent-box.user-hi { border-color: #007bff; }
+  .agent-box.dim     { opacity: .3; }
+  .arr { color: #646464; font-size: .85rem; flex-shrink: 0; }
+  .arr.lit { color: #f0a500; }
+  .arr.vert { text-align: center; font-size: .8rem; }
+  /* output panel */
+  .out-panel {
+    background: #1a1a20;
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: .35rem .55rem;
+    font-size: .7rem;
+    font-family: monospace;
+    color: #c9d1d9;
+    margin-bottom: .55rem;
+    display: none;
+    line-height: 1.45;
+    word-break: break-word;
+  }
+  .out-panel.show { display: block; }
+  .out-panel .plbl { font-size: .6rem; text-transform: uppercase; letter-spacing: .06em; margin-bottom: .18rem; color: #888; }
+  /* status */
+  #stat {
+    padding: .45rem .65rem;
+    background: #393639;
+    border-left: 3px solid #284b63;
+    border-radius: 0 4px 4px 0;
+    font-size: .8rem;
+    line-height: 1.5;
+    min-height: 2.2rem;
+    margin-bottom: .65rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .3rem .7rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .8rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .7rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">Multi-Agent Systems - Visualizer</div>
+  <div class="body">
+
+    <div class="mode-row">
+      <div class="mode-btn active" id="mode-sup" onclick="setMode('supervisor')">Supervisor</div>
+      <div class="mode-btn" id="mode-hand" onclick="setMode('handoff')">Handoff</div>
+    </div>
+
+    <div class="diagram" id="diagram"></div>
+    <div class="out-panel" id="out-panel"></div>
+
+    <div id="stat">Press Step to begin.</div>
+
+    <div id="ctrl">
+      <button id="btn-back" disabled>&#9664; Back</button>
+      <button id="btn-step">Step &#9654;</button>
+      <button id="btn-reset">&#8635; Reset</button>
+      <span id="counter"></span>
+    </div>
+  </div>
+</div>
+<script>
+var mode = 'supervisor';
+var idx = 0;
+
+var SUPERVISOR_STEPS = [
+  {
+    boxes: {
+      user:{cls:'user-hi',st:'Requesting...'},
+      sup:{cls:'',st:''},
+      ra:{cls:'dim',st:''},
+      wa:{cls:'dim',st:''},
+      ca:{cls:'dim',st:''}
+    },
+    out:{show:false,lbl:'',text:''},
+    msg:'User request: "Write a report on AI trends with code examples".'
+  },
+  {
+    boxes: {
+      user:{cls:'',st:'Sent'},
+      sup:{cls:'active',st:'Decomposing...'},
+      ra:{cls:'dim',st:''},
+      wa:{cls:'dim',st:''},
+      ca:{cls:'dim',st:''}
+    },
+    out:{show:true,lbl:'Supervisor reasoning',text:'Tasks:\n  Task 1 → Research Agent (research)\n  Task 2 → Writer Agent (write)\n  Task 3 → Coder Agent (code examples)'},
+    msg:'Supervisor LLM receives request. Decomposes into 3 subtasks for specialized agents.'
+  },
+  {
+    boxes: {
+      user:{cls:'',st:''},
+      sup:{cls:'active',st:'Calling Research'},
+      ra:{cls:'active',st:'Working...'},
+      wa:{cls:'dim',st:''},
+      ca:{cls:'dim',st:''}
+    },
+    out:{show:true,lbl:'Research Agent output',text:'findings: [\n  "LLMs growing rapidly",\n  "Multimodal models mainstream",\n  "Agentic frameworks emerging"\n]'},
+    msg:'Supervisor calls Research Agent. Agent searches web, summarizes findings, returns results.'
+  },
+  {
+    boxes: {
+      user:{cls:'',st:''},
+      sup:{cls:'active',st:'Calling Writer'},
+      ra:{cls:'done',st:'Done'},
+      wa:{cls:'active',st:'Drafting...'},
+      ca:{cls:'dim',st:''}
+    },
+    out:{show:true,lbl:'Writer Agent output',text:'draft: "AI in 2024: LLMs now power...\n[section on multimodal]\n[section on agents]"'},
+    msg:'Supervisor calls Writer Agent with research findings. Agent drafts report, returns prose.'
+  },
+  {
+    boxes: {
+      user:{cls:'',st:''},
+      sup:{cls:'active',st:'Calling Coder'},
+      ra:{cls:'done',st:'Done'},
+      wa:{cls:'done',st:'Done'},
+      ca:{cls:'active',st:'Coding...'}
+    },
+    out:{show:true,lbl:'Coder Agent output',text:'code: [\n  "from langchain_anthropic import ChatAnthropic\\n...",\n  "agent = create_react_agent(llm, tools)\\n..."\n]'},
+    msg:'Supervisor calls Coder Agent. Agent generates relevant code examples.'
+  },
+  {
+    boxes: {
+      user:{cls:'',st:''},
+      sup:{cls:'active',st:'Combining...'},
+      ra:{cls:'done',st:'Done'},
+      wa:{cls:'done',st:'Done'},
+      ca:{cls:'done',st:'Done'}
+    },
+    out:{show:true,lbl:'Supervisor combining',text:'report = draft + findings + code_examples\n→ "AI Trends 2024 Report (12 pages)"'},
+    msg:'Supervisor combines all outputs: research + draft + code examples into final report.'
+  },
+  {
+    boxes: {
+      user:{cls:'done',st:'Report received'},
+      sup:{cls:'done',st:'Done'},
+      ra:{cls:'done',st:''},
+      wa:{cls:'done',st:''},
+      ca:{cls:'done',st:''}
+    },
+    out:{show:true,lbl:'Final output',text:'"AI Trends 2024 Report with Code Examples"\n[returned to user]'},
+    msg:'Supervisor returns final combined report to user. Workflow complete.'
+  }
+];
+
+var HANDOFF_STEPS = [
+  {
+    chain: {triage:{cls:'user-hi',st:'Incoming'}, billing:{cls:'dim',st:''}, finance:{cls:'dim',st:''}},
+    out:{show:false,lbl:'',text:''},
+    msg:'User request arrives. Triage Agent receives the message.'
+  },
+  {
+    chain: {triage:{cls:'active',st:'Routing...'}, billing:{cls:'dim',st:''}, finance:{cls:'dim',st:''}},
+    out:{show:true,lbl:'Triage Agent decision',text:'intent: "billing question"\n→ handoff_to: BillingAgent'},
+    msg:'Triage Agent detects: billing question. Initiates handoff to Billing Agent.'
+  },
+  {
+    chain: {triage:{cls:'done',st:'Handed off'}, billing:{cls:'active',st:'Handling...'}, finance:{cls:'dim',st:''}},
+    out:{show:true,lbl:'Billing Agent handling',text:'resolved: partial\nneed_approval: true\n→ handoff_to: FinanceAgent (refund approval)'},
+    msg:'Billing Agent handles request, but needs refund approval. Initiates second handoff to Finance Agent.'
+  },
+  {
+    chain: {triage:{cls:'done',st:''}, billing:{cls:'done',st:'Handed off'}, finance:{cls:'active',st:'Approving...'}},
+    out:{show:true,lbl:'Finance Agent decision',text:'refund_approved: true\namount: $42.00\n→ response flows back'},
+    msg:'Finance Agent approves refund. Response flows back through the handoff chain.'
+  },
+  {
+    chain: {triage:{cls:'done',st:''}, billing:{cls:'done',st:'Complete'}, finance:{cls:'done',st:'Approved'}},
+    out:{show:true,lbl:'Final response to user',text:'"Your refund of $42.00 has been approved.\nPlease allow 3-5 business days."'},
+    msg:'Chain complete. Final response delivered to user after 2 handoffs (Triage → Billing → Finance).'
+  }
+];
+
+function supHtml(step) {
+  var b = step.boxes;
+  return '<div class="sup-layout">' +
+    '<div class="agent-row">' +
+      box('', 'User', b.user.cls, b.user.st) +
+      '<div class="arr lit">→</div>' +
+      box('Supervisor', 'Supervisor LLM', b.sup.cls, b.sup.st) +
+    '</div>' +
+    '<div class="agent-row">' +
+      box('Research', 'Research Agent', b.ra.cls, b.ra.st) +
+      box('Writer', 'Writer Agent', b.wa.cls, b.wa.st) +
+      box('Coder', 'Coder Agent', b.ca.cls, b.ca.st) +
+    '</div>' +
+  '</div>';
+}
+
+function handHtml(step) {
+  var c = step.chain;
+  return '<div class="agent-row">' +
+    box('Triage', 'Triage Agent', c.triage.cls, c.triage.st) +
+    '<div class="arr lit">→</div>' +
+    box('Billing', 'Billing Agent', c.billing.cls, c.billing.st) +
+    '<div class="arr lit">→</div>' +
+    box('Finance', 'Finance Agent', c.finance.cls, c.finance.st) +
+  '</div>';
+}
+
+function box(lbl, nm, cls, st) {
+  return '<div class="agent-box' + (cls ? ' ' + cls : '') + '">' +
+    (lbl ? '<div class="lbl">' + lbl + '</div>' : '') +
+    '<div class="nm">' + nm + '</div>' +
+    '<div class="st">' + st + '</div>' +
+  '</div>';
+}
+
+function getSteps() {
+  return mode === 'supervisor' ? SUPERVISOR_STEPS : HANDOFF_STEPS;
+}
+
+function draw() {
+  var steps = getSteps();
+  var s = steps[idx];
+  var total = steps.length - 1;
+
+  document.getElementById('diagram').innerHTML = mode === 'supervisor' ? supHtml(s) : handHtml(s);
+
+  var op = document.getElementById('out-panel');
+  op.className = 'out-panel' + (s.out.show ? ' show' : '');
+  op.innerHTML = s.out.show ? '<div class="plbl">' + s.out.lbl + '</div>' + escHtml(s.out.text) : '';
+
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + total;
+  var stepBtn = document.getElementById('btn-step');
+  if (idx === total) {
+    stepBtn.textContent = 'Done ✓';
+    stepBtn.disabled = true;
+  } else {
+    stepBtn.textContent = 'Step ►';
+    stepBtn.disabled = false;
+  }
+  document.getElementById('btn-back').disabled = idx === 0;
+}
+
+function setMode(m) {
+  mode = m;
+  idx = 0;
+  document.getElementById('mode-sup').className = 'mode-btn' + (m === 'supervisor' ? ' active' : '');
+  document.getElementById('mode-hand').className = 'mode-btn' + (m === 'handoff' ? ' active' : '');
+  draw();
+}
+
+function escHtml(t) {
+  return t.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+
+document.getElementById('btn-step').onclick = function() {
+  var total = getSteps().length - 1;
+  if (idx < total) { idx++; draw(); }
+};
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+draw();
+</script>
+</body>
+</html>

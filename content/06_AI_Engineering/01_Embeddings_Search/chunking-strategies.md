@@ -106,6 +106,12 @@ def chunk_with_context(document: str, small_size=256, large_size=1024, overlap=5
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/chunking-strategies.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Chunking Strategies Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Chunked text is embedded before storing in a vector database  -  chunk quality directly affects embedding quality and retrieval precision.

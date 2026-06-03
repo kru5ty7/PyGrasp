@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lambda Triggers - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .5rem;
+  }
+  #modes { display: flex; gap: .4rem; margin-bottom: .6rem; flex-wrap: wrap; }
+  .mode-btn {
+    padding: .28rem .65rem;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .78rem;
+    background: #2a2a2e;
+    color: #888;
+    transition: all .15s;
+  }
+  .mode-btn.active { background: #2e2810; border-color: #f0a500; color: #f0a500; font-weight: 600; }
+  .mode-btn:not(.active):hover { color: #d4d4d4; }
+  #diagram { margin-bottom: .75rem; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Lambda Triggers &amp; Invocation Models</h4>
+  <div id="modes">
+    <button class="mode-btn active" data-mode="sync">Sync (API Gateway)</button>
+    <button class="mode-btn" data-mode="async">Async (S3)</button>
+    <button class="mode-btn" data-mode="poll">Poll (SQS)</button>
+  </div>
+  <div id="diagram"></div>
+  <div id="stat"></div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var C = {
+  bg: '#2a2a2e', border: '#393639', header: '#284b63',
+  amber: '#f0a500', green: '#28a745', red: '#dc3545',
+  blue: '#007bff', text: '#d4d4d4', dim: '#333', panelBg: '#393639'
+};
+
+// Layout — 5 nodes, positions vary by mode but we reuse a fixed layout
+// client (top-left), trigger (top-right), lambdaSvc (middle), fn (bottom-center), dlq (bottom-right)
+var L = {
+  client:  { x: 10,  y: 20,  w: 110, h: 32 },
+  trigger: { x: 390, y: 20,  w: 120, h: 32 },
+  svc:     { x: 180, y: 20,  w: 140, h: 32 },
+  fn:      { x: 190, y: 120, w: 140, h: 50 },
+  queue:   { x: 10,  y: 120, w: 110, h: 32 },
+  dlq:     { x: 390, y: 120, w: 120, h: 32 }
+};
+
+var allModes = {
+  sync: [
+    {
+      msg: 'Synchronous invocation via API Gateway. The HTTP client waits for Lambda to finish before getting a response. Press Step to begin.',
+      hi: {}, arrows: [], badge: null
+    },
+    {
+      msg: 'Step 1/5: HTTP request arrives at API Gateway from the client.',
+      hi: { client: 'active', trigger: 'active' },
+      arrows: [{ from: 'client', to: 'trigger', color: C.amber, label: 'HTTP GET /items' }],
+      badge: null
+    },
+    {
+      msg: 'Step 2/5: API Gateway invokes Lambda synchronously — client is still waiting.',
+      hi: { trigger: 'active', fn: 'active' },
+      arrows: [{ from: 'trigger', to: 'fn', color: C.amber, label: 'invoke sync' }],
+      badge: { text: 'client is waiting...', color: C.amber, node: 'client' }
+    },
+    {
+      msg: 'Step 3/5: Lambda executes the handler function. Max 29s before API Gateway times out.',
+      hi: { fn: 'active' },
+      arrows: [],
+      badge: { text: 'executing...', color: C.amber, node: 'fn' }
+    },
+    {
+      msg: 'Step 4/5: Handler returns response dict to API Gateway.',
+      hi: { fn: 'done', trigger: 'active' },
+      arrows: [{ from: 'fn', to: 'trigger', color: C.green, label: '{ statusCode: 200 }' }],
+      badge: null
+    },
+    {
+      msg: 'Step 5/5: API Gateway forwards HTTP response to the client. Total round-trip complete.',
+      hi: { trigger: 'done', client: 'done' },
+      arrows: [{ from: 'trigger', to: 'client', color: C.green, label: '200 OK' }],
+      badge: null
+    }
+  ],
+  async: [
+    {
+      msg: 'Asynchronous invocation via S3. S3 fires and forgets — it does not wait for Lambda. Press Step to begin.',
+      hi: {}, arrows: [], badge: null
+    },
+    {
+      msg: 'Step 1/6: Object uploaded to S3 bucket.',
+      hi: { trigger: 'active' },
+      arrows: [],
+      badge: { text: 'PutObject: uploads/data.csv', color: C.amber, node: 'trigger' }
+    },
+    {
+      msg: 'Step 2/6: S3 places the event on Lambda\'s internal async queue. S3 returns 200 immediately — no waiting.',
+      hi: { trigger: 'done', svc: 'active' },
+      arrows: [{ from: 'trigger', to: 'svc', color: C.amber, label: 'event → internal queue' }],
+      badge: null
+    },
+    {
+      msg: 'Step 3/6: Lambda service polls its internal queue and picks up the event.',
+      hi: { svc: 'active' },
+      arrows: [],
+      badge: { text: 'polling internal queue', color: C.amber, node: 'svc' }
+    },
+    {
+      msg: 'Step 4/6: Lambda invokes the function asynchronously. S3 has already returned — it never sees the result.',
+      hi: { svc: 'active', fn: 'active' },
+      arrows: [{ from: 'svc', to: 'fn', color: C.amber, label: 'invoke async' }],
+      badge: null
+    },
+    {
+      msg: 'Step 5/6: Success — function executes. S3 receives no response (fire-and-forget).',
+      hi: { fn: 'done' },
+      arrows: [],
+      badge: null
+    },
+    {
+      msg: 'Step 6/6: On failure — Lambda retries up to 2 times automatically. After all retries fail, event goes to DLQ.',
+      hi: { fn: 'error', dlq: 'active' },
+      arrows: [{ from: 'fn', to: 'dlq', color: C.red, label: 'retry x2 → DLQ' }],
+      badge: null
+    }
+  ],
+  poll: [
+    {
+      msg: 'Polling invocation via SQS event source mapping. Lambda polls on your behalf — you write no polling code. Press Step to begin.',
+      hi: {}, arrows: [], badge: null
+    },
+    {
+      msg: 'Step 1/6: Messages sit in the SQS queue waiting to be processed.',
+      hi: { queue: 'active' },
+      arrows: [],
+      badge: { text: '10 messages in queue', color: C.amber, node: 'queue' }
+    },
+    {
+      msg: 'Step 2/6: Lambda service (event source mapping) long-polls the SQS queue automatically.',
+      hi: { queue: 'active', svc: 'active' },
+      arrows: [{ from: 'svc', to: 'queue', color: C.blue, label: 'long poll' }],
+      badge: null
+    },
+    {
+      msg: 'Step 3/6: Batch of messages retrieved (up to BatchSize). Messages hidden from queue (visibility timeout starts).',
+      hi: { svc: 'active', queue: 'active' },
+      arrows: [{ from: 'queue', to: 'svc', color: C.amber, label: 'batch of 10 msgs' }],
+      badge: null
+    },
+    {
+      msg: 'Step 4/6: Lambda invokes the function with the entire batch as event["Records"].',
+      hi: { svc: 'active', fn: 'active' },
+      arrows: [{ from: 'svc', to: 'fn', color: C.amber, label: 'invoke with batch' }],
+      badge: null
+    },
+    {
+      msg: 'Step 5/6: Success — function returns. Lambda service deletes all processed messages from the queue.',
+      hi: { fn: 'done', queue: 'done' },
+      arrows: [{ from: 'fn', to: 'queue', color: C.green, label: 'delete messages' }],
+      badge: null
+    },
+    {
+      msg: 'Step 6/6: On failure — messages return to queue after visibility timeout expires. Retry up to maxReceiveCount, then DLQ.',
+      hi: { fn: 'error', queue: 'active', dlq: 'active' },
+      arrows: [
+        { from: 'fn', to: 'queue', color: C.red, label: 'visibility timeout → requeue' },
+        { from: 'queue', to: 'dlq', color: C.red, label: 'maxReceiveCount → DLQ' }
+      ],
+      badge: null
+    }
+  ]
+};
+
+var mode = 'sync';
+var idx = 0;
+
+function steps() { return allModes[mode]; }
+
+function nc(key) {
+  var n = L[key]; return { x: n.x + n.w/2, y: n.y + n.h/2 };
+}
+function ep(key, toKey) {
+  var c = nc(key), tc = nc(toKey), n = L[key];
+  var dx = tc.x - c.x, dy = tc.y - c.y;
+  var hw = n.w/2, hh = n.h/2;
+  var adx = Math.abs(dx), ady = Math.abs(dy);
+  if (adx === 0 && ady === 0) return c;
+  if (adx * hh > ady * hw) {
+    return { x: c.x + (dx > 0 ? hw : -hw), y: c.y + dy * (hw / Math.max(adx, 0.001)) };
+  }
+  return { x: c.x + dx * (hh / Math.max(ady, 0.001)), y: c.y + (dy > 0 ? hh : -hh) };
+}
+function hiB(key, hi) {
+  var s = hi[key];
+  if (s === 'active') return C.amber;
+  if (s === 'done')   return C.green;
+  if (s === 'error')  return C.red;
+  return C.border;
+}
+function hiF(key, hi) {
+  var s = hi[key];
+  if (s === 'active') return '#2e2810';
+  if (s === 'done')   return '#0e2018';
+  if (s === 'error')  return '#2e1010';
+  return C.bg;
+}
+function cname(hex) {
+  if (hex === C.amber) return 'amber';
+  if (hex === C.green) return 'green';
+  if (hex === C.red)   return 'red';
+  return 'blue';
+}
+
+var modeLabels = {
+  sync:  { trigger: 'API Gateway', client: 'HTTP Client', triggerSub: 'REST / HTTP API' },
+  async: { trigger: 'S3 Bucket',   client: 'S3 Client',   triggerSub: 'ObjectCreated event' },
+  poll:  { trigger: null,          client: null,           triggerSub: null }
+};
+
+function renderSVG(step) {
+  var hi = step.hi;
+  var W = 520, H = 220;
+  var out = '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">';
+  ['amber','green','red','blue'].forEach(function(n) {
+    var col = C[n];
+    out += '<defs><marker id="arr-' + n + '" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">'
+         + '<polygon points="0 0,8 3,0 6" fill="' + col + '"/></marker></defs>';
+  });
+
+  // Arrows
+  step.arrows.forEach(function(a) {
+    if (!L[a.from] || !L[a.to]) return;
+    var p1 = ep(a.from, a.to), p2 = ep(a.to, a.from);
+    var mx = (p1.x + p2.x)/2, my = (p1.y + p2.y)/2;
+    out += '<line x1="' + p1.x + '" y1="' + p1.y + '" x2="' + p2.x + '" y2="' + p2.y
+         + '" stroke="' + a.color + '" stroke-width="1.5" marker-end="url(#arr-' + cname(a.color) + ')"/>';
+    if (a.label) {
+      var lw = a.label.length * 5 + 8;
+      out += '<rect x="' + (mx - lw/2) + '" y="' + (my - 8) + '" width="' + lw + '" height="13" rx="3" fill="#161618" opacity="0.9"/>';
+      out += '<text x="' + mx + '" y="' + (my + 3) + '" text-anchor="middle" font-size="8.5" fill="' + a.color + '">' + a.label + '</text>';
+    }
+  });
+
+  function drawNode(key, title, subtitle) {
+    var n = L[key];
+    if (!n) return;
+    var bc = hiB(key, hi), bf = hiF(key, hi), sw = hi[key] ? 2 : 1;
+    out += '<rect x="' + n.x + '" y="' + n.y + '" width="' + n.w + '" height="' + n.h + '" rx="4" fill="' + bf + '" stroke="' + bc + '" stroke-width="' + sw + '"/>';
+    out += '<rect x="' + n.x + '" y="' + n.y + '" width="' + n.w + '" height="13" rx="4" fill="' + C.header + '"/>';
+    out += '<rect x="' + n.x + '" y="' + (n.y+9) + '" width="' + n.w + '" height="4" fill="' + C.header + '"/>';
+    out += '<text x="' + (n.x + n.w/2) + '" y="' + (n.y + 9.5) + '" text-anchor="middle" font-size="7.5" fill="#aaa" font-weight="bold">' + title + '</text>';
+    if (subtitle) {
+      out += '<text x="' + (n.x + n.w/2) + '" y="' + (n.y + 25) + '" text-anchor="middle" font-size="8" fill="' + C.text + '">' + subtitle + '</text>';
+    }
+  }
+
+  if (mode === 'sync') {
+    drawNode('client',  'HTTP CLIENT', 'Browser / curl');
+    drawNode('trigger', 'API GATEWAY', 'REST / HTTP API');
+    drawNode('fn',      'LAMBDA FN',   'handler(event, context)');
+    // Lambda service implied inside trigger flow
+  } else if (mode === 'async') {
+    drawNode('trigger', 'S3 BUCKET', 'ObjectCreated');
+    drawNode('svc',     'LAMBDA SVC', 'internal async queue');
+    drawNode('fn',      'LAMBDA FN',  'handler(event, context)');
+    drawNode('dlq',     'DLQ',        'Dead-Letter Queue');
+  } else {
+    // poll
+    drawNode('queue', 'SQS QUEUE',  'Standard queue');
+    drawNode('svc',   'LAMBDA SVC', 'event source mapping');
+    drawNode('fn',    'LAMBDA FN',  'handler(event, context)');
+    drawNode('dlq',   'DLQ',        'Dead-Letter Queue');
+  }
+
+  // Badge
+  if (step.badge && L[step.badge.node]) {
+    var bn = L[step.badge.node];
+    var bx = bn.x, by2 = bn.y + bn.h + 4, bw2 = bn.w;
+    out += '<rect x="' + bx + '" y="' + by2 + '" width="' + bw2 + '" height="13" rx="3" fill="#111" opacity="0.9"/>';
+    out += '<text x="' + (bx + bw2/2) + '" y="' + (by2 + 9.5) + '" text-anchor="middle" font-size="7.5" fill="' + step.badge.color + '">' + step.badge.text + '</text>';
+  }
+
+  out += '</svg>';
+  return out;
+}
+
+function render() {
+  var st = steps();
+  var step = st[idx];
+  document.getElementById('diagram').innerHTML = renderSVG(step);
+  document.getElementById('stat').textContent = step.msg;
+  var isLast = idx >= st.length - 1;
+  document.getElementById('btn-step').disabled = isLast;
+  document.getElementById('btn-step').textContent = isLast ? 'Done ✓' : 'Step →';
+  document.getElementById('btn-back').disabled = idx === 0;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (st.length - 1);
+}
+
+document.querySelectorAll('.mode-btn').forEach(function(btn) {
+  btn.addEventListener('click', function() {
+    mode = btn.dataset.mode;
+    idx = 0;
+    document.querySelectorAll('.mode-btn').forEach(function(b) { b.classList.remove('active'); });
+    btn.classList.add('active');
+    render();
+  });
+});
+
+document.getElementById('btn-step').onclick = function() {
+  if (idx < steps().length - 1) { idx++; render(); }
+};
+document.getElementById('btn-back').onclick = function() {
+  if (idx > 0) { idx--; render(); }
+};
+document.getElementById('btn-reset').onclick = function() { idx = 0; render(); };
+
+render();
+</script>
+</body>
+</html>

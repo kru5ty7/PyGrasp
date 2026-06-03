@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EC2 Auto Scaling - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .5rem;
+  }
+  #mode-row {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: .75rem;
+  }
+  .mode-btn {
+    padding: .28rem .65rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .8rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: background .15s;
+  }
+  .mode-btn.active { background: #284b63; color: #fff; }
+  #diagram { margin-bottom: .75rem; }
+  svg { display: block; width: 100%; height: auto; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>EC2 Auto Scaling Group</h4>
+  <div id="mode-row">
+    <button class="mode-btn active" id="mbtn-out" onclick="setMode('out')">Scale Out</button>
+    <button class="mode-btn" id="mbtn-in" onclick="setMode('in')">Scale In</button>
+  </div>
+  <div id="diagram"></div>
+  <div id="stat"></div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var C = {
+  bg: '#2a2a2e', border: '#393639', header: '#284b63',
+  amber: '#f0a500', green: '#28a745', red: '#dc3545',
+  blue: '#007bff', text: '#d4d4d4', dim: '#444', panelBg: '#393639'
+};
+
+// modes: 'out' | 'in'
+var mode = 'out';
+var idx = 0;
+
+// Each step: cpuPct (0-100), instances array [{state}], alarmState, msg
+// instance states: 'running'|'pending'|'stopped'|'terminated'|'draining'|'idle'
+// alarmState: null | 'ok' | 'alarm'
+var MODES = {
+  out: [
+    {
+      cpu: 40, instances: ['running','running'], alarm: 'ok', asg: 'idle', elb: false,
+      msg: 'Scale Out — Step 1/7: 2 instances running. CPU at 40% — well below threshold. ASG at desired count of 2.'
+    },
+    {
+      cpu: 75, instances: ['running','running'], alarm: 'ok', asg: 'idle', elb: false,
+      msg: 'Scale Out — Step 2/7: Load spikes. CPU rises to 75%, crossing the 70% alarm threshold line.'
+    },
+    {
+      cpu: 75, instances: ['running','running'], alarm: 'alarm', asg: 'idle', elb: false,
+      msg: 'Scale Out — Step 3/7: CloudWatch alarm fires — CPU > 70% sustained. Alarm transitions to ALARM state (red).'
+    },
+    {
+      cpu: 75, instances: ['running','running'], alarm: 'alarm', asg: 'scaling', elb: false,
+      msg: 'Scale Out — Step 4/7: ASG receives ScaleOut signal. Policy: add 2 instances. Launching now.'
+    },
+    {
+      cpu: 75, instances: ['running','running','pending','pending'], alarm: 'alarm', asg: 'scaling', elb: false,
+      msg: 'Scale Out — Step 5/7: 2 new instances launched (Pending state). Bootstrapping and passing health checks.'
+    },
+    {
+      cpu: 75, instances: ['running','running','running','running'], alarm: 'alarm', asg: 'stable', elb: true,
+      msg: 'Scale Out — Step 6/7: New instances healthy, registered to ELB target group. Load now distributed across 4 instances.'
+    },
+    {
+      cpu: 38, instances: ['running','running','running','running'], alarm: 'ok', asg: 'stable', elb: true,
+      msg: 'Scale Out — Step 7/7: CPU drops to 38%. Load distributed. CloudWatch alarm returns to OK. ASG stable at 4 instances.'
+    }
+  ],
+  in: [
+    {
+      cpu: 20, instances: ['running','running','running','running'], alarm: 'ok', asg: 'idle', elb: true,
+      msg: 'Scale In — Step 1/7: 4 instances running. CPU at 20% — well below capacity. Low utilisation detected.'
+    },
+    {
+      cpu: 20, instances: ['running','running','running','running'], alarm: 'alarm', asg: 'idle', elb: true,
+      msg: 'Scale In — Step 2/7: Scale-in alarm fires — CPU < 30% for 10 minutes sustained. Alarm transitions to ALARM.'
+    },
+    {
+      cpu: 20, instances: ['running','running','running','draining'], alarm: 'alarm', asg: 'scaling', elb: true,
+      msg: 'Scale In — Step 3/7: ASG selects least-utilized instance for termination. Instance deregistered from ELB first.'
+    },
+    {
+      cpu: 20, instances: ['running','running','running','draining'], alarm: 'alarm', asg: 'scaling', elb: true,
+      msg: 'Scale In — Step 4/7: Draining period begins. ELB stops sending new connections. In-flight requests complete.'
+    },
+    {
+      cpu: 20, instances: ['running','running','running','terminated'], alarm: 'alarm', asg: 'scaling', elb: true,
+      msg: 'Scale In — Step 5/7: Draining complete. Instance terminated. 3 instances remain in fleet.'
+    },
+    {
+      cpu: 27, instances: ['running','running','running'], alarm: 'ok', asg: 'stable', elb: true,
+      msg: 'Scale In — Step 6/7: Load rebalances. CPU settles at 27% across 3 instances. Alarm returns to OK.'
+    },
+    {
+      cpu: 27, instances: ['running','running','running'], alarm: 'ok', asg: 'stable', elb: true,
+      msg: 'Scale In — Step 7/7: Scale-in complete. 3 instances, CPU 27%. Cost reduced without affecting capacity.'
+    }
+  ]
+};
+
+function getSteps() { return MODES[mode]; }
+
+function instColor(state) {
+  if (state === 'running')    return C.green;
+  if (state === 'pending')    return C.amber;
+  if (state === 'draining')   return C.blue;
+  if (state === 'terminated') return C.red;
+  return C.border;
+}
+function instFill(state) {
+  if (state === 'running')    return '#0e2018';
+  if (state === 'pending')    return '#2e2810';
+  if (state === 'draining')   return '#0a1a2e';
+  if (state === 'terminated') return '#2e1010';
+  return C.bg;
+}
+function instLabel(state) {
+  if (state === 'running')    return 'Running';
+  if (state === 'pending')    return 'Pending';
+  if (state === 'draining')   return 'Draining';
+  if (state === 'terminated') return 'Terminated';
+  return state;
+}
+
+function renderSVG(step) {
+  var W = 510, H = 260;
+  var out = '<svg viewBox="0 0 ' + W + ' ' + H + '" xmlns="http://www.w3.org/2000/svg">';
+
+  // --- Chart area (top) ---
+  var cx = 20, cy = 10, cw = 470, ch = 70;
+  out += '<rect x="' + cx + '" y="' + cy + '" width="' + cw + '" height="' + ch + '" rx="4" fill="#1e1e20" stroke="' + C.border + '" stroke-width="1"/>';
+  out += '<text x="' + (cx + 6) + '" y="' + (cy + 11) + '" font-size="8" fill="#666">CPU %</text>';
+
+  // threshold line at 70%
+  var threshY = cy + ch - (70 / 100) * (ch - 16) - 4;
+  out += '<line x1="' + (cx + 30) + '" y1="' + threshY + '" x2="' + (cx + cw - 6) + '" y2="' + threshY + '" stroke="#dc3545" stroke-width="1" stroke-dasharray="4,3"/>';
+  out += '<text x="' + (cx + cw - 4) + '" y="' + (threshY - 2) + '" text-anchor="end" font-size="7" fill="#dc3545">70% threshold</text>';
+
+  // CPU bar
+  var barH = Math.round((step.cpu / 100) * (ch - 16));
+  var barX = cx + cw / 2 - 25;
+  var barColor = step.cpu >= 70 ? C.amber : (step.cpu < 30 ? C.blue : C.green);
+  out += '<rect x="' + barX + '" y="' + (cy + ch - 4 - barH) + '" width="50" height="' + barH + '" rx="2" fill="' + barColor + '" opacity="0.8"/>';
+  out += '<text x="' + (barX + 25) + '" y="' + (cy + ch - 6 - barH - 2) + '" text-anchor="middle" font-size="9" fill="' + barColor + '">' + step.cpu + '%</text>';
+  out += '<text x="' + (barX + 25) + '" y="' + (cy + ch - 2) + '" text-anchor="middle" font-size="7.5" fill="#666">CPU avg</text>';
+
+  // Alarm badge
+  var alarmX = cx + cw - 100, alarmY = cy + 8;
+  var alarmColor = step.alarm === 'alarm' ? C.red : C.green;
+  var alarmLabel = step.alarm === 'alarm' ? 'ALARM' : 'OK';
+  out += '<rect x="' + alarmX + '" y="' + alarmY + '" width="80" height="18" rx="3" fill="' + (step.alarm === 'alarm' ? '#2e1010' : '#0e2018') + '" stroke="' + alarmColor + '" stroke-width="1"/>';
+  out += '<text x="' + (alarmX + 40) + '" y="' + (alarmY + 12) + '" text-anchor="middle" font-size="8.5" font-weight="700" fill="' + alarmColor + '">CW Alarm: ' + alarmLabel + '</text>';
+
+  // ASG policy label
+  var asgY = cy + 36;
+  var asgColor = step.asg === 'scaling' ? C.amber : (step.asg === 'stable' ? C.green : C.dim);
+  out += '<text x="' + (cx + 36) + '" y="' + asgY + '" font-size="8" fill="' + asgColor + '">ASG: ' + (step.asg === 'scaling' ? 'Scaling...' : (step.asg === 'stable' ? 'Stable' : 'Idle')) + '</text>';
+
+  // ELB indicator
+  if (step.elb) {
+    out += '<text x="' + (cx + 110) + '" y="' + asgY + '" font-size="8" fill="' + C.green + '">ELB: targets registered</text>';
+  }
+
+  // --- Instance fleet (bottom) ---
+  var fleetY = 100;
+  out += '<text x="' + cx + '" y="' + (fleetY - 6) + '" font-size="8" fill="#666">Instance Fleet:</text>';
+
+  var instances = step.instances;
+  var boxW = 90, boxH = 50, gap = 10;
+  var totalW = instances.length * boxW + (instances.length - 1) * gap;
+  var startX = Math.round((W - totalW) / 2);
+
+  instances.forEach(function(state, i) {
+    var bx = startX + i * (boxW + gap);
+    var by = fleetY;
+    var bc = instColor(state);
+    var bf = instFill(state);
+    out += '<rect x="' + bx + '" y="' + by + '" width="' + boxW + '" height="' + boxH + '" rx="5" fill="' + bf + '" stroke="' + bc + '" stroke-width="2"/>';
+    // header strip
+    out += '<rect x="' + bx + '" y="' + by + '" width="' + boxW + '" height="14" rx="5" fill="' + C.header + '"/>';
+    out += '<rect x="' + bx + '" y="' + (by + 10) + '" width="' + boxW + '" height="4" fill="' + C.header + '"/>';
+    out += '<text x="' + (bx + boxW / 2) + '" y="' + (by + 10) + '" text-anchor="middle" font-size="7.5" fill="#aaa">EC2</text>';
+    out += '<text x="' + (bx + boxW / 2) + '" y="' + (by + 32) + '" text-anchor="middle" font-size="9" font-weight="600" fill="' + bc + '">' + instLabel(state) + '</text>';
+  });
+
+  // Instance count
+  out += '<text x="' + (W / 2) + '" y="' + (fleetY + boxH + 16) + '" text-anchor="middle" font-size="8" fill="#666">' + instances.filter(function(s){ return s !== 'terminated'; }).length + ' active instance(s)</text>';
+
+  out += '</svg>';
+  return out;
+}
+
+function render() {
+  var steps = getSteps();
+  var step = steps[idx];
+  document.getElementById('diagram').innerHTML = renderSVG(step);
+  document.getElementById('stat').textContent = step.msg;
+  var isLast = idx >= steps.length - 1;
+  document.getElementById('btn-step').disabled = isLast;
+  document.getElementById('btn-step').textContent = isLast ? 'Done ✓' : 'Step →';
+  document.getElementById('btn-back').disabled = idx === 0;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
+}
+
+function setMode(m) {
+  mode = m;
+  idx = 0;
+  document.getElementById('mbtn-out').className = 'mode-btn' + (m === 'out' ? ' active' : '');
+  document.getElementById('mbtn-in').className  = 'mode-btn' + (m === 'in'  ? ' active' : '');
+  render();
+}
+
+document.getElementById('btn-step').onclick  = function() { if (idx < getSteps().length - 1) { idx++; render(); } };
+document.getElementById('btn-back').onclick  = function() { if (idx > 0) { idx--; render(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; render(); };
+
+render();
+</script>
+</body>
+</html>

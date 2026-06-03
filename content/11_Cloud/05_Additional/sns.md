@@ -155,6 +155,12 @@ aws lambda add-permission \
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/sns.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="SNS Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 SNS and SQS are complementary services - SNS provides fan-out routing, SQS provides durable buffering. Together they form the canonical AWS event distribution pattern.

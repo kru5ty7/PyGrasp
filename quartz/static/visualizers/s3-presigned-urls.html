@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>S3 Presigned URLs - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #diagram { margin-bottom: .75rem; }
+  svg { display: block; width: 100%; height: auto; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>S3 Presigned URLs</h4>
+  <div id="diagram"></div>
+  <div id="stat"></div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var C = {
+  bg: '#2a2a2e',
+  border: '#393639',
+  header: '#284b63',
+  amber: '#f0a500',
+  green: '#28a745',
+  red: '#dc3545',
+  blue: '#007bff',
+  text: '#d4d4d4',
+  dim: '#555',
+  panelBg: '#393639'
+};
+
+// Layout: viewBox 560 x 300
+// Actors: Client (left), Backend Server (center), S3 (right)
+var nodes = {
+  client:  { x: 20,  y: 110, w: 90,  h: 44, label: 'Client\nBrowser' },
+  backend: { x: 215, y: 110, w: 130, h: 44, label: 'Backend Server' },
+  s3:      { x: 415, y: 110, w: 90,  h: 44, label: 'S3 Bucket' }
+};
+
+// Each step: msg, hi (node highlights), arrows, badge (optional overlay label)
+var steps = [
+  {
+    msg: 'Three actors: Client Browser, Backend Server, and S3 Bucket. Press Step to begin.',
+    hi: {},
+    arrows: [],
+    badge: null
+  },
+  {
+    msg: 'Step 1/8: Client wants to upload a large file and needs a secure upload URL.',
+    hi: { client: 'active' },
+    arrows: [],
+    badge: null
+  },
+  {
+    msg: 'Step 2/8: Client requests an upload URL from the backend (POST /get-upload-url).',
+    hi: { client: 'active', backend: 'active' },
+    arrows: [{ from: 'client', to: 'backend', color: C.amber, label: 'POST /get-upload-url', above: true }],
+    badge: null
+  },
+  {
+    msg: 'Step 3/8: Backend calls boto3: s3.generate_presigned_url("put_object", ...) with 15 min expiry. No network call to AWS — signing is local.',
+    hi: { backend: 'active', s3: 'active' },
+    arrows: [{ from: 'backend', to: 's3', color: C.amber, label: 'sign with IAM credentials', above: true }],
+    badge: null
+  },
+  {
+    msg: 'Step 4/8: S3 embeds the signature into the URL using the backend\'s IAM credentials.',
+    hi: { s3: 'active' },
+    arrows: [],
+    badge: { node: 's3', text: 'URL signed', color: C.amber }
+  },
+  {
+    msg: 'Step 5/8: Backend returns the presigned URL to the client. The file never touches the backend again.',
+    hi: { backend: 'done', client: 'active' },
+    arrows: [{ from: 'backend', to: 'client', color: C.green, label: 'presigned URL (15 min)', above: false }],
+    badge: null
+  },
+  {
+    msg: 'Step 6/8: Client PUTs the file directly to S3 using the presigned URL. Traffic never hits your server.',
+    hi: { client: 'active', s3: 'active' },
+    arrows: [{ from: 'client', to: 's3', color: C.blue, label: 'PUT large file directly', above: false }],
+    badge: { node: 'backend', text: 'bypassed', color: C.dim }
+  },
+  {
+    msg: 'Step 7/8: S3 validates the signature, checks expiry and bucket/key match — upload accepted (200 OK).',
+    hi: { s3: 'done', client: 'done' },
+    arrows: [{ from: 's3', to: 'client', color: C.green, label: '200 OK', above: true }],
+    badge: null
+  },
+  {
+    msg: 'Step 8/8: URL used after 15 min expiry — S3 rejects with 403 AccessDenied. Signature is expired.',
+    hi: { client: 'active', s3: 'error' },
+    arrows: [
+      { from: 'client', to: 's3', color: C.red, label: 'PUT (expired URL)', above: false },
+      { from: 's3', to: 'client', color: C.red, label: '403 AccessDenied', above: true }
+    ],
+    badge: { node: 's3', text: 'EXPIRED', color: C.red }
+  }
+];
+
+var idx = 0;
+var TOTAL = steps.length - 1;
+
+// -- rendering helpers --
+
+function cx(node) { return node.x + node.w / 2; }
+function cy(node) { return node.y + node.h / 2; }
+
+function nodeColor(key, hi) {
+  var s = hi[key];
+  if (s === 'active') return C.amber;
+  if (s === 'done')   return C.green;
+  if (s === 'error')  return C.red;
+  return C.border;
+}
+
+function headerColor(key, hi) {
+  var s = hi[key];
+  if (s === 'active') return C.amber;
+  if (s === 'done')   return C.green;
+  if (s === 'error')  return C.red;
+  return C.header;
+}
+
+function mkArrow(a) {
+  var from = nodes[a.from];
+  var to   = nodes[a.to];
+  var x1 = cx(from), y1 = cy(from);
+  var x2 = cx(to),   y2 = cy(to);
+  // clamp to box edges
+  var dx = x2 - x1, dy = y2 - y1, dist = Math.sqrt(dx*dx + dy*dy);
+  var fx = from.w / 2, fy = from.h / 2;
+  var tx = to.w / 2,   ty = to.h / 2;
+  var sx = x1 + (dx / dist) * fx;
+  var ex = x2 - (dx / dist) * tx;
+
+  var mid = (sx + ex) / 2;
+  var yOff = a.above ? -14 : 14;
+
+  var g = '<g>';
+  g += '<defs><marker id="arr-' + a.from + a.to + '" markerWidth="8" markerHeight="6" refX="6" refY="3" orient="auto">'
+     + '<polygon points="0 0,8 3,0 6" fill="' + a.color + '"/></marker></defs>';
+  g += '<line x1="' + sx + '" y1="' + y1 + '" x2="' + ex + '" y2="' + y2 + '"'
+     + ' stroke="' + a.color + '" stroke-width="2"'
+     + ' marker-end="url(#arr-' + a.from + a.to + ')"/>';
+  if (a.label) {
+    g += '<text x="' + mid + '" y="' + (y1 + yOff) + '" text-anchor="middle"'
+       + ' font-size="9" fill="' + a.color + '">' + a.label + '</text>';
+  }
+  g += '</g>';
+  return g;
+}
+
+function render() {
+  var step = steps[idx];
+  var hi   = step.hi || {};
+  var svgH = 300;
+  var s = '<svg viewBox="0 0 560 ' + svgH + '" xmlns="http://www.w3.org/2000/svg">';
+
+  // Draw nodes
+  Object.keys(nodes).forEach(function(key) {
+    var n = nodes[key];
+    var bColor = nodeColor(key, hi);
+    var hColor = headerColor(key, hi);
+    s += '<rect x="' + n.x + '" y="' + n.y + '" width="' + n.w + '" height="' + n.h + '"'
+       + ' rx="5" fill="' + C.bg + '" stroke="' + bColor + '" stroke-width="1.5"/>';
+    // header strip (top 14px)
+    s += '<rect x="' + (n.x+1) + '" y="' + (n.y+1) + '" width="' + (n.w-2) + '" height="13"'
+       + ' rx="4" fill="' + hColor + '"/>';
+    // label (split on \n)
+    var lines = n.label.split('\n');
+    var baseY = n.y + 14 + (n.h - 14) / 2 - (lines.length - 1) * 6;
+    lines.forEach(function(line, i) {
+      s += '<text x="' + cx(n) + '" y="' + (baseY + i * 12) + '" text-anchor="middle"'
+         + ' font-size="11" fill="' + C.text + '">' + line + '</text>';
+    });
+  });
+
+  // Draw arrows
+  (step.arrows || []).forEach(function(a) { s += mkArrow(a); });
+
+  // Badge overlay
+  if (step.badge) {
+    var bnode = nodes[step.badge.node];
+    s += '<rect x="' + (bnode.x + bnode.w/2 - 28) + '" y="' + (bnode.y + bnode.h + 4) + '"'
+       + ' width="56" height="18" rx="3" fill="' + step.badge.color + '" opacity="0.15"/>';
+    s += '<text x="' + cx(bnode) + '" y="' + (bnode.y + bnode.h + 16) + '"'
+       + ' text-anchor="middle" font-size="10" fill="' + step.badge.color + '">'
+       + step.badge.text + '</text>';
+  }
+
+  // "Traffic never hits your server" label at step 6
+  if (idx === 6) {
+    s += '<rect x="155" y="175" width="250" height="20" rx="3" fill="#1a2a1a"/>';
+    s += '<text x="280" y="189" text-anchor="middle" font-size="10" fill="' + C.green + '">'
+       + 'Traffic never hits your server</text>';
+  }
+
+  s += '</svg>';
+  document.getElementById('diagram').innerHTML = s;
+  document.getElementById('stat').textContent = step.msg;
+
+  var isLast = idx >= TOTAL;
+  document.getElementById('btn-step').disabled = isLast;
+  document.getElementById('btn-step').textContent = isLast ? 'Done ✓' : 'Step →';
+  document.getElementById('btn-back').disabled = idx === 0;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + TOTAL;
+}
+
+document.getElementById('btn-step').addEventListener('click', function() {
+  if (idx < TOTAL) { idx++; render(); }
+});
+document.getElementById('btn-back').addEventListener('click', function() {
+  if (idx > 0) { idx--; render(); }
+});
+document.getElementById('btn-reset').addEventListener('click', function() {
+  idx = 0; render();
+});
+
+render();
+</script>
+</body>
+</html>

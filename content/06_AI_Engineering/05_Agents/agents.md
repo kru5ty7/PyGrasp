@@ -55,6 +55,12 @@ The `tools_condition` routing function (from `langgraph.prebuilt`) implements th
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/agents.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="AI Agents Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Tool calling is the mechanism that gives agents agency  -  the ability to do things beyond generating text. Every action step in the agent loop is a tool call. Understanding the tool call format, how tools are described, and how results are returned to the LLM is the mechanical foundation of agent behavior.

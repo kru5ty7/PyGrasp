@@ -114,6 +114,12 @@ graph.add_conditional_edges(
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/conditional-edges.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Conditional Edges Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Conditional edges are how agent loops terminate  -  they route between the reasoning node, tool node, and `END`.

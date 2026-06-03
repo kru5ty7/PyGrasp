@@ -167,6 +167,12 @@ aws ecs create-service \
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/ecs.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="ECS Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 ECS pulls container images from ECR at task launch. Understanding the ECR push workflow, authentication model, and lifecycle policies is prerequisite knowledge for ECS operations.

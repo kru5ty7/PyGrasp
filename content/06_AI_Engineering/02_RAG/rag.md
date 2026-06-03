@@ -55,6 +55,12 @@ At query time, the user's question goes through the same embedding model to prod
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/rag.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="RAG Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Embeddings are the core mechanism for both indexing and query-time retrieval. The quality of the embedding model determines the quality of semantic matching  -  whether a user's question about "Python thread safety" retrieves chunks about the GIL, `threading.Lock`, and `asyncio.Queue`. Embedding quality is the ceiling on RAG quality; better retrieval is impossible without better semantic representation.

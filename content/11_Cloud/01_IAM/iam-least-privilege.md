@@ -164,6 +164,12 @@ def create_minimal_policy(role_name: str, bucket_name: str) -> dict:
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/iam-least-privilege.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="IAM Least Privilege Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Least privilege is the design philosophy that guides every IAM policy decision. It is not a separate system - it is the practice of applying IAM correctly. Every other IAM note in this layer should be read with this principle in mind.

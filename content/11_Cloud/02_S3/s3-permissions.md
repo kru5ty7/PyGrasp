@@ -121,6 +121,12 @@ print(json.loads(response["Policy"]))
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/s3-permissions.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="S3 Permissions Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 S3 bucket policies use IAM ARN syntax for principals - you reference IAM roles, users, and accounts by ARN. Understanding the IAM identity model is therefore a prerequisite for writing correct bucket policies.

@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RAG Pipeline - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+
+  /* Stage pipeline bar */
+  .stage-bar {
+    display: flex;
+    gap: .2rem;
+    margin-bottom: .65rem;
+  }
+  .stage {
+    flex: 1;
+    text-align: center;
+    padding: .3rem .2rem;
+    font-size: .68rem;
+    border-radius: 4px;
+    border: 1px solid #393639;
+    background: #2a2a2e;
+    color: #646464;
+    transition: all .25s;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .stage.active { border-color: #f0a500; background: #3a2a00; color: #f0c060; font-weight: 700; }
+  .stage.done { border-color: #28a745; background: #1a3a1a; color: #5dd97a; }
+  .stage.error { border-color: #dc3545; background: #3a1a1a; color: #f07070; }
+
+  /* Detail panel */
+  .panel {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .55rem .7rem;
+    margin-bottom: .6rem;
+    min-height: 90px;
+    font-size: .78rem;
+    line-height: 1.55;
+  }
+  .panel-title {
+    font-size: .7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    color: #888;
+    margin-bottom: .3rem;
+  }
+  .tag {
+    display: inline-block;
+    font-size: .65rem;
+    padding: .08rem .32rem;
+    border-radius: 3px;
+    margin-right: .25rem;
+    margin-top: .15rem;
+    font-weight: 700;
+    letter-spacing: .04em;
+  }
+  .tag-ok { background: #1a3a1a; color: #28a745; border: 1px solid #28a745; }
+  .tag-warn { background: #3a2a00; color: #f0a500; border: 1px solid #f0a500; }
+  .tag-err { background: #3a1a1a; color: #dc3545; border: 1px solid #dc3545; }
+  .tag-info { background: #1e2e38; color: #7eb8d4; border: 1px solid #284b63; }
+  .tag-ptr { background: #002a4a; color: #007bff; border: 1px solid #007bff; }
+
+  .chunk-list { margin-top: .35rem; }
+  .chunk-item {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    padding: .2rem 0;
+    border-bottom: 1px solid #333;
+    font-size: .73rem;
+  }
+  .chunk-item:last-child { border-bottom: none; }
+  .sim-bar-wrap { flex: 1; background: #1e1e20; border-radius: 2px; height: 7px; overflow: hidden; }
+  .sim-bar { height: 100%; border-radius: 2px; }
+  .sim-high { background: #28a745; }
+  .sim-med { background: #f0a500; }
+  .sim-low { background: #dc3545; }
+
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .82rem;
+    line-height: 1.5;
+    min-height: 2.6rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>RAG Pipeline — Stages &amp; Failure Modes</h4>
+
+  <div class="stage-bar">
+    <div class="stage" id="st-0">Ingestion</div>
+    <div class="stage" id="st-1">Retrieval</div>
+    <div class="stage" id="st-2">Augmentation</div>
+    <div class="stage" id="st-3">Generation</div>
+    <div class="stage" id="st-4">Post-proc</div>
+  </div>
+
+  <div class="panel" id="panel">
+    <div class="panel-title" id="panel-title"></div>
+    <div id="panel-body">Press Step to begin.</div>
+  </div>
+
+  <div id="stat">Press Step to begin.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#x2192;</button>
+    <button id="btn-reset">&#x21BA; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var STEPS = [
+  {
+    stages: ['active','','','',''],
+    title: 'Stage 1: Ingestion',
+    body: '<span class="tag tag-info">PDF</span><span class="tag tag-info">DOCX</span><span class="tag tag-info">HTML</span> Documents loaded, chunked (512 tokens, 50-token overlap), embedded via embedding model, and inserted into the Vector DB index. Metadata (source, date, title) stored alongside each chunk.',
+    msg: 'Ingestion — documents are chunked, embedded, and indexed in the Vector DB. This phase runs offline and only re-runs when documents are added or updated.'
+  },
+  {
+    stages: ['done','active','','',''],
+    title: 'Stage 2: Query Arrives',
+    body: 'User query: <em>"What is the refund policy?"</em><br><br>Query is passed through the same embedding model used at index time → produces a <span class="tag tag-ptr">query vector</span>. Same embedding space ensures semantic comparability with stored chunk vectors.',
+    msg: 'Query arrives — embedded into a query vector using the same model as indexing. Embedding consistency is critical: a mismatch in models breaks retrieval.'
+  },
+  {
+    stages: ['done','active','','',''],
+    title: 'Stage 3: Retrieval — top-k=5',
+    body: '<div class="chunk-list"><div class="chunk-item"><span style="width:130px;flex-shrink:0">"Refund eligibility..."</span><div class="sim-bar-wrap"><div class="sim-bar sim-high" style="width:92%"></div></div><span>0.92</span></div><div class="chunk-item"><span style="width:130px;flex-shrink:0">"Return process steps..."</span><div class="sim-bar-wrap"><div class="sim-bar sim-high" style="width:85%"></div></div><span>0.85</span></div><div class="chunk-item"><span style="width:130px;flex-shrink:0">"Exchange policy..."</span><div class="sim-bar-wrap"><div class="sim-bar sim-med" style="width:74%"></div></div><span>0.74</span></div><div class="chunk-item"><span style="width:130px;flex-shrink:0">"Shipping FAQ..."</span><div class="sim-bar-wrap"><div class="sim-bar sim-med" style="width:68%"></div></div><span>0.68</span></div><div class="chunk-item"><span style="width:130px;flex-shrink:0">"Store credit terms..."</span><div class="sim-bar-wrap"><div class="sim-bar sim-med" style="width:62%"></div></div><span>0.62</span></div></div>',
+    msg: 'Retrieval — Vector DB ANN search returns top-5 ranked chunks. Similarity scores shown. High similarity = semantically close to the query.'
+  },
+  {
+    stages: ['done','error','','',''],
+    title: 'Failure Mode: Poor Retrieval',
+    body: '<span class="tag tag-err">LOW SIMILARITY</span><span class="tag tag-warn">BAD MATCH</span><br><br>Query: <em>"refund"</em> retrieves chunk: <em>"return policy for damaged goods"</em> with similarity 0.41 — vocabularies don\'t match. LLM receives irrelevant context → produces a wrong or evasive answer. <br><br><strong>Root cause:</strong> embedding model sees "refund" and "return" as different concepts in this domain.',
+    msg: 'Failure mode — poor retrieval occurs when query vocabulary diverges from document vocabulary. The LLM cannot compensate for a bad context window.'
+  },
+  {
+    stages: ['done','active','','',''],
+    title: 'Fix: Reranking with Cross-Encoder',
+    body: '<span class="tag tag-ok">RERANKER APPLIED</span><br><br>Retrieve top-20 candidates via vector search, then pass each (query, chunk) pair through a <strong>cross-encoder</strong> that scores relevance directly. Top-5 reranked results have precision 0.89 vs 0.63 before reranking.<br><br><em>Cost:</em> 20 cross-encoder inferences per query (~30ms added latency).',
+    msg: 'Fix — reranking with a cross-encoder rescores the top-20 candidates by modeling the full query-chunk relationship. Precision improves significantly at moderate latency cost.'
+  },
+  {
+    stages: ['done','done','active','',''],
+    title: 'Stage 4: Augmentation',
+    body: '<strong>Prompt assembled:</strong><br><code style="font-size:.7rem;color:#9fc5d8;display:block;margin-top:.3rem;white-space:pre-wrap">[System]: Answer from context only.\n[Context chunk 1]: Refund eligibility...\n[Context chunk 2]: Return process...\n[Context chunk 3]: Exchange policy...\n[User]: What is the refund policy?</code>',
+    msg: 'Augmentation — the retrieved chunks are injected between the system instructions and the user question. The LLM context now contains grounding evidence.'
+  },
+  {
+    stages: ['done','done','done','active',''],
+    title: 'Stage 5: Generation',
+    body: '<span class="tag tag-info">STREAMING</span><br><br>LLM call initiated. Response streams token by token. Typical latency: 800ms–3s for a 200-token answer.<br><br><em>Key risk:</em> if the LLM ignores provided context and answers from training data → faithfulness failure.',
+    msg: 'Generation — LLM streams its response grounded in the augmented prompt. Token-by-token streaming keeps perceived latency low for the user.'
+  },
+  {
+    stages: ['done','done','done','done','active'],
+    title: 'Stage 6: Post-processing',
+    body: '<span class="tag tag-ok">CITATIONS EXTRACTED</span><span class="tag tag-ok">FORMAT OK</span><br><br>Checks performed: <br>• Hallucination detection: is each claim supported by a retrieved chunk?<br>• Citation extraction: map answer sentences to source chunks<br>• Response formatting: strip raw markup, add structure',
+    msg: 'Post-processing — extracted citations verify grounding. Hallucination detection flags claims not supported by retrieved chunks before the answer is shown to the user.'
+  },
+  {
+    stages: ['done','done','done','done','done'],
+    title: 'Success Path — Final Answer',
+    body: '<span class="tag tag-ok">3 CITATIONS</span><span class="tag tag-ok">FAITHFUL</span><br><br>"You may request a refund within 30 days of purchase [1]. Returns must include original packaging [2]. Exchanges are processed within 5 business days [3]."<br><br><em>Sources: [1] refund-policy.pdf p.2, [2] returns-faq.pdf p.1, [3] exchange-terms.pdf p.4</em>',
+    msg: 'Done — answer delivered with 3 source citations. Answer faithfulness verified against retrieved context. Pipeline completed successfully.'
+  }
+];
+
+var idx = 0;
+
+function draw() {
+  var s = STEPS[idx];
+  for (var i = 0; i < 5; i++) {
+    var el = document.getElementById('st-' + i);
+    el.className = 'stage' + (s.stages[i] ? ' ' + s.stages[i] : '');
+  }
+  document.getElementById('panel-title').textContent = s.title;
+  document.getElementById('panel-body').innerHTML = s.body;
+  document.getElementById('stat').textContent = s.msg;
+  var done = idx === STEPS.length - 1;
+  var stepBtn = document.getElementById('btn-step');
+  stepBtn.disabled = done;
+  stepBtn.textContent = done ? 'Done ✓' : 'Step →';
+  document.getElementById('btn-back').disabled = idx === 0;
+  document.getElementById('counter').textContent = 'Step ' + (idx + 1) + ' / ' + STEPS.length;
+}
+
+document.getElementById('btn-step').onclick = function() {
+  if (idx < STEPS.length - 1) { idx++; draw(); }
+};
+document.getElementById('btn-back').onclick = function() {
+  if (idx > 0) { idx--; draw(); }
+};
+document.getElementById('btn-reset').onclick = function() {
+  idx = 0; draw();
+};
+
+draw();
+</script>
+</body>
+</html>

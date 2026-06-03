@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Conditional Edges Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 0;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  .header {
+    background: #284b63;
+    padding: .55rem 1rem;
+    font-size: .78rem;
+    font-weight: 600;
+    letter-spacing: .06em;
+    text-transform: uppercase;
+    color: #d4d4d4;
+  }
+  .body { padding: .85rem 1rem .75rem; }
+  /* iter badge */
+  .iter-row {
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+    margin-bottom: .5rem;
+  }
+  .iter-badge {
+    background: #284b63;
+    color: #d4d4d4;
+    font-size: .68rem;
+    font-weight: 700;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    border-radius: 3px;
+    padding: .18rem .5rem;
+  }
+  .guard-badge {
+    font-size: .68rem;
+    color: #dc3545;
+    border: 1px solid #dc3545;
+    border-radius: 3px;
+    padding: .15rem .45rem;
+    display: none;
+  }
+  .guard-badge.show { display: inline-block; }
+  /* graph */
+  .graph-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: .5rem;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+  }
+  .node {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 5px;
+    padding: .3rem .5rem;
+    text-align: center;
+    flex: 1;
+    min-width: 0;
+    font-size: .75rem;
+    font-weight: 600;
+    transition: border-color .25s, background .25s;
+  }
+  .node .nlbl { font-size: .58rem; text-transform: uppercase; letter-spacing: .04em; color: #646464; margin-bottom: .1rem; }
+  .node .nst  { font-size: .6rem; color: #888; margin-top: .1rem; min-height: .75rem; }
+  .node.active { border-color: #f0a500; background: #2a2518; }
+  .node.done   { border-color: #28a745; }
+  .node.end-node { border-color: #28a745; background: #182218; }
+  .node.router { border-color: #007bff; }
+  .arr { color: #646464; font-size: .82rem; flex-shrink: 0; }
+  .arr.amber { color: #f0a500; }
+  .arr.green { color: #28a745; }
+  .arr.red   { color: #dc3545; }
+  /* router branch */
+  .branch-row {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    margin-bottom: .5rem;
+    padding: .3rem .5rem;
+    background: #1e2028;
+    border: 1px solid #333;
+    border-radius: 4px;
+    font-size: .72rem;
+  }
+  .branch-row .bq { color: #888; }
+  .branch-row .byes { color: #007bff; font-weight: 600; }
+  .branch-row .bno  { color: #28a745; font-weight: 600; }
+  .branch-row.hi-yes { border-color: #007bff; }
+  .branch-row.hi-no  { border-color: #28a745; }
+  /* state panel */
+  .state-panel {
+    background: #1a1a20;
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: .35rem .55rem;
+    font-size: .68rem;
+    font-family: monospace;
+    color: #c9d1d9;
+    margin-bottom: .5rem;
+    line-height: 1.45;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+  .state-panel .slbl { font-size: .6rem; text-transform: uppercase; letter-spacing: .06em; margin-bottom: .18rem; color: #888; }
+  /* status */
+  #stat {
+    padding: .45rem .65rem;
+    background: #393639;
+    border-left: 3px solid #284b63;
+    border-radius: 0 4px 4px 0;
+    font-size: .8rem;
+    line-height: 1.5;
+    min-height: 2.2rem;
+    margin-bottom: .65rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .3rem .7rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .8rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .7rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">Conditional Edges - Visualizer</div>
+  <div class="body">
+
+    <div class="iter-row">
+      <div class="iter-badge" id="iter-badge">Iteration 1</div>
+      <div class="guard-badge" id="guard-badge">max_iterations guard</div>
+    </div>
+
+    <!-- graph -->
+    <div class="graph-row">
+      <div class="node" id="n-agent"><div class="nlbl">Node</div>agent_node<div class="nst" id="nst-agent"></div></div>
+      <div class="arr" id="e-ar">→</div>
+      <div class="node" id="n-router"><div class="nlbl">Router</div>should_continue<div class="nst" id="nst-router"></div></div>
+      <div class="arr" id="e-rt">→</div>
+      <div class="node" id="n-tools"><div class="nlbl">Node</div>tools_node<div class="nst" id="nst-tools"></div></div>
+      <div class="arr" id="e-ta">↩</div>
+      <div class="node" id="n-end"><div class="nlbl">Terminal</div>END<div class="nst" id="nst-end"></div></div>
+    </div>
+
+    <!-- routing decision -->
+    <div class="branch-row" id="branch-row">
+      <span class="bq">should_continue:</span>
+      <span class="byes" id="br-yes">tool_calls → "tools"</span>
+      <span style="color:#555;margin:0 .3rem">|</span>
+      <span class="bno" id="br-no">no calls → END</span>
+    </div>
+
+    <!-- state -->
+    <div class="state-panel">
+      <div class="slbl">State (messages[-1])</div>
+      <div id="state-txt">{messages: [...], tool_calls: null}</div>
+    </div>
+
+    <div id="stat">Press Step to begin.</div>
+
+    <div id="ctrl">
+      <button id="btn-back" disabled>&#9664; Back</button>
+      <button id="btn-step">Step &#9654;</button>
+      <button id="btn-reset">&#8635; Reset</button>
+      <span id="counter">Step 0 / 8</span>
+    </div>
+  </div>
+</div>
+<script>
+var STEPS = [
+  {
+    iter: 1, guard: false,
+    nodes: {agent:'',router:'',tools:'',end:''},
+    edges: {ar:'',rt:'',ta:''},
+    branch: 'none',
+    state: '{messages: [HumanMessage("What is the capital of France?")], tool_calls: null}',
+    msg: 'Graph: agent_node → should_continue (router) → tools_node OR END. Initial state created.'
+  },
+  {
+    iter: 1, guard: false,
+    nodes: {agent:'active',router:'',tools:'',end:''},
+    edges: {ar:'amber',rt:'',ta:''},
+    branch: 'none',
+    state: '{messages: [..., AIMessage(tool_calls=[search("capital France")])], tool_calls: [search("capital France")]}',
+    msg: 'Iteration 1: agent_node runs. Agent decides to call a tool → state has tool_calls.'
+  },
+  {
+    iter: 1, guard: false,
+    nodes: {agent:'done',router:'router',tools:'',end:''},
+    edges: {ar:'',rt:'amber',ta:''},
+    branch: 'yes',
+    state: '{..., tool_calls: [search("capital France")]}',
+    msg: 'should_continue checks: tool_calls present → route to "tools".'
+  },
+  {
+    iter: 1, guard: false,
+    nodes: {agent:'',router:'done',tools:'active',end:''},
+    edges: {ar:'',rt:'',ta:'amber'},
+    branch: 'yes',
+    state: '{..., messages: [..., ToolMessage("Paris is the capital of France.")], tool_calls: null}',
+    msg: 'tools_node executes search. Appends ToolMessage result to messages. Returns to agent_node.'
+  },
+  {
+    iter: 2, guard: false,
+    nodes: {agent:'active',router:'',tools:'done',end:''},
+    edges: {ar:'amber',rt:'',ta:''},
+    branch: 'none',
+    state: '{..., messages: [..., ToolMessage("Paris...")], tool_calls: null}',
+    msg: 'Iteration 2: agent_node receives tool result. Agent thinks again with full updated context.'
+  },
+  {
+    iter: 2, guard: false,
+    nodes: {agent:'done',router:'router',tools:'',end:''},
+    edges: {ar:'',rt:'amber',ta:''},
+    branch: 'no',
+    state: '{..., messages: [..., AIMessage("The capital of France is Paris.")], tool_calls: null}',
+    msg: 'Agent decides: no more tools needed → AIMessage with no tool_calls.'
+  },
+  {
+    iter: 2, guard: false,
+    nodes: {agent:'done',router:'done',tools:'',end:'end-node'},
+    edges: {ar:'',rt:'green',ta:''},
+    branch: 'no',
+    state: '{..., messages: [..., AIMessage("The capital of France is Paris.")], tool_calls: null}',
+    msg: 'should_continue checks: no tool_calls → route to END. Graph terminates.'
+  },
+  {
+    iter: 2, guard: false,
+    nodes: {agent:'done',router:'done',tools:'',end:'end-node'},
+    edges: {ar:'',rt:'',ta:''},
+    branch: 'none',
+    state: '{messages: [HumanMessage, AIMessage(tool_call), ToolMessage, AIMessage("Paris")], tool_calls: null}',
+    msg: 'Graph terminates. Final state returned. 2 iterations: one tool call, one final answer.'
+  },
+  {
+    iter: 3, guard: true,
+    nodes: {agent:'active',router:'',tools:'',end:''},
+    edges: {ar:'amber',rt:'',ta:''},
+    branch: 'none',
+    state: '{..., iteration_count: 3, max_iterations: 10\n→ if iteration_count >= max: route to END (safety guard)}',
+    msg: 'max_iterations guard: conditional edge checks iteration_count before routing. Prevents infinite loops.'
+  }
+];
+
+var idx = 0;
+
+function draw() {
+  var s = STEPS[idx];
+  document.getElementById('iter-badge').textContent = 'Iteration ' + s.iter;
+  document.getElementById('guard-badge').className = 'guard-badge' + (s.guard ? ' show' : '');
+
+  var nmap = {agent:'n-agent',router:'n-router',tools:'n-tools',end:'n-end'};
+  var nstmap = {agent:'nst-agent',router:'nst-router',tools:'nst-tools',end:'nst-end'};
+  for (var k in nmap) {
+    var v = s.nodes[k];
+    var cls = 'node';
+    if (v === 'active')   cls = 'node active';
+    else if (v === 'done') cls = 'node done';
+    else if (v === 'router') cls = 'node router';
+    else if (v === 'end-node') cls = 'node end-node';
+    document.getElementById(nmap[k]).className = cls;
+  }
+
+  var ea = document.getElementById('e-ar');
+  var er = document.getElementById('e-rt');
+  var et = document.getElementById('e-ta');
+  ea.className = 'arr' + (s.edges.ar === 'amber' ? ' amber' : '');
+  er.className = 'arr' + (s.edges.rt === 'amber' ? ' amber' : s.edges.rt === 'green' ? ' green' : '');
+  et.className = 'arr' + (s.edges.ta === 'amber' ? ' amber' : '');
+
+  var br = document.getElementById('branch-row');
+  var byesEl = document.getElementById('br-yes');
+  var bnoEl  = document.getElementById('br-no');
+  if (s.branch === 'yes') {
+    br.className = 'branch-row hi-yes';
+    byesEl.style.textDecoration = 'underline';
+    bnoEl.style.textDecoration = 'none';
+  } else if (s.branch === 'no') {
+    br.className = 'branch-row hi-no';
+    bnoEl.style.textDecoration = 'underline';
+    byesEl.style.textDecoration = 'none';
+  } else {
+    br.className = 'branch-row';
+    byesEl.style.textDecoration = 'none';
+    bnoEl.style.textDecoration = 'none';
+  }
+
+  document.getElementById('state-txt').textContent = s.state;
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (STEPS.length - 1);
+  var stepBtn = document.getElementById('btn-step');
+  if (idx === STEPS.length - 1) {
+    stepBtn.textContent = 'Done ✓';
+    stepBtn.disabled = true;
+  } else {
+    stepBtn.textContent = 'Step ►';
+    stepBtn.disabled = false;
+  }
+  document.getElementById('btn-back').disabled = idx === 0;
+}
+
+document.getElementById('btn-step').onclick = function() { if (idx < STEPS.length - 1) { idx++; draw(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+draw();
+</script>
+</body>
+</html>

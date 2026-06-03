@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tokenization (BPE) - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #vis-area {
+    background: #2a2a2e;
+    border-radius: 6px;
+    padding: .75rem;
+    min-height: 180px;
+    margin-bottom: .5rem;
+  }
+  .vis-label {
+    font-size: .68rem;
+    text-transform: uppercase;
+    letter-spacing: .07em;
+    color: #646464;
+    margin-bottom: .4rem;
+  }
+  .token-row { display: flex; gap: .25rem; flex-wrap: wrap; align-items: flex-start; margin-bottom: .35rem; }
+  .tok {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+  }
+  .tok-text {
+    padding: .2rem .35rem;
+    border-radius: 3px;
+    font-size: .82rem;
+    font-family: monospace;
+    border: 1px solid #393639;
+    background: #393639;
+    color: #d4d4d4;
+    white-space: pre;
+  }
+  .tok-text.merged { background: #284b63; border-color: #7b97aa; color: #fff; }
+  .tok-text.final { background: #1a3a2a; border-color: #28a745; color: #28a745; }
+  .tok-text.highlight { background: #f0a500; border-color: #f0a500; color: #000; }
+  .tok-text.pointer { background: #007bff; border-color: #007bff; color: #fff; }
+  .tok-id { font-size: .6rem; color: #646464; font-family: monospace; }
+  .info-box {
+    background: #1e1e20;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    padding: .4rem .6rem;
+    font-size: .78rem;
+    line-height: 1.5;
+    color: #d4d4d4;
+    margin-top: .4rem;
+  }
+  .freq-table { width: 100%; border-collapse: collapse; font-size: .8rem; margin-top: .3rem; }
+  .freq-table th { background: #393639; color: #646464; font-weight: 400; font-size: .7rem; text-transform: uppercase; padding: .25rem .4rem; text-align: left; }
+  .freq-table td { padding: .2rem .4rem; border-bottom: 1px solid #2a2a2e; }
+  .freq-table tr.top-pair td { color: #f0a500; }
+  .compare-row { display: flex; gap: .75rem; margin-top: .4rem; }
+  .compare-box { flex: 1; background: #1e1e20; border: 1px solid #393639; border-radius: 4px; padding: .4rem .5rem; }
+  .compare-title { font-size: .68rem; text-transform: uppercase; letter-spacing: .07em; color: #646464; margin-bottom: .25rem; }
+  .big-num { font-size: 1.4rem; font-weight: 700; color: #f0a500; }
+  #stat {
+    padding: .45rem .75rem; background: #393639;
+    border-left: 3px solid #7b97aa;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem; line-height: 1.5;
+    min-height: 2.2rem; margin-bottom: .5rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem; border: none; border-radius: 4px;
+    cursor: pointer; font-size: .82rem;
+    background: #393639; color: #d4d4d4; transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>BPE Tokenization — Byte-Pair Encoding</h4>
+  <div id="vis-area"></div>
+  <div id="stat">Press Step to begin.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+function makeTok(text, cls, id) {
+  var c = cls ? ' ' + cls : '';
+  var idHtml = id !== undefined ? '<span class="tok-id">' + id + '</span>' : '';
+  return '<span class="tok"><span class="tok-text' + c + '">' + text + '</span>' + idHtml + '</span>';
+}
+
+var STEPS = [
+  {
+    render: function() {
+      var h = '<div class="vis-label">Input text</div>';
+      h += '<div class="info-box" style="font-size:1rem;letter-spacing:.03em;font-family:monospace;color:#f0a500">"the cat sat on the mat"</div>';
+      h += '<div class="info-box">BPE starts with raw text and builds a vocabulary of subword units by iteratively merging frequent character pairs.</div>';
+      return h;
+    },
+    msg: 'Input: "the cat sat on the mat" — 22 characters, 6 words. BPE will find subword token boundaries.'
+  },
+  {
+    render: function() {
+      var h = '<div class="vis-label">Step 1: split into individual characters (+ space marker _)</div>';
+      var chars = ['t','h','e','_','c','a','t','_','s','a','t','_','o','n','_','t','h','e','_','m','a','t'];
+      var ids =   [116,104,101,32, 99, 97,116,32,115, 97,116,32,111,110,32,116,104,101,32,109, 97,116];
+      h += '<div class="token-row">';
+      chars.forEach(function(c, i) {
+        h += makeTok(c, '', ids[i]);
+      });
+      h += '</div>';
+      h += '<div class="info-box">' + chars.length + ' individual character tokens. Space shown as _ (underscore). Each character has a byte-level ID.</div>';
+      return h;
+    },
+    msg: 'Initial split: every character becomes a token. 22 tokens for 22 characters. Vocabulary = all unique bytes.'
+  },
+  {
+    render: function() {
+      var h = '<div class="vis-label">Step 2: count adjacent pair frequencies</div>';
+      h += '<table class="freq-table"><thead><tr><th>Pair</th><th>Count</th><th>Note</th></tr></thead><tbody>';
+      var pairs = [
+        ['t, h', 2, 'top pair ★', true],
+        ['h, e', 2, '', false],
+        ['a, t', 3, '', false],
+        ['_', 5,  '(space sep)', false],
+      ];
+      var rows = [
+        ['t + h', '2', 'appears in "the" × 2', true],
+        ['a + t', '3', 'in cat, sat, mat', false],
+        ['h + e', '2', 'in "the" × 2', false],
+        ['o + n', '1', 'in "on"', false],
+      ];
+      rows.forEach(function(r) {
+        h += '<tr' + (r[3] ? ' class="top-pair"' : '') + '><td style="font-family:monospace">' + r[0] + '</td><td>' + r[1] + '</td><td style="color:#646464;font-size:.75rem">' + r[2] + '</td></tr>';
+      });
+      h += '</tbody></table>';
+      h += '<div class="info-box">Most frequent pair: <strong style="color:#f0a500">t + h</strong> (count 2). This pair is merged next.</div>';
+      return h;
+    },
+    msg: 'Count all adjacent character pairs. Most frequent pair "t+h" (count 2 in "the"×2) will be merged into a new token "th".'
+  },
+  {
+    render: function() {
+      var h = '<div class="vis-label">After merge: t+h → "th" (new vocab entry)</div>';
+      var tokens = ['th','e','_','c','a','t','_','s','a','t','_','o','n','_','th','e','_','m','a','t'];
+      var ids =    [3000,101,32,99,97,116,32,115,97,116,32,111,110,32,3000,101,32,109,97,116];
+      h += '<div class="token-row">';
+      tokens.forEach(function(t, i) {
+        var cls = (t === 'th') ? 'merged' : '';
+        h += makeTok(t, cls, ids[i]);
+      });
+      h += '</div>';
+      h += '<div class="info-box">22 → 20 tokens. "th" assigned new ID 3000. BPE adds this merge to the merge rules list.</div>';
+      return h;
+    },
+    msg: 'Merge applied: all "t","h" adjacent pairs replaced by "th". Token count reduced from 22 to 20.'
+  },
+  {
+    render: function() {
+      var h = '<div class="vis-label">Next merge: most frequent pair now "a+t"</div>';
+      var tokens = ['th','e','_','c','at','_','s','at','_','o','n','_','th','e','_','m','at'];
+      var ids =    [3000,101,32,99,3001,32,115,3001,32,111,110,32,3000,101,32,109,3001];
+      h += '<div class="token-row">';
+      tokens.forEach(function(t, i) {
+        var cls = (t === 'at') ? 'merged' : (t === 'th' ? 'highlight' : '');
+        h += makeTok(t, cls, ids[i]);
+      });
+      h += '</div>';
+      h += '<div class="info-box">"at" (amber) appears in cat, sat, mat — count 3. Previous merge "th" shown in blue. 20 → 17 tokens.</div>';
+      return h;
+    },
+    msg: 'After second merge "a+t" → "at" (appears in cat, sat, mat). 20 → 17 tokens. Merges accumulate.'
+  },
+  {
+    render: function() {
+      var h = '<div class="vis-label">Continuing merges: "th+e" → "the"</div>';
+      var tokens = ['the','_','c','at','_','s','at','_','o','n','_','the','_','m','at'];
+      var ids =    [3002,32,99,3001,32,115,3001,32,111,110,32,3002,32,109,3001];
+      h += '<div class="token-row">';
+      tokens.forEach(function(t, i) {
+        var cls = (t === 'the') ? 'merged' : (t === 'at' ? 'highlight' : '');
+        h += makeTok(t, cls, ids[i]);
+      });
+      h += '</div>';
+      h += '<div class="info-box">"the" = 3rd merge. Each merge reduces total token count. After thousands of merges, vocabulary reaches ~50k–100k entries.</div>';
+      return h;
+    },
+    msg: 'Merge "th+e" → "the". The word "the" is now a single token. This continues until vocabulary size is reached.'
+  },
+  {
+    render: function() {
+      var h = '<div class="vis-label">Final tokenization result</div>';
+      var tokens = ['the_', 'cat_', 'sat_', 'on_', 'the_', 'mat'];
+      var ids = [1820, 3797, 7937, 389, 1820, 2326];
+      h += '<div class="token-row">';
+      tokens.forEach(function(t, i) {
+        h += makeTok(t, 'final', ids[i]);
+      });
+      h += '</div>';
+      h += '<div class="compare-row">';
+      h += '<div class="compare-box"><div class="compare-title">Characters</div><div class="big-num">22</div></div>';
+      h += '<div class="compare-box"><div class="compare-title">Words</div><div class="big-num">6</div></div>';
+      h += '<div class="compare-box"><div class="compare-title">Tokens</div><div class="big-num" style="color:#28a745">6</div></div>';
+      h += '</div>';
+      return h;
+    },
+    msg: 'Final: 6 tokens from 6 common English words. Common words → 1 token each. Token IDs are the actual integer inputs to the model.'
+  },
+  {
+    render: function() {
+      var h = '<div class="vis-label">Edge case: rare/compound word tokenization</div>';
+      h += '<div class="info-box" style="margin-bottom:.4rem;font-family:monospace">Input: <strong>"unhappiness"</strong></div>';
+      h += '<div class="token-row">';
+      [['un',1, 403], ['hap',1, 14201], ['pi',1, 14508], ['ness',1, 1108]].forEach(function(t) {
+        h += makeTok(t[0], 'pointer', t[2]);
+      });
+      h += '</div>';
+      h += '<div class="info-box" style="margin-top:.4rem;font-family:monospace">Input: <strong>"antidisestablishmentarianism"</strong></div>';
+      h += '<div class="token-row">';
+      [['anti',5765],['dis',9137],['est',3486],['ab',397],['lish',1056],['ment',434],['ari',1494],['an',1867],['ism',3374]].forEach(function(t) {
+        h += makeTok(t[0], 'pointer', t[1]);
+      });
+      h += '</div>';
+      return h;
+    },
+    msg: 'Rare words split into multiple tokens. "unhappiness" → 4 tokens, "antidisestablishmentarianism" → 9 tokens.'
+  },
+  {
+    render: function() {
+      var h = '<div class="vis-label">Token count vs character count</div>';
+      var examples = [
+        { text: '"Hello world"', chars: 11, tokens: 2, note: 'Common English words' },
+        { text: '"def fibonacci(n)"', chars: 18, tokens: 7, note: 'Code — more tokens per char' },
+        { text: '"こんにちは"', chars: 5, tokens: 5, note: 'Japanese — ~1 char per token' },
+        { text: '"antidisestablishment..."', chars: 28, tokens: 9, note: 'Rare long word' },
+      ];
+      examples.forEach(function(e) {
+        h += '<div style="margin-bottom:.3rem;background:#1e1e20;border:1px solid #393639;border-radius:4px;padding:.35rem .5rem">';
+        h += '<div style="font-family:monospace;font-size:.8rem;color:#f0a500">' + e.text + '</div>';
+        h += '<div style="font-size:.75rem;margin-top:.15rem;display:flex;gap:1rem">';
+        h += '<span style="color:#646464">' + e.chars + ' chars</span>';
+        h += '<span style="color:#28a745">' + e.tokens + ' tokens</span>';
+        h += '<span style="color:#888">' + e.note + '</span>';
+        h += '</div></div>';
+      });
+      return h;
+    },
+    msg: 'Done ✓ — Token count varies widely by content type. Always use tiktoken or the API count endpoint for accurate estimates.'
+  }
+];
+
+var idx = 0;
+
+function draw() {
+  var s = STEPS[idx];
+  var isDone = (idx === STEPS.length - 1);
+  document.getElementById('vis-area').innerHTML = s.render();
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (STEPS.length - 1);
+  document.getElementById('btn-step').disabled = isDone;
+  document.getElementById('btn-step').textContent = isDone ? 'Done ✓' : 'Step →';
+  document.getElementById('btn-back').disabled = idx === 0;
+}
+
+document.getElementById('btn-step').onclick = function() { if (idx < STEPS.length - 1) { idx++; draw(); } };
+document.getElementById('btn-back').onclick = function() { if (idx > 0) { idx--; draw(); } };
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+draw();
+</script>
+</body>
+</html>

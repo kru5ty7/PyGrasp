@@ -55,6 +55,12 @@ Calling an embedding API in Python is a single request: pass a list of text stri
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/embeddings.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Embeddings Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Embeddings are the primary mechanism by which RAG systems retrieve relevant context. A query is embedded, and the nearest document chunks (by cosine similarity) are retrieved and inserted into the LLM's context window. Without embeddings, retrieval falls back to keyword search, which cannot match semantically equivalent phrasing.

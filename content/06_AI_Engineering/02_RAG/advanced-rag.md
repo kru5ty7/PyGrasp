@@ -88,6 +88,12 @@ Contextual compression wraps any retriever with a `ContextualCompressionRetrieve
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/advanced-rag.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Advanced RAG Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Multi-query and HyDE both consume additional LLM calls per user query, and these calls add latency. Understanding how to pipeline these calls asynchronously  -  running the N sub-queries for multi-query retrieval concurrently rather than sequentially  -  requires familiarity with async patterns in Python and LangChain's async retriever interface (`ainvoke`).

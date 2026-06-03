@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chunking Strategies - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  .mode-row {
+    display: flex;
+    gap: .4rem;
+    margin-bottom: .75rem;
+  }
+  .mode-btn {
+    flex: 1;
+    padding: .35rem .4rem;
+    border: 1px solid #393639;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .75rem;
+    background: #2a2a2e;
+    color: #646464;
+    transition: all .15s;
+    text-align: center;
+  }
+  .mode-btn.active {
+    background: #284b63;
+    color: #fff;
+    border-color: #284b63;
+  }
+  .mode-btn:hover:not(.active) { border-color: #555; color: #d4d4d4; }
+  #viz-area {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 6px;
+    min-height: 200px;
+    margin-bottom: .75rem;
+    padding: .75rem;
+  }
+  /* Document bar */
+  .doc-bar-wrap { margin: .5rem 0; }
+  .doc-bar-label { font-size: .7rem; color: #646464; margin-bottom: .25rem; }
+  .doc-bar {
+    height: 28px;
+    border-radius: 3px;
+    background: #393639;
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+  }
+  .doc-bar-text {
+    font-size: .68rem;
+    color: #888;
+    position: absolute;
+    top: 50%;
+    left: 6px;
+    transform: translateY(-50%);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    pointer-events: none;
+  }
+  /* Chunk display */
+  .chunks-wrap { margin-top: .6rem; }
+  .chunk-row {
+    display: flex;
+    align-items: stretch;
+    margin-bottom: .3rem;
+    gap: 0;
+    position: relative;
+  }
+  .chunk-label {
+    font-size: .68rem;
+    color: #646464;
+    width: 42px;
+    flex-shrink: 0;
+    padding-top: .3rem;
+  }
+  .chunk-block {
+    flex: 1;
+    border-radius: 3px;
+    padding: .3rem .5rem;
+    font-size: .72rem;
+    line-height: 1.4;
+    position: relative;
+  }
+  .chunk-block .size-badge {
+    position: absolute;
+    top: 3px;
+    right: 4px;
+    font-size: .62rem;
+    padding: 1px 4px;
+    border-radius: 2px;
+    background: #1e1e22;
+    color: #646464;
+  }
+  .overlap-block {
+    height: 8px;
+    border-radius: 2px;
+    margin: .1rem 0 .1rem 42px;
+    font-size: .62rem;
+    color: #f0a500;
+    display: flex;
+    align-items: center;
+    padding-left: 4px;
+  }
+  /* Sentence similarity bars */
+  .sim-row {
+    display: flex;
+    align-items: center;
+    gap: .4rem;
+    margin-bottom: .2rem;
+    font-size: .72rem;
+  }
+  .sim-label { width: 130px; flex-shrink: 0; color: #888; }
+  .sim-track { flex: 1; height: 8px; background: #393639; border-radius: 4px; overflow: hidden; }
+  .sim-fill { height: 100%; border-radius: 4px; }
+  .sim-score { width: 32px; text-align: right; color: #646464; }
+  /* Break marker */
+  .break-marker {
+    display: inline-block;
+    background: #dc354522;
+    color: #dc3545;
+    border: 1px solid #dc354544;
+    border-radius: 2px;
+    font-size: .65rem;
+    padding: 0 3px;
+    margin: 0 2px;
+  }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #284b63;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button.ctrl-btn {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button.ctrl-btn:disabled { opacity: .3; cursor: default; }
+  button.ctrl-btn:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Chunking Strategies</h4>
+  <div class="mode-row">
+    <button class="mode-btn active" id="mode-fixed">Fixed Size</button>
+    <button class="mode-btn" id="mode-sentence">Sentence-Based</button>
+    <button class="mode-btn" id="mode-semantic">Semantic</button>
+  </div>
+  <div id="viz-area"></div>
+  <div id="stat">Select a strategy above, then press Step.</div>
+  <div id="ctrl">
+    <button class="ctrl-btn" id="btn-back" disabled>&#9664; Back</button>
+    <button class="ctrl-btn" id="btn-step">Step &#8594;</button>
+    <button class="ctrl-btn" id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+var mode = 'fixed';
+var idx = 0;
+
+// ~1000-char document — 200-char fixed chunks yield ~5 pieces
+var SAMPLE_DOC = 'The Python GIL prevents true parallel execution of threads. Using multiprocessing instead of threading bypasses this limitation. Database connections are expensive to create and should be pooled. A connection pool reuses open connections and limits total connection count. Async I/O with asyncio enables high-concurrency I/O without threads. The event loop schedules coroutines cooperatively. Python manages memory with reference counting as its primary mechanism. A cyclic garbage collector handles reference cycles that counting misses. Caching frequently accessed data reduces database load significantly. An LRU cache evicts the least recently used entries when capacity is reached.';
+
+var SENTENCES = [
+  'The Python GIL prevents true parallel execution of threads.',
+  'Using multiprocessing instead of threading bypasses this limitation.',
+  'Database connections are expensive to create and should be pooled.',
+  'A connection pool reuses open connections and limits total connection count.',
+  'Async I/O with asyncio enables high-concurrency I/O without threads.',
+  'The event loop schedules coroutines cooperatively.',
+  'Python manages memory with reference counting as its primary mechanism.',
+  'A cyclic garbage collector handles reference cycles that counting misses.',
+  'Caching frequently accessed data reduces database load significantly.',
+  'An LRU cache evicts the least recently used entries when capacity is reached.'
+];
+
+// Similarity scores between adjacent sentences (for semantic mode)
+// Topics: [0,1]=GIL/threading, [2,3]=DB pooling, [4,5]=Async, [6,7]=Memory, [8,9]=Caching
+var SIM_SCORES = [0.84, 0.22, 0.80, 0.21, 0.83, 0.23, 0.79, 0.24, 0.81];
+// Boundaries after S2, S4, S6, S8 (0-indexed: 1, 3, 5, 7)
+
+function docBarHtml(text) {
+  return '<div class="doc-bar-wrap"><div class="doc-bar-label">Document</div>' +
+    '<div class="doc-bar"><div class="doc-bar-text">' + text + '</div></div></div>';
+}
+
+function chunkColors() {
+  return ['#284b63', '#2e4a30', '#3a2e1e', '#2a2a3e', '#1e2e3a'];
+}
+
+// --- FIXED SIZE STEPS ---
+var FIXED_STEPS = [
+  {
+    msg: 'A long document: article about Python concurrency and memory management. We need to split it for embedding.',
+    render: function() {
+      return docBarHtml(SAMPLE_DOC) +
+        '<div style="margin-top:.75rem;font-size:.78rem;color:#646464;">' +
+        '<span style="color:#f0a500;">chunk_size</span> = 200 chars &nbsp;|&nbsp; ' +
+        '<span style="color:#f0a500;">overlap</span> = 20 chars</div>';
+    }
+  },
+  {
+    msg: 'Cut every 200 characters. The document splits into 5 fixed-size chunks (C1–C5) regardless of sentence boundaries.',
+    render: function() {
+      var chars = SAMPLE_DOC;
+      var size = 200, overlap = 0;
+      var chunks = [];
+      for (var i = 0; i < chars.length; i += size) { chunks.push(chars.slice(i, i + size)); }
+      var colors = chunkColors();
+      var html = docBarHtml(SAMPLE_DOC);
+      html += '<div class="chunks-wrap">';
+      chunks.forEach(function(c, i) {
+        html += '<div class="chunk-row">' +
+          '<div class="chunk-label">C' + (i + 1) + '</div>' +
+          '<div class="chunk-block" style="background:' + colors[i % colors.length] + '33;border:1px solid ' + colors[i % colors.length] + '55;">' +
+          '<span class="size-badge">' + c.length + ' chars</span>' +
+          c.substring(0, 80) + (c.length > 80 ? '...' : '') +
+          '</div></div>';
+      });
+      html += '</div>';
+      return html;
+    }
+  },
+  {
+    msg: 'Overlap: the last 20 chars of chunk N become the first 20 chars of chunk N+1. Context is shared across boundaries.',
+    render: function() {
+      var chars = SAMPLE_DOC;
+      var size = 200, overlap = 20;
+      var chunks = [];
+      for (var i = 0; i < chars.length; i += size - overlap) {
+        chunks.push(chars.slice(i, i + size));
+        if (i + size >= chars.length) break;
+      }
+      var colors = chunkColors();
+      var html = docBarHtml(SAMPLE_DOC);
+      html += '<div class="chunks-wrap">';
+      chunks.forEach(function(c, i) {
+        html += '<div class="chunk-row">' +
+          '<div class="chunk-label">C' + (i + 1) + '</div>' +
+          '<div class="chunk-block" style="background:' + colors[i % colors.length] + '33;border:1px solid ' + colors[i % colors.length] + '55;">' +
+          '<span class="size-badge">' + Math.min(c.length, size) + ' chars</span>' +
+          c.substring(0, 75) + (c.length > 75 ? '...' : '') +
+          '</div></div>';
+        if (i < chunks.length - 1) {
+          html += '<div class="overlap-block" style="background:#f0a50011;border:1px solid #f0a50033;">↕ 20-char overlap</div>';
+        }
+      });
+      html += '</div>';
+      return html;
+    }
+  },
+  {
+    msg: 'Problem: the fixed cut splits sentences mid-way. The word "threading" ends up split from its context. Red markers show bad cuts.',
+    render: function() {
+      var chars = SAMPLE_DOC;
+      var size = 200;
+      var html = '<div style="padding:.25rem 0;font-size:.78rem;line-height:1.8;">';
+      // Show text with cut markers at every 200 chars
+      var cutPositions = [200, 400, 600, 800];
+      var result = '';
+      var lastCut = 0;
+      cutPositions.forEach(function(pos) {
+        if (pos < chars.length) {
+          result += '<span style="color:#aaa;">' + chars.slice(lastCut, pos) + '</span>';
+          result += '<span class="break-marker">✂ cut</span>';
+          lastCut = pos;
+        }
+      });
+      result += '<span style="color:#aaa;">' + chars.slice(lastCut) + '</span>';
+      html += result;
+      html += '</div>';
+      html += '<div style="margin-top:.5rem;font-size:.75rem;color:#dc3545;">⚠ Mid-sentence cuts produce low-quality chunk embeddings</div>';
+      return html;
+    }
+  },
+  {
+    msg: 'Fixed-size chunking: simple and fast, but mid-sentence cuts degrade embedding quality. Best for: raw byte data, where sentence boundaries don\'t apply.',
+    render: function() {
+      // Dynamically slice SAMPLE_DOC into 200-char chunks for accuracy
+      var colors = chunkColors();
+      var html = '<div style="display:flex;flex-direction:column;gap:.35rem;margin-top:.25rem;">';
+      var size = 200;
+      for (var i = 0; i < SAMPLE_DOC.length; i += size) {
+        var slice = SAMPLE_DOC.slice(i, i + size);
+        var chunkNum = Math.floor(i / size) + 1;
+        var isLast = (i + size >= SAMPLE_DOC.length);
+        // Detect mid-word/mid-sentence cut: last char is not punctuation and not space, and not last chunk
+        var endsClean = isLast || slice.endsWith('.') || slice.endsWith('!') || slice.endsWith('?');
+        html += '<div class="chunk-row">' +
+          '<div class="chunk-label">C' + chunkNum + '</div>' +
+          '<div class="chunk-block" style="background:' + colors[(chunkNum - 1) % colors.length] + '33;border:1px solid ' + colors[(chunkNum - 1) % colors.length] + '55;">' +
+          '<span class="size-badge">' + slice.length + ' chars</span>' +
+          slice.substring(0, 85) + (slice.length > 85 ? '...' : '') +
+          (!endsClean ? ' <span class="break-marker">cut</span>' : '') +
+          '</div></div>';
+      }
+      html += '</div>';
+      return html;
+    },
+    done: true
+  }
+];
+
+// --- SENTENCE-BASED STEPS ---
+var SENT_STEPS = [
+  {
+    msg: 'Sentence-based chunking: first detect sentence boundaries using punctuation (., !, ?).',
+    render: function() {
+      var html = '<div style="padding:.25rem 0;font-size:.78rem;line-height:2;">';
+      SENTENCES.forEach(function(s, i) {
+        html += '<span style="background:#393639;border-radius:2px;padding:1px 3px;margin:0 2px;color:#d4d4d4;">' + s + '</span>';
+        if (i < SENTENCES.length - 1) html += ' ';
+      });
+      html += '</div><div style="margin-top:.5rem;font-size:.72rem;color:#646464;">' + SENTENCES.length + ' sentences detected</div>';
+      return html;
+    }
+  },
+  {
+    msg: 'Group sentences until chunk_size reached (~200 chars). Sentences are never split — only grouped at clean boundaries.',
+    render: function() {
+      // Group sentences into ~200-char chunks
+      var maxChunk = 200;
+      var chunks = [], current = [], currentLen = 0;
+      SENTENCES.forEach(function(s) {
+        if (currentLen + s.length > maxChunk && current.length > 0) {
+          chunks.push(current);
+          current = [s]; currentLen = s.length;
+        } else {
+          current.push(s); currentLen += s.length + 1;
+        }
+      });
+      if (current.length > 0) chunks.push(current);
+      var colors = chunkColors();
+      var html = '<div class="chunks-wrap">';
+      chunks.forEach(function(c, i) {
+        var text = c.join(' ');
+        html += '<div class="chunk-row">' +
+          '<div class="chunk-label">C' + (i + 1) + '</div>' +
+          '<div class="chunk-block" style="background:' + colors[i % colors.length] + '33;border:1px solid ' + colors[i % colors.length] + '55;">' +
+          '<span class="size-badge">' + text.length + ' ch</span>' +
+          text.substring(0, 85) + (text.length > 85 ? '...' : '') +
+          '</div></div>';
+      });
+      html += '</div>';
+      return html;
+    }
+  },
+  {
+    msg: 'Clean sentence boundaries: no sentence is ever cut mid-way. Each chunk ends at a complete sentence.',
+    render: function() {
+      var maxChunk = 200;
+      var chunks = [], current = [], currentLen = 0;
+      SENTENCES.forEach(function(s) {
+        if (currentLen + s.length > maxChunk && current.length > 0) {
+          chunks.push(current); current = [s]; currentLen = s.length;
+        } else { current.push(s); currentLen += s.length + 1; }
+      });
+      if (current.length > 0) chunks.push(current);
+      var colors = chunkColors();
+      var html = '<div class="chunks-wrap">';
+      chunks.forEach(function(c, i) {
+        var text = c.join(' ');
+        html += '<div class="chunk-row">' +
+          '<div class="chunk-label" style="color:#28a745;">C' + (i + 1) + '</div>' +
+          '<div class="chunk-block" style="background:' + colors[i % colors.length] + '33;border:1px solid #28a74544;">' +
+          '<span class="size-badge">' + c.length + ' sent</span>' +
+          text.substring(0, 85) + (text.length > 85 ? '...' : '') +
+          '</div></div>';
+      });
+      html += '</div><div style="margin-top:.4rem;font-size:.72rem;color:#28a745;">✓ Every chunk ends at a sentence boundary</div>';
+      return html;
+    }
+  },
+  {
+    msg: 'Chunks have uneven sizes — that\'s expected. Sentence boundaries vary. Each chunk represents a complete semantic unit.',
+    render: function() {
+      var maxChunk = 200;
+      var chunks = [], current = [], currentLen = 0;
+      SENTENCES.forEach(function(s) {
+        if (currentLen + s.length > maxChunk && current.length > 0) {
+          chunks.push(current); current = [s]; currentLen = s.length;
+        } else { current.push(s); currentLen += s.length + 1; }
+      });
+      if (current.length > 0) chunks.push(current);
+      var colors = chunkColors();
+      var html = '<div class="chunks-wrap">';
+      chunks.forEach(function(c, i) {
+        var text = c.join(' ');
+        var barW = Math.round(text.length / 3);
+        html += '<div class="chunk-row" style="align-items:center;">' +
+          '<div class="chunk-label">C' + (i + 1) + '</div>' +
+          '<div style="flex:1;">' +
+          '<div style="height:8px;background:' + colors[i % colors.length] + '88;border-radius:3px;width:' + barW + '%;margin-bottom:.2rem;"></div>' +
+          '<div style="font-size:.7rem;color:#888;">' + text.length + ' chars · ' + c.length + ' sentences</div>' +
+          '</div></div>';
+      });
+      html += '</div>';
+      return html;
+    }
+  },
+  {
+    msg: 'Sentence-based chunking: cleaner retrieval because semantic units are intact. Best for: prose documents, articles, documentation.',
+    render: function() {
+      var html = '<div style="display:flex;gap:1rem;justify-content:center;margin:.5rem 0;">';
+      var metrics = [
+        { label: 'Cut quality', value: 'Clean', color: '#28a745' },
+        { label: 'Chunk sizes', value: 'Variable', color: '#f0a500' },
+        { label: 'Retrieval', value: 'Better', color: '#28a745' },
+        { label: 'Speed', value: 'Moderate', color: '#f0a500' },
+      ];
+      metrics.forEach(function(m) {
+        html += '<div style="text-align:center;">' +
+          '<div style="font-size:.9rem;font-weight:700;color:' + m.color + ';">' + m.value + '</div>' +
+          '<div style="font-size:.68rem;color:#646464;">' + m.label + '</div>' +
+          '</div>';
+      });
+      html += '</div>';
+      return html;
+    },
+    done: true
+  }
+];
+
+// --- SEMANTIC STEPS ---
+var SEM_STEPS = [
+  {
+    msg: 'Semantic chunking: embed each sentence individually to understand its meaning in vector space.',
+    render: function() {
+      var html = '<div style="margin-top:.25rem;">';
+      SENTENCES.forEach(function(s, i) {
+        html += '<div style="display:flex;align-items:center;gap:.4rem;margin-bottom:.2rem;">' +
+          '<div style="font-size:.68rem;color:#646464;width:18px;">S' + (i + 1) + '</div>' +
+          '<div style="flex:1;background:#1e1e22;border-radius:3px;padding:.2rem .4rem;font-size:.7rem;color:#888;">' + s + '</div>' +
+          '<div style="font-size:.65rem;color:#284b63;white-space:nowrap;">[emb]</div>' +
+          '</div>';
+      });
+      html += '</div>';
+      return html;
+    }
+  },
+  {
+    msg: 'Compute cosine similarity between adjacent sentence embeddings. Low similarity = topic shift.',
+    render: function() {
+      var html = '<div style="margin-top:.25rem;">';
+      SIM_SCORES.forEach(function(score, i) {
+        var color = score >= 0.5 ? '#28a745' : '#dc3545';
+        var fill = Math.round(score * 100);
+        html += '<div class="sim-row">' +
+          '<div class="sim-label" style="font-size:.65rem;">S' + (i+1) + ' → S' + (i+2) + '</div>' +
+          '<div class="sim-track"><div class="sim-fill" style="width:' + fill + '%;background:' + color + ';"></div></div>' +
+          '<div class="sim-score" style="color:' + color + ';">' + score + '</div>' +
+          '</div>';
+      });
+      html += '</div>';
+      return html;
+    }
+  },
+  {
+    msg: 'Topic boundaries found where similarity drops sharply: after S2, S4, S6, and S8 (low scores: 0.22, 0.21, 0.23, 0.24). Four topic shifts detected.',
+    render: function() {
+      var BREAKS = [1, 3, 5, 7]; // after S2, S4, S6, S8 (0-indexed)
+      var html = '<div style="margin-top:.25rem;">';
+      SIM_SCORES.forEach(function(score, i) {
+        var isBoundary = BREAKS.indexOf(i) !== -1;
+        var color = isBoundary ? '#dc3545' : '#28a745';
+        var fill = Math.round(score * 100);
+        html += '<div class="sim-row">' +
+          '<div class="sim-label" style="font-size:.65rem;">' +
+          (isBoundary ? '<span style="color:#dc3545;font-weight:700;">▼ BREAK</span>' : 'S' + (i+1) + ' → S' + (i+2)) +
+          '</div>' +
+          '<div class="sim-track"><div class="sim-fill" style="width:' + fill + '%;background:' + color + ';"></div></div>' +
+          '<div class="sim-score" style="color:' + color + ';">' + score + '</div>' +
+          '</div>';
+      });
+      html += '</div>';
+      return html;
+    }
+  },
+  {
+    msg: 'Split at the boundaries. 5 topically coherent chunks emerge: Threading, Databases, Async, Memory, Caching.',
+    render: function() {
+      var semanticChunks = [
+        { label: 'C1 — Threading', sents: [0, 1], color: '#284b63', topic: 'GIL & multiprocessing' },
+        { label: 'C2 — Databases', sents: [2, 3], color: '#2e4a30', topic: 'Connection pooling' },
+        { label: 'C3 — Async',     sents: [4, 5], color: '#3a2e1e', topic: 'asyncio & event loops' },
+        { label: 'C4 — Memory',    sents: [6, 7], color: '#2a1e3a', topic: 'GC & ref counting' },
+        { label: 'C5 — Caching',   sents: [8, 9], color: '#1e2e1e', topic: 'LRU cache' },
+      ];
+      var html = '<div class="chunks-wrap">';
+      semanticChunks.forEach(function(c) {
+        var text = c.sents.map(function(i) { return SENTENCES[i]; }).join(' ');
+        html += '<div class="chunk-row">' +
+          '<div class="chunk-label" style="font-size:.62rem;color:#646464;">' + c.label.split(' — ')[0] + '</div>' +
+          '<div class="chunk-block" style="background:' + c.color + '55;border:1px solid ' + c.color + '88;">' +
+          '<span class="size-badge">' + c.topic + '</span>' +
+          text.substring(0, 85) + (text.length > 85 ? '...' : '') +
+          '</div></div>';
+      });
+      html += '</div>';
+      return html;
+    }
+  },
+  {
+    msg: 'Semantic chunks are topically coherent: a query about "asyncio" hits C3, "LRU cache" hits C5. No mixed chunks. Best retrieval quality.',
+    render: function() {
+      var html = '<div style="display:flex;flex-direction:column;gap:.4rem;margin-top:.25rem;">';
+      var comparisons = [
+        { label: 'Fixed-size',       retrieval: 35, cutQuality: 20 },
+        { label: 'Sentence-based',   retrieval: 65, cutQuality: 85 },
+        { label: 'Semantic',         retrieval: 90, cutQuality: 95 },
+      ];
+      comparisons.forEach(function(c) {
+        html += '<div>' +
+          '<div style="font-size:.7rem;color:#888;margin-bottom:.15rem;">' + c.label + '</div>' +
+          '<div style="display:flex;gap:.4rem;align-items:center;">' +
+          '<div style="font-size:.65rem;color:#646464;width:70px;">retrieval</div>' +
+          '<div style="flex:1;height:8px;background:#393639;border-radius:4px;overflow:hidden;">' +
+          '<div style="height:100%;background:#28a745;width:' + c.retrieval + '%;border-radius:4px;"></div></div>' +
+          '<div style="font-size:.65rem;color:#28a745;width:28px;">' + c.retrieval + '%</div>' +
+          '</div></div>';
+      });
+      html += '</div>';
+      return html;
+    },
+    done: true
+  }
+];
+
+function getSteps() {
+  if (mode === 'fixed') return FIXED_STEPS;
+  if (mode === 'sentence') return SENT_STEPS;
+  return SEM_STEPS;
+}
+
+function draw() {
+  var steps = getSteps();
+  var s = steps[idx];
+  document.getElementById('viz-area').innerHTML = s.render();
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (steps.length - 1);
+  document.getElementById('btn-step').disabled = !!(s.done);
+  document.getElementById('btn-step').textContent = s.done ? 'Done ✓' : 'Step →';
+  document.getElementById('btn-back').disabled = (idx === 0);
+}
+
+function setMode(m) {
+  mode = m; idx = 0;
+  document.getElementById('mode-fixed').classList.toggle('active', m === 'fixed');
+  document.getElementById('mode-sentence').classList.toggle('active', m === 'sentence');
+  document.getElementById('mode-semantic').classList.toggle('active', m === 'semantic');
+  draw();
+}
+
+document.getElementById('mode-fixed').onclick = function() { setMode('fixed'); };
+document.getElementById('mode-sentence').onclick = function() { setMode('sentence'); };
+document.getElementById('mode-semantic').onclick = function() { setMode('semantic'); };
+document.getElementById('btn-step').onclick = function() {
+  var steps = getSteps();
+  if (idx < steps.length - 1) { idx++; draw(); }
+};
+document.getElementById('btn-back').onclick = function() {
+  if (idx > 0) { idx--; draw(); }
+};
+document.getElementById('btn-reset').onclick = function() { idx = 0; draw(); };
+
+draw();
+</script>
+</body>
+</html>

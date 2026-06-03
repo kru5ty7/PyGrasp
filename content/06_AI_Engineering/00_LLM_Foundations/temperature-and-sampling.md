@@ -108,6 +108,12 @@ response = client.messages.create(
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/temperature-and-sampling.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="Temperature and Sampling Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 Temperature is one of the key parameters in the Claude API and affects output quality for different tasks.

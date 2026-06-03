@@ -164,6 +164,12 @@ waiter.wait(
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/ec2-elb.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="EC2 ELB Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 The ALB and Auto Scaling Group are designed to work together. The ALB health check results feed into the ASG's health monitoring - instances failing ALB health checks are terminated and replaced. The ASG registers new instances with the ALB target group automatically when they launch.

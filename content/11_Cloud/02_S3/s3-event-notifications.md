@@ -144,6 +144,12 @@ s3.put_bucket_notification_configuration(
 
 ---
 
+## Visualizer
+
+<iframe src="/static/visualizers/s3-event-notifications.html" style="width:100%;height:450px;border:none;border-radius:8px;" title="S3 Event Notifications Visualizer"></iframe>
+
+---
+
 ## How It Connects
 
 S3 event notifications are one of the most common Lambda triggers in production AWS architectures. The Lambda function that receives the notification needs an execution role with permissions to read from S3 and write to wherever it stores results.

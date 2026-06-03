@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Embeddings - Visualizer</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #161618;
+    color: #d4d4d4;
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 1.5rem 1rem;
+  }
+  .wrap { width: 100%; max-width: 560px; }
+  h4 {
+    font-size: .78rem;
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    color: #646464;
+    margin-bottom: .75rem;
+  }
+  #plot-wrap {
+    background: #2a2a2e;
+    border: 1px solid #393639;
+    border-radius: 6px;
+    display: flex;
+    justify-content: center;
+    margin-bottom: .75rem;
+    overflow: hidden;
+  }
+  svg text { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+  #stat {
+    padding: .5rem .75rem;
+    background: #393639;
+    border-left: 3px solid #284b63;
+    border-radius: 0 4px 4px 0;
+    font-size: .85rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    margin-bottom: .75rem;
+  }
+  #ctrl { display: flex; gap: .4rem; align-items: center; flex-wrap: wrap; }
+  button {
+    padding: .32rem .72rem;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: .82rem;
+    background: #393639;
+    color: #d4d4d4;
+    transition: opacity .15s;
+  }
+  button:disabled { opacity: .3; cursor: default; }
+  button:not(:disabled):hover { opacity: .75; }
+  #btn-step { background: #284b63; color: #fff; }
+  #counter { margin-left: auto; font-size: .72rem; color: #646464; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h4>Embeddings — 2D Semantic Space</h4>
+  <div id="plot-wrap">
+    <svg id="plot" width="520" height="340" viewBox="0 0 520 340"></svg>
+  </div>
+  <div id="stat">Press Step to begin the embedding space walkthrough.</div>
+  <div id="ctrl">
+    <button id="btn-back" disabled>&#9664; Back</button>
+    <button id="btn-step">Step &#8594;</button>
+    <button id="btn-reset">&#8635; Reset</button>
+    <span id="counter"></span>
+  </div>
+</div>
+<script>
+// Coordinate system: SVG (0,0) top-left. We map semantic 2D coords to SVG pixels.
+// Data domain: x in [-1,1], y in [-1,1] maps to SVG [40,480] x [20,320]
+var PAD_L = 40, PAD_R = 40, PAD_T = 20, PAD_B = 20;
+var W = 520, H = 340;
+var PLOT_W = W - PAD_L - PAD_R; // 440
+var PLOT_H = H - PAD_T - PAD_B; // 300
+
+function sx(x) { return PAD_L + (x + 1) / 2 * PLOT_W; }
+function sy(y) { return PAD_T + (1 - y) / 2 * PLOT_H; }
+
+// All word data with 2D coords in [-1,1]
+var ALL_WORDS = [
+  // Animals cluster — top-left quadrant
+  { id: 'cat',       x: -0.65, y:  0.60, color: '#7eb8d4', group: 'animals' },
+  { id: 'dog',       x: -0.50, y:  0.72, color: '#7eb8d4', group: 'animals' },
+  { id: 'fish',      x: -0.40, y:  0.45, color: '#7eb8d4', group: 'animals' },
+  // Cities cluster — top-right quadrant
+  { id: 'Paris',     x:  0.50, y:  0.70, color: '#a8d8a8', group: 'cities' },
+  { id: 'London',    x:  0.65, y:  0.58, color: '#a8d8a8', group: 'cities' },
+  { id: 'Berlin',    x:  0.55, y:  0.44, color: '#a8d8a8', group: 'cities' },
+  // Positive emotions — bottom-right
+  { id: 'happy',     x:  0.45, y: -0.35, color: '#f0a500', group: 'pos' },
+  { id: 'joyful',    x:  0.60, y: -0.22, color: '#f0a500', group: 'pos' },
+  { id: 'excited',   x:  0.55, y: -0.50, color: '#f0a500', group: 'pos' },
+  // Negative emotions — further bottom-right
+  { id: 'sad',       x:  0.30, y: -0.62, color: '#dc3545', group: 'neg' },
+  { id: 'depressed', x:  0.50, y: -0.75, color: '#dc3545', group: 'neg' },
+  { id: 'gloomy',    x:  0.42, y: -0.88, color: '#dc3545', group: 'neg' },
+  // Royalty words
+  { id: 'king',      x: -0.15, y:  0.20, color: '#d4a8d4', group: 'royalty' },
+  { id: 'queen',     x: -0.05, y:  0.08, color: '#d4a8d4', group: 'royalty' },
+  { id: 'man',       x: -0.30, y:  0.05, color: '#d4d4d4', group: 'royalty' },
+  { id: 'woman',     x: -0.20, y: -0.08, color: '#d4d4d4', group: 'royalty' },
+  // Sentences
+  { id: '"The cat sat"',      x: -0.58, y:  0.28, color: '#7eb8d4', group: 'sent', shape: 'diamond' },
+  { id: '"A feline rested"',  x: -0.52, y:  0.18, color: '#7eb8d4', group: 'sent', shape: 'diamond' },
+];
+
+function wordById(id) {
+  return ALL_WORDS.find(function(w) { return w.id === id; });
+}
+
+// Steps: each step defines which words are visible and extra annotations
+var STEPS = [
+  {
+    msg: 'Empty 2D embedding space. Each axis represents a learned semantic dimension. Words with similar meaning will cluster together.',
+    visible: [],
+    annotations: []
+  },
+  {
+    msg: 'Plotting "cat". A single dot appears at its position in the embedding space.',
+    visible: ['cat'],
+    annotations: []
+  },
+  {
+    msg: '"dog" appears close to "cat" — both are common pets. The embedding model learned their semantic similarity.',
+    visible: ['cat', 'dog'],
+    annotations: []
+  },
+  {
+    msg: '"fish" joins the cluster. Slightly farther — less typical as a pet — but still in the animal region.',
+    visible: ['cat', 'dog', 'fish'],
+    annotations: [{ type: 'hull', group: 'animals', label: 'Animals', color: '#7eb8d4' }]
+  },
+  {
+    msg: 'Paris, London, and Berlin form a tight cluster in the top-right. The model learned these are all European capitals.',
+    visible: ['cat', 'dog', 'fish', 'Paris', 'London', 'Berlin'],
+    annotations: [
+      { type: 'hull', group: 'animals', label: 'Animals', color: '#7eb8d4' },
+      { type: 'hull', group: 'cities', label: 'Cities', color: '#a8d8a8' }
+    ]
+  },
+  {
+    msg: 'Query: "What is similar to king?" — "king" appears. Then "queen" emerges nearby. Semantic neighbors are close in vector space.',
+    visible: ['cat', 'dog', 'fish', 'Paris', 'London', 'Berlin', 'king', 'queen'],
+    annotations: [
+      { type: 'hull', group: 'animals', label: 'Animals', color: '#7eb8d4' },
+      { type: 'hull', group: 'cities', label: 'Cities', color: '#a8d8a8' }
+    ]
+  },
+  {
+    msg: 'Vector arithmetic: king − man + woman ≈ queen. Adding "man" and "woman" shows the gender axis. The arrow from king toward queen traces this analogy.',
+    visible: ['cat', 'dog', 'fish', 'Paris', 'London', 'Berlin', 'king', 'queen', 'man', 'woman'],
+    annotations: [
+      { type: 'hull', group: 'animals', label: 'Animals', color: '#7eb8d4' },
+      { type: 'hull', group: 'cities', label: 'Cities', color: '#a8d8a8' },
+      { type: 'arrow', from: 'king', to: 'queen', color: '#f0a500', label: 'king−man+woman' }
+    ]
+  },
+  {
+    msg: 'Sentence embeddings: "The cat sat" and "A feline rested" land close together — different words, same meaning. Semantic similarity beats lexical matching.',
+    visible: ['cat', 'dog', 'fish', 'Paris', 'London', 'Berlin', 'king', 'queen', 'man', 'woman',
+              'happy', 'joyful', 'excited', 'sad', 'depressed', 'gloomy',
+              '"The cat sat"', '"A feline rested"'],
+    annotations: [
+      { type: 'hull', group: 'animals', label: 'Animals', color: '#7eb8d4' },
+      { type: 'hull', group: 'cities', label: 'Cities', color: '#a8d8a8' },
+      { type: 'hull', group: 'pos', label: 'Positive', color: '#f0a500' },
+      { type: 'hull', group: 'neg', label: 'Negative', color: '#dc3545' },
+      { type: 'line', from: '"The cat sat"', to: '"A feline rested"', color: '#7eb8d4', label: 'sim≈0.95' }
+    ],
+    done: true
+  }
+];
+
+var idx = 0;
+
+function convexHullPoints(pts) {
+  // Simple gift-wrapping convex hull for a small set of points
+  if (pts.length < 3) return pts;
+  pts = pts.slice().sort(function(a, b) { return a.x - b.x || a.y - b.y; });
+  var lower = [], upper = [];
+  for (var i = 0; i < pts.length; i++) {
+    while (lower.length >= 2) {
+      var a = lower[lower.length - 2], b = lower[lower.length - 1], c = pts[i];
+      if ((b.x - a.x) * (c.y - a.y) - (b.y - a.y) * (c.x - a.x) <= 0) lower.pop();
+      else break;
+    }
+    lower.push(pts[i]);
+  }
+  for (var j = pts.length - 1; j >= 0; j--) {
+    while (upper.length >= 2) {
+      var a2 = upper[upper.length - 2], b2 = upper[upper.length - 1], c2 = pts[j];
+      if ((b2.x - a2.x) * (c2.y - a2.y) - (b2.y - a2.y) * (c2.x - a2.x) <= 0) upper.pop();
+      else break;
+    }
+    upper.push(pts[j]);
+  }
+  lower.pop(); upper.pop();
+  return lower.concat(upper);
+}
+
+function expandHull(pts, margin) {
+  // Find centroid then push each point outward
+  var cx = 0, cy = 0;
+  pts.forEach(function(p) { cx += p.x; cy += p.y; });
+  cx /= pts.length; cy /= pts.length;
+  return pts.map(function(p) {
+    var dx = p.x - cx, dy = p.y - cy;
+    var len = Math.sqrt(dx * dx + dy * dy) || 1;
+    return { x: p.x + dx / len * margin, y: p.y + dy / len * margin };
+  });
+}
+
+function drawPlot() {
+  var s = STEPS[idx];
+  var visSet = {};
+  s.visible.forEach(function(id) { visSet[id] = true; });
+
+  var html = '';
+
+  // Axes
+  html += '<line x1="' + PAD_L + '" y1="' + (H / 2) + '" x2="' + (W - PAD_R) + '" y2="' + (H / 2) + '" stroke="#393639" stroke-width="1"/>';
+  html += '<line x1="' + (W / 2) + '" y1="' + PAD_T + '" x2="' + (W / 2) + '" y2="' + (H - PAD_B) + '" stroke="#393639" stroke-width="1"/>';
+  // Axis labels
+  html += '<text x="' + (W - PAD_R - 2) + '" y="' + (H / 2 - 5) + '" fill="#646464" font-size="9" text-anchor="end">semantic dim 1</text>';
+  html += '<text x="' + (W / 2 + 5) + '" y="' + (PAD_T + 10) + '" fill="#646464" font-size="9">semantic dim 2</text>';
+
+  // Hull annotations (drawn before dots so they appear behind)
+  s.annotations.forEach(function(ann) {
+    if (ann.type === 'hull') {
+      var groupWords = ALL_WORDS.filter(function(w) {
+        return w.group === ann.group && visSet[w.id];
+      });
+      if (groupWords.length >= 3) {
+        var svgPts = groupWords.map(function(w) { return { x: sx(w.x), y: sy(w.y) }; });
+        var hull = convexHullPoints(svgPts);
+        var expanded = expandHull(hull, 18);
+        var d = expanded.map(function(p, i) {
+          return (i === 0 ? 'M' : 'L') + p.x.toFixed(1) + ',' + p.y.toFixed(1);
+        }).join(' ') + ' Z';
+        html += '<path d="' + d + '" fill="' + ann.color + '1a" stroke="' + ann.color + '44" stroke-width="1.5" stroke-dasharray="4,3"/>';
+        // Label near centroid top
+        var cx2 = expanded.reduce(function(s2, p) { return s2 + p.x; }, 0) / expanded.length;
+        var minY = Math.min.apply(null, expanded.map(function(p) { return p.y; }));
+        html += '<text x="' + cx2.toFixed(1) + '" y="' + (minY - 4) + '" text-anchor="middle" font-size="9" fill="' + ann.color + '" font-weight="600">' + ann.label + '</text>';
+      }
+    } else if (ann.type === 'arrow') {
+      var from = wordById(ann.from), to = wordById(ann.to);
+      if (from && to && visSet[from.id] && visSet[to.id]) {
+        var x1 = sx(from.x), y1 = sy(from.y), x2 = sx(to.x), y2 = sy(to.y);
+        html += '<defs><marker id="ah" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto"><path d="M0,0 L0,6 L8,3 Z" fill="' + ann.color + '"/></marker></defs>';
+        html += '<line x1="' + x1 + '" y1="' + y1 + '" x2="' + x2 + '" y2="' + y2 + '" stroke="' + ann.color + '" stroke-width="1.5" marker-end="url(#ah)" stroke-dasharray="5,3"/>';
+        var mx = (x1 + x2) / 2, my = (y1 + y2) / 2;
+        html += '<text x="' + mx + '" y="' + (my - 6) + '" text-anchor="middle" font-size="8" fill="' + ann.color + '">' + ann.label + '</text>';
+      }
+    } else if (ann.type === 'line') {
+      var fromW = wordById(ann.from), toW = wordById(ann.to);
+      if (fromW && toW && visSet[fromW.id] && visSet[toW.id]) {
+        var lx1 = sx(fromW.x), ly1 = sy(fromW.y), lx2 = sx(toW.x), ly2 = sy(toW.y);
+        html += '<line x1="' + lx1 + '" y1="' + ly1 + '" x2="' + lx2 + '" y2="' + ly2 + '" stroke="' + ann.color + '" stroke-width="1.5" stroke-dasharray="3,2"/>';
+        var lmx = (lx1 + lx2) / 2, lmy = (ly1 + ly2) / 2;
+        html += '<rect x="' + (lmx - 20) + '" y="' + (lmy - 9) + '" width="40" height="12" fill="#161618" rx="2"/>';
+        html += '<text x="' + lmx + '" y="' + lmy + '" text-anchor="middle" font-size="8" fill="' + ann.color + '">' + ann.label + '</text>';
+      }
+    }
+  });
+
+  // Dots
+  ALL_WORDS.forEach(function(w) {
+    if (!visSet[w.id]) return;
+    var px = sx(w.x), py = sy(w.y);
+    var highlight = (idx > 0 && s.visible[s.visible.length - 1] === w.id);
+    var r = highlight ? 7 : 5;
+    var stroke = highlight ? w.color : 'none';
+    var strokeW = highlight ? '2' : '0';
+
+    if (w.shape === 'diamond') {
+      var ds = r + 2;
+      html += '<polygon points="' + px + ',' + (py - ds) + ' ' + (px + ds) + ',' + py + ' ' +
+              px + ',' + (py + ds) + ' ' + (px - ds) + ',' + py + '"' +
+              ' fill="' + w.color + '" stroke="' + (highlight ? '#fff' : 'none') + '" stroke-width="' + strokeW + '"/>';
+    } else {
+      html += '<circle cx="' + px + '" cy="' + py + '" r="' + r + '"' +
+              ' fill="' + w.color + '" stroke="' + stroke + '" stroke-width="' + strokeW + '"/>';
+    }
+    // Label
+    var labelX = px + 8, labelAnchor = 'start';
+    if (px > W - 80) { labelX = px - 8; labelAnchor = 'end'; }
+    html += '<text x="' + labelX + '" y="' + (py + 4) + '"' +
+            ' text-anchor="' + labelAnchor + '" font-size="10" fill="' + w.color + '" font-weight="' + (highlight ? '700' : '500') + '">' +
+            w.id + '</text>';
+  });
+
+  document.getElementById('plot').innerHTML = html;
+  document.getElementById('stat').textContent = s.msg;
+  document.getElementById('counter').textContent = 'Step ' + idx + ' / ' + (STEPS.length - 1);
+  document.getElementById('btn-step').disabled = !!(s.done);
+  document.getElementById('btn-step').textContent = s.done ? 'Done ✓' : 'Step →';
+  document.getElementById('btn-back').disabled = (idx === 0);
+}
+
+document.getElementById('btn-step').onclick = function() {
+  if (idx < STEPS.length - 1) { idx++; drawPlot(); }
+};
+document.getElementById('btn-back').onclick = function() {
+  if (idx > 0) { idx--; drawPlot(); }
+};
+document.getElementById('btn-reset').onclick = function() {
+  idx = 0; drawPlot();
+};
+
+drawPlot();
+</script>
+</body>
+</html>
