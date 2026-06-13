@@ -79,3 +79,9 @@ tags: [moc, learning-path, dsa, algorithms, layer-10]
 3. [[topological-sort|Topological Sort]]
 4. [[minimum-spanning-tree|Minimum Spanning Tree]]
 5. [[cycle-detection|Cycle Detection]]
+
+---
+
+## Layer 10f - Interview Prep
+
+1. [[dsa-interview-patterns|DSA Interview Patterns]]

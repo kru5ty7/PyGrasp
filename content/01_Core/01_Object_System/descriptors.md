@@ -109,6 +109,16 @@ SQLAlchemy column definitions are the most widely encountered real-world descrip
 
 ---
 
+## Common Pitfalls
+
+- Forgetting `__set_name__`: without it, a descriptor needs the attribute name passed manually (`x = Validator(name="x")`), which is easy to get wrong on rename since the string and the attribute name can silently drift apart.
+- Storing descriptor state on `self` (the descriptor instance) instead of `obj.__dict__` - since one descriptor instance is shared by the class, every instance of the owning class ends up sharing the same value.
+- Assigning a descriptor as an instance attribute (`self.x = Validator()` inside `__init__`) instead of a class attribute - descriptors only activate when looked up via the class's MRO, so this silently does nothing.
+- Omitting the `obj is None` check in `__get__` - accessing the descriptor via the class itself (`MyClass.attr`) then misbehaves instead of returning the descriptor object.
+- Assuming `__get__` always runs: a non-data descriptor is shadowed by an instance `__dict__` entry of the same name, so `__get__` can be silently skipped after a direct assignment.
+
+---
+
 ## Interview Angle
 
 Common question forms:
@@ -117,6 +127,25 @@ Common question forms:
 - "Why does `obj.method(args)` automatically provide `self`?"
 
 Answer frame: A descriptor is a class attribute that implements `__get__`, `__set__`, or `__delete__`. Data descriptors (with `__set__`) take priority over instance `__dict__`; non-data descriptors (only `__get__`) are shadowed by instance attributes. Functions are non-data descriptors  -  `function.__get__(obj, type)` returns a bound method, which is how `self` is automatically provided. `property` is a data descriptor  -  its `__get__`/`__set__` intercept reads and writes. `__set_name__` allows descriptors to know their own attribute name from the class they are assigned to.
+
+**Sample Q&A:**
+
+Q: "Why does `obj.method(args)` not need to pass `self` explicitly?"
+A: Methods are plain functions stored as class attributes, and function objects are non-data descriptors via `__get__`. When you access `obj.method`, attribute lookup finds `method` on the class and calls `function.__get__(obj, type(obj))`, which returns a *bound method* that has already captured `obj`. Calling that bound method with `(args)` is equivalent to `ClassName.method(obj, args)` - that's where `self` comes from. `staticmethod` and `classmethod` wrap the same mechanism: `staticmethod.__get__` returns the plain function unbound, and `classmethod.__get__` binds to the class instead of the instance.
+
+Q: "What's the difference between writing a custom `__get__`/`__set__` descriptor and just using `@property`?"
+A: `@property` *is* a data descriptor - it's the standard library's ready-made implementation of the protocol for a single attribute on a single class. A custom descriptor class earns its keep when the same validation or transformation logic needs to apply to many attributes or many classes (e.g. a `PositiveInt` descriptor reused for `age`, `price`, and `quantity`): write `__get__`/`__set__` once, instantiate the descriptor per attribute, and let `__set_name__` tell each instance which attribute it owns. `@property` would require duplicating the getter/setter for every attribute.
+
+Q: "Given `class A: x = SomeNonDataDescriptor()`, then `a = A(); a.x = 5; print(a.x)` - what prints, and why?"
+A: `5` - not whatever the descriptor's `__get__` would normally compute. `SomeNonDataDescriptor` only implements `__get__`, so it's a non-data descriptor with no `__set__`. The assignment `a.x = 5` simply stores `5` in `a.__dict__['x']`. On the next lookup, step 3 of `object.__getattribute__` (check `obj.__dict__`) finds `'x': 5` *before* step 4 would call the descriptor's `__get__`, so the instance dict wins.
+
+---
+
+## Practice Prompts
+
+- Implement a `TypedAttribute(type_)` descriptor that enforces a type on assignment, using `__set_name__` so the attribute name never has to be passed manually. Reuse it for two different attributes on the same class.
+- Predict the output of assigning `obj.method = lambda: 42` on an instance whose class defines `method`, then verify it - explain which descriptor priority rule from "How It Actually Works" applies.
+- Write a `LazyProperty` non-data descriptor that computes a value once and caches it in `obj.__dict__`. Explain why the second access never calls `__get__` again, then compare your implementation to `functools.cached_property`.
 
 ---
 

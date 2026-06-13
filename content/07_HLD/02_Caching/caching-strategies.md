@@ -157,6 +157,16 @@ For Python applications, cache-aside is the most practical pattern because it re
 
 ---
 
+## Common Pitfalls
+
+- Choosing update-on-write for cache-aside "to avoid a cache miss" without accounting for the race condition where two concurrent writers can leave the cache holding a stale value - delete-on-write is the safer default.
+- Setting no TTL because "the cache will always have the latest data" - if the invalidation path ever has a bug or is bypassed (e.g. a direct DB update), a non-expiring entry can be stale forever.
+- Using write-behind for data where losing the last few seconds of writes is unacceptable (e.g. payment status), because the pattern was copy-pasted from a counter/analytics use case.
+- Scattering raw `redis.get`/`set`/`delete` calls across the codebase instead of centralizing them in a repository or service layer - inconsistent key naming and missed invalidations follow.
+- Assuming a cache hit is always "fast and free" - an overloaded or poorly-partitioned cache can itself become the bottleneck or a single point of failure.
+
+---
+
 ## Interview Angle
 
 Common question forms:
@@ -166,6 +176,25 @@ Common question forms:
 
 Answer frame:
 Define each pattern concisely. Explain that cache-aside is the default choice: simple, flexible, application-controlled. Write-through is appropriate when reads dominate and consistency is paramount. Write-behind is a performance optimization with data loss risk. Discuss the two write variants of cache-aside: delete-on-write (safe, one miss) vs update-on-write (faster, race condition risk). Connect to consistency requirements.
+
+**Sample Q&A:**
+
+Q: "A user updates their profile picture, but it still shows the old one for several minutes. What caching issue could cause this, and how would you fix it?"
+A: This is the classic symptom of cache-aside with update-on-write (or a missing invalidation) plus a long TTL. If the write path updates the database but doesn't delete the corresponding cache entry, reads keep serving the stale value until the TTL expires. The fix is to make the write path explicitly delete the cache key (delete-on-write) so the next read is a guaranteed miss that repopulates from the now-updated database. If the staleness is intermittent rather than constant, suspect a race where an in-flight read repopulates the cache *after* the delete - auditing the order of operations in the write path, plus a shorter TTL as a safety net, addresses that.
+
+Q: "When would you choose write-behind over write-through, and what do you give up?"
+A: Write-behind suits cases where write throughput matters far more than immediate durability - page-view counters, activity logs, leaderboards, telemetry - and occasional data loss on a cache crash is acceptable. The cost: a window where the cache is ahead of the database, and updates are lost permanently if the cache dies before flushing. Write-through is the opposite tradeoff - every write pays the latency and failure risk of two synchronous writes (cache + DB), but the database is never behind. The decision comes down to the cost of losing the last few seconds of writes for that specific data versus the latency/availability cost of synchronous dual writes.
+
+Q: "Your service has a 95% cache hit rate but p99 latency is still bad. What would you investigate?"
+A: A high hit rate doesn't guarantee good tail latency. Check: (1) whether the 5% of misses funnel through a slow, unoptimized database query - the cold-path latency, not just the average; (2) cache stampede - when a hot key expires, many concurrent requests can miss simultaneously and hammer the database at once; request coalescing or jittered TTLs mitigate this; (3) whether the cache itself is the bottleneck under load - connection pool exhaustion or a single saturated Redis instance; (4) large serialized values dominating per-request time even on a hit. Hit rate measures how often you avoid the DB, not how expensive the remaining misses (or the cache call itself) are.
+
+---
+
+## Practice Prompts
+
+- Implement `get_user`/`update_user` from this note against a real or mocked Redis instance and DB layer, then deliberately remove the `r.delete(...)` call in `update_user` and write a test that demonstrates the resulting staleness bug.
+- Design a cache-stampede mitigation for `get_user`: when a key is about to expire, only one request should repopulate it while others wait briefly or serve the slightly-stale value. Sketch the logic.
+- For the page-view counter example, sketch what happens if `flush_page_views()` crashes partway through processing keys from `scan_iter`. Is any data lost or double-counted? How would you make the flush idempotent?
 
 ---
 

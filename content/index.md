@@ -4,7 +4,7 @@ title: Home
 
 # PyGrasp
 
-A structured Python knowledge vault - 694 notes across 13 layers, from CPython internals to AWS cloud deployments.
+A structured Python knowledge vault - 695 notes across 13 layers, from CPython internals to AWS cloud deployments.
 
 ---
 
@@ -23,7 +23,7 @@ Start here. Each path follows dependency order so every concept builds on what c
 | [[lp-lld\|Low Level Design]] | OOP, SOLID, design patterns, concurrency safety, API design, LLD case studies | 49 |
 | [[lp-hld\|High Level Design]] | Scalability, caching, databases at scale, microservices, HLD case studies | 61 |
 | [[lp-sql\|SQL]] | Fundamentals, joins, aggregations, indexes, transactions, advanced SQL | 45 |
-| [[lp-dsa\|DSA]] | Data structures, sorting, searching, dynamic programming, graph algorithms | 52 |
+| [[lp-dsa\|DSA]] | Data structures, sorting, searching, dynamic programming, graph algorithms | 53 |
 | [[lp-cloud\|Cloud (AWS)]] | IAM, S3, EC2, Lambda, SQS/SNS, ECS, boto3 | 56 |
 | [[lp-security\|Security]] | OWASP Top 10, injection, XSS, CSRF, SSRF, Python security tools | 11 |
 | [[lp-tooling\|Tooling and DevOps]] | Poetry, Docker, Kubernetes, GitHub Actions, CD pipelines, observability | 45 |

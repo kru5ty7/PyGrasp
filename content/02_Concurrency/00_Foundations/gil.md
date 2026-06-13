@@ -89,6 +89,16 @@ For a developer, the GIL's practical consequence is a single rule: Python thread
 
 ---
 
+## Common Pitfalls
+
+- Treating "the GIL is held" and "the thread is making progress" as the same thing - a thread can hold the GIL while blocked on a C-level lock, starving every other thread.
+- Assuming `threading.Lock` is unnecessary "because the GIL already serializes everything" - compound operations (`+=`, `if x not in d: d[x] = ...`) are not atomic even under the GIL.
+- Benchmarking CPU-bound `threading` code, seeing no speedup, and concluding "Python multithreading is broken" instead of recognizing this is exactly what the GIL predicts - the fix is `multiprocessing` or releasing the GIL in C, not avoiding threads altogether.
+- Forgetting that imports interact with the GIL in multithreaded programs - circular imports triggered from a non-main thread can deadlock against the import lock.
+- Assuming `time.sleep()` and blocking I/O are scheduled identically under the GIL - both release the GIL, but the switch-interval mechanism for CPU-bound code only checks periodically, so I/O-bound threads can appear to be prioritized differently.
+
+---
+
 ## Interview Angle
 
 Common question forms:
@@ -97,6 +107,25 @@ Common question forms:
 - "How do you achieve parallelism in Python despite the GIL?"
 
 Answer frame: Define the GIL as a mutex allowing one thread to run bytecode at a time. State the reason: reference counting uses a plain C int (`ob_refcnt`) that is not atomic  -  concurrent writes corrupt it. Address thread safety: GIL serializes individual bytecodes but not multi-instruction operations  -  locks are still required. Give the parallelism workarounds: multiprocessing (separate processes, each with their own GIL), C extensions that release the GIL (NumPy), or the upcoming nogil CPython build.
+
+**Sample Q&A:**
+
+Q: "If the GIL means only one thread runs Python at a time, why would I ever use `threading` instead of `multiprocessing`?"
+A: Because "running Python bytecode" and "doing work" are different things. A thread waiting on a network response, database query, or file read isn't executing bytecode - it releases the GIL during that wait. With `threading`, many threads can be blocked on I/O simultaneously, and each briefly acquires the GIL to process its result as it arrives. That's real concurrency for I/O-bound workloads, with far less overhead than separate processes (no IPC, no extra memory space, lower startup cost). `multiprocessing` is for CPU-bound work, where you need the interpreter loop itself to run in parallel - something the GIL prevents within one process.
+
+Q: "Two threads each run `counter += 1` a million times on a shared `counter`. Will the final value always be 2,000,000?"
+A: No - it will usually be less, and the exact value is non-deterministic. `counter += 1` compiles to multiple bytecode instructions (load, add, store). The GIL guarantees each *individual* instruction is atomic, but the switch interval can fire between any two instructions in that sequence. If thread A loads `counter`, gets switched out before storing, and thread B loads the same stale value, increments, and stores, then thread A resumes and stores its own stale increment - one increment is lost. This is why "the GIL serializes execution" does not mean "compound operations are atomic", and `threading.Lock` is still required around `counter += 1`.
+
+Q: "CPython 3.13 supports a build without the GIL. Does that mean all Python code instantly gets faster on multiple cores?"
+A: No, for two reasons. First, the free-threaded ("nogil") build is opt-in and experimental - the default build still has the GIL, and most published C extensions assume it exists. Second, removing the GIL isn't free: without it, every `ob_refcnt` update needs to be atomic (or use biased reference counting), which costs roughly 10-50% single-threaded performance in current implementations. Free-threaded Python trades single-threaded speed for true multi-core parallelism of Python bytecode - a deliberate tradeoff for CPU-bound multithreaded workloads, not a free speedup for everyone.
+
+---
+
+## Practice Prompts
+
+- Write a script that spawns two threads incrementing a shared counter (no lock) 100,000 times each, run it a few times, and observe the final count vary. Add a `threading.Lock` and confirm it's always exactly 200,000.
+- Time a CPU-bound function (e.g. summing squares up to 10 million) single-threaded, with 2 `threading` threads, and with 2 `multiprocessing` processes. Explain the results in terms of the GIL.
+- Find where a C-extension library you use regularly (NumPy, hashlib, zlib) documents releasing the GIL during computation, and explain why that matters for a multithreaded pipeline that mixes I/O and compute.
 
 ---
 

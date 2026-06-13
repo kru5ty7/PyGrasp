@@ -208,6 +208,16 @@ The tension between singleton convenience and testability is a real architectura
 
 ---
 
+## Common Pitfalls
+
+- Forgetting `__init__` runs on *every* call, even when `__new__` returns an existing instance - `SingletonNew("first")` then `SingletonNew("second")` silently overwrites `self.value`, masking that later arguments are being ignored or are mutating shared state unexpectedly.
+- Implementing check-then-create without a lock (`if cls._instance is None: cls._instance = ...`) - a textbook race condition under `threading`.
+- Using a class-based singleton purely to avoid passing a parameter, then discovering every test needs to reset or monkeypatch the class-level `_instance`/`_instances` state so it doesn't leak across test cases.
+- Subclassing a `__new__`-based singleton without giving each subclass its own `_instance` slot - subclasses can end up sharing (or fighting over) the base class's instance.
+- Reaching for a class-based singleton when a module-level object or a `functools.cache`-wrapped factory function would be simpler and equally "singleton" given Python's import semantics.
+
+---
+
 ## Interview Angle
 
 Common question forms:
@@ -218,6 +228,25 @@ Common question forms:
 
 Answer frame:
 Define singleton as one instance with global access. Show the metaclass implementation with thread safety. Explain the testability problem (hidden dependencies, cannot substitute in tests). Present the module-level alternative as the Pythonic approach. Discuss when singletons are appropriate (connection pools, config) vs when DI is better (business logic dependencies).
+
+**Sample Q&A:**
+
+Q: "Walk me through implementing a thread-safe singleton in Python, and explain why the naive version isn't thread-safe."
+A: The naive version overrides `__new__`: check `cls._instance is None`, and if so create and store the instance. Under `threading`, two threads can both evaluate that check as `True` before either assigns - the GIL can switch threads between the check and the assignment - producing two instances (and two `__init__` calls, the second overwriting the first's state). The fix is to wrap the check-and-create in a `threading.Lock`, typically via a metaclass overriding `__call__` so the lock applies to every call to `Config()`. The metaclass approach is reusable across multiple singleton classes without repeating the locking logic in each one.
+
+Q: "What's the difference between `__new__` and `__init__` here, and why does it matter for a singleton?"
+A: `__new__` allocates and returns the instance, before the object exists. `__init__` initializes whatever `__new__` returned, and runs on *every* "construction" call - even when `__new__` returned an existing instance. For a singleton, that means `Config()` re-runs `__init__` every time, even though only the first call actually created the object. If `__init__` resets state (`self.settings = {}`), every later "construction" silently wipes previously stored data. Production singletons typically guard `__init__` with a flag (`if self._initialized: return`) or move setup into an explicit `load()`/`configure()` method called once.
+
+Q: "Why might an interviewer consider a module-level variable a better singleton than a class with a metaclass?"
+A: Python's import system already guarantees a module is loaded and executed exactly once per process, and `import config` always returns the same module object - so `_settings = load_settings()` at module scope is a singleton with zero extra code, no metaclass, no `__new__` override, and no manual locking (the import system is thread-safe). It's also more testable: a test can monkeypatch the module attribute directly, or call a `get_settings()` function that accepts an optional override for dependency injection. A class-based singleton with a metaclass is justified mainly when you need lazy initialization with constructor arguments, inheritance, or several distinct singleton types sharing common locking logic.
+
+---
+
+## Practice Prompts
+
+- Implement `SingletonMeta` from scratch without referring to the example, then write a `threading`-based test that spawns 10 threads all calling `Config()` simultaneously and asserts they all get the same `id()`.
+- Refactor `BadService` (which calls `Config()` internally) into `GoodService` using constructor injection, then write a unit test for `GoodService` that passes a fake config - note what becomes testable that wasn't before.
+- Turn the module-level singleton sketch in this note into working code with a `get_settings()` accessor and a `reset_settings_for_testing()` helper, and explain why the helper should exist for tests but never be called from application code.
 
 ---
 
