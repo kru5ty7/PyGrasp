@@ -18,6 +18,7 @@ tags: [moc, learning-path, interview-prep, layer-14]
 4. [[nab-nef-context|NAB, NEF and Banking Domain Context]]
 5. [[behavioral-questions|Behavioral and Management Round Questions]]
 6. [[prep-plan|Prioritized Prep Plan]]
+7. [[master-study-checklist|Master Study Checklist]]
 
 ---
 

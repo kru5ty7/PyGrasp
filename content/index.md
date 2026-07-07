@@ -4,7 +4,7 @@ title: Home
 
 # PyGrasp
 
-A structured Python knowledge vault - 706 notes across 14 layers, from CPython internals to AWS cloud deployments.
+A structured Python knowledge vault - 707 notes across 14 layers, from CPython internals to AWS cloud deployments.
 
 ---
 
@@ -27,7 +27,7 @@ Start here. Each path follows dependency order so every concept builds on what c
 | [[lp-cloud\|Cloud (AWS)]] | IAM, S3, EC2, Lambda, SQS/SNS, ECS, boto3 | 57 |
 | [[lp-security\|Security]] | OWASP Top 10, injection, XSS, CSRF, SSRF, Python security tools, pipeline security | 12 |
 | [[lp-tooling\|Tooling and DevOps]] | Poetry, Docker, Kubernetes, GitHub Actions, CD pipelines, observability, Terraform/IaC | 49 |
-| [[lp-interview-prep\|Interview Prep]] | Company-specific prep (NAB Platform Engineer) wired to technical question banks | 6 |
+| [[lp-interview-prep\|Interview Prep]] | Company-specific prep (NAB Platform Engineer) wired to technical question banks | 7 |
 
 ---
 
