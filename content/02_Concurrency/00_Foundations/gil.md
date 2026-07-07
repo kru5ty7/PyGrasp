@@ -100,6 +100,17 @@ Answer frame: Define the GIL as a mutex allowing one thread to run bytecode at a
 
 ---
 
+## Interview Prep — Platform Engineering
+
+Platform-engineering interviews (SDE2 level) ask the concurrency-choice question rather than the definition question:
+
+- "Async vs threading vs multiprocessing — when do you pick each, and why?" — expect GIL follow-ups. Answer frame: [[asyncio|asyncio]] for high-concurrency I/O in one thread (event loop, no GIL contention — [[event-loop|Event Loop]]); [[threads|threads]] for blocking-I/O libraries that aren't async-aware (GIL released during I/O — [[io-bound-vs-cpu-bound|I/O Bound vs CPU Bound]]); [[multiprocessing-module|multiprocessing]] for CPU-bound work needing real parallelism (one GIL per process). Strongest answers cite a real production story for each of the three.
+- Live-coding problems tend to be platform-flavored utilities: log parsing, a rate limiter ([[lld-rate-limiter|LLD - Rate Limiter]]), retry-with-backoff — small, correct, tested code beats clever code.
+
+See [[lp-interview-prep|Learning Path - Interview Prep]] for the full question banks.
+
+---
+
 ## Related Notes
 
 - [[reference-counting|Reference Counting]]

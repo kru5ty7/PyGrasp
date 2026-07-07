@@ -1,6 +1,6 @@
 ---
 title: Learning Path - Security
-description: Web security attacks and Python-specific security practices - OWASP Top 10, injection, XSS, CSRF, SSRF, and dependency scanning.
+description: Web security attacks, Python-specific security practices, and platform security - OWASP Top 10, injection, XSS, CSRF, SSRF, dependency scanning, and pipeline security/compliance.
 tags: [moc, learning-path, security, layer-12]
 ---
 
@@ -28,3 +28,9 @@ tags: [moc, learning-path, security, layer-12]
 3. [[secrets-in-python|Handling Secrets in Python]]
 4. [[cryptography-python|Cryptography with Python]]
 5. [[pickle-security|Pickle Security Risks]]
+
+---
+
+## Layer 12c - Platform Security
+
+1. [[pipeline-security-compliance|Pipeline Security and Compliance]]

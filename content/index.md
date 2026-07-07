@@ -4,7 +4,7 @@ title: Home
 
 # PyGrasp
 
-A structured Python knowledge vault - 694 notes across 13 layers, from CPython internals to AWS cloud deployments.
+A structured Python knowledge vault - 706 notes across 14 layers, from CPython internals to AWS cloud deployments.
 
 ---
 
@@ -24,9 +24,10 @@ Start here. Each path follows dependency order so every concept builds on what c
 | [[lp-hld\|High Level Design]] | Scalability, caching, databases at scale, microservices, HLD case studies | 61 |
 | [[lp-sql\|SQL]] | Fundamentals, joins, aggregations, indexes, transactions, advanced SQL | 45 |
 | [[lp-dsa\|DSA]] | Data structures, sorting, searching, dynamic programming, graph algorithms | 52 |
-| [[lp-cloud\|Cloud (AWS)]] | IAM, S3, EC2, Lambda, SQS/SNS, ECS, boto3 | 56 |
-| [[lp-security\|Security]] | OWASP Top 10, injection, XSS, CSRF, SSRF, Python security tools | 11 |
-| [[lp-tooling\|Tooling and DevOps]] | Poetry, Docker, Kubernetes, GitHub Actions, CD pipelines, observability | 45 |
+| [[lp-cloud\|Cloud (AWS)]] | IAM, S3, EC2, Lambda, SQS/SNS, ECS, boto3 | 57 |
+| [[lp-security\|Security]] | OWASP Top 10, injection, XSS, CSRF, SSRF, Python security tools, pipeline security | 12 |
+| [[lp-tooling\|Tooling and DevOps]] | Poetry, Docker, Kubernetes, GitHub Actions, CD pipelines, observability, Terraform/IaC | 49 |
+| [[lp-interview-prep\|Interview Prep]] | Company-specific prep (NAB Platform Engineer) wired to technical question banks | 6 |
 
 ---
 
@@ -70,4 +71,5 @@ Layer 10  DSA          ← standalone, any time
 Layer 11  Cloud (AWS)  ← after Layer 13 (containers)
 Layer 12  Security     ← after Layer 3 + 4
 Layer 13  Tooling      ← any time after Layer 1
+Layer 14  Interview Prep ← draws on Layers 10-13
 ```

@@ -1,6 +1,6 @@
 ---
 title: Learning Path - Tooling and DevOps
-description: Python tooling, Docker, Kubernetes, expanded CI/CD (GitHub Actions, CD to EC2/Lambda/ECS), and observability.
+description: Python tooling, Docker, Kubernetes, expanded CI/CD (GitHub Actions, CD to EC2/Lambda/ECS), observability, and infrastructure as code.
 tags: [moc, learning-path, tooling, devops, layer-13]
 ---
 
@@ -34,6 +34,7 @@ tags: [moc, learning-path, tooling, devops, layer-13]
 7. [[kubernetes-deployments|Kubernetes Deployments]]
 8. [[kubernetes-services|Kubernetes Services]]
 9. [[kubernetes-python|Deploying Python Apps on Kubernetes]]
+10. [[kubernetes-operations-questions|Kubernetes Operations Question Bank]]
 
 ---
 
@@ -50,6 +51,7 @@ tags: [moc, learning-path, tooling, devops, layer-13]
 9. [[cd-ecs|CD to ECS]]
 10. [[semantic-versioning|Semantic Versioning]]
 11. [[environment-strategy|Environment Strategy (dev, staging, prod)]]
+12. [[cicd-design-questions|CI/CD Design Question Bank]]
 
 ---
 
@@ -62,3 +64,10 @@ tags: [moc, learning-path, tooling, devops, layer-13]
 5. [[opentelemetry|OpenTelemetry]]
 6. [[sentry|Sentry]]
 7. [[cloudwatch-python|CloudWatch with Python]]
+8. [[observability-questions|Observability Question Bank]]
+
+---
+
+## Layer 13e - Infrastructure as Code
+
+1. [[terraform-iac-questions|Terraform and IaC Question Bank]]

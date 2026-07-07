@@ -101,6 +101,14 @@ Answer frame: Define `@decorator` as `fn = decorator(fn)`  -  syntactic sugar fo
 
 ---
 
+## Interview Prep — Platform Engineering
+
+Platform-engineering interviews probe Python language internals as a cluster: decorators, [[generators|generators]], [[context-managers|context managers]], and [[pydantic-validators|Pydantic validation]] internals typically come as rapid-fire follow-ups in one round. The connecting thread to present: all four are mechanisms for wrapping or controlling execution — decorators wrap functions, context managers wrap blocks (`__enter__`/`__exit__`), generators suspend and resume execution, and Pydantic hooks validation into attribute assignment. A retry-with-backoff decorator is the single best prepared example: it demonstrates closures, parameterized decorators, and `functools.wraps` in one platform-flavored utility.
+
+See [[lp-interview-prep|Learning Path - Interview Prep]] for the full question banks.
+
+---
+
 ## Related Notes
 
 - [[closures|Closures]]
