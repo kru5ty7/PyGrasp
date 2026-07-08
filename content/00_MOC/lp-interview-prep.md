@@ -33,7 +33,28 @@ tags: [moc, learning-path, interview-prep, layer-14]
 
 ---
 
+## Concept notes created for this prep (in the topic layers)
+
+1. [[kubernetes-pod-lifecycle|Kubernetes Pod Lifecycle]] - Layer 13, Containers
+2. [[kubernetes-scheduling|Kubernetes Scheduling]] - Layer 13, Containers
+3. [[kubernetes-config-and-secrets|Kubernetes ConfigMaps and Secrets]] - Layer 13, Containers
+4. [[kubernetes-storage|Kubernetes Storage]] - Layer 13, Containers
+5. [[kubernetes-autoscaling|Kubernetes Autoscaling and Resource Management]] - Layer 13, Containers
+6. [[kubernetes-tooling|Kubernetes Tooling]] - Layer 13, Containers
+7. [[kubernetes-platform-extensions|Kubernetes Platform Extensions]] - Layer 13, Containers
+8. [[terraform-basics|Terraform Basics]] - Layer 13, Infrastructure as Code
+9. [[terraform-configuration|Terraform Configuration Structure]] - Layer 13, Infrastructure as Code
+10. [[terraform-modules-and-enterprise|Terraform Modules and Terraform Enterprise]] - Layer 13, Infrastructure as Code
+11. [[cicd-overview|CI/CD Overview]] - Layer 13, CI/CD
+12. [[gitops|GitOps]] - Layer 13, CI/CD
+13. [[harness-concepts|Harness Concepts]] - Layer 13, CI/CD
+14. [[rbac-and-sso|RBAC, ABAC and Enterprise SSO]] - Layer 4, Auth and Security
+15. [[llm-routing-and-guardrails|LLM Routing and Guardrails]] - Layer 6, LLM Foundations
+
+---
+
 ## Existing notes with added interview framing
 
 1. [[gil|The GIL]] - async vs threading vs multiprocessing question framing
 2. [[decorators|Decorators]] - language-internals question cluster (decorators, generators, context managers, Pydantic)
+3. [[dependency-injection-pattern|Dependency Injection]] - DI vs IoC vs DIP distinction

@@ -20,6 +20,7 @@ tags: [moc, learning-path, ai, layer-6]
 6. [[function-calling|Function Calling]]
 7. [[structured-output|Structured Output]]
 8. [[llm-providers|LLM Providers Comparison]]
+9. [[llm-routing-and-guardrails|LLM Routing and Guardrails]]
 
 ---
 

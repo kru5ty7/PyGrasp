@@ -34,7 +34,14 @@ tags: [moc, learning-path, tooling, devops, layer-13]
 7. [[kubernetes-deployments|Kubernetes Deployments]]
 8. [[kubernetes-services|Kubernetes Services]]
 9. [[kubernetes-python|Deploying Python Apps on Kubernetes]]
-10. [[kubernetes-operations-questions|Kubernetes Operations Question Bank]]
+10. [[kubernetes-pod-lifecycle|Kubernetes Pod Lifecycle]]
+11. [[kubernetes-scheduling|Kubernetes Scheduling]]
+12. [[kubernetes-config-and-secrets|Kubernetes ConfigMaps and Secrets]]
+13. [[kubernetes-storage|Kubernetes Storage]]
+14. [[kubernetes-autoscaling|Kubernetes Autoscaling and Resource Management]]
+15. [[kubernetes-tooling|Kubernetes Tooling]]
+16. [[kubernetes-platform-extensions|Kubernetes Platform Extensions]]
+17. [[kubernetes-operations-questions|Kubernetes Operations Question Bank]]
 
 ---
 
@@ -51,7 +58,9 @@ tags: [moc, learning-path, tooling, devops, layer-13]
 9. [[cd-ecs|CD to ECS]]
 10. [[semantic-versioning|Semantic Versioning]]
 11. [[environment-strategy|Environment Strategy (dev, staging, prod)]]
-12. [[cicd-design-questions|CI/CD Design Question Bank]]
+12. [[gitops|GitOps]]
+13. [[harness-concepts|Harness Concepts]]
+14. [[cicd-design-questions|CI/CD Design Question Bank]]
 
 ---
 
@@ -70,4 +79,7 @@ tags: [moc, learning-path, tooling, devops, layer-13]
 
 ## Layer 13e - Infrastructure as Code
 
-1. [[terraform-iac-questions|Terraform and IaC Question Bank]]
+1. [[terraform-basics|Terraform Basics]]
+2. [[terraform-configuration|Terraform Configuration Structure]]
+3. [[terraform-modules-and-enterprise|Terraform Modules and Terraform Enterprise]]
+4. [[terraform-iac-questions|Terraform and IaC Question Bank]]

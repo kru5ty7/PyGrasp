@@ -264,6 +264,14 @@ Define DI as passing dependencies from outside. Show constructor injection with 
 
 ---
 
+## Interview Prep — Platform Engineering
+
+Interviewers often follow "explain DI" with "and what is Inversion of Control?" The relationship to state cleanly: **IoC is the principle, DI is one implementation of it.** IoC means a component does not control the construction or lookup of its collaborators — that control is inverted, moved out to a framework or container. DI achieves the inversion by *handing dependencies in* (constructor/parameter injection — FastAPI's `Depends` resolving and passing values into your route). Other IoC forms exist without injection: template-method frameworks and event loops invert control of *flow* ("don't call us, we'll call you" — the Hollywood Principle). Related but distinct: [[dip|Dependency Inversion Principle]] is about depending on abstractions rather than concretions — DI is how the concrete implementation then arrives at runtime. The crisp one-liner: *DIP says depend on interfaces; IoC says don't construct your own dependencies; DI is the mechanism that satisfies both.*
+
+See [[lp-interview-prep|Learning Path - Interview Prep]] for the full question banks.
+
+---
+
 ## Related Notes
 
 - [[dip|Dependency Inversion Principle]]

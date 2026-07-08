@@ -22,22 +22,22 @@ created: 2026-07-07
 - [ ] What Kubernetes is / the container-orchestration problem it solves — [[kubernetes-basics|Kubernetes Basics]]
 - [ ] Control plane vs. worker nodes: API server, etcd, scheduler, controller manager, kubelet, kube-proxy, container runtime — [[kubernetes-basics|Kubernetes Basics]]
 - [ ] The reconciliation loop — desired state (spec) vs. actual state (status), etcd as source of truth — [[kubernetes-basics|Kubernetes Basics]], [[kubernetes-operations-questions|Kubernetes Operations Question Bank]]
-- [ ] Pod lifecycle phases — Pending, Running, Succeeded, Failed, Unknown
-- [ ] Container Runtime Interface (CRI) — containerd, CRI-O, why Kubernetes is runtime-agnostic
+- [ ] Pod lifecycle phases — Pending, Running, Succeeded, Failed, Unknown — [[kubernetes-pod-lifecycle|Kubernetes Pod Lifecycle]]
+- [ ] Container Runtime Interface (CRI) — containerd, CRI-O, why Kubernetes is runtime-agnostic — [[kubernetes-pod-lifecycle|Kubernetes Pod Lifecycle]]
 
 ### Scheduling
 
-- [ ] Taints and Tolerations — how nodes repel pods unless explicitly tolerated
-- [ ] Node Affinity / Anti-affinity — controlling which nodes a pod can land on
-- [ ] Pod Affinity / Anti-affinity — controlling placement relative to other pods (e.g., spread replicas across nodes)
+- [ ] Taints and Tolerations — how nodes repel pods unless explicitly tolerated — [[kubernetes-scheduling|Kubernetes Scheduling]]
+- [ ] Node Affinity / Anti-affinity — controlling which nodes a pod can land on — [[kubernetes-scheduling|Kubernetes Scheduling]]
+- [ ] Pod Affinity / Anti-affinity — controlling placement relative to other pods (e.g., spread replicas across nodes) — [[kubernetes-scheduling|Kubernetes Scheduling]]
 
 ### Workload Objects
 
 - [ ] Pods (smallest deployable unit; can hold 1+ containers) — [[kubernetes-basics|Kubernetes Basics]]
 - [ ] ReplicaSets (ensures N replicas running) — [[kubernetes-deployments|Kubernetes Deployments]]
 - [ ] Deployments (manages ReplicaSets; enables rolling updates/rollbacks) — [[kubernetes-deployments|Kubernetes Deployments]]
-- [ ] Jobs (run-to-completion tasks)
-- [ ] CronJobs (scheduled Jobs)
+- [ ] Jobs (run-to-completion tasks) — [[kubernetes-operations-questions|Kubernetes Operations Question Bank]]
+- [ ] CronJobs (scheduled Jobs) — [[kubernetes-operations-questions|Kubernetes Operations Question Bank]]
 - [ ] StatefulSets (stable identity/storage for stateful apps) — [[kubernetes-operations-questions|Kubernetes Operations Question Bank]]
 - [ ] DaemonSets (one pod per node) — [[kubernetes-operations-questions|Kubernetes Operations Question Bank]]
 
@@ -48,20 +48,20 @@ created: 2026-07-07
 - [ ] `port` vs. `targetPort` (Service's own port vs. where it forwards to) — [[kubernetes-services|Kubernetes Services]]
 - [ ] In-cluster DNS resolution — [[kubernetes-operations-questions|Kubernetes Operations Question Bank]]
 - [ ] Ingress (external HTTP/S routing) — [[kubernetes-operations-questions|Kubernetes Operations Question Bank]]
-- [ ] Network policies (restricting pod-to-pod traffic) — concept level
+- [ ] Network policies (restricting pod-to-pod traffic) — concept level — [[kubernetes-platform-extensions|Kubernetes Platform Extensions]]
 
 ### Configuration & Secrets
 
-- [ ] ConfigMaps (non-sensitive config) — get hands-on with mounting one as a volume vs. env var, not just conceptual
-- [ ] Secrets (sensitive data — note: base64-encoded, not encrypted by default) — same, hands-on if time allows — [[secret-management|Secret Management]]
-- [ ] Env vars vs. mounted config/secret volumes
+- [ ] ConfigMaps (non-sensitive config) — get hands-on with mounting one as a volume vs. env var, not just conceptual — [[kubernetes-config-and-secrets|Kubernetes ConfigMaps and Secrets]]
+- [ ] Secrets (sensitive data — note: base64-encoded, not encrypted by default) — same, hands-on if time allows — [[kubernetes-config-and-secrets|Kubernetes ConfigMaps and Secrets]], [[secret-management|Secret Management]]
+- [ ] Env vars vs. mounted config/secret volumes — [[kubernetes-config-and-secrets|Kubernetes ConfigMaps and Secrets]]
 
 ### Storage
 
-- [ ] Volumes — ephemeral vs. persistent
-- [ ] PersistentVolume (PV) and PersistentVolumeClaim (PVC)
-- [ ] StorageClass (dynamic provisioning)
-- [ ] StatefulSet + volumeClaimTemplates
+- [ ] Volumes — ephemeral vs. persistent — [[kubernetes-storage|Kubernetes Storage]]
+- [ ] PersistentVolume (PV) and PersistentVolumeClaim (PVC) — [[kubernetes-storage|Kubernetes Storage]]
+- [ ] StorageClass (dynamic provisioning) — [[kubernetes-storage|Kubernetes Storage]]
+- [ ] StatefulSet + volumeClaimTemplates — [[kubernetes-storage|Kubernetes Storage]]
 
 ### RBAC (Kubernetes-specific)
 
@@ -76,15 +76,15 @@ created: 2026-07-07
 ### Scaling & Resource Management
 
 - [ ] Resource requests vs. limits (CPU/memory) — [[kubernetes-operations-questions|Kubernetes Operations Question Bank]]
-- [ ] Horizontal Pod Autoscaler (HPA) — metrics-based scaling, get this hands-on if the train allows a phone-based interactive scenario
-- [ ] Vertical Pod Autoscaler (VPA) — brief
-- [ ] Cluster Autoscaler — node-level scaling, concept only
-- [ ] Multi-container Pods and init containers — why you'd run more than one container per Pod, what an init container is for — sidecar pattern in [[kubernetes-basics|Kubernetes Basics]]
+- [ ] Horizontal Pod Autoscaler (HPA) — metrics-based scaling, get this hands-on if the train allows a phone-based interactive scenario — [[kubernetes-autoscaling|Kubernetes Autoscaling and Resource Management]]
+- [ ] Vertical Pod Autoscaler (VPA) — brief — [[kubernetes-autoscaling|Kubernetes Autoscaling and Resource Management]]
+- [ ] Cluster Autoscaler — node-level scaling, concept only — [[kubernetes-autoscaling|Kubernetes Autoscaling and Resource Management]]
+- [ ] Multi-container Pods and init containers — why you'd run more than one container per Pod, what an init container is for — [[kubernetes-pod-lifecycle|Kubernetes Pod Lifecycle]]
 
 ### Health & Reliability
 
 - [ ] Liveness vs. readiness vs. startup probes — [[kubernetes-operations-questions|Kubernetes Operations Question Bank]]
-- [ ] Restart policies
+- [ ] Restart policies — [[kubernetes-pod-lifecycle|Kubernetes Pod Lifecycle]]
 - [ ] Rolling updates and rollbacks — [[kubernetes-deployments|Kubernetes Deployments]]
 - [ ] Canary and blue-green deployment concepts — [[cicd-design-questions|CI/CD Design Question Bank]]
 
@@ -98,20 +98,20 @@ created: 2026-07-07
 ### Tooling
 
 - [ ] `kubectl` CLI fundamentals — [[kubernetes-basics|Kubernetes Basics]]
-- [ ] kubeconfig and contexts — managing/switching between multiple clusters
-- [ ] `kubectl port-forward` — accessing a pod's port locally without a Service
-- [ ] minikube / kind for local dev
-- [ ] Helm and Helm charts — templating, `values.yaml`, releases — [[kubernetes-python|Deploying Python Apps on Kubernetes]]
+- [ ] kubeconfig and contexts — managing/switching between multiple clusters — [[kubernetes-tooling|Kubernetes Tooling]]
+- [ ] `kubectl port-forward` — accessing a pod's port locally without a Service — [[kubernetes-tooling|Kubernetes Tooling]]
+- [ ] minikube / kind for local dev — [[kubernetes-tooling|Kubernetes Tooling]]
+- [ ] Helm and Helm charts — templating, `values.yaml`, releases — [[kubernetes-tooling|Kubernetes Tooling]], [[kubernetes-python|Deploying Python Apps on Kubernetes]]
 - [ ] YAML manifest structure — apiVersion, kind, metadata, spec — [[kubernetes-basics|Kubernetes Basics]]
 
 ### Advanced / Platform-level (concept literacy, likely not your direct ownership)
 
-- [ ] Managed Kubernetes (EKS/GKE/AKS) vs. self-managed
-- [ ] Kubernetes Operators (custom controllers)
-- [ ] Custom Resource Definitions (CRDs) — how the API itself gets extended; the mechanism Operators are built on
-- [ ] Admission Controllers — validating/mutating webhooks, where the API server enforces policy on requests
+- [ ] Managed Kubernetes (EKS/GKE/AKS) vs. self-managed — [[kubernetes-platform-extensions|Kubernetes Platform Extensions]]
+- [ ] Kubernetes Operators (custom controllers) — [[kubernetes-platform-extensions|Kubernetes Platform Extensions]]
+- [ ] Custom Resource Definitions (CRDs) — how the API itself gets extended; the mechanism Operators are built on — [[kubernetes-platform-extensions|Kubernetes Platform Extensions]]
+- [ ] Admission Controllers — validating/mutating webhooks, where the API server enforces policy on requests — [[kubernetes-platform-extensions|Kubernetes Platform Extensions]]
 - [ ] Multi-cluster / multi-cloud considerations
-- [ ] Security best practices — pod security standards, image scanning, network policies — [[pipeline-security-compliance|Pipeline Security and Compliance]]
+- [ ] Security best practices — pod security standards, image scanning, network policies — [[kubernetes-platform-extensions|Kubernetes Platform Extensions]], [[pipeline-security-compliance|Pipeline Security and Compliance]]
 - [ ] Private container registries — [[ecr|ECR (Elastic Container Registry)]]
 
 ### Observability
@@ -126,11 +126,11 @@ created: 2026-07-07
 
 ### Core Concepts
 
-- [ ] Infrastructure as Code — why declarative over imperative scripting — [[terraform-iac-questions|Terraform and IaC Question Bank]]
-- [ ] Providers (AWS, GCP, Azure, etc.)
-- [ ] Resources vs. Data Sources
-- [ ] Lifecycle — init, plan, apply, destroy
-- [ ] Open-source Terraform vs. Terraform Cloud vs. Terraform Enterprise — the three tiers and what each adds
+- [ ] Infrastructure as Code — why declarative over imperative scripting — [[terraform-basics|Terraform Basics]]
+- [ ] Providers (AWS, GCP, Azure, etc.) — [[terraform-basics|Terraform Basics]]
+- [ ] Resources vs. Data Sources — [[terraform-basics|Terraform Basics]]
+- [ ] Lifecycle — init, plan, apply, destroy — [[terraform-basics|Terraform Basics]]
+- [ ] Open-source Terraform vs. Terraform Cloud vs. Terraform Enterprise — the three tiers and what each adds — [[terraform-basics|Terraform Basics]], [[terraform-modules-and-enterprise|Terraform Modules and Terraform Enterprise]]
 
 ### State Management
 
@@ -142,20 +142,20 @@ created: 2026-07-07
 
 ### Configuration Structure
 
-- [ ] Input variables and Outputs
-- [ ] Local values (`locals` block) — computed values reused within a config
-- [ ] Functions and expressions — `count`, `for_each`, conditional expressions
-- [ ] Environment variables vs. `.tfvars` files
-- [ ] Provisioners — when to use, when to avoid
-- [ ] Workspaces — managing multiple environments — [[terraform-iac-questions|Terraform and IaC Question Bank]]
-- [ ] Basic CLI hygiene — `terraform validate`, `terraform fmt`
+- [ ] Input variables and Outputs — [[terraform-configuration|Terraform Configuration Structure]]
+- [ ] Local values (`locals` block) — computed values reused within a config — [[terraform-configuration|Terraform Configuration Structure]]
+- [ ] Functions and expressions — `count`, `for_each`, conditional expressions — [[terraform-configuration|Terraform Configuration Structure]]
+- [ ] Environment variables vs. `.tfvars` files — [[terraform-configuration|Terraform Configuration Structure]]
+- [ ] Provisioners — when to use, when to avoid — [[terraform-configuration|Terraform Configuration Structure]]
+- [ ] Workspaces — managing multiple environments — [[terraform-configuration|Terraform Configuration Structure]], [[terraform-iac-questions|Terraform and IaC Question Bank]]
+- [ ] Basic CLI hygiene — `terraform validate`, `terraform fmt` — [[terraform-basics|Terraform Basics]]
 
 ### Modules
 
-- [ ] Why modules — reusability, encapsulation — [[terraform-iac-questions|Terraform and IaC Question Bank]]
-- [ ] Module structure — `variables.tf`, `outputs.tf`, `main.tf`
-- [ ] Versioning modules — [[semantic-versioning|Semantic Versioning]]
-- [ ] Public registry modules vs. custom internal modules
+- [ ] Why modules — reusability, encapsulation — [[terraform-modules-and-enterprise|Terraform Modules and Terraform Enterprise]]
+- [ ] Module structure — `variables.tf`, `outputs.tf`, `main.tf` — [[terraform-modules-and-enterprise|Terraform Modules and Terraform Enterprise]]
+- [ ] Versioning modules — [[terraform-modules-and-enterprise|Terraform Modules and Terraform Enterprise]], [[semantic-versioning|Semantic Versioning]]
+- [ ] Public registry modules vs. custom internal modules — [[terraform-modules-and-enterprise|Terraform Modules and Terraform Enterprise]]
 
 ### Policy & Governance
 
@@ -164,11 +164,11 @@ created: 2026-07-07
 
 ### Terraform Enterprise (NAB specifically runs this, not vanilla OSS Terraform)
 
-- [ ] Private module registry — internal, versioned modules shared org-wide — [[nab-nef-context|NAB, NEF and Banking Domain Context]]
-- [ ] Sentinel policy enforcement built into the apply pipeline itself (not bolted on after)
-- [ ] Remote execution — runs happen on Terraform's infrastructure, not your laptop
-- [ ] Team-based access controls on workspaces
-- [ ] Why this matters for the interview: "how do you enforce policy before infra changes go live" is a Terraform Enterprise answer, not a vanilla-Terraform one
+- [ ] Private module registry — internal, versioned modules shared org-wide — [[terraform-modules-and-enterprise|Terraform Modules and Terraform Enterprise]], [[nab-nef-context|NAB, NEF and Banking Domain Context]]
+- [ ] Sentinel policy enforcement built into the apply pipeline itself (not bolted on after) — [[terraform-modules-and-enterprise|Terraform Modules and Terraform Enterprise]]
+- [ ] Remote execution — runs happen on Terraform's infrastructure, not your laptop — [[terraform-modules-and-enterprise|Terraform Modules and Terraform Enterprise]]
+- [ ] Team-based access controls on workspaces — [[terraform-modules-and-enterprise|Terraform Modules and Terraform Enterprise]]
+- [ ] Why this matters for the interview: "how do you enforce policy before infra changes go live" is a Terraform Enterprise answer, not a vanilla-Terraform one — [[terraform-modules-and-enterprise|Terraform Modules and Terraform Enterprise]]
 
 ### AWS-specific (your strength — deepen, don't relearn)
 
@@ -183,8 +183,8 @@ created: 2026-07-07
 ### General Concepts
 
 - [ ] Pipeline stages — build, test, deploy, where security scanning fits — [[cicd-design-questions|CI/CD Design Question Bank]], [[ci-testing-pipeline|CI Testing Pipeline]]
-- [ ] CI vs. Continuous Delivery vs. Continuous Deployment — the actual distinctions
-- [ ] Artifact management/versioning — [[semantic-versioning|Semantic Versioning]]
+- [ ] CI vs. Continuous Delivery vs. Continuous Deployment — the actual distinctions — [[cicd-overview|CI/CD Overview]]
+- [ ] Artifact management/versioning — [[cicd-overview|CI/CD Overview]], [[semantic-versioning|Semantic Versioning]]
 - [ ] Rollback strategies — [[cicd-design-questions|CI/CD Design Question Bank]]
 - [ ] Blue-green vs. canary deployment patterns — [[cicd-design-questions|CI/CD Design Question Bank]]
 
@@ -197,20 +197,20 @@ created: 2026-07-07
 
 ### Harness (NAB-specific — conceptual literacy)
 
-- [ ] Pipelines and stages — [[cicd-design-questions|CI/CD Design Question Bank]] gap-probe
-- [ ] Delegates — what they are, why they exist
-- [ ] OPA policy gates within pipelines
-- [ ] Canary/blue-green verification built into Harness
+- [ ] Pipelines and stages — [[harness-concepts|Harness Concepts]]
+- [ ] Delegates — what they are, why they exist — [[harness-concepts|Harness Concepts]]
+- [ ] OPA policy gates within pipelines — [[harness-concepts|Harness Concepts]]
+- [ ] Canary/blue-green verification built into Harness — [[harness-concepts|Harness Concepts]]
 
 ### GitOps (general, increasingly standard in platform engineering)
 
-- [ ] The GitOps model — git as the single source of truth, a controller reconciles cluster state to match it
-- [ ] ArgoCD / FluxCD — what problem they solve vs. a push-based pipeline
-- [ ] Pull-based (GitOps) vs. push-based (traditional CI/CD) deployment — the actual tradeoff
+- [ ] The GitOps model — git as the single source of truth, a controller reconciles cluster state to match it — [[gitops|GitOps]]
+- [ ] ArgoCD / FluxCD — what problem they solve vs. a push-based pipeline — [[gitops|GitOps]]
+- [ ] Pull-based (GitOps) vs. push-based (traditional CI/CD) deployment — the actual tradeoff — [[gitops|GitOps]]
 
 ### Broader tool landscape (awareness, not depth)
 
-- [ ] Jenkins, GitLab CI, CircleCI — know what they are and roughly how they differ from GitHub Actions/Harness
+- [ ] Jenkins, GitLab CI, CircleCI — know what they are and roughly how they differ from GitHub Actions/Harness — [[cicd-overview|CI/CD Overview]]
 
 ### Security in the pipeline
 
@@ -222,11 +222,11 @@ created: 2026-07-07
 
 ## 4. RBAC — Application-level (general, separate from K8s mechanics above)
 
-- [ ] RBAC vs. ABAC — role-based vs. attribute-based access control
-- [ ] Core model — Users, Roles, Permissions, Role-assignment — [[authentication-vs-authorization|Authentication vs Authorization]]
+- [ ] RBAC vs. ABAC — role-based vs. attribute-based access control — [[rbac-and-sso|RBAC, ABAC and Enterprise SSO]]
+- [ ] Core model — Users, Roles, Permissions, Role-assignment — [[rbac-and-sso|RBAC, ABAC and Enterprise SSO]], [[authentication-vs-authorization|Authentication vs Authorization]]
 - [ ] JWT-based auth flow — token issuance, claims, verification — [[jwt|JWT]]
 - [ ] OAuth2 vs. session-based auth — when each fits — [[oauth2|OAuth2]], [[session-based-auth|Session-Based Auth]]
-- [ ] OIDC (OpenID Connect) and SAML — common enterprise SSO protocols, how they relate to OAuth2
+- [ ] OIDC (OpenID Connect) and SAML — common enterprise SSO protocols, how they relate to OAuth2 — [[rbac-and-sso|RBAC, ABAC and Enterprise SSO]]
 - [ ] Principle of least privilege — [[iam-least-privilege|Principle of Least Privilege]]
 - [ ] Your real anchors: Orqa (Payroll Admin → view/edit timesheets), DAG Builder project (JWT + RBAC auth)
 
@@ -261,7 +261,7 @@ created: 2026-07-07
 ### Design Patterns (relevant to your FastAPI/backend work)
 
 - [ ] Dependency Injection (on your resume — FastAPI's `Depends` system specifically) — [[dependency-injection-pattern|Dependency Injection]]
-- [ ] Inversion of Control (IoC) — the broader principle DI is one implementation of
+- [ ] Inversion of Control (IoC) — the broader principle DI is one implementation of — [[dependency-injection-pattern|Dependency Injection]]
 - [ ] Singleton — [[singleton|Singleton]]
 - [ ] Factory / Factory Method — [[factory-method|Factory Method]], [[abstract-factory|Abstract Factory]]
 - [ ] Builder — constructing complex objects step by step — [[builder-pattern|Builder Pattern]]
@@ -293,15 +293,15 @@ created: 2026-07-07
 ### LLM Integration Concepts
 
 - [ ] Prompt engineering fundamentals — [[prompt-engineering|Prompt Engineering]]
-- [ ] Multi-model routing (your resume: OpenAI/Claude/Gemini/Ollama) — why route to different models
-- [ ] AI guardrails — what they check, how they're implemented
+- [ ] Multi-model routing (your resume: OpenAI/Claude/Gemini/Ollama) — why route to different models — [[llm-routing-and-guardrails|LLM Routing and Guardrails]]
+- [ ] AI guardrails — what they check, how they're implemented — [[llm-routing-and-guardrails|LLM Routing and Guardrails]]
 - [ ] Context window limits and their effect on chunking/retrieval design — [[context-window|Context Window]]
 
 ### Broader GenAI Platform Concepts
 
 - [ ] RAG vs. fine-tuning vs. prompt engineering — when each is the right tool — [[fine-tuning-basics|Fine-Tuning Basics]]
-- [ ] Hallucination mitigation strategies
-- [ ] Latency/cost tradeoffs across retrieval/generation strategies
+- [ ] Hallucination mitigation strategies — [[llm-routing-and-guardrails|LLM Routing and Guardrails]]
+- [ ] Latency/cost tradeoffs across retrieval/generation strategies — [[llm-routing-and-guardrails|LLM Routing and Guardrails]]
 - [ ] Agentic RAG / multi-hop retrieval — an emerging pattern where retrieval itself becomes iterative/tool-using rather than single-shot — [[advanced-rag|Advanced RAG]]
 
 ---

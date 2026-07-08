@@ -1,5 +1,5 @@
 ---
-title: 01 - Terraform and IaC Question Bank
+title: 04 - Terraform and IaC Question Bank
 description: "Platform-engineering interview questions on Terraform and Infrastructure as Code - state management and locking, reusable module design, drift and unexpected destroys, import, workspaces, and policy-as-code - with answer frames and honest gap-probe handling."
 tags: [terraform, iac, infrastructure-as-code, state, modules, policy-as-code, interview-prep, tooling, layer-9]
 status: draft

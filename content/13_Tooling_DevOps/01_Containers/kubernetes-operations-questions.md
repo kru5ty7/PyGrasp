@@ -1,5 +1,5 @@
 ---
-title: 10 - Kubernetes Operations Question Bank
+title: 17 - Kubernetes Operations Question Bank
 description: "Platform-engineering interview questions on Kubernetes operations - workload types, the kubectl apply flow, pod troubleshooting (CrashLoopBackOff, OOMKilled, Pending), probes, RBAC, networking, and rollout strategies - with answer frames and links to the underlying concept notes."
 tags: [kubernetes, k8s, interview-prep, troubleshooting, rbac, probes, tooling, layer-9]
 status: draft
