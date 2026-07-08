@@ -19,6 +19,7 @@ tags: [moc, learning-path, interview-prep, layer-14]
 5. [[behavioral-questions|Behavioral and Management Round Questions]]
 6. [[prep-plan|Prioritized Prep Plan]]
 7. [[master-study-checklist|Master Study Checklist]]
+8. [[f2f-gap-closing-checklist|F2F Gap-Closing Checklist (Networking + Coding)]]
 
 ---
 
@@ -50,6 +51,7 @@ tags: [moc, learning-path, interview-prep, layer-14]
 13. [[harness-concepts|Harness Concepts]] - Layer 13, CI/CD
 14. [[rbac-and-sso|RBAC, ABAC and Enterprise SSO]] - Layer 4, Auth and Security
 15. [[llm-routing-and-guardrails|LLM Routing and Guardrails]] - Layer 6, LLM Foundations
+16. [[networking-fundamentals|Networking Fundamentals (OSI, TCP/UDP, NAT)]] - Layer 7, HLD Networking
 
 ---
 
@@ -58,3 +60,5 @@ tags: [moc, learning-path, interview-prep, layer-14]
 1. [[gil|The GIL]] - async vs threading vs multiprocessing question framing
 2. [[decorators|Decorators]] - language-internals question cluster (decorators, generators, context managers, Pydantic)
 3. [[dependency-injection-pattern|Dependency Injection]] - DI vs IoC vs DIP distinction
+4. [[dns|DNS]] - CoreDNS / in-cluster service discovery framing
+5. [[load-balancing|Load Balancing]] - L4 vs L7 mapped to K8s Service vs Ingress and canary splits

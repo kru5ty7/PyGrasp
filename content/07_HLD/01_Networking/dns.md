@@ -132,9 +132,16 @@ Trace the full resolution chain from client to authoritative nameserver. Explain
 
 ---
 
+## Interview Prep — Platform Engineering
+
+The platform-flavored follow-up to the resolution chain is always Kubernetes: **what changes in a cluster?** Answer frame: CoreDNS runs in `kube-system` as the cluster's resolver; every Service gets a record (`my-svc.my-namespace.svc.cluster.local`), so service discovery *is* DNS — no client-side registry needed. Pods' `/etc/resolv.conf` points at CoreDNS with search domains, which is why `my-svc` alone resolves within the same namespace. Headless Services (`clusterIP: None`) return individual pod IPs instead of a virtual IP — how StatefulSets get per-replica DNS identities. Debugging: `nslookup my-svc` from a pod, then check CoreDNS pods and the Service's endpoints ([[kubernetes-operations-questions|Kubernetes Operations Question Bank]]). Also have record types cold (A/AAAA, CNAME, MX, TXT) and the TTL trade-off (low TTL = fast failover, more query load) — theory floor in [[networking-fundamentals|Networking Fundamentals (OSI, TCP/UDP, NAT)]]; full question banks via [[lp-interview-prep|Learning Path - Interview Prep]].
+
+---
+
 ## Related Notes
 
 - [[load-balancing|Load Balancing]]
 - [[cdn|CDN]]
 - [[reverse-proxy|Reverse Proxy]]
 - [[http-basics|HTTP Basics]]
+- [[networking-fundamentals|Networking Fundamentals (OSI, TCP/UDP, NAT)]]

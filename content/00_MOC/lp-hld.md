@@ -33,6 +33,7 @@ tags: [moc, learning-path, hld, system-design, layer-8]
 6. [[cdn|CDN]]
 7. [[consistent-hashing|Consistent Hashing]]
 8. [[api-gateway-hld|API Gateway]]
+9. [[networking-fundamentals|Networking Fundamentals (OSI, TCP/UDP, NAT)]]
 
 ---
 

@@ -4,7 +4,7 @@ title: Home
 
 # PyGrasp
 
-A structured Python knowledge vault - 722 notes across 14 layers, from CPython internals to AWS cloud deployments.
+A structured Python knowledge vault - 724 notes across 14 layers, from CPython internals to AWS cloud deployments.
 
 ---
 
@@ -21,13 +21,13 @@ Start here. Each path follows dependency order so every concept builds on what c
 | [[lp-data-engineering\|Data Engineering]] | NumPy, Pandas, Polars, Kafka, Airflow, dbt, Spark | 41 |
 | [[lp-ai-engineering\|AI Engineering]] | LLMs, embeddings, RAG, LangChain, LangGraph, agents, MLOps | 58 |
 | [[lp-lld\|Low Level Design]] | OOP, SOLID, design patterns, concurrency safety, API design, LLD case studies | 49 |
-| [[lp-hld\|High Level Design]] | Scalability, caching, databases at scale, microservices, HLD case studies | 61 |
+| [[lp-hld\|High Level Design]] | Scalability, caching, databases at scale, microservices, HLD case studies | 62 |
 | [[lp-sql\|SQL]] | Fundamentals, joins, aggregations, indexes, transactions, advanced SQL | 45 |
 | [[lp-dsa\|DSA]] | Data structures, sorting, searching, dynamic programming, graph algorithms | 52 |
 | [[lp-cloud\|Cloud (AWS)]] | IAM, S3, EC2, Lambda, SQS/SNS, ECS, boto3 | 57 |
 | [[lp-security\|Security]] | OWASP Top 10, injection, XSS, CSRF, SSRF, Python security tools, pipeline security | 12 |
 | [[lp-tooling\|Tooling and DevOps]] | Poetry, Docker, Kubernetes, GitHub Actions, CD pipelines, observability, Terraform/IaC | 62 |
-| [[lp-interview-prep\|Interview Prep]] | Company-specific prep (NAB Platform Engineer) wired to technical question banks | 7 |
+| [[lp-interview-prep\|Interview Prep]] | Company-specific prep (NAB Platform Engineer) wired to technical question banks | 8 |
 
 ---
 

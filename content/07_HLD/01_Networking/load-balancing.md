@@ -137,6 +137,12 @@ Define the load balancer's two roles: distributing load and providing a single e
 
 ---
 
+## Interview Prep — Platform Engineering
+
+The platform mapping interviewers want: **L4 vs L7 is the Service-vs-Ingress split in Kubernetes and the NLB-vs-ALB split in AWS.** L4 balancing sees only IP/port — fast, protocol-agnostic, no payload knowledge; that's a K8s Service (ClusterIP/NodePort/LoadBalancer via kube-proxy) and an AWS NLB. L7 balancing parses HTTP — host, path, headers, cookies — which is what enables path-based routing, host-based multi-tenancy, and *weighted canary traffic splits*; that's Ingress (or a service mesh) and an ALB ([[kubernetes-services|Kubernetes Services]], [[ec2-elb|Elastic Load Balancer]]). The canary connection is the money answer: you cannot split 5% of traffic to a new version on L4 alone — L7 (or mesh) inspection is what makes progressive delivery mechanically possible ([[cicd-design-questions|CI/CD Design Question Bank]]). Theory floor in [[networking-fundamentals|Networking Fundamentals (OSI, TCP/UDP, NAT)]]; full question banks via [[lp-interview-prep|Learning Path - Interview Prep]].
+
+---
+
 ## Related Notes
 
 - [[load-balancing-algorithms|Load Balancing Algorithms]]
@@ -144,3 +150,4 @@ Define the load balancer's two roles: distributing load and providing a single e
 - [[reverse-proxy|Reverse Proxy]]
 - [[consistent-hashing|Consistent Hashing]]
 - [[horizontal-vs-vertical-scaling|Horizontal vs Vertical Scaling]]
+- [[networking-fundamentals|Networking Fundamentals (OSI, TCP/UDP, NAT)]]
